@@ -7,8 +7,7 @@
   -->
   <PropertyGroup>
     <EzRealmSyncLibDir>$(MSBuildThisFileDirectory)lib</EzRealmSyncLibDir>
-    <UseLocalOsuLibs Condition="'$(UseLocalOsuLibs)' == ''">false</UseLocalOsuLibs>
-    <UseLocalOsuLibs Condition="'$(UseLocalOsuLibs)' == '' and Exists('$(EzRealmSyncLibDir)\osu.Game.dll')">true</UseLocalOsuLibs>
+    <UseLocalOsuLibs Condition="'$(UseLocalOsuLibs)' == ''">true</UseLocalOsuLibs>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(UseLocalOsuLibs)' == 'true' AND '$(MSBuildProjectName)' == 'osu.Game.EzRealmSync'">
@@ -18,6 +17,7 @@
   <ItemGroup Condition="Exists('$(EzRealmSyncLibDir)\osu.Game.dll')">
     <EzRealmSyncRuntimeLib Include="$(EzRealmSyncLibDir)\*.dll"
                           Exclude="$(EzRealmSyncLibDir)\*Game.Resources*.dll;$(EzRealmSyncLibDir)\*Resources.dll" />
+    <EzRealmSyncRuntimeNative Include="$(EzRealmSyncLibDir)\runtimes\**\*.*" />
   </ItemGroup>
 
   <ItemGroup Condition="'$(UseLocalOsuLibs)' == 'true' AND '$(MSBuildProjectName)' == 'osu.Game.EzRealmSync'">

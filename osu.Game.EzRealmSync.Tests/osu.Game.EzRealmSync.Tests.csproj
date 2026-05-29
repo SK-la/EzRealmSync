@@ -15,7 +15,11 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\osu.Game.EzRealmSync\osu.Game.EzRealmSync.csproj" />
-    <ProjectReference Include="..\osu.EzRealmSync.AppModel\osu.EzRealmSync.AppModel.csproj" />
+    <ProjectReference Include="..\osu.Game.EzRealmSync\osu.Game.EzRealmSync.csproj">
+      <AdditionalProperties>UseLocalOsuLibs=$(UseLocalOsuLibs)</AdditionalProperties>
+    </ProjectReference>
+    <ProjectReference Include="..\osu.EzRealmSync.AppModel\osu.EzRealmSync.AppModel.csproj">
+      <AdditionalProperties>UseLocalOsuLibs=$(UseLocalOsuLibs)</AdditionalProperties>
+    </ProjectReference>
   </ItemGroup>
 </Project>

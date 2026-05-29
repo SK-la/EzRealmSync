@@ -52,14 +52,13 @@ namespace osu.EzRealmSync.Desktop.Pages
             BackupCombo.ItemsSource = vm.Presenter.BackupEntries;
             BackupCombo.SetBinding(
                 System.Windows.Controls.Primitives.Selector.SelectedValueProperty,
-                new System.Windows.Data.Binding(nameof(ShellViewModel.SelectedBackupId))
+                new Binding(nameof(ShellViewModel.SelectedBackupId))
                 {
                     Source = vm,
-                    Mode = System.Windows.Data.BindingMode.TwoWay,
+                    Mode = BindingMode.TwoWay,
                 });
 
-            vm.Presenter.BackupEntriesChanged += () =>
-                Dispatcher.Invoke(() => BackupCombo.ItemsSource = vm!.Presenter.BackupEntries);
+            vm.Presenter.BackupEntriesChanged += () => Dispatcher.Invoke(() => BackupCombo.ItemsSource = vm!.Presenter.BackupEntries);
         }
 
         private void configureRealmGrid()
@@ -208,8 +207,7 @@ namespace osu.EzRealmSync.Desktop.Pages
             }
         }
 
-        private void reportDropError(Exception ex) =>
-            vm?.Presenter.MarshalToUi?.Invoke(() => vm.Presenter.StatusMessage.Value = ex.Message);
+        private void reportDropError(Exception ex) => vm?.Presenter.MarshalToUi?.Invoke(() => vm.Presenter.StatusMessage.Value = ex.Message);
 
         protected override void OnInitialized(EventArgs e)
         {

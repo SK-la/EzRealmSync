@@ -7,12 +7,14 @@ namespace osu.EzRealmSync.AppModel
     {
         public bool UiTestMode { get; init; }
 
+        /// <summary>命令行是否显式指定了 <c>--ui-test</c> / <c>--no-ui-test</c>（未指定时启动读 settings.json）。</summary>
+        public bool HasUiTestModeArgument { get; init; }
+
         public MockEzRealmSyncOptions MockOptions { get; init; } = new();
 
         public static EzRealmSyncLaunchOptions Parse(string[] args)
         {
-            // 默认连接真实 Realm；仅 UI 布局调试时加 --ui-test。
-            bool uiTest = false;
+            bool? uiTest = null;
             var mock = new MockEzRealmSyncOptions();
 
             foreach (string arg in args)
@@ -27,7 +29,8 @@ namespace osu.EzRealmSync.AppModel
 
             return new EzRealmSyncLaunchOptions
             {
-                UiTestMode = uiTest,
+                UiTestMode = uiTest ?? false,
+                HasUiTestModeArgument = uiTest.HasValue,
                 MockOptions = mock,
             };
         }

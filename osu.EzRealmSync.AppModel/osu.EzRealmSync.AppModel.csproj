@@ -7,15 +7,17 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\osu.Game.EzRealmSync\osu.Game.EzRealmSync.csproj" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <PackageReference Include="ppy.osu.Framework" Version="2025.1008.0" />
+    <ProjectReference Include="..\osu.Game.EzRealmSync\osu.Game.EzRealmSync.csproj">
+      <AdditionalProperties>UseLocalOsuLibs=$(UseLocalOsuLibs)</AdditionalProperties>
+    </ProjectReference>
   </ItemGroup>
 
   <ItemGroup>
     <EmbeddedResource Update="Localization\Strings.resx" />
     <EmbeddedResource Update="Localization\Strings.zh-Hans.resx" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="ez2lazer.Framework" Version="2026.528.1-ez2lazer" />
   </ItemGroup>
 </Project>

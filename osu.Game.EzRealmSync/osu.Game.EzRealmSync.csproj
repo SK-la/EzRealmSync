@@ -3,11 +3,12 @@
     <TargetFramework>net8.0</TargetFramework>
     <RootNamespace>osu.Game.EzRealmSync</RootNamespace>
     <Description>Ez Realm 同步契约与引擎；可选 lib/osu.Game.dll 提供 RealmAccess / Ez 表（见 lib/README.md）。</Description>
+    <CopyLocalLockFileAssemblies Condition="'$(UseLocalOsuLibs)' == 'true'">false</CopyLocalLockFileAssemblies>
+    <UseLocalOsuLibs Condition="'$(UseLocalOsuLibs)' != 'true' and '$(UseLocalOsuLibs)' != 'false' and Exists('$(EzRealmSyncLibDir)\osu.Game.dll')">true</UseLocalOsuLibs>
   </PropertyGroup>
 
   <!-- lib/osu.Game.dll 的编译期类型依赖（Realm、NativeStorage 等）；不向引用方传递以免与 AppModel 的 Framework 冲突 -->
   <ItemGroup Condition="'$(UseLocalOsuLibs)' == 'true'">
-    <PackageReference Include="Realm" Version="20.1.0" PrivateAssets="all" />
-    <PackageReference Include="ppy.osu.Framework" Version="2025.1008.0" PrivateAssets="all" />
+    <PackageReference Include="Realm" Version="20.1.0" />
   </ItemGroup>
 </Project>

@@ -9,6 +9,7 @@
     <UseWPF>true</UseWPF>
     <StartupObject>osu.EzRealmSync.Desktop.Program</StartupObject>
     <ApplicationManifest>..\app.manifest</ApplicationManifest>
+    <UseLocalOsuLibs Condition="'$(UseLocalOsuLibs)' != 'true' and '$(UseLocalOsuLibs)' != 'false' and Exists('$(EzRealmSyncLibDir)\osu.Game.dll')">true</UseLocalOsuLibs>
   </PropertyGroup>
 
   <ItemGroup>
@@ -17,6 +18,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <PackageReference Include="ez2lazer.Framework" Version="2026.528.1-ez2lazer" />
     <PackageReference Include="WPF-UI" Version="4.3.0" />
     <PackageReference Include="WPF-UI.Abstractions" Version="4.3.0" />
     <PackageReference Include="WPF-UI.DependencyInjection" Version="4.3.0" />

@@ -237,7 +237,6 @@ namespace osu.EzRealmSync.Desktop
 
             vm.Presenter.UiTestMode.Value = enabled;
             refreshSettingsFlyout();
-            WpfUiSnackbar.Show(vm.WindowTitle, Loc.Get("UiTestModeRestartHint"), ControlAppearance.Info);
         }
 
         private void ConfirmDeleteSwitch_OnClick(object sender, RoutedEventArgs e)

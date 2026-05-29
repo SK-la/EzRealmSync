@@ -33,8 +33,8 @@ namespace osu.Game.EzRealmSync
             }
 
 #if HAS_EZ_OSU_GAME
-            var realm = new RealmRealmDataService();
-            return new RealmServiceSession(realm, realm, realm, realm);
+            var data = new RealmRealmDataService();
+            return new RealmServiceSession(data, data, data, new RealmEzRealmSyncService());
 #else
             return new RealmServiceSession(
                 new StubRealmDataService(),
@@ -44,14 +44,11 @@ namespace osu.Game.EzRealmSync
 #endif
         }
 
-        public static IRealmDataService CreateDataService(bool uiTestMode, MockEzRealmSyncOptions? mockOptions = null) =>
-            CreateSession(uiTestMode, mockOptions).Data;
+        public static IRealmDataService CreateDataService(bool uiTestMode, MockEzRealmSyncOptions? mockOptions = null) => CreateSession(uiTestMode, mockOptions).Data;
 
-        public static IRealmFixService CreateFixService(bool uiTestMode, MockEzRealmSyncOptions? mockOptions = null) =>
-            CreateSession(uiTestMode, mockOptions).Fix;
+        public static IRealmFixService CreateFixService(bool uiTestMode, MockEzRealmSyncOptions? mockOptions = null) => CreateSession(uiTestMode, mockOptions).Fix;
 
-        public static IRealmExportService CreateExportService(bool uiTestMode, MockEzRealmSyncOptions? mockOptions = null) =>
-            CreateSession(uiTestMode, mockOptions).Export;
+        public static IRealmExportService CreateExportService(bool uiTestMode, MockEzRealmSyncOptions? mockOptions = null) => CreateSession(uiTestMode, mockOptions).Export;
     }
 
     public sealed class RealmServiceSession

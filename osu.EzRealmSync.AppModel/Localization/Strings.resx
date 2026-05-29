@@ -44,7 +44,8 @@
   <data name="AddToTarget" xml:space="preserve"><value>Add to {0}</value></data>
   <data name="SelectionCount" xml:space="preserve"><value>{0} selected</value></data>
   <data name="StatusReady" xml:space="preserve"><value>Ready — real Realm backend (lib/osu.Game.dll)</value></data>
-  <data name="StatusMissingLib" xml:space="preserve"><value>lib/osu.Game.dll not found. Build Ez2Lazer osu.Game and copy DLLs per lib/README.md, then rebuild. Disable UI test mode.</value></data>
+  <data name="StatusMissingLib" xml:space="preserve"><value>lib/osu.Game.dll not found next to EzRealmSync.exe (put DLLs in the exe's lib/ folder; see lib/README.md). Disable UI test mode.</value></data>
+  <data name="StatusLibNeedsRebuild" xml:space="preserve"><value>osu.Game.dll is present but this build has no real data layer. Close the app, run: dotnet build EzRealmSync.sln, then start again (copying DLLs alone is not enough).</value></data>
   <data name="StatusUiTest" xml:space="preserve"><value>UI test mode — not connected to a real database</value></data>
   <data name="StatusScanning" xml:space="preserve"><value>Scanning…</value></data>
   <data name="StatusScanComplete" xml:space="preserve"><value>Scan complete — {0} only in {1}: {2}, only in {3}: {4}, conflicted: {5}</value></data>
@@ -73,8 +74,10 @@
   <data name="SettingsTitle" xml:space="preserve"><value>Settings</value></data>
   <data name="SettingsGeneral" xml:space="preserve"><value>General</value></data>
   <data name="UiTestMode" xml:space="preserve"><value>UI test mode</value></data>
-  <data name="UiTestModeHint" xml:space="preserve"><value>Uses mock data when enabled. Restart the app to apply.</value></data>
+  <data name="UiTestModeHint" xml:space="preserve"><value>Mock data when on; real Realm when off (no restart).</value></data>
   <data name="UiTestModeRestartHint" xml:space="preserve"><value>UI test mode changed. Restart the app to apply.</value></data>
+  <data name="StatusBackendSwitchedReal" xml:space="preserve"><value>Switched to real Realm backend — reload data</value></data>
+  <data name="StatusBusyCannotSwitchBackend" xml:space="preserve"><value>Cannot switch backend while an operation is running</value></data>
   <data name="Close" xml:space="preserve"><value>Close</value></data>
   <data name="MockOptions" xml:space="preserve"><value>Mock options (UI test only)</value></data>
   <data name="MockDataset" xml:space="preserve"><value>Dataset</value></data>
@@ -105,7 +108,9 @@
   <data name="ApplySearchDirectory" xml:space="preserve"><value>Apply path</value></data>
   <data name="ApplyRealmPath" xml:space="preserve"><value>Apply</value></data>
   <data name="StatusInvalidRealmPath" xml:space="preserve"><value>Path must be a .realm file or an existing folder.</value></data>
-  <data name="StatusNoRealmInPath" xml:space="preserve"><value>No .realm files found. Choose the storage root (*.realm at root or under data/, plus files/).</value></data>
+  <data name="StatusNoRealmInPath" xml:space="preserve"><value>No .realm under {0}. Use the osu! storage root (*.realm at root or in data/).</value></data>
+  <data name="StatusSetSearchDirectory" xml:space="preserve"><value>Set and apply the osu! data directory first</value></data>
+  <data name="StatusNoRealmRegistered" xml:space="preserve"><value>Found .realm in {0} but could not register — check lib/osu.Game.dll or disable UI test mode</value></data>
   <data name="StatusFilesFolderRequired" xml:space="preserve"><value>Missing files/ under the import folder. Select the osu! storage root shared by all Realm files.</value></data>
   <data name="StatusStorageReady" xml:space="preserve"><value>Found {0} Realm file(s); shared files: {1}</value></data>
   <data name="FixRequiresFilesHint" xml:space="preserve"><value>Fix and Export use the shared files/ folder from the osu! storage path on the Import tab.</value></data>

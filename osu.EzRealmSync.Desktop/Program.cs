@@ -2,6 +2,7 @@ using osu.EzRealmSync.AppModel;
 using osu.EzRealmSync.AppModel.Localization;
 using osu.EzRealmSync.Desktop.ViewModels;
 using osu.Game.EzRealmSync;
+using osu.Game.EzRealmSync.Runtime;
 
 namespace osu.EzRealmSync.Desktop
 {
@@ -10,11 +11,13 @@ namespace osu.EzRealmSync.Desktop
         [STAThread]
         public static void Main(string[] args)
         {
+            EzRealmSyncRuntimeLibLoader.Install();
+
             var options = EzRealmSyncLaunchOptions.Parse(args);
             Loc.SetLanguage(AppLanguage.ZhHans);
 
-            var session = EzRealmSyncServiceFactory.CreateSession(options.UiTestMode, options.MockOptions);
-            var presenter = new RealmAppPresenter(session.Sync, session.Data, session.Fix, session.Export, options);
+            var serviceHost = new RealmServiceHost(options.UiTestMode, options.MockOptions);
+            var presenter = new RealmAppPresenter(serviceHost, options);
 
             var app = new App();
             app.InitializeComponent();

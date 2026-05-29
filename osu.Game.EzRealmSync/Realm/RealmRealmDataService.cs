@@ -17,7 +17,7 @@ namespace osu.Game.EzRealmSync.Realm
             Task.Run(() =>
             {
                 cancellationToken.ThrowIfCancellationRequested();
-                return registry.MergeDiscovered(searchDirectory);
+                return registry.MergeDiscovered(searchDirectory, RealmSchemaProbe.TryReadSchemaVersion);
             }, cancellationToken);
 
         public Task<RealmFileEntry> RegisterRealmFileAsync(string realmFilePath, CancellationToken cancellationToken = default)

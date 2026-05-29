@@ -52,7 +52,7 @@ namespace osu.Game.EzRealmSync.Realm
             var storage = new NativeStorage(storageRoot);
 
             return ez
-                ? new RealmAccess(storage, filename)
+                ? new RealmAccess(storage, filename, useDevelopmentVersionedFilenames: false)
                 : new OfficialRealmAccess(storage, filename);
         }
 

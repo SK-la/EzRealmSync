@@ -36,6 +36,9 @@ namespace osu.EzRealmSync.AppModel
 
         /// <summary>删除表格行前是否弹出确认对话框。</summary>
         public bool ConfirmBeforeDelete { get; set; } = true;
+
+        /// <summary>UI 测试模式（Mock 数据）；可在设置中切换，无需重启。</summary>
+        public bool UiTestMode { get; set; }
     }
 
     public static class AppSettingsStore

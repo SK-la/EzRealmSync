@@ -44,7 +44,8 @@
   <data name="AddToTarget" xml:space="preserve"><value>添加到 {0} 端</value></data>
   <data name="SelectionCount" xml:space="preserve"><value>已选 {0} 项</value></data>
   <data name="StatusReady" xml:space="preserve"><value>就绪 — 已连接真实 Realm（lib/osu.Game.dll）</value></data>
-  <data name="StatusMissingLib" xml:space="preserve"><value>未检测到 lib/osu.Game.dll：请按 lib/README.md 从 Ez2Lazer osu 构建并复制 DLL 后重新编译运行；勿使用 UI 测试模式</value></data>
+  <data name="StatusMissingLib" xml:space="preserve"><value>未在 EzRealmSync.exe 旁找到 lib/osu.Game.dll：请将 DLL 放入 exe 同目录下的 lib/ 文件夹（见 lib/README.md）；勿使用 UI 测试模式</value></data>
+  <data name="StatusLibNeedsRebuild" xml:space="preserve"><value>已找到 osu.Game.dll，但当前程序未编入真实数据层。请关闭本程序后执行：dotnet build EzRealmSync.sln，再重新运行（仅复制 DLL 不够）</value></data>
   <data name="StatusUiTest" xml:space="preserve"><value>UI 测试模式 — 未连接真实数据库</value></data>
   <data name="StatusScanning" xml:space="preserve"><value>正在扫描…</value></data>
   <data name="StatusScanComplete" xml:space="preserve"><value>扫描完成 — {1}端有{3}端无 {2}，{3}端有{1}端无 {4}，不一致 {5}</value></data>
@@ -73,8 +74,10 @@
   <data name="SettingsTitle" xml:space="preserve"><value>设置</value></data>
   <data name="SettingsGeneral" xml:space="preserve"><value>常规</value></data>
   <data name="UiTestMode" xml:space="preserve"><value>UI 测试模式</value></data>
-  <data name="UiTestModeHint" xml:space="preserve"><value>开启后使用 Mock 数据。修改后需重启应用生效。</value></data>
+  <data name="UiTestModeHint" xml:space="preserve"><value>开启后使用 Mock 假数据；关闭则立即切换为真实 Realm（无需重启）。</value></data>
   <data name="UiTestModeRestartHint" xml:space="preserve"><value>UI 测试模式已更改，请重启应用后生效。</value></data>
+  <data name="StatusBackendSwitchedReal" xml:space="preserve"><value>已切换为真实 Realm 后端，请重新加载数据</value></data>
+  <data name="StatusBusyCannotSwitchBackend" xml:space="preserve"><value>操作进行中，无法切换数据后端</value></data>
   <data name="Close" xml:space="preserve"><value>关闭</value></data>
   <data name="MockOptions" xml:space="preserve"><value>模拟选项（仅 UI 测试模式）</value></data>
   <data name="MockDataset" xml:space="preserve"><value>数据集</value></data>
@@ -105,7 +108,9 @@
   <data name="ApplySearchDirectory" xml:space="preserve"><value>应用路径</value></data>
   <data name="ApplyRealmPath" xml:space="preserve"><value>应用</value></data>
   <data name="StatusInvalidRealmPath" xml:space="preserve"><value>路径必须是 .realm 文件或已存在的文件夹。</value></data>
-  <data name="StatusNoRealmInPath" xml:space="preserve"><value>该目录下未找到 .realm。请选择数据根目录（根目录或 data/ 子目录中的 *.realm，并含 files/）。</value></data>
+  <data name="StatusNoRealmInPath" xml:space="preserve"><value>目录 {0} 下未找到 .realm（请选 osu! 数据根目录，含根目录或 data/ 下的 *.realm）。</value></data>
+  <data name="StatusSetSearchDirectory" xml:space="preserve"><value>请先填写并应用 osu! 数据目录</value></data>
+  <data name="StatusNoRealmRegistered" xml:space="preserve"><value>在 {0} 发现 .realm 但未能注册到列表，请查看 lib/osu.Game.dll 或关闭 UI 测试后重试</value></data>
   <data name="StatusFilesFolderRequired" xml:space="preserve"><value>该目录下缺少 files/。请选择含 *.realm 与 files/ 的数据根目录（所有 Realm 共用 files/）。</value></data>
   <data name="StatusStorageReady" xml:space="preserve"><value>已发现 {0} 个 Realm；共享文件库：{1}</value></data>
   <data name="FixRequiresFilesHint" xml:space="preserve"><value>修复与导出使用导入页数据目录下的共享 files/ 文件夹。</value></data>

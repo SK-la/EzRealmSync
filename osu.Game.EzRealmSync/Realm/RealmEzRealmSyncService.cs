@@ -1,9 +1,7 @@
 #if HAS_EZ_OSU_GAME
-using osu.Game.Database;
 using osu.Game.EzRealmSync.Abstractions;
 using osu.Game.EzRealmSync.IO;
 using osu.Game.EzRealmSync.Models;
-using osu.Game.EzRealmSync;
 
 namespace osu.Game.EzRealmSync.Realm
 {

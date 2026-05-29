@@ -5,7 +5,7 @@ using osu.Game.EzRealmSync.Models;
 using osu.Game.Models;
 using osu.Game.Rulesets;
 using osu.Game.Scoring;
-using Realms;
+using RealmInstance = Realms.Realm;
 
 namespace osu.Game.EzRealmSync.Realm
 {
@@ -26,7 +26,7 @@ namespace osu.Game.EzRealmSync.Realm
                 throw new InvalidOperationException(validationError);
 
             bool stripEzFieldsForOfficial = request.WritePlan?.StripEzFieldsForTarget
-                ?? request.Direction == SyncDirection.EzToOfficial;
+                                            ?? request.Direction == SyncDirection.EzToOfficial;
             int applied = 0;
             int total = request.ItemIds.Count;
 
@@ -119,7 +119,7 @@ namespace osu.Game.EzRealmSync.Realm
             return deleted;
         }
 
-        private static bool tryDetachBeatmapSet(Realm source, Guid id, out BeatmapSetInfo detached)
+        private static bool tryDetachBeatmapSet(RealmInstance source, Guid id, out BeatmapSetInfo detached)
         {
             detached = null!;
             if (source.Find<BeatmapSetInfo>(id) is not BeatmapSetInfo set || set.DeletePending)
@@ -129,7 +129,7 @@ namespace osu.Game.EzRealmSync.Realm
             return true;
         }
 
-        private static bool tryDetachBeatmap(Realm source, Guid id, out BeatmapInfo detached)
+        private static bool tryDetachBeatmap(RealmInstance source, Guid id, out BeatmapInfo detached)
         {
             detached = null!;
             if (source.Find<BeatmapInfo>(id) is not BeatmapInfo beatmap)
@@ -142,7 +142,7 @@ namespace osu.Game.EzRealmSync.Realm
             return true;
         }
 
-        private static bool tryDetachScore(Realm source, Guid id, out ScoreInfo detached)
+        private static bool tryDetachScore(RealmInstance source, Guid id, out ScoreInfo detached)
         {
             detached = null!;
             if (source.Find<ScoreInfo>(id) is not ScoreInfo score || score.DeletePending)
@@ -173,7 +173,7 @@ namespace osu.Game.EzRealmSync.Realm
                 OfficialRealmMapper.StripEzOnlyRulesetFields(score.Ruleset);
         }
 
-        private static void insertBeatmapSet(BeatmapSetInfo detached, Realm target)
+        private static void insertBeatmapSet(BeatmapSetInfo detached, RealmInstance target)
         {
             if (target.Find<BeatmapSetInfo>(detached.ID) != null)
                 return;
@@ -189,7 +189,7 @@ namespace osu.Game.EzRealmSync.Realm
             target.Add(detached);
         }
 
-        private static void insertBeatmap(BeatmapInfo detached, Realm target)
+        private static void insertBeatmap(BeatmapInfo detached, RealmInstance target)
         {
             if (target.Find<BeatmapInfo>(detached.ID) != null)
                 return;
@@ -199,14 +199,14 @@ namespace osu.Game.EzRealmSync.Realm
                 throw new InvalidOperationException("难度缺少所属谱面集，请先同步谱面集。");
 
             var managedSet = target.Find<BeatmapSetInfo>(setId)
-                ?? throw new InvalidOperationException("目标库中不存在对应谱面集，请先同步谱面集。");
+                             ?? throw new InvalidOperationException("目标库中不存在对应谱面集，请先同步谱面集。");
 
             detached.BeatmapSet = managedSet;
             detached.Ruleset = resolveRuleset(target, detached.Ruleset);
             target.Add(detached);
         }
 
-        private static void insertScore(ScoreInfo detached, Realm target)
+        private static void insertScore(ScoreInfo detached, RealmInstance target)
         {
             if (target.Find<ScoreInfo>(detached.ID) != null)
                 return;
@@ -222,7 +222,7 @@ namespace osu.Game.EzRealmSync.Realm
             target.Add(detached);
         }
 
-        private static void linkFiles(Realm target, IList<RealmNamedFileUsage> files)
+        private static void linkFiles(RealmInstance target, IList<RealmNamedFileUsage> files)
         {
             for (int i = 0; i < files.Count; i++)
             {
@@ -233,7 +233,7 @@ namespace osu.Game.EzRealmSync.Realm
             }
         }
 
-        private static RulesetInfo resolveRuleset(Realm target, RulesetInfo source)
+        private static RulesetInfo resolveRuleset(RealmInstance target, RulesetInfo source)
         {
             var existing = target.All<RulesetInfo>().FirstOrDefault(r => r.ShortName == source.ShortName);
             if (existing != null)

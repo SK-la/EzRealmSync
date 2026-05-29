@@ -3,7 +3,7 @@ using osu.Game.Beatmaps;
 using osu.Game.Database;
 using osu.Game.EzRealmSync.Models;
 using osu.Game.Scoring;
-using Realms;
+using RealmInstance = Realms.Realm;
 
 namespace osu.Game.EzRealmSync.Realm
 {
@@ -17,7 +17,7 @@ namespace osu.Game.EzRealmSync.Realm
 
             access.Run(realm =>
             {
-                foreach (var beatmap in realm.All<BeatmapInfo>().Where(b => !b.DeletePending && b.BeatmapSet?.DeletePending != true))
+                foreach (var beatmap in realm.All<BeatmapInfo>().Where(b => b.BeatmapSet == null || !b.BeatmapSet.DeletePending))
                     scanMetadata(beatmap.Metadata, beatmap.ID, EntityKind.Beatmap, issues, options.IllegalCharacters, replacement);
 
                 foreach (var score in realm.All<ScoreInfo>().Where(s => !s.DeletePending))
@@ -53,7 +53,7 @@ namespace osu.Game.EzRealmSync.Realm
                         if (set == null)
                             continue;
 
-                        foreach (var beatmap in set.Beatmaps.Where(b => !b.DeletePending))
+                        foreach (var beatmap in set.Beatmaps)
                         {
                             if (applyToMetadata(realm, beatmap.Metadata, issue.FieldName, issue.SuggestedValue))
                                 applied++;
@@ -135,7 +135,7 @@ namespace osu.Game.EzRealmSync.Realm
             }
         }
 
-        private static bool applyToMetadata(Realm realm, BeatmapMetadata metadata, string fieldName, string suggestedValue)
+        private static bool applyToMetadata(RealmInstance realm, BeatmapMetadata metadata, string fieldName, string suggestedValue)
         {
             bool changed = false;
 
@@ -202,7 +202,7 @@ namespace osu.Game.EzRealmSync.Realm
             return changed;
         }
 
-        private static bool applyToScore(Realm realm, ScoreInfo score, string fieldName, string suggestedValue)
+        private static bool applyToScore(RealmInstance realm, ScoreInfo score, string fieldName, string suggestedValue)
         {
             if (fieldName != nameof(ScoreInfo.BeatmapHash))
                 return false;

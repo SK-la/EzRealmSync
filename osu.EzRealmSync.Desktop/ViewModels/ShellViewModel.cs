@@ -3,9 +3,9 @@ using System.ComponentModel;
 using System.Runtime.CompilerServices;
 using osu.EzRealmSync.AppModel;
 using osu.EzRealmSync.AppModel.Localization;
-using osu.Game.EzRealmSync;
 using osu.EzRealmSync.Desktop.Commands;
 using osu.EzRealmSync.Desktop.Services;
+using osu.Game.EzRealmSync;
 using osu.Game.EzRealmSync.Models;
 
 namespace osu.EzRealmSync.Desktop.ViewModels
@@ -133,9 +133,13 @@ namespace osu.EzRealmSync.Desktop.ViewModels
                 if (LaunchOptions.UiTestMode)
                     return Loc.Get("AppTitleUiTest");
 
-                return Presenter.BackendKind == EzRealmSyncBackendKind.Real
-                    ? Loc.Get("AppTitle")
-                    : Loc.Get("AppTitle") + " [缺少 lib]";
+                if (Presenter.BackendKind == EzRealmSyncBackendKind.Real)
+                    return Loc.Get("AppTitle");
+
+                if (EzRealmSyncBackend.IsOsuGameDllOnDisk && !EzRealmSyncBackend.IsRealBackendCompiled)
+                    return Loc.Get("AppTitle") + " [需重新编译]";
+
+                return Loc.Get("AppTitle") + " [缺少 lib]";
             }
         }
 

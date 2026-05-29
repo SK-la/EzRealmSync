@@ -1,5 +1,4 @@
 #if HAS_EZ_OSU_GAME
-using osu.Game.EzRealmSync.Abstractions;
 using osu.Game.EzRealmSync.Models;
 
 namespace osu.Game.EzRealmSync.Realm
@@ -14,8 +13,7 @@ namespace osu.Game.EzRealmSync.Realm
             string workspacePath,
             RealmFixScanOptions options,
             IProgress<ScanProgress>? progress = null,
-            CancellationToken cancellationToken = default) =>
-            Task.Run(() => scanIssuesCore(realmId, workspacePath, options, progress, cancellationToken), cancellationToken);
+            CancellationToken cancellationToken = default) => Task.Run(() => scanIssuesCore(realmId, workspacePath, options, progress, cancellationToken), cancellationToken);
 
         private IReadOnlyList<RealmFixIssue> scanIssuesCore(
             string realmId,
@@ -64,8 +62,7 @@ namespace osu.Game.EzRealmSync.Realm
             IReadOnlyList<Guid> issueIds,
             RealmFixApplyOptions options,
             IProgress<ScanProgress>? progress = null,
-            CancellationToken cancellationToken = default) =>
-            Task.Run(() => applyFixesCore(realmId, issueIds, progress, cancellationToken), cancellationToken);
+            CancellationToken cancellationToken = default) => Task.Run(() => applyFixesCore(realmId, issueIds, progress, cancellationToken), cancellationToken);
 
         private RealmFixApplyResult applyFixesCore(
             string realmId,
@@ -92,6 +89,7 @@ namespace osu.Game.EzRealmSync.Realm
             using var access = RealmSchemaProbe.Open(file.FilePath, file.SchemaVersion);
 
             var illegalIssues = selected.Where(i => i.Kind == RealmFixIssueKind.IllegalCharacter).ToList();
+
             if (illegalIssues.Count > 0)
             {
                 applied += RealmIllegalCharacterFixer.Apply(access, illegalIssues, cancellationToken);
@@ -111,7 +109,7 @@ namespace osu.Game.EzRealmSync.Realm
                             Directory.CreateDirectory(dir);
 
                         if (!File.Exists(issue.ExpectedFilePath))
-                            File.WriteAllText(issue.ExpectedFilePath, Array.Empty<byte>());
+                            File.WriteAllText(issue.ExpectedFilePath, string.Empty);
 
                         applied++;
                         break;
@@ -145,8 +143,7 @@ namespace osu.Game.EzRealmSync.Realm
             string realmId,
             ExportDataKind kind,
             IProgress<ScanProgress>? progress = null,
-            CancellationToken cancellationToken = default) =>
-            Task.Run(() => loadCatalogCore(realmId, kind, progress, cancellationToken), cancellationToken);
+            CancellationToken cancellationToken = default) => Task.Run(() => loadCatalogCore(realmId, kind, progress, cancellationToken), cancellationToken);
 
         private RealmExportCatalog loadCatalogCore(
             string realmId,
@@ -190,8 +187,7 @@ namespace osu.Game.EzRealmSync.Realm
                 if (!setRow.Cells.TryGetValue("Hash", out string? setHash) || string.IsNullOrWhiteSpace(setHash))
                     continue;
 
-                var firstBeatmap = beatmapRows.FirstOrDefault(b =>
-                    b.Cells.TryGetValue("BeatmapSet", out string? bs) && string.Equals(bs, setHash, StringComparison.OrdinalIgnoreCase));
+                var firstBeatmap = beatmapRows.FirstOrDefault(b => b.Cells.TryGetValue("BeatmapSet", out string? bs) && string.Equals(bs, setHash, StringComparison.OrdinalIgnoreCase));
 
                 string relative = firstBeatmap != null
                     ? buildBeatmapRelativePath(firstBeatmap, setHash)
@@ -254,8 +250,7 @@ namespace osu.Game.EzRealmSync.Realm
         public Task<RealmExportResult> ExportAsync(
             RealmExportRequest request,
             IProgress<ScanProgress>? progress = null,
-            CancellationToken cancellationToken = default) =>
-            Task.Run(() => exportCore(request, progress, cancellationToken), cancellationToken);
+            CancellationToken cancellationToken = default) => Task.Run(() => exportCore(request, progress, cancellationToken), cancellationToken);
 
         private RealmExportResult exportCore(
             RealmExportRequest request,
@@ -301,6 +296,7 @@ namespace osu.Game.EzRealmSync.Realm
                     Directory.CreateDirectory(destDir);
 
                 string sourcePath = Path.Combine(request.FilesDirectory, item.RelativePath);
+
                 if (File.Exists(sourcePath))
                 {
                     File.Copy(sourcePath, destPath, overwrite: true);

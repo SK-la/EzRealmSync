@@ -9,10 +9,10 @@ namespace osu.Game.EzRealmSync.Models
     {
         private readonly Dictionary<string, RealmFileEntry> files = new();
 
-        public IReadOnlyList<RealmFileEntry> MergeDiscovered(string? searchDirectory)
+        public IReadOnlyList<RealmFileEntry> MergeDiscovered(string? searchDirectory, Func<string, int?>? readSchemaVersion = null)
         {
             foreach (string path in RealmWorkspacePaths.FindRealmFiles(searchDirectory))
-                registerPath(path, schemaVersion: null);
+                registerPath(path, readSchemaVersion?.Invoke(path));
 
             return List();
         }

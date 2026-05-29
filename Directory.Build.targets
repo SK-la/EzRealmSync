@@ -1,28 +1,114 @@
 ﻿<Project>
+  <Target Name="WarnIfLibPresentButNotLinked"
+          BeforeTargets="CoreCompile"
+          Condition="'$(MSBuildProjectName)' == 'osu.Game.EzRealmSync' and Exists('$(EzRealmSyncLibDir)\osu.Game.dll') and '$(UseLocalOsuLibs)' != 'true'">
+    <Warning Text="lib/osu.Game.dll 存在但 UseLocalOsuLibs!=true，真实 Realm 代码未编入。请检查 EzRealmSync.LocalLibs.props。" />
+  </Target>
+
+  <!-- 构建 WinExe 时把 lib/*.dll 与引擎程序集复制到输出目录 -->
+  <ItemGroup Condition="'$(UseLocalOsuLibs)' == 'true'">
+    <EzRealmSyncEngineOutput Include="$(MSBuildThisFileDirectory)osu.Game.EzRealmSync\bin\$(Configuration)\net8.0\osu.Game.EzRealmSync.dll" />
+  </ItemGroup>
+
   <Target Name="CopyEzRealmSyncLibsToOutput"
           AfterTargets="Build"
-          Condition="'$(OutputType)' == 'WinExe' AND '@(EzRealmSyncRuntimeLib)' != ''">
-    <Copy SourceFiles="@(EzRealmSyncRuntimeLib)"
+          Condition="'$(OutputType)' == 'WinExe' AND ('@(EzRealmSyncRuntimeLib)' != '' OR '@(EzRealmSyncEngineOutput)' != '')">
+    <MakeDir Directories="$(OutputPath)lib" />
+    <ItemGroup>
+      <_EzCopyToLib Include="@(EzRealmSyncRuntimeLib)" />
+      <_EzCopyToExe Include="@(EzRealmSyncEngineOutput)" />
+    </ItemGroup>
+    <Message Importance="high" Text="CopyEzRealmSyncLibs -> $(OutputPath)lib: @(_EzCopyToLib->'%(Filename)%(Extension)', ', ')" />
+    <Copy SourceFiles="@(_EzCopyToLib)"
+          DestinationFolder="$(OutputPath)lib"
+          SkipUnchangedFiles="false" />
+    <Copy SourceFiles="@(EzRealmSyncRuntimeNative)"
+          DestinationFiles="@(EzRealmSyncRuntimeNative->'$(OutputPath)lib\runtimes\%(RecursiveDir)%(Filename)%(Extension)')"
+          SkipUnchangedFiles="false"
+          Condition="'@(EzRealmSyncRuntimeNative)' != ''" />
+    <Copy SourceFiles="@(_EzCopyToExe)"
           DestinationFolder="$(OutputPath)"
-          SkipUnchangedFiles="true" />
+          SkipUnchangedFiles="false"
+          Condition="'@(_EzCopyToExe)' != ''" />
+  </Target>
+
+  <!-- 无构建 lib 时也创建运行时 lib 目录，便于用户手动放置 DLL -->
+  <Target Name="EnsureRuntimeLibFolder"
+          AfterTargets="Build"
+          Condition="'$(OutputType)' == 'WinExe'">
+    <MakeDir Directories="$(OutputPath)lib" />
+    <Copy SourceFiles="$(MSBuildThisFileDirectory)lib\README.md"
+          DestinationFiles="$(OutputPath)lib\README.md"
+          SkipUnchangedFiles="true"
+          Condition="Exists('$(MSBuildThisFileDirectory)lib\README.md')" />
+  </Target>
+
+  <!-- WPF MarkupCompile 需要能解析 osu.Game.EzRealmSync 的传递依赖（如 Realm.dll） -->
+  <Target Name="StageEzRealmDepsForWpfMarkup"
+          BeforeTargets="MarkupCompilePass1"
+          DependsOnTargets="ResolveProjectReferences"
+          Condition="'$(OutputType)' == 'WinExe' AND '$(UseLocalOsuLibs)' == 'true'">
+    <ItemGroup>
+      <_WpfStageDll Include="$(MSBuildThisFileDirectory)osu.Game.EzRealmSync\bin\$(Configuration)\net8.0\osu.Game.EzRealmSync.dll" />
+      <_WpfStageDll Include="$(EzRealmSyncLibDir)\Realm.dll" Condition="Exists('$(EzRealmSyncLibDir)\Realm.dll')" />
+      <_WpfStageDll Include="$(EzRealmSyncLibDir)\osu.Game.dll" Condition="Exists('$(EzRealmSyncLibDir)\osu.Game.dll')" />
+      <_WpfStageDll Include="$(EzRealmSyncLibDir)\osu.Framework.dll" Condition="Exists('$(EzRealmSyncLibDir)\osu.Framework.dll')" />
+    </ItemGroup>
+    <MakeDir Directories="$(OutputPath)" Condition="!Exists('$(OutputPath)')" />
+    <Copy SourceFiles="@(_WpfStageDll)" DestinationFolder="$(OutputPath)" SkipUnchangedFiles="true" />
+  </Target>
+
+  <Target Name="CopyEzRealmSyncLibsToPublish"
+          AfterTargets="Publish"
+          Condition="'$(OutputType)' == 'WinExe'">
+    <MakeDir Directories="$(PublishDir)lib" />
+    <Copy SourceFiles="@(EzRealmSyncRuntimeLib)"
+          DestinationFolder="$(PublishDir)lib"
+          SkipUnchangedFiles="false"
+          Condition="'@(EzRealmSyncRuntimeLib)' != ''" />
+    <Copy SourceFiles="@(EzRealmSyncRuntimeNative)"
+          DestinationFiles="@(EzRealmSyncRuntimeNative->'$(PublishDir)lib\runtimes\%(RecursiveDir)%(Filename)%(Extension)')"
+          SkipUnchangedFiles="false"
+          Condition="'@(EzRealmSyncRuntimeNative)' != ''" />
+    <Copy SourceFiles="$(MSBuildThisFileDirectory)lib\README.md"
+          DestinationFiles="$(PublishDir)lib\README.md"
+          SkipUnchangedFiles="true"
+          Condition="Exists('$(MSBuildThisFileDirectory)lib\README.md')" />
   </Target>
 
   <!-- dotnet build -t:SyncEzRealmLibs EzRealmSync.sln -->
   <PropertyGroup>
-    <EzOsuGameOutputDir>$(MSBuildThisFileDirectory)..\osu\osu.Game\bin\$(Configuration)\net8.0</EzOsuGameOutputDir>
+    <EzOsuGameProject>$(MSBuildThisFileDirectory)..\osu\osu.Game\osu.Game.csproj</EzOsuGameProject>
+    <EzOsuGamePublishStagingDir>$(MSBuildThisFileDirectory)obj\SyncEzRealmLibs\$(Configuration)\net8.0</EzOsuGamePublishStagingDir>
   </PropertyGroup>
 
-  <Target Name="SyncEzRealmLibs">
-    <Message Importance="high" Text="SyncEzRealmLibs: $(EzOsuGameOutputDir) -> $(EzRealmSyncLibDir)" Condition="Exists('$(EzOsuGameOutputDir)\osu.Game.dll')" />
-    <ItemGroup Condition="Exists('$(EzOsuGameOutputDir)\osu.Game.dll')">
-      <_EzLibSource Include="$(EzOsuGameOutputDir)\*.dll"
-                    Exclude="$(EzOsuGameOutputDir)\*Game.Resources*.dll;$(EzOsuGameOutputDir)\*Resources.dll" />
+  <Target Name="SyncEzRealmLibs"
+          Condition="'$(MSBuildProjectName)' == 'osu.EzRealmSync.Desktop'">
+    <Message Importance="high"
+             Text="SyncEzRealmLibs: publish $(EzOsuGameProject) -> $(EzRealmSyncLibDir)"
+             Condition="Exists('$(EzOsuGameProject)')" />
+    <Exec Command="dotnet publish &quot;$(EzOsuGameProject)&quot; -c $(Configuration) -o &quot;$(EzOsuGamePublishStagingDir)&quot;"
+          Condition="Exists('$(EzOsuGameProject)')" />
+    <ItemGroup Condition="Exists('$(EzOsuGamePublishStagingDir)\osu.Game.dll')">
+      <_EzLibSource Include="$(EzOsuGamePublishStagingDir)\*.dll"
+                    Exclude="$(EzOsuGamePublishStagingDir)\*Game.Resources*.dll;$(EzOsuGamePublishStagingDir)\*Resources.dll" />
+      <_EzLibRuntime Include="$(EzOsuGamePublishStagingDir)\runtimes\**\*.*" />
     </ItemGroup>
+    <MakeDir Directories="$(EzRealmSyncLibDir)" Condition="Exists('$(EzOsuGamePublishStagingDir)\osu.Game.dll')" />
     <Copy SourceFiles="@(_EzLibSource)"
           DestinationFolder="$(EzRealmSyncLibDir)"
           SkipUnchangedFiles="true"
-          Condition="Exists('$(EzOsuGameOutputDir)\osu.Game.dll')" />
-    <Warning Text="SyncEzRealmLibs: 未找到 $(EzOsuGameOutputDir)\osu.Game.dll，请先在 ../osu 执行: dotnet build osu.Game/osu.Game.csproj -c $(Configuration)"
-             Condition="!Exists('$(EzOsuGameOutputDir)\osu.Game.dll')" />
+          Condition="Exists('$(EzOsuGamePublishStagingDir)\osu.Game.dll')" />
+    <Copy SourceFiles="@(_EzLibRuntime)"
+          DestinationFiles="@(_EzLibRuntime->'$(EzRealmSyncLibDir)\runtimes\%(RecursiveDir)%(Filename)%(Extension)')"
+          SkipUnchangedFiles="true"
+          Condition="Exists('$(EzOsuGamePublishStagingDir)\osu.Game.dll')" />
+    <Message Importance="high"
+             Text="SyncEzRealmLibs: copied @(_EzLibSource->Count()) DLL(s) to $(EzRealmSyncLibDir)"
+             Condition="Exists('$(EzOsuGamePublishStagingDir)\osu.Game.dll')" />
+    <Warning Text="SyncEzRealmLibs: publish 未产出 osu.Game.dll。请确认 ../osu 可构建: dotnet build osu.Game/osu.Game.csproj -c $(Configuration)"
+             Condition="Exists('$(EzOsuGameProject)') and !Exists('$(EzOsuGamePublishStagingDir)\osu.Game.dll')" />
+    <Warning Text="SyncEzRealmLibs: 未找到 $(EzOsuGameProject)"
+             Condition="!Exists('$(EzOsuGameProject)')" />
   </Target>
 </Project>

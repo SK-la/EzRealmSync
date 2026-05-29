@@ -19,11 +19,13 @@ namespace osu.EzRealmSync.AppModel
 
     public sealed class RealmAppPresenter
     {
-        private readonly IEzRealmSyncService syncService;
-        private readonly IRealmDataService dataService;
-        private readonly IRealmFixService fixService;
-        private readonly IRealmExportService exportService;
+        private readonly RealmServiceHost services;
         private readonly EzRealmSyncLaunchOptions launchOptions;
+
+        private IEzRealmSyncService syncService => services.Sync;
+        private IRealmDataService dataService => services.Data;
+        private IRealmFixService fixService => services.Fix;
+        private IRealmExportService exportService => services.Export;
 
         private ScanResult? lastScanResult;
         private CancellationTokenSource? operationCts;
@@ -31,26 +33,36 @@ namespace osu.EzRealmSync.AppModel
         private RealmSnapshot? loadedSnapshot;
         private readonly Dictionary<RealmObjectClass, List<RealmBrowseRow>> browseRowsByClass = new();
         private readonly bool loadingSettings;
+        private bool suppressBackendModeChange;
 
-        public RealmAppPresenter(
-            IEzRealmSyncService syncService,
-            IRealmDataService dataService,
-            IRealmFixService fixService,
-            IRealmExportService exportService,
-            EzRealmSyncLaunchOptions launchOptions)
+        public RealmAppPresenter(RealmServiceHost services, EzRealmSyncLaunchOptions launchOptions)
         {
-            this.syncService = syncService;
-            this.dataService = dataService;
-            this.fixService = fixService;
-            this.exportService = exportService;
+            this.services = services;
             this.launchOptions = launchOptions;
 
             loadingSettings = true;
-            applySettings(AppSettingsStore.Load());
-            loadingSettings = false;
-            UiTestMode.Value = launchOptions.UiTestMode;
-            BackendKind = EzRealmSyncBackend.Detect(dataService);
+            var settings = AppSettingsStore.Load();
+            applySettings(settings);
+
+            bool initialUiTest = launchOptions.HasUiTestModeArgument
+                ? launchOptions.UiTestMode
+                : settings.UiTestMode;
+
+            services.SetUiTestMode(initialUiTest, force: true);
+            UiTestMode.Value = initialUiTest;
+            BackendKind = services.BackendKind;
             StatusMessage.Value = resolveBackendStatusMessage();
+            loadingSettings = false;
+
+            UiTestMode.BindValueChanged(mode =>
+            {
+                if (loadingSettings || suppressBackendModeChange)
+                    return;
+
+                applyBackendMode(mode.NewValue);
+            });
+
+            UiTestMode.BindValueChanged(_ => persistSettings());
 
             CurrentWorkspaceTab.BindValueChanged(_ => { }, true);
             EntityFilter.BindValueChanged(_ => refreshSyncRows(), true);
@@ -174,6 +186,7 @@ namespace osu.EzRealmSync.AppModel
         public async Task InitializeAsync()
         {
             var defaults = launchOptions.CreateDefaultPaths();
+
             if (string.IsNullOrWhiteSpace(SearchDirectory.Value) && !string.IsNullOrWhiteSpace(defaults.EzDataPath))
             {
                 SearchDirectory.Value = defaults.EzDataPath;
@@ -191,7 +204,8 @@ namespace osu.EzRealmSync.AppModel
 
             try
             {
-                var files = await dataService.DiscoverRealmFilesAsync(SearchDirectory.Value).ConfigureAwait(false);
+                string? searchDirectory = resolveSearchDirectoryForDiscovery();
+                var files = await discoverRealmFilesAsync(searchDirectory).ConfigureAwait(false);
 
                 runOnUi(() =>
                 {
@@ -203,21 +217,7 @@ namespace osu.EzRealmSync.AppModel
                     refreshRealmFileRows();
                     RealmFilesChanged?.Invoke();
                     updateWorkspaceCapabilities();
-
-                    if (RealmFiles.Count == 0
-                        && RealmWorkspaceDiscovery.FindRealmFilesInSearchDirectory(SearchDirectory.Value).Count == 0
-                        && !string.IsNullOrWhiteSpace(SearchDirectory.Value))
-                    {
-                        StatusMessage.Value = Loc.Get("StatusNoRealmInPath");
-                    }
-                    else if (RealmWorkspaceDiscovery.TryResolveSharedFilesDirectory(SearchDirectory.Value, out string sharedFiles))
-                    {
-                        StatusMessage.Value = Loc.Format("StatusStorageReady", RealmFiles.Count, sharedFiles);
-                    }
-                    else
-                    {
-                        StatusMessage.Value = Loc.Format("StatusRealmList", RealmFiles.Count);
-                    }
+                    StatusMessage.Value = buildRealmListStatusMessage(searchDirectory, files.Count);
                 });
             }
             catch (Exception ex)
@@ -228,6 +228,79 @@ namespace osu.EzRealmSync.AppModel
             {
                 setBusy(false);
             }
+        }
+
+        private string? resolveSearchDirectoryForDiscovery()
+        {
+            if (string.IsNullOrWhiteSpace(SearchDirectory.Value))
+                return null;
+
+            string normalized = RealmWorkspaceDiscovery.NormalizeStorageRoot(SearchDirectory.Value);
+
+            if (!string.Equals(normalized, SearchDirectory.Value.Trim(), StringComparison.OrdinalIgnoreCase))
+                runOnUi(() => SearchDirectory.Value = normalized);
+
+            return normalized;
+        }
+
+        private async Task<IReadOnlyList<RealmFileEntry>> discoverRealmFilesAsync(string? searchDirectory, CancellationToken cancellationToken = default)
+        {
+            var files = (await dataService.DiscoverRealmFilesAsync(searchDirectory, cancellationToken).ConfigureAwait(false)).ToList();
+
+            if (files.Count > 0 || string.IsNullOrWhiteSpace(searchDirectory))
+                return files;
+
+            var diskPaths = RealmWorkspaceDiscovery.FindRealmFilesInSearchDirectory(searchDirectory);
+            if (diskPaths.Count == 0)
+                return files;
+
+            var recovered = new List<RealmFileEntry>();
+
+            foreach (string path in diskPaths)
+            {
+                cancellationToken.ThrowIfCancellationRequested();
+
+                try
+                {
+                    recovered.Add(await dataService.RegisterRealmFileAsync(path, cancellationToken).ConfigureAwait(false));
+                }
+                catch
+                {
+                    if (RealmFileDiscovery.TryCreateEntry(path, schemaVersion: null, out var entry))
+                        recovered.Add(entry);
+                }
+            }
+
+            return recovered
+                   .GroupBy(f => f.FilePath, StringComparer.OrdinalIgnoreCase)
+                   .Select(g => g.First())
+                   .OrderBy(f => f.DisplayName, StringComparer.OrdinalIgnoreCase)
+                   .ToList();
+        }
+
+        private string buildRealmListStatusMessage(string? searchDirectory, int count)
+        {
+            if (count == 0)
+            {
+                if (string.IsNullOrWhiteSpace(searchDirectory))
+                    return Loc.Get("StatusSetSearchDirectory");
+
+                if (RealmWorkspaceDiscovery.FindRealmFilesInSearchDirectory(searchDirectory).Count == 0)
+                    return Loc.Format("StatusNoRealmInPath", searchDirectory);
+
+                if (BackendKind == EzRealmSyncBackendKind.Stub)
+                    return resolveBackendStatusMessage();
+
+                return Loc.Format("StatusNoRealmRegistered", searchDirectory);
+            }
+
+            if (!string.IsNullOrWhiteSpace(searchDirectory)
+                && RealmWorkspaceDiscovery.TryResolveSharedFilesDirectory(searchDirectory, out string sharedFiles))
+            {
+                return Loc.Format("StatusStorageReady", count, sharedFiles);
+            }
+
+            return Loc.Format("StatusRealmList", count);
         }
 
         public Task ApplySearchDirectoryAsync() => applySearchDirectoryAsync();
@@ -361,6 +434,7 @@ namespace osu.EzRealmSync.AppModel
         public async Task RestoreSelectedBackupAsync()
         {
             var file = getRealmFile(ImportSelectedRealmId.Value);
+
             if (file == null)
             {
                 runOnUi(() => StatusMessage.Value = Loc.Get("ErrorPickRealmForRestore"));
@@ -931,7 +1005,7 @@ namespace osu.EzRealmSync.AppModel
                 return;
             }
 
-            if (launchOptions.UiTestMode && !tryGetSharedFilesDirectory(out filesDirectory))
+            if (UiTestMode.Value && !tryGetSharedFilesDirectory(out filesDirectory))
                 filesDirectory = Path.Combine(SearchDirectory.Value, "files");
 
             setBusy(true);
@@ -1134,17 +1208,77 @@ namespace osu.EzRealmSync.AppModel
             ConfirmBeforeDelete.Value = settings.ConfirmBeforeDelete;
         }
 
+        private void applyBackendMode(bool uiTest)
+        {
+            if (IsBusy.Value)
+            {
+                suppressBackendModeChange = true;
+                UiTestMode.Value = !uiTest;
+                suppressBackendModeChange = false;
+                StatusMessage.Value = Loc.Get("StatusBusyCannotSwitchBackend");
+                return;
+            }
+
+            services.SetUiTestMode(uiTest);
+            BackendKind = services.BackendKind;
+            clearSessionState();
+            StatusMessage.Value = uiTest
+                ? Loc.Get("StatusUiTest")
+                : BackendKind switch
+                {
+                    EzRealmSyncBackendKind.Real => Loc.Get("StatusBackendSwitchedReal"),
+                    EzRealmSyncBackendKind.Stub => Loc.Get("StatusMissingLib"),
+                    _ => Loc.Get("StatusReady"),
+                };
+
+            LabelsChanged?.Invoke();
+            updateWorkspaceCapabilities();
+
+            _ = switchBackendAsync();
+        }
+
+        private async Task switchBackendAsync()
+        {
+            try
+            {
+                await RefreshRealmFilesAsync().ConfigureAwait(false);
+            }
+            catch (Exception ex)
+            {
+                runOnUi(() => StatusMessage.Value = ex.Message);
+            }
+        }
+
+        private void clearSessionState()
+        {
+            loadedSnapshot = null;
+            lastScanResult = null;
+            LoadedSnapshotSummary = string.Empty;
+            syncRows.Clear();
+            SyncRowsChanged?.Invoke();
+            DataRows.Clear();
+            DataClasses.Clear();
+            BrowseRows.Clear();
+            browseRowsByClass.Clear();
+            FixIssues.Clear();
+            ExportItems.Clear();
+            BackupEntries.Clear();
+            BackupEntriesChanged?.Invoke();
+            refreshDataBrowse();
+        }
+
         private string resolveBackendStatusMessage()
         {
-            if (launchOptions.UiTestMode)
+            if (UiTestMode.Value)
                 return Loc.Get("StatusUiTest");
 
-            return BackendKind switch
-            {
-                EzRealmSyncBackendKind.Real => Loc.Get("StatusReady"),
-                EzRealmSyncBackendKind.Stub => Loc.Get("StatusMissingLib"),
-                _ => Loc.Get("StatusUiTest"),
-            };
+            if (BackendKind == EzRealmSyncBackendKind.Real)
+                return Loc.Get("StatusReady");
+
+            if (EzRealmSyncBackend.IsOsuGameDllOnDisk && !EzRealmSyncBackend.IsRealBackendCompiled)
+                return Loc.Get("StatusLibNeedsRebuild");
+
+            return Loc.Get("StatusMissingLib");
         }
 
         private void persistSettings()
@@ -1166,6 +1300,7 @@ namespace osu.EzRealmSync.AppModel
                 ExportFolderName = ExportFolderName.Value,
                 IllegalCharacterReplacement = IllegalCharacterReplacement.Value,
                 ConfirmBeforeDelete = ConfirmBeforeDelete.Value,
+                UiTestMode = UiTestMode.Value,
             });
         }
 
@@ -1230,8 +1365,7 @@ namespace osu.EzRealmSync.AppModel
             return RealmWorkspacePaths.ResolveStorageRoot(file.FilePath);
         }
 
-        private bool tryGetSharedFilesDirectory(out string filesDirectory) =>
-            RealmWorkspaceDiscovery.TryResolveSharedFilesDirectory(SearchDirectory.Value, out filesDirectory);
+        private bool tryGetSharedFilesDirectory(out string filesDirectory) => RealmWorkspaceDiscovery.TryResolveSharedFilesDirectory(SearchDirectory.Value, out filesDirectory);
 
         private void reconcileTabRealmSelections()
         {
@@ -1257,8 +1391,7 @@ namespace osu.EzRealmSync.AppModel
             ExportRealmId.Value = pickRealmId(ExportRealmId.Value, first);
         }
 
-        private string pickRealmId(string? current, string fallback) =>
-            !string.IsNullOrEmpty(current) && RealmFiles.Any(f => f.Id == current) ? current : fallback;
+        private string pickRealmId(string? current, string fallback) => !string.IsNullOrEmpty(current) && RealmFiles.Any(f => f.Id == current) ? current : fallback;
 
         private void setBusy(bool busy) => runOnUi(() =>
         {

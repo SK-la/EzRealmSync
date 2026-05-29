@@ -25,13 +25,12 @@ dotnet run --project osu.EzRealmSync.Desktop
 - **默认**：真实 Realm 后端（需 `lib/osu.Game.dll`，见下方）
 - `--ui-test`：Mock 假数据（仅调 UI，不读 `.realm`）
 - `--mock-delay=0`：Mock 模式去掉模拟延迟
-- 同步 lib：`dotnet build -t:SyncEzRealmLibs EzRealmSync.sln`（从 `../osu/osu.Game/bin/...` 复制）
+- 同步 lib：`dotnet build -t:SyncEzRealmLibs EzRealmSync.sln`（`dotnet publish ../osu/osu.Game`，复制完整运行时依赖至 `lib/`）
 
 准备 `lib/`（首次）：
 
 ```bash
-dotnet build ../osu/osu.Game/osu.Game.csproj -c Debug
-dotnet build -t:SyncEzRealmLibs EzRealmSync.sln
+dotnet build -t:SyncEzRealmLibs EzRealmSync.sln -c Debug
 dotnet build EzRealmSync.sln
 ```
 
