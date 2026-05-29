@@ -1,3 +1,5 @@
+using osu.EzRealmSync.AppModel;
+
 namespace osu.EzRealmSync.Desktop.Commands
 {
     public sealed class RelayCommand : ICommand
@@ -26,7 +28,7 @@ namespace osu.EzRealmSync.Desktop.Commands
     {
         private readonly Func<Task> execute;
         private readonly Func<bool>? canExecute;
-        private bool isRunning;
+        private readonly AsyncCommandGate gate = new();
 
         public AsyncRelayCommand(Func<Task> execute, Func<bool>? canExecute = null)
         {
@@ -40,25 +42,39 @@ namespace osu.EzRealmSync.Desktop.Commands
             remove => CommandManager.RequerySuggested -= value;
         }
 
-        public bool CanExecute(object? parameter) => !isRunning && (canExecute?.Invoke() ?? true);
+        public event EventHandler<Exception>? UnhandledException;
 
-        public async void Execute(object? parameter)
+        public bool CanExecute(object? parameter) => !gate.IsRunning && (canExecute?.Invoke() ?? true);
+
+        public void Execute(object? parameter)
         {
-            if (isRunning)
+            if (!gate.TryEnter(canExecute))
                 return;
 
-            isRunning = true;
-            CommandManager.InvalidateRequerySuggested();
+            invalidateCanExecute();
+            SafeAsyncInvoker.Run(runAsync, handleException);
+        }
 
+        private async Task runAsync()
+        {
             try
             {
                 await execute().ConfigureAwait(true);
             }
             finally
             {
-                isRunning = false;
-                CommandManager.InvalidateRequerySuggested();
+                gate.Exit();
+                invalidateCanExecute();
             }
         }
+
+        private void handleException(Exception ex)
+        {
+            gate.Exit();
+            invalidateCanExecute();
+            UnhandledException?.Invoke(this, ex);
+        }
+
+        private void invalidateCanExecute() => CommandManager.InvalidateRequerySuggested();
     }
 }

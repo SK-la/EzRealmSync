@@ -43,6 +43,10 @@ namespace osu.EzRealmSync.Desktop.ViewModels
                     action();
             };
 
+            void reportAsyncError(Exception ex) => presenter.MarshalToUi?.Invoke(() => presenter.StatusMessage.Value = ex.Message);
+
+            SafeAsyncInvoker.DefaultExceptionHandler = reportAsyncError;
+
             bindPresenter(presenter.IsBusy, nameof(IsBusy));
             bindPresenter(presenter.Progress, nameof(Progress));
             bindPresenter(presenter.StatusMessage, nameof(StatusMessage));
@@ -76,25 +80,32 @@ namespace osu.EzRealmSync.Desktop.ViewModels
             presenter.LabelsChanged += () => Application.Current.Dispatcher.Invoke(() => OnPropertyChanged(nameof(WindowTitle)));
             Loc.LanguageChanged += () => Application.Current.Dispatcher.Invoke(() => OnPropertyChanged(nameof(WindowTitle)));
 
-            RefreshRealmFilesCommand = new AsyncRelayCommand(() => presenter.RefreshRealmFilesAsync(), () => !IsBusy);
-            ApplyRealmPathCommand = new AsyncRelayCommand(() => presenter.ApplyRealmPathAsync(), () => !IsBusy);
-            BackupSelectedCommand = new AsyncRelayCommand(() => presenter.BackupSelectedRealmAsync(), () => !IsBusy);
-            LoadRealmCommand = new AsyncRelayCommand(() => presenter.LoadSelectedRealmAsync(), () => !IsBusy);
-            ComputeSetCommand = new AsyncRelayCommand(() => presenter.ComputeSetAsync(), () => !IsBusy);
-            ExecuteSyncCommand = new AsyncRelayCommand(() => presenter.ExecuteSyncActionAsync(), () => !IsBusy);
-            BrowseBackupCommand = new AsyncRelayCommand(presenter.BrowseBackupDirectoryAsync);
-            BrowseRealmLocationCommand = new AsyncRelayCommand(presenter.BrowseRealmLocationAsync);
+            RefreshRealmFilesCommand = createAsyncCommand(() => presenter.RefreshRealmFilesAsync(), () => !IsBusy);
+            ApplyRealmPathCommand = createAsyncCommand(() => presenter.ApplyRealmPathAsync(), () => !IsBusy);
+            BackupSelectedCommand = createAsyncCommand(() => presenter.BackupSelectedRealmAsync(), () => !IsBusy);
+            LoadRealmCommand = createAsyncCommand(() => presenter.LoadSelectedRealmAsync(), () => !IsBusy);
+            ComputeSetCommand = createAsyncCommand(() => presenter.ComputeSetAsync(), () => !IsBusy);
+            ExecuteSyncCommand = createAsyncCommand(() => presenter.ExecuteSyncActionAsync(), () => !IsBusy);
+            BrowseBackupCommand = createAsyncCommand(presenter.BrowseBackupDirectoryAsync);
+            BrowseRealmLocationCommand = createAsyncCommand(presenter.BrowseRealmLocationAsync);
             ToggleSelectAllCommand = new RelayCommand(presenter.ToggleSyncSelectAll);
-            ScanFixIssuesCommand = new AsyncRelayCommand(() => presenter.ScanFixIssuesAsync(), () => !IsBusy && CanUseFixAndExport);
-            ApplyFixSelectedCommand = new AsyncRelayCommand(() => presenter.ApplySelectedFixesAsync(), () => !IsBusy && CanUseFixAndExport);
-            ApplyAllFixesCommand = new AsyncRelayCommand(() => presenter.ApplyAllFixesAsync(), () => !IsBusy && CanUseFixAndExport);
+            ScanFixIssuesCommand = createAsyncCommand(() => presenter.ScanFixIssuesAsync(), () => !IsBusy && CanUseFixAndExport);
+            ApplyFixSelectedCommand = createAsyncCommand(() => presenter.ApplySelectedFixesAsync(), () => !IsBusy && CanUseFixAndExport);
+            ApplyAllFixesCommand = createAsyncCommand(() => presenter.ApplyAllFixesAsync(), () => !IsBusy && CanUseFixAndExport);
             ToggleFixSelectAllCommand = new RelayCommand(presenter.ToggleFixSelectAll);
-            LoadExportCatalogCommand = new AsyncRelayCommand(() => presenter.LoadExportCatalogAsync(), () => !IsBusy && CanUseFixAndExport);
-            ExportSelectedCommand = new AsyncRelayCommand(() => presenter.ExportSelectedAsync(), () => !IsBusy && CanUseFixAndExport);
+            LoadExportCatalogCommand = createAsyncCommand(() => presenter.LoadExportCatalogAsync(), () => !IsBusy && CanUseFixAndExport);
+            ExportSelectedCommand = createAsyncCommand(() => presenter.ExportSelectedAsync(), () => !IsBusy && CanUseFixAndExport);
             ToggleExportSelectAllCommand = new RelayCommand(presenter.ToggleExportSelectAll);
-            BrowseExportDirectoryCommand = new AsyncRelayCommand(presenter.BrowseExportDirectoryAsync);
+            BrowseExportDirectoryCommand = createAsyncCommand(presenter.BrowseExportDirectoryAsync);
 
-            _ = presenter.InitializeAsync();
+            SafeAsyncInvoker.Run(() => presenter.InitializeAsync(), reportAsyncError);
+
+            AsyncRelayCommand createAsyncCommand(Func<Task> work, Func<bool>? canExecute = null)
+            {
+                var command = new AsyncRelayCommand(work, canExecute);
+                command.UnhandledException += (_, ex) => reportAsyncError(ex);
+                return command;
+            }
         }
 
         public RealmAppPresenter Presenter { get; }

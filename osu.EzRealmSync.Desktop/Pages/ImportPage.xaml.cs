@@ -1,4 +1,3 @@
-using System.IO;
 using System.Windows.Data;
 using osu.EzRealmSync.AppModel;
 using osu.EzRealmSync.AppModel.Localization;
@@ -161,7 +160,7 @@ namespace osu.EzRealmSync.Desktop.Pages
             e.Handled = true;
         }
 
-        private async void DropZone_OnDrop(object sender, DragEventArgs e)
+        private void DropZone_OnDrop(object sender, DragEventArgs e)
         {
             if (vm == null || !e.Data.GetDataPresent(DataFormats.FileDrop))
                 return;
@@ -169,18 +168,30 @@ namespace osu.EzRealmSync.Desktop.Pages
             if (e.Data.GetData(DataFormats.FileDrop) is not string[] files)
                 return;
 
-            foreach (string file in files)
+            SafeAsyncInvoker.Run(() => handleDropAsync(files), reportDropError);
+        }
+
+        private async Task handleDropAsync(string[] files)
+        {
+            foreach (var action in ImportDropProcessor.ParseDroppedPaths(files))
             {
-                if (file.EndsWith(".realm", StringComparison.OrdinalIgnoreCase))
-                    await vm.RegisterDroppedRealmAsync(file);
-                else if (Directory.Exists(file))
+                switch (action.Kind)
                 {
-                    vm.SearchDirectory = file;
-                    RealmPathBox.Text = file;
-                    vm.RefreshRealmFilesCommand.Execute(null);
+                    case ImportDropActionKind.RegisterRealm:
+                        await vm!.RegisterDroppedRealmAsync(action.Path).ConfigureAwait(true);
+                        break;
+
+                    case ImportDropActionKind.SetSearchDirectory:
+                        vm!.SearchDirectory = action.Path;
+                        RealmPathBox.Text = action.Path;
+                        vm.RefreshRealmFilesCommand.Execute(null);
+                        break;
                 }
             }
         }
+
+        private void reportDropError(Exception ex) =>
+            vm?.Presenter.MarshalToUi?.Invoke(() => vm.Presenter.StatusMessage.Value = ex.Message);
 
         protected override void OnInitialized(EventArgs e)
         {
