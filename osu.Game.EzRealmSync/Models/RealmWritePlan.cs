@@ -1,7 +1,7 @@
 namespace osu.Game.EzRealmSync.Models
 {
     /// <summary>
-    /// 从 UI 的 A（源）到 B（目标）的一次写入/扫描计划。A/B 与 ppy/Ez 种类无关。
+    /// osu! Realm 维护：从 UI 的 A（源）到 B（目标）的一次 Diff/写入计划。A/B 与 ppy/Ez 种类无关。
     /// </summary>
     public sealed class RealmWritePlan
     {

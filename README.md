@@ -1,6 +1,6 @@
 # EzRealmSync
 
-**独立** Ez Realm 双库同步工具（非 osu! 规则集）。
+**osu!lazer Realm 维护工具**（独立 exe，非规则集）：对比两份 `client.realm`（**A 源 / B 目标**），维护差异与失效数据、备份还原；支持同类型库（新旧版本）与 Ez↔官方等组合。
 
 | 层 | 项目 | 职责 |
 |----|------|------|
@@ -26,7 +26,7 @@ dotnet run --project osu.EzRealmSync.Desktop -- --ui-test
 - `--mock-delay=0`：去掉 Mock 加载/计算延迟
 - 无 `lib/osu.Game.dll` 且非 UI 测试：数据/同步会提示放入 `lib/`（见 `StubRealmDataService`）
 
-主界面五 Tab：**导入** → **数据**（Realm Studio 式类浏览，当前 Mock）→ **同步** → **修复** → **导出**。设置持久化至 `%AppData%\EzRealmSync\settings.json`。
+主界面五 Tab：**导入**（A/B 工作区 + 列表 + 备份）→ **数据**（单库浏览）→ **同步**（A↔B 集合运算与写入）→ **修复** → **导出**。设置持久化至 `%AppData%\EzRealmSync\settings.json`。
 
 路线图：[docs/ROADMAP.md](docs/ROADMAP.md)
 

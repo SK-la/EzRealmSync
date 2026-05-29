@@ -4,8 +4,8 @@
   <resheader name="version"><value>2.0</value></resheader>
   <resheader name="reader"><value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
   <resheader name="writer"><value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
-  <data name="AppTitle" xml:space="preserve"><value>Ez Realm 同步</value></data>
-  <data name="AppTitleUiTest" xml:space="preserve"><value>Ez Realm 同步 [UI 测试]</value></data>
+  <data name="AppTitle" xml:space="preserve"><value>osu! Realm 维护工具</value></data>
+  <data name="AppTitleUiTest" xml:space="preserve"><value>osu! Realm 维护工具 [UI 测试]</value></data>
   <data name="Settings" xml:space="preserve"><value>设置</value></data>
   <data name="EndpointA" xml:space="preserve"><value>A 端</value></data>
   <data name="EndpointB" xml:space="preserve"><value>B 端</value></data>
@@ -97,7 +97,7 @@
   <data name="TabSync" xml:space="preserve"><value>同步</value></data>
   <data name="TabFix" xml:space="preserve"><value>修复</value></data>
   <data name="TabExport" xml:space="preserve"><value>导出</value></data>
-  <data name="ImportDropHint" xml:space="preserve"><value>拖入 .realm 文件或文件夹，或点击浏览</value></data>
+  <data name="ImportDropHint" xml:space="preserve"><value>拖入 .realm 或工作区文件夹以注册/扫描；在下方选择 A/B 端路径后刷新列表</value></data>
   <data name="RealmLocation" xml:space="preserve"><value>Realm 路径</value></data>
   <data name="ApplyEndpointA" xml:space="preserve"><value>应用 A 端</value></data>
   <data name="ApplyEndpointB" xml:space="preserve"><value>应用 B 端</value></data>

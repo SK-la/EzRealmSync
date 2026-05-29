@@ -4,8 +4,8 @@
   <resheader name="version"><value>2.0</value></resheader>
   <resheader name="reader"><value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
   <resheader name="writer"><value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
-  <data name="AppTitle" xml:space="preserve"><value>Ez Realm Sync</value></data>
-  <data name="AppTitleUiTest" xml:space="preserve"><value>Ez Realm Sync [UI Test]</value></data>
+  <data name="AppTitle" xml:space="preserve"><value>osu! Realm Maintainer</value></data>
+  <data name="AppTitleUiTest" xml:space="preserve"><value>osu! Realm Maintainer [UI Test]</value></data>
   <data name="Settings" xml:space="preserve"><value>Settings</value></data>
   <data name="EndpointA" xml:space="preserve"><value>A endpoint</value></data>
   <data name="EndpointB" xml:space="preserve"><value>B endpoint</value></data>
@@ -97,7 +97,7 @@
   <data name="TabSync" xml:space="preserve"><value>Sync</value></data>
   <data name="TabFix" xml:space="preserve"><value>Fix</value></data>
   <data name="TabExport" xml:space="preserve"><value>Export</value></data>
-  <data name="ImportDropHint" xml:space="preserve"><value>Drag a .realm file or folder here, or click to browse</value></data>
+  <data name="ImportDropHint" xml:space="preserve"><value>Drop a .realm or workspace folder; set A/B paths below and refresh the list</value></data>
   <data name="RealmLocation" xml:space="preserve"><value>Realm path</value></data>
   <data name="ApplyEndpointA" xml:space="preserve"><value>Apply A</value></data>
   <data name="ApplyEndpointB" xml:space="preserve"><value>Apply B</value></data>

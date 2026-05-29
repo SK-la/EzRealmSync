@@ -1,6 +1,6 @@
 # EzRealmSync 路线图
 
-与 [EzRealmSyncTool-中文.md](../Ez2Lazer.wiki/EzRealmSyncTool-中文.md) 及 Cursor 计划 `ezrealmsynctool_规格` 对齐。
+**osu! Realm 维护工具**：双 `client.realm`（A/B）Diff、写入、备份、浏览。与 [EzRealmSyncTool-中文.md](../Ez2Lazer.wiki/EzRealmSyncTool-中文.md) 及 Cursor 计划 `ezrealmsynctool_规格` 对齐。
 
 ## 当前状态（2026-05-29）
 
