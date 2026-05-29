@@ -12,11 +12,12 @@
       "console": "integratedTerminal"
     },
     {
-      "name": "EzRealmSync",
+      "name": "EzRealmSync (Real Realm)",
       "type": "coreclr",
       "request": "launch",
       "preLaunchTask": "build",
       "program": "${workspaceFolder}/osu.EzRealmSync.Desktop/bin/Debug/net8.0-windows/EzRealmSync.dll",
+      "args": ["--no-ui-test"],
       "cwd": "${workspaceFolder}",
       "console": "integratedTerminal"
     }

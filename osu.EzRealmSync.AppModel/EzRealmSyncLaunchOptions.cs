@@ -11,8 +11,8 @@ namespace osu.EzRealmSync.AppModel
 
         public static EzRealmSyncLaunchOptions Parse(string[] args)
         {
-            // 暂时默认开启 UI 测试；使用 --no-ui-test 连接真实 Realm。
-            bool uiTest = true;
+            // 默认连接真实 Realm；仅 UI 布局调试时加 --ui-test。
+            bool uiTest = false;
             var mock = new MockEzRealmSyncOptions();
 
             foreach (string arg in args)

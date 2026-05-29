@@ -43,7 +43,8 @@
   <data name="DeleteFromSource" xml:space="preserve"><value>从 {0} 端删除</value></data>
   <data name="AddToTarget" xml:space="preserve"><value>添加到 {0} 端</value></data>
   <data name="SelectionCount" xml:space="preserve"><value>已选 {0} 项</value></data>
-  <data name="StatusReady" xml:space="preserve"><value>就绪</value></data>
+  <data name="StatusReady" xml:space="preserve"><value>就绪 — 已连接真实 Realm（lib/osu.Game.dll）</value></data>
+  <data name="StatusMissingLib" xml:space="preserve"><value>未检测到 lib/osu.Game.dll：请按 lib/README.md 从 Ez2Lazer osu 构建并复制 DLL 后重新编译运行；勿使用 UI 测试模式</value></data>
   <data name="StatusUiTest" xml:space="preserve"><value>UI 测试模式 — 未连接真实数据库</value></data>
   <data name="StatusScanning" xml:space="preserve"><value>正在扫描…</value></data>
   <data name="StatusScanComplete" xml:space="preserve"><value>扫描完成 — {1}端有{3}端无 {2}，{3}端有{1}端无 {4}，不一致 {5}</value></data>

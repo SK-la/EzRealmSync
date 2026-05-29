@@ -19,12 +19,21 @@ UI **不引用** `osu.Game` / `osu.Game.Resources`。中文/英文见 `Strings.r
 ```bash
 cd EzRealmSync
 dotnet build EzRealmSync.sln
-dotnet run --project osu.EzRealmSync.Desktop -- --ui-test
+dotnet run --project osu.EzRealmSync.Desktop
 ```
 
-- `--ui-test`：Mock Realm 列表 + 分组数据 + 集合运算（不读写真实 `.realm`）
-- `--mock-delay=0`：去掉 Mock 加载/计算延迟
-- 无 `lib/osu.Game.dll` 且非 UI 测试：数据/同步会提示放入 `lib/`（见 `StubRealmDataService`）
+- **默认**：真实 Realm 后端（需 `lib/osu.Game.dll`，见下方）
+- `--ui-test`：Mock 假数据（仅调 UI，不读 `.realm`）
+- `--mock-delay=0`：Mock 模式去掉模拟延迟
+- 同步 lib：`dotnet build -t:SyncEzRealmLibs EzRealmSync.sln`（从 `../osu/osu.Game/bin/...` 复制）
+
+准备 `lib/`（首次）：
+
+```bash
+dotnet build ../osu/osu.Game/osu.Game.csproj -c Debug
+dotnet build -t:SyncEzRealmLibs EzRealmSync.sln
+dotnet build EzRealmSync.sln
+```
 
 主界面五 Tab：**导入**（osu! 数据目录 + Realm 列表 + 备份）→ **数据**（单库浏览）→ **同步**（A/B 双库集合运算与写入）→ **修复** / **导出**（共用导入目录下 `files/`）。设置持久化至 `%AppData%\EzRealmSync\settings.json`。
 

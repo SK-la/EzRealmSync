@@ -1,6 +1,7 @@
 using System.Collections.ObjectModel;
 using osu.EzRealmSync.AppModel.Localization;
 using osu.Framework.Bindables;
+using osu.Game.EzRealmSync;
 using osu.Game.EzRealmSync.Abstractions;
 using osu.Game.EzRealmSync.Mock;
 using osu.Game.EzRealmSync.Models;
@@ -48,7 +49,8 @@ namespace osu.EzRealmSync.AppModel
             applySettings(AppSettingsStore.Load());
             loadingSettings = false;
             UiTestMode.Value = launchOptions.UiTestMode;
-            StatusMessage.Value = launchOptions.UiTestMode ? Loc.Get("StatusUiTest") : Loc.Get("StatusReady");
+            BackendKind = EzRealmSyncBackend.Detect(dataService);
+            StatusMessage.Value = resolveBackendStatusMessage();
 
             CurrentWorkspaceTab.BindValueChanged(_ => { }, true);
             EntityFilter.BindValueChanged(_ => refreshSyncRows(), true);
@@ -129,6 +131,9 @@ namespace osu.EzRealmSync.AppModel
         public Bindable<RealmSyncAction> SyncAction { get; } = new Bindable<RealmSyncAction>(RealmSyncAction.Add);
 
         public BindableBool UiTestMode { get; } = new BindableBool();
+
+        public EzRealmSyncBackendKind BackendKind { get; private set; }
+
         public Bindable<EntityKindFilter> EntityFilter { get; } = new Bindable<EntityKindFilter>(EntityKindFilter.All);
         public Bindable<DiffCategory> CurrentCategory { get; } = new Bindable<DiffCategory>(DiffCategory.SourceOnly);
 
@@ -1127,6 +1132,19 @@ namespace osu.EzRealmSync.AppModel
                 : settings.IllegalCharacterReplacement;
 
             ConfirmBeforeDelete.Value = settings.ConfirmBeforeDelete;
+        }
+
+        private string resolveBackendStatusMessage()
+        {
+            if (launchOptions.UiTestMode)
+                return Loc.Get("StatusUiTest");
+
+            return BackendKind switch
+            {
+                EzRealmSyncBackendKind.Real => Loc.Get("StatusReady"),
+                EzRealmSyncBackendKind.Stub => Loc.Get("StatusMissingLib"),
+                _ => Loc.Get("StatusUiTest"),
+            };
         }
 
         private void persistSettings()

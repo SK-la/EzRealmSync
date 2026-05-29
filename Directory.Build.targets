@@ -1,1 +1,28 @@
-﻿<Project/>
+﻿<Project>
+  <Target Name="CopyEzRealmSyncLibsToOutput"
+          AfterTargets="Build"
+          Condition="'$(OutputType)' == 'WinExe' AND '@(EzRealmSyncRuntimeLib)' != ''">
+    <Copy SourceFiles="@(EzRealmSyncRuntimeLib)"
+          DestinationFolder="$(OutputPath)"
+          SkipUnchangedFiles="true" />
+  </Target>
+
+  <!-- dotnet build -t:SyncEzRealmLibs EzRealmSync.sln -->
+  <PropertyGroup>
+    <EzOsuGameOutputDir>$(MSBuildThisFileDirectory)..\osu\osu.Game\bin\$(Configuration)\net8.0</EzOsuGameOutputDir>
+  </PropertyGroup>
+
+  <Target Name="SyncEzRealmLibs">
+    <Message Importance="high" Text="SyncEzRealmLibs: $(EzOsuGameOutputDir) -> $(EzRealmSyncLibDir)" Condition="Exists('$(EzOsuGameOutputDir)\osu.Game.dll')" />
+    <ItemGroup Condition="Exists('$(EzOsuGameOutputDir)\osu.Game.dll')">
+      <_EzLibSource Include="$(EzOsuGameOutputDir)\*.dll"
+                    Exclude="$(EzOsuGameOutputDir)\*Game.Resources*.dll;$(EzOsuGameOutputDir)\*Resources.dll" />
+    </ItemGroup>
+    <Copy SourceFiles="@(_EzLibSource)"
+          DestinationFolder="$(EzRealmSyncLibDir)"
+          SkipUnchangedFiles="true"
+          Condition="Exists('$(EzOsuGameOutputDir)\osu.Game.dll')" />
+    <Warning Text="SyncEzRealmLibs: 未找到 $(EzOsuGameOutputDir)\osu.Game.dll，请先在 ../osu 执行: dotnet build osu.Game/osu.Game.csproj -c $(Configuration)"
+             Condition="!Exists('$(EzOsuGameOutputDir)\osu.Game.dll')" />
+  </Target>
+</Project>

@@ -43,7 +43,8 @@
   <data name="DeleteFromSource" xml:space="preserve"><value>Delete from {0}</value></data>
   <data name="AddToTarget" xml:space="preserve"><value>Add to {0}</value></data>
   <data name="SelectionCount" xml:space="preserve"><value>{0} selected</value></data>
-  <data name="StatusReady" xml:space="preserve"><value>Ready</value></data>
+  <data name="StatusReady" xml:space="preserve"><value>Ready — real Realm backend (lib/osu.Game.dll)</value></data>
+  <data name="StatusMissingLib" xml:space="preserve"><value>lib/osu.Game.dll not found. Build Ez2Lazer osu.Game and copy DLLs per lib/README.md, then rebuild. Disable UI test mode.</value></data>
   <data name="StatusUiTest" xml:space="preserve"><value>UI test mode — not connected to a real database</value></data>
   <data name="StatusScanning" xml:space="preserve"><value>Scanning…</value></data>
   <data name="StatusScanComplete" xml:space="preserve"><value>Scan complete — {0} only in {1}: {2}, only in {3}: {4}, conflicted: {5}</value></data>

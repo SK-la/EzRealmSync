@@ -3,6 +3,7 @@ using System.ComponentModel;
 using System.Runtime.CompilerServices;
 using osu.EzRealmSync.AppModel;
 using osu.EzRealmSync.AppModel.Localization;
+using osu.Game.EzRealmSync;
 using osu.EzRealmSync.Desktop.Commands;
 using osu.EzRealmSync.Desktop.Services;
 using osu.Game.EzRealmSync.Models;
@@ -125,7 +126,18 @@ namespace osu.EzRealmSync.Desktop.ViewModels
 
         public ObservableCollection<RealmExportItemModel> ExportItems => Presenter.ExportItems;
 
-        public string WindowTitle => LaunchOptions.UiTestMode ? Loc.Get("AppTitleUiTest") : Loc.Get("AppTitle");
+        public string WindowTitle
+        {
+            get
+            {
+                if (LaunchOptions.UiTestMode)
+                    return Loc.Get("AppTitleUiTest");
+
+                return Presenter.BackendKind == EzRealmSyncBackendKind.Real
+                    ? Loc.Get("AppTitle")
+                    : Loc.Get("AppTitle") + " [缺少 lib]";
+            }
+        }
 
         public bool IsBusy => Presenter.IsBusy.Value;
         public double Progress => Presenter.Progress.Value;

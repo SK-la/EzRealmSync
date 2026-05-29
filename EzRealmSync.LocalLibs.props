@@ -15,9 +15,13 @@
     <DefineConstants>$(DefineConstants);HAS_EZ_OSU_GAME</DefineConstants>
   </PropertyGroup>
 
+  <ItemGroup Condition="Exists('$(EzRealmSyncLibDir)\osu.Game.dll')">
+    <EzRealmSyncRuntimeLib Include="$(EzRealmSyncLibDir)\*.dll"
+                          Exclude="$(EzRealmSyncLibDir)\*Game.Resources*.dll;$(EzRealmSyncLibDir)\*Resources.dll" />
+  </ItemGroup>
+
   <ItemGroup Condition="'$(UseLocalOsuLibs)' == 'true' AND '$(MSBuildProjectName)' == 'osu.Game.EzRealmSync'">
-    <EzRealmSyncLibDll Include="$(EzRealmSyncLibDir)\*.dll"
-                       Exclude="$(EzRealmSyncLibDir)\*Game.Resources*.dll;$(EzRealmSyncLibDir)\*Resources.dll" />
+    <EzRealmSyncLibDll Include="@(EzRealmSyncRuntimeLib)" />
     <Reference Include="@(EzRealmSyncLibDll)">
       <HintPath>%(Identity)</HintPath>
       <Private>true</Private>
