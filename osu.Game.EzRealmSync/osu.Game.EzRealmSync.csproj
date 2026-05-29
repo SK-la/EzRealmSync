@@ -1,0 +1,7 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup Label="Project">
+    <TargetFramework>net8.0</TargetFramework>
+    <RootNamespace>osu.Game.EzRealmSync</RootNamespace>
+    <Description>Ez Realm dual-database sync tool — contracts and mock implementation.</Description>
+  </PropertyGroup>
+</Project>

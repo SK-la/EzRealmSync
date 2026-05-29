@@ -1,0 +1,17 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup Label="Project">
+    <TargetFramework>net8.0</TargetFramework>
+    <OutputType>WinExe</OutputType>
+    <RootNamespace>osu.EzRealmSync</RootNamespace>
+    <AssemblyName>EzRealmSync</AssemblyName>
+    <ApplicationIcon>$(OsuRepoRoot)osu.Desktop\lazer.ico</ApplicationIcon>
+    <Description>独立 Ez Realm 双库同步工具（osu!framework UI，非规则集）。</Description>
+  </PropertyGroup>
+  <PropertyGroup>
+    <StartupObject>osu.EzRealmSync.Program</StartupObject>
+  </PropertyGroup>
+  <ItemGroup Label="Project References">
+    <ProjectReference Include="..\osu.Game.EzRealmSync\osu.Game.EzRealmSync.csproj" />
+    <ProjectReference Include="$(OsuRepoRoot)osu.Game\osu.Game.csproj" />
+  </ItemGroup>
+</Project>

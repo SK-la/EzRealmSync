@@ -1,0 +1,26 @@
+﻿<!-- 复用同级 Ez2Lazer/osu 的项目级 MSBuild 约定；编译链接 Ez2Lazer 版 osu.Game 源码。 -->
+<Project>
+  <PropertyGroup>
+    <OsuRepoRoot>$(MSBuildThisFileDirectory)..\osu\</OsuRepoRoot>
+  </PropertyGroup>
+
+  <Import Project="$(OsuRepoRoot)Directory.Build.props" Condition="Exists('$(OsuRepoRoot)Directory.Build.props')" />
+
+  <PropertyGroup Label="EzRealmSync">
+    <ImplicitUsings>enable</ImplicitUsings>
+    <ApplicationManifest Condition="'$(OutputType)' != 'WinExe'" />
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(OutputType)' == 'WinExe'">
+    <ApplicationManifest>$(OsuRepoRoot)app.manifest</ApplicationManifest>
+  </PropertyGroup>
+
+  <PropertyGroup Label="Nuget">
+    <PackageProjectUrl>https://github.com/Ez2Lazer/EzRealmSync</PackageProjectUrl>
+    <RepositoryUrl>https://github.com/Ez2Lazer/EzRealmSync</RepositoryUrl>
+    <PackageTags>osu ez2lazer realm sync</PackageTags>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <EmbeddedResource Remove="Resources\**\*.*" />
+  </ItemGroup>
+</Project>

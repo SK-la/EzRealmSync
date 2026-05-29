@@ -1,7 +1,7 @@
-*.ss~
-*.ss#*
-.#*.ss
+bin/
+obj/
+.vs/
 
-*.scm~
-*.scm#*
-.#*.scm
+*.user
+*.suo
+*.DotSettings.user

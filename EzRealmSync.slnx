@@ -1,0 +1,4 @@
+<Solution>
+  <Project Path="osu.Game.EzRealmSync/osu.Game.EzRealmSync.csproj" />
+  <Project Path="osu.EzRealmSync/osu.EzRealmSync.csproj" />
+</Solution>

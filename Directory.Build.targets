@@ -1,0 +1,3 @@
+﻿<Project>
+  <Import Project="$(MSBuildThisFileDirectory)..\osu\Directory.Build.targets" Condition="Exists('$(MSBuildThisFileDirectory)..\osu\Directory.Build.targets')" />
+</Project>
