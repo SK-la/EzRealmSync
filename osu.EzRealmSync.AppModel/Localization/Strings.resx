@@ -97,15 +97,17 @@
   <data name="TabSync" xml:space="preserve"><value>Sync</value></data>
   <data name="TabFix" xml:space="preserve"><value>Fix</value></data>
   <data name="TabExport" xml:space="preserve"><value>Export</value></data>
-  <data name="ImportDropHint" xml:space="preserve"><value>Drop a .realm or workspace folder; set A/B paths below and refresh the list</value></data>
+  <data name="ImportDropHint" xml:space="preserve"><value>Select the osu! storage folder (e.g. Ez2Lazer install dir): *.realm at the root and shared files/. Drop the folder or a .realm file, then refresh.</value></data>
   <data name="RealmLocation" xml:space="preserve"><value>Realm path</value></data>
   <data name="ApplyEndpointA" xml:space="preserve"><value>Apply A</value></data>
   <data name="ApplyEndpointB" xml:space="preserve"><value>Apply B</value></data>
+  <data name="ApplySearchDirectory" xml:space="preserve"><value>Apply path</value></data>
   <data name="ApplyRealmPath" xml:space="preserve"><value>Apply</value></data>
   <data name="StatusInvalidRealmPath" xml:space="preserve"><value>Path must be a .realm file or an existing folder.</value></data>
-  <data name="StatusNoRealmInPath" xml:space="preserve"><value>No .realm file found in this folder. Choose a path that contains client.realm (or under data/).</value></data>
-  <data name="StatusFilesFolderRequired" xml:space="preserve"><value>A files/ folder is required next to the Realm data directory.</value></data>
-  <data name="FixRequiresFilesHint" xml:space="preserve"><value>Fix and Export require a storage path with both .realm and files/ (set on Import tab).</value></data>
+  <data name="StatusNoRealmInPath" xml:space="preserve"><value>No .realm files found. Choose the storage root (*.realm at root or under data/, plus files/).</value></data>
+  <data name="StatusFilesFolderRequired" xml:space="preserve"><value>Missing files/ under the import folder. Select the osu! storage root shared by all Realm files.</value></data>
+  <data name="StatusStorageReady" xml:space="preserve"><value>Found {0} Realm file(s); shared files: {1}</value></data>
+  <data name="FixRequiresFilesHint" xml:space="preserve"><value>Fix and Export use the shared files/ folder from the osu! storage path on the Import tab.</value></data>
   <data name="FixScan" xml:space="preserve"><value>Scan issues</value></data>
   <data name="FixApplySelected" xml:space="preserve"><value>Fix selected</value></data>
   <data name="FixApplyAll" xml:space="preserve"><value>Fix all</value></data>
@@ -133,7 +135,7 @@
   <data name="StatusExportCatalogLoaded" xml:space="preserve"><value>{0} item(s) ready to export</value></data>
   <data name="StatusExportComplete" xml:space="preserve"><value>Exported {0} item(s) to {1}</value></data>
   <data name="BackupDirectory" xml:space="preserve"><value>Backup folder</value></data>
-  <data name="SearchDirectory" xml:space="preserve"><value>Search folder</value></data>
+  <data name="SearchDirectory" xml:space="preserve"><value>osu! storage folder</value></data>
   <data name="RefreshList" xml:space="preserve"><value>Refresh</value></data>
   <data name="BackupSelected" xml:space="preserve"><value>Backup selected</value></data>
   <data name="BackupList" xml:space="preserve"><value>Existing backups</value></data>

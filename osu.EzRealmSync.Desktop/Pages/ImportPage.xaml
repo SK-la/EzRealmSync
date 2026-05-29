@@ -38,8 +38,6 @@
       <Grid>
         <Grid.RowDefinitions>
           <RowDefinition Height="Auto" />
-          <RowDefinition Height="8" />
-          <RowDefinition Height="Auto" />
           <RowDefinition Height="10" />
           <RowDefinition Height="Auto" />
         </Grid.RowDefinitions>
@@ -51,54 +49,27 @@
             <ColumnDefinition Width="8" />
             <ColumnDefinition Width="Auto" />
           </Grid.ColumnDefinitions>
-          <ui:TextBlock x:Name="EndpointALabel"
+          <ui:TextBlock x:Name="SearchDirLabel"
                         Style="{StaticResource WorkspaceMutedText}"
                         VerticalAlignment="Center" />
-          <ui:TextBox x:Name="EndpointABox"
+          <ui:TextBox x:Name="SearchDirBox"
                       Grid.Column="1"
                       Margin="8,0"
                       MinHeight="36"
                       VerticalContentAlignment="Center"
-                      Icon="{ui:SymbolIcon Database24}" />
-          <ui:Button x:Name="BrowseEndpointAButton"
+                      Icon="{ui:SymbolIcon Folder24}" />
+          <ui:Button x:Name="BrowseSearchButton"
                      Grid.Column="2"
                      MinHeight="36"
-                     Click="BrowseEndpointA_OnClick"
+                     Click="BrowseSearch_OnClick"
                      Icon="{ui:SymbolIcon Folder24}" />
-          <ui:Button x:Name="ApplyEndpointAButton"
+          <ui:Button x:Name="ApplySearchButton"
                      Grid.Column="4"
                      MinHeight="36"
-                     Click="ApplyEndpointA_OnClick" />
-        </Grid>
-        <Grid Grid.Row="2">
-          <Grid.ColumnDefinitions>
-            <ColumnDefinition Width="112" />
-            <ColumnDefinition Width="*" />
-            <ColumnDefinition Width="Auto" />
-            <ColumnDefinition Width="8" />
-            <ColumnDefinition Width="Auto" />
-          </Grid.ColumnDefinitions>
-          <ui:TextBlock x:Name="EndpointBLabel"
-                        Style="{StaticResource WorkspaceMutedText}"
-                        VerticalAlignment="Center" />
-          <ui:TextBox x:Name="EndpointBBox"
-                      Grid.Column="1"
-                      Margin="8,0"
-                      MinHeight="36"
-                      VerticalContentAlignment="Center"
-                      Icon="{ui:SymbolIcon Database24}" />
-          <ui:Button x:Name="BrowseEndpointBButton"
-                     Grid.Column="2"
-                     MinHeight="36"
-                     Click="BrowseEndpointB_OnClick"
-                     Icon="{ui:SymbolIcon Folder24}" />
-          <ui:Button x:Name="ApplyEndpointBButton"
-                     Grid.Column="4"
-                     MinHeight="36"
-                     Click="ApplyEndpointB_OnClick" />
+                     Click="ApplySearch_OnClick" />
         </Grid>
         <ui:Button x:Name="RefreshButton"
-                   Grid.Row="4"
+                   Grid.Row="2"
                    MinHeight="36"
                    HorizontalAlignment="Left"
                    Click="Refresh_OnClick"

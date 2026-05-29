@@ -36,6 +36,12 @@ namespace osu.Game.EzRealmSync.Models
 
         private RealmFileEntry registerPath(string fullPath, int? schemaVersion)
         {
+            fullPath = Path.GetFullPath(fullPath);
+
+            var existing = files.Values.FirstOrDefault(f => string.Equals(f.FilePath, fullPath, StringComparison.OrdinalIgnoreCase));
+            if (existing != null)
+                return existing;
+
             bool isLocked = !RealmSyncPathHelper.TryValidateRealmFileAccessible(fullPath, out _);
 
             long? size = File.Exists(fullPath) ? new FileInfo(fullPath).Length : null;

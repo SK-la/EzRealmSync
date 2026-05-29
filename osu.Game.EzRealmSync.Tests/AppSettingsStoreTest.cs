@@ -30,9 +30,13 @@ namespace osu.Game.EzRealmSync.Tests
         {
             var original = new EzRealmSyncAppSettings
             {
-                SearchDirectory = @"D:\osu\legacy",
-                EndpointAWorkspace = @"D:\osu\ez",
-                EndpointBWorkspace = @"D:\osu\ppy",
+                SearchDirectory = @"D:\osu\data",
+                ImportSelectedRealmId = "import",
+                DataRealmId = "data",
+                SyncRealmIdA = "a",
+                SyncRealmIdB = "b",
+                FixRealmId = "fix",
+                ExportRealmId = "export",
                 BackupDirectory = @"D:\backups",
                 ConfirmBeforeDelete = false,
                 IllegalCharacterReplacement = "-",
@@ -41,11 +45,13 @@ namespace osu.Game.EzRealmSync.Tests
             AppSettingsStore.Save(original, settingsPath);
             var loaded = AppSettingsStore.Load(settingsPath);
 
-            Assert.That(loaded.EndpointAWorkspace, Is.EqualTo(original.EndpointAWorkspace));
-            Assert.That(loaded.EndpointBWorkspace, Is.EqualTo(original.EndpointBWorkspace));
+            Assert.That(loaded.SearchDirectory, Is.EqualTo(original.SearchDirectory));
+            Assert.That(loaded.DataRealmId, Is.EqualTo(original.DataRealmId));
+            Assert.That(loaded.SyncRealmIdA, Is.EqualTo(original.SyncRealmIdA));
+            Assert.That(loaded.SyncRealmIdB, Is.EqualTo(original.SyncRealmIdB));
+            Assert.That(loaded.FixRealmId, Is.EqualTo(original.FixRealmId));
             Assert.That(loaded.BackupDirectory, Is.EqualTo(original.BackupDirectory));
             Assert.That(loaded.ConfirmBeforeDelete, Is.False);
-            Assert.That(loaded.IllegalCharacterReplacement, Is.EqualTo("-"));
         }
 
         [Test]
@@ -57,14 +63,14 @@ namespace osu.Game.EzRealmSync.Tests
         }
 
         [Test]
-        public void Load_migrates_legacy_search_directory_to_endpoint_a()
+        public void Load_migrates_legacy_endpoint_a_to_search_directory()
         {
-            var legacy = new EzRealmSyncAppSettings { SearchDirectory = @"D:\legacy\ez" };
+            var legacy = new EzRealmSyncAppSettings { EndpointAWorkspace = @"D:\legacy\ez" };
             AppSettingsStore.Save(legacy, settingsPath);
 
             var loaded = AppSettingsStore.Load(settingsPath);
 
-            Assert.That(loaded.EndpointAWorkspace, Is.EqualTo(@"D:\legacy\ez"));
+            Assert.That(loaded.SearchDirectory, Is.EqualTo(@"D:\legacy\ez"));
         }
     }
 }

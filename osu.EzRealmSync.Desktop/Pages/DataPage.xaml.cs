@@ -39,7 +39,8 @@ namespace osu.EzRealmSync.Desktop.Pages
 
             vm.PropertyChanged += (_, e) =>
             {
-                if (e.PropertyName == nameof(ShellViewModel.RealmFiles))
+                if (e.PropertyName == nameof(ShellViewModel.RealmFiles)
+                    || e.PropertyName == nameof(ShellViewModel.DataRealmId))
                     refreshRealmCombo();
 
                 if (e.PropertyName is nameof(ShellViewModel.LoadedSnapshotSummary) or nameof(ShellViewModel.DataClasses))
@@ -84,7 +85,7 @@ namespace osu.EzRealmSync.Desktop.Pages
                 return;
 
             RealmSelectCombo.ItemsSource = vm.RealmFiles;
-            RealmSelectCombo.SelectedValue = vm.SelectedRealmId;
+            RealmSelectCombo.SelectedValue = vm.DataRealmId;
         }
 
         private void refreshClassList()
@@ -173,10 +174,8 @@ namespace osu.EzRealmSync.Desktop.Pages
 
         private void RealmSelectCombo_OnChanged(object sender, SelectionChangedEventArgs e)
         {
-            if (vm == null || RealmSelectCombo.SelectedValue is not string id)
-                return;
-
-            vm.SelectedRealmId = id;
+            if (vm != null && RealmSelectCombo.SelectedValue is string id)
+                vm.DataRealmId = id;
         }
 
         private void ClassList_OnSelectionChanged(object sender, SelectionChangedEventArgs e)

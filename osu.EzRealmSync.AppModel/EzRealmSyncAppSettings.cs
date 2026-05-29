@@ -5,12 +5,26 @@ namespace osu.EzRealmSync.AppModel
 {
     public sealed class EzRealmSyncAppSettings
     {
-        /// <summary>兼容旧版 settings；新安装请使用 <see cref="EndpointAWorkspace"/>。</summary>
+        /// <summary>导入页扫描路径：存储根目录下的 <c>*.realm</c>（及可选 <c>data/</c> 子目录）。</summary>
         public string SearchDirectory { get; set; } = string.Empty;
 
+        /// <summary>兼容旧版 settings.json；读取后迁移到 <see cref="SearchDirectory"/>，不再写入。</summary>
+        [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)]
         public string EndpointAWorkspace { get; set; } = string.Empty;
 
+        [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)]
         public string EndpointBWorkspace { get; set; } = string.Empty;
+
+        public string? ImportSelectedRealmId { get; set; }
+
+        public string? DataRealmId { get; set; }
+
+        public string? SyncRealmIdA { get; set; }
+        public string? SyncRealmIdB { get; set; }
+
+        public string? FixRealmId { get; set; }
+
+        public string? ExportRealmId { get; set; }
 
         public string BackupDirectory { get; set; } = string.Empty;
 
@@ -78,8 +92,13 @@ namespace osu.EzRealmSync.AppModel
 
         private static void migrateLegacyPaths(EzRealmSyncAppSettings settings)
         {
-            if (string.IsNullOrWhiteSpace(settings.EndpointAWorkspace) && !string.IsNullOrWhiteSpace(settings.SearchDirectory))
-                settings.EndpointAWorkspace = settings.SearchDirectory;
+            if (string.IsNullOrWhiteSpace(settings.SearchDirectory))
+            {
+                if (!string.IsNullOrWhiteSpace(settings.EndpointAWorkspace))
+                    settings.SearchDirectory = settings.EndpointAWorkspace;
+                else if (!string.IsNullOrWhiteSpace(settings.EndpointBWorkspace))
+                    settings.SearchDirectory = settings.EndpointBWorkspace;
+            }
         }
     }
 }

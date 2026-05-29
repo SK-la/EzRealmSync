@@ -40,6 +40,8 @@ namespace osu.EzRealmSync.Desktop.Pages
                     switch (e.PropertyName)
                     {
                         case nameof(ShellViewModel.RealmFiles):
+                        case nameof(ShellViewModel.SyncRealmIdA):
+                        case nameof(ShellViewModel.SyncRealmIdB):
                             refreshRealmCombos();
                             break;
                         case nameof(ShellViewModel.SelectionCountText):
@@ -64,8 +66,8 @@ namespace osu.EzRealmSync.Desktop.Pages
 
         private void refreshLabels()
         {
-            SourceLabel.Text = Loc.Get("SourceRealm");
-            TargetLabel.Text = Loc.Get("TargetRealm");
+            SourceLabel.Text = Loc.Get("EndpointA");
+            TargetLabel.Text = Loc.Get("EndpointB");
             SetOpLabel.Text = Loc.Get("SetOperation");
             ActionLabel.Text = Loc.Get("SyncAction");
             ComputeButton.Content = Loc.Get("ComputeSet");
@@ -171,8 +173,8 @@ namespace osu.EzRealmSync.Desktop.Pages
 
             SourceCombo.ItemsSource = vm.RealmFiles;
             TargetCombo.ItemsSource = vm.RealmFiles;
-            SourceCombo.SelectedValue = vm.ActiveSourceRealmId;
-            TargetCombo.SelectedValue = vm.ActiveTargetRealmId;
+            SourceCombo.SelectedValue = vm.SyncRealmIdA;
+            TargetCombo.SelectedValue = vm.SyncRealmIdB;
         }
 
         private void updateCategoryTabs()
@@ -196,13 +198,13 @@ namespace osu.EzRealmSync.Desktop.Pages
         private void SourceCombo_OnChanged(object sender, SelectionChangedEventArgs e)
         {
             if (vm != null && SourceCombo.SelectedValue is string id)
-                vm.ActiveSourceRealmId = id;
+                vm.SyncRealmIdA = id;
         }
 
         private void TargetCombo_OnChanged(object sender, SelectionChangedEventArgs e)
         {
             if (vm != null && TargetCombo.SelectedValue is string id)
-                vm.ActiveTargetRealmId = id;
+                vm.SyncRealmIdB = id;
         }
 
         private void SetOpCombo_OnChanged(object sender, SelectionChangedEventArgs e)

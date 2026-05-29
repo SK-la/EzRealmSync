@@ -53,12 +53,14 @@ namespace osu.EzRealmSync.Desktop.ViewModels
             bindPresenter(presenter.SelectionCount, nameof(SelectionCountText));
             bindPresenter(presenter.CurrentWorkspaceTab, nameof(CurrentTab));
             bindPresenter(presenter.BackupDirectory, nameof(BackupDirectory));
-            bindPresenter(presenter.EndpointAWorkspace, nameof(EndpointAWorkspace));
-            bindPresenter(presenter.EndpointBWorkspace, nameof(EndpointBWorkspace));
+            bindPresenter(presenter.SearchDirectory, nameof(SearchDirectory));
             bindPresenter(presenter.SelectedBackupId, nameof(SelectedBackupId));
-            bindPresenter(presenter.SelectedRealmId, nameof(SelectedRealmId));
-            bindPresenter(presenter.ActiveSourceRealmId, nameof(ActiveSourceRealmId));
-            bindPresenter(presenter.ActiveTargetRealmId, nameof(ActiveTargetRealmId));
+            bindPresenter(presenter.ImportSelectedRealmId, nameof(ImportSelectedRealmId));
+            bindPresenter(presenter.DataRealmId, nameof(DataRealmId));
+            bindPresenter(presenter.SyncRealmIdA, nameof(SyncRealmIdA));
+            bindPresenter(presenter.SyncRealmIdB, nameof(SyncRealmIdB));
+            bindPresenter(presenter.FixRealmId, nameof(FixRealmId));
+            bindPresenter(presenter.ExportRealmId, nameof(ExportRealmId));
             bindPresenter(presenter.EntityFilter, nameof(EntityFilter));
             bindPresenter(presenter.CurrentCategory, nameof(CurrentCategory));
             bindPresenter(presenter.SetOperation, nameof(SetOperation));
@@ -66,8 +68,6 @@ namespace osu.EzRealmSync.Desktop.ViewModels
             bindPresenter(presenter.SelectedDataGroup, nameof(SelectedDataGroup));
             bindPresenter(presenter.SelectedRealmClass, nameof(SelectedRealmClass));
             bindPresenter(presenter.CanUseFixAndExport, nameof(CanUseFixAndExport));
-            bindPresenter(presenter.FixRealmId, nameof(FixRealmId));
-            bindPresenter(presenter.ExportRealmId, nameof(ExportRealmId));
             bindPresenter(presenter.SelectedExportKind, nameof(ExportDataKind));
             bindPresenter(presenter.IllegalCharacterReplacement, nameof(IllegalCharacterReplacement));
             bindPresenter(presenter.ExportDirectory, nameof(ExportDirectory));
@@ -83,8 +83,7 @@ namespace osu.EzRealmSync.Desktop.ViewModels
             Loc.LanguageChanged += () => Application.Current.Dispatcher.Invoke(() => OnPropertyChanged(nameof(WindowTitle)));
 
             RefreshRealmFilesCommand = createAsyncCommand(() => presenter.RefreshRealmFilesAsync(), () => !IsBusy);
-            ApplyEndpointAPathCommand = createAsyncCommand(() => presenter.ApplyEndpointAPathAsync(), () => !IsBusy);
-            ApplyEndpointBPathCommand = createAsyncCommand(() => presenter.ApplyEndpointBPathAsync(), () => !IsBusy);
+            ApplySearchDirectoryCommand = createAsyncCommand(() => presenter.ApplySearchDirectoryAsync(), () => !IsBusy);
             BackupSelectedCommand = createAsyncCommand(() => presenter.BackupSelectedRealmAsync(), () => !IsBusy);
             RefreshBackupsCommand = createAsyncCommand(() => presenter.RefreshBackupsAsync(), () => !IsBusy);
             RestoreBackupCommand = createAsyncCommand(() => presenter.RestoreSelectedBackupAsync(), () => !IsBusy);
@@ -92,8 +91,7 @@ namespace osu.EzRealmSync.Desktop.ViewModels
             ComputeSetCommand = createAsyncCommand(() => presenter.ComputeSetAsync(), () => !IsBusy);
             ExecuteSyncCommand = createAsyncCommand(() => presenter.ExecuteSyncActionAsync(), () => !IsBusy);
             BrowseBackupCommand = createAsyncCommand(presenter.BrowseBackupDirectoryAsync);
-            BrowseEndpointACommand = createAsyncCommand(presenter.BrowseEndpointAWorkspaceAsync);
-            BrowseEndpointBCommand = createAsyncCommand(presenter.BrowseEndpointBWorkspaceAsync);
+            BrowseSearchDirectoryCommand = createAsyncCommand(presenter.BrowseSearchDirectoryAsync);
             ToggleSelectAllCommand = new RelayCommand(presenter.ToggleSyncSelectAll);
             ScanFixIssuesCommand = createAsyncCommand(() => presenter.ScanFixIssuesAsync(), () => !IsBusy && CanUseFixAndExport);
             ApplyFixSelectedCommand = createAsyncCommand(() => presenter.ApplySelectedFixesAsync(), () => !IsBusy && CanUseFixAndExport);
@@ -159,22 +157,22 @@ namespace osu.EzRealmSync.Desktop.ViewModels
             set => Presenter.BackupDirectory.Value = value;
         }
 
-        public string EndpointAWorkspace
+        public string SearchDirectory
         {
-            get => Presenter.EndpointAWorkspace.Value;
-            set => Presenter.EndpointAWorkspace.Value = value;
+            get => Presenter.SearchDirectory.Value;
+            set => Presenter.SearchDirectory.Value = value;
         }
 
-        public string EndpointBWorkspace
+        public string? ImportSelectedRealmId
         {
-            get => Presenter.EndpointBWorkspace.Value;
-            set => Presenter.EndpointBWorkspace.Value = value;
+            get => Presenter.ImportSelectedRealmId.Value;
+            set => Presenter.ImportSelectedRealmId.Value = value;
         }
 
-        public string? SelectedRealmId
+        public string? DataRealmId
         {
-            get => Presenter.SelectedRealmId.Value;
-            set => Presenter.SelectedRealmId.Value = value;
+            get => Presenter.DataRealmId.Value;
+            set => Presenter.DataRealmId.Value = value;
         }
 
         public string? SelectedBackupId
@@ -183,16 +181,16 @@ namespace osu.EzRealmSync.Desktop.ViewModels
             set => Presenter.SelectedBackupId.Value = value;
         }
 
-        public string? ActiveSourceRealmId
+        public string? SyncRealmIdA
         {
-            get => Presenter.ActiveSourceRealmId.Value;
-            set => Presenter.ActiveSourceRealmId.Value = value;
+            get => Presenter.SyncRealmIdA.Value;
+            set => Presenter.SyncRealmIdA.Value = value;
         }
 
-        public string? ActiveTargetRealmId
+        public string? SyncRealmIdB
         {
-            get => Presenter.ActiveTargetRealmId.Value;
-            set => Presenter.ActiveTargetRealmId.Value = value;
+            get => Presenter.SyncRealmIdB.Value;
+            set => Presenter.SyncRealmIdB.Value = value;
         }
 
         public EntityKindFilter EntityFilter
@@ -270,8 +268,7 @@ namespace osu.EzRealmSync.Desktop.ViewModels
         }
 
         public ICommand RefreshRealmFilesCommand { get; }
-        public ICommand ApplyEndpointAPathCommand { get; }
-        public ICommand ApplyEndpointBPathCommand { get; }
+        public ICommand ApplySearchDirectoryCommand { get; }
         public ICommand BackupSelectedCommand { get; }
         public ICommand RefreshBackupsCommand { get; }
         public ICommand RestoreBackupCommand { get; }
@@ -279,8 +276,7 @@ namespace osu.EzRealmSync.Desktop.ViewModels
         public ICommand ComputeSetCommand { get; }
         public ICommand ExecuteSyncCommand { get; }
         public ICommand BrowseBackupCommand { get; }
-        public ICommand BrowseEndpointACommand { get; }
-        public ICommand BrowseEndpointBCommand { get; }
+        public ICommand BrowseSearchDirectoryCommand { get; }
         public ICommand ToggleSelectAllCommand { get; }
         public ICommand ScanFixIssuesCommand { get; }
         public ICommand ApplyFixSelectedCommand { get; }

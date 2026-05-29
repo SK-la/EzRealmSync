@@ -31,8 +31,7 @@ namespace osu.EzRealmSync.Desktop.Pages
             configureExportGridBehavior();
             setupDataKindCombo();
 
-            RealmSelectCombo.ItemsSource = vm.RealmFiles;
-            RealmSelectCombo.SelectedValue = vm.ExportRealmId ?? vm.SelectedRealmId;
+            refreshRealmCombo();
             ExportDirBox.Text = vm.ExportDirectory;
             FolderNameBox.Text = vm.ExportFolderName;
 
@@ -40,7 +39,8 @@ namespace osu.EzRealmSync.Desktop.Pages
 
             vm.PropertyChanged += (_, e) =>
             {
-                if (e.PropertyName == nameof(ShellViewModel.RealmFiles))
+                if (e.PropertyName == nameof(ShellViewModel.RealmFiles)
+                    || e.PropertyName == nameof(ShellViewModel.ExportRealmId))
                     Dispatcher.Invoke(refreshRealmCombo);
 
                 if (e.PropertyName == nameof(ShellViewModel.ExportItems))
@@ -114,7 +114,7 @@ namespace osu.EzRealmSync.Desktop.Pages
                 return;
 
             RealmSelectCombo.ItemsSource = vm.RealmFiles;
-            RealmSelectCombo.SelectedValue = vm.ExportRealmId ?? vm.SelectedRealmId;
+            RealmSelectCombo.SelectedValue = vm.ExportRealmId;
         }
 
         private void setupGrid()
@@ -184,10 +184,8 @@ namespace osu.EzRealmSync.Desktop.Pages
 
         private void RealmSelectCombo_OnChanged(object sender, SelectionChangedEventArgs e)
         {
-            if (vm == null || RealmSelectCombo.SelectedValue is not string id)
-                return;
-
-            vm.ExportRealmId = id;
+            if (vm != null && RealmSelectCombo.SelectedValue is string id)
+                vm.ExportRealmId = id;
         }
 
         private void DataKindCombo_OnChanged(object sender, SelectionChangedEventArgs e)

@@ -1,7 +1,7 @@
 namespace osu.Game.EzRealmSync.Models
 {
     /// <summary>
-    /// osu!lazer 存储布局：<c>{storage}/data/*.realm</c> 与 <c>{storage}/files/</c>。
+    /// osu! 存储布局：共享 <c>{storage}/files/</c>，Realm 可在根目录（如 Ez2Lazer）或 <c>{storage}/data/</c>（官方 lazer）。
     /// </summary>
     public static class RealmWorkspacePaths
     {
@@ -107,12 +107,17 @@ namespace osu.Game.EzRealmSync.Models
             if (string.IsNullOrWhiteSpace(workspacePath))
                 return string.Empty;
 
-            var files = FindRealmFiles(workspacePath);
+            string root = Path.GetFullPath(workspacePath.Trim());
+            var files = FindRealmFiles(root);
             string? client = files.FirstOrDefault(f => Path.GetFileName(f).Equals("client.realm", StringComparison.OrdinalIgnoreCase));
             if (client != null)
                 return client;
 
-            return Path.Combine(Path.GetFullPath(workspacePath.Trim()), "data", "client.realm");
+            string atRoot = Path.Combine(root, "client.realm");
+            if (File.Exists(atRoot))
+                return atRoot;
+
+            return Path.Combine(root, "data", "client.realm");
         }
     }
 }

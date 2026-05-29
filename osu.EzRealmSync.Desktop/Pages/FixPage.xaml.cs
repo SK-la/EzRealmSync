@@ -28,15 +28,15 @@ namespace osu.EzRealmSync.Desktop.Pages
             setupGrid();
             configureIssuesGridBehavior();
 
-            RealmSelectCombo.ItemsSource = vm.RealmFiles;
-            RealmSelectCombo.SelectedValue = vm.FixRealmId ?? vm.SelectedRealmId;
+            refreshRealmCombo();
             ReplacementBox.Text = vm.IllegalCharacterReplacement;
 
             IssuesGrid.ItemsSource = vm.FixIssues;
 
             vm.PropertyChanged += (_, e) =>
             {
-                if (e.PropertyName == nameof(ShellViewModel.RealmFiles))
+                if (e.PropertyName == nameof(ShellViewModel.RealmFiles)
+                    || e.PropertyName == nameof(ShellViewModel.FixRealmId))
                     Dispatcher.Invoke(refreshRealmCombo);
 
                 if (e.PropertyName == nameof(ShellViewModel.FixIssues))
@@ -79,7 +79,7 @@ namespace osu.EzRealmSync.Desktop.Pages
                 return;
 
             RealmSelectCombo.ItemsSource = vm.RealmFiles;
-            RealmSelectCombo.SelectedValue = vm.FixRealmId ?? vm.SelectedRealmId;
+            RealmSelectCombo.SelectedValue = vm.FixRealmId;
         }
 
         private void setupGrid()
@@ -142,10 +142,8 @@ namespace osu.EzRealmSync.Desktop.Pages
 
         private void RealmSelectCombo_OnChanged(object sender, SelectionChangedEventArgs e)
         {
-            if (vm == null || RealmSelectCombo.SelectedValue is not string id)
-                return;
-
-            vm.FixRealmId = id;
+            if (vm != null && RealmSelectCombo.SelectedValue is string id)
+                vm.FixRealmId = id;
         }
 
         private void Scan_OnClick(object sender, RoutedEventArgs e)
