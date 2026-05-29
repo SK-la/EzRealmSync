@@ -26,11 +26,7 @@ namespace osu.Game.EzRealmSync
             if (uiTestMode)
                 return new MockEzRealmSyncService(mockOptions ?? new MockEzRealmSyncOptions());
 
-#if HAS_EZ_OSU_GAME
-            return new RealmEzRealmSyncService();
-#else
             return new StubRealmDataService();
-#endif
         }
 
         public static IRealmFixService CreateFixService(bool uiTestMode, MockEzRealmSyncOptions? mockOptions = null)
@@ -38,11 +34,7 @@ namespace osu.Game.EzRealmSync
             if (uiTestMode)
                 return new MockEzRealmSyncService(mockOptions ?? new MockEzRealmSyncOptions());
 
-#if HAS_EZ_OSU_GAME
-            return new RealmEzRealmSyncService();
-#else
             return new StubRealmFixExportService();
-#endif
         }
 
         public static IRealmExportService CreateExportService(bool uiTestMode, MockEzRealmSyncOptions? mockOptions = null)
@@ -50,11 +42,7 @@ namespace osu.Game.EzRealmSync
             if (uiTestMode)
                 return new MockEzRealmSyncService(mockOptions ?? new MockEzRealmSyncOptions());
 
-#if HAS_EZ_OSU_GAME
-            return new RealmEzRealmSyncService();
-#else
             return new StubRealmFixExportService();
-#endif
         }
     }
 }

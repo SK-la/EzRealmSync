@@ -7,7 +7,7 @@ using osu.EzRealmSync.Desktop.ViewModels;
 
 namespace osu.EzRealmSync.Desktop.Pages
 {
-    public partial class ImportPage : UserControl
+    public partial class ImportPage
     {
         private ShellViewModel? vm;
         private bool realmGridConfigured;
@@ -58,7 +58,7 @@ namespace osu.EzRealmSync.Desktop.Pages
             realmGridConfigured = true;
             RealmFilesGrid.ItemsSource = vm.RealmFileRows;
 
-            CheckableDataGridHelper.Configure<RealmFileRowModel>(
+            CheckableDataGridHelper.Configure(
                 RealmFilesGrid,
                 () => vm.RealmFileRows,
                 (rows, check) => vm.Presenter.SetRealmFileRowsChecked(rows, check),

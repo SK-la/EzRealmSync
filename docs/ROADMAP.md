@@ -7,7 +7,7 @@
 | 里程碑 | 状态 | 说明 |
 |--------|------|------|
 | **M1** Phase 1 UI | **基本完成** | 独立仓库 WPF Desktop（五 Tab），`--ui-test` Mock |
-| **M2** Phase 2 数据 | **进行中** | P2.1 `OfficialRealmAccess` 已入 `osu.Game` |
+| **M2** Phase 2 数据 | **进行中** | P2.1–P2.2 完成；P2.3 RowCopier 占位 |
 | **M3** Phase 3 | 未开始 | Collections / Zombie / `.osr` |
 
 ### Phase 1 已交付（Desktop）
@@ -18,12 +18,13 @@
 - 全表右键：勾选 / 取消 / 反选 / 删除；删除前确认（可关）
 - `MockEzRealmSyncService` + `--ui-test`
 
-### Phase 2 下一步
+### Phase 2 进度
 
-1. **P2.2** `RealmDiffEngine`（GUID/Hash，三分类）
-2. **P2.3** `RealmRowCopier` + `OfficialRealmMapper`（strip Ez 列）
-3. **P2.4** `RealmEzRealmSyncService` / `IRealmDataService` 真实实现
-4. **P2.5** 集成测试 + 手工 Ez→官方验收
+- [x] **P2.1** `OfficialRealmAccess`（`osu.Game`）
+- [x] **P2.2** `RealmDiffEngine` + `RealmDiffReader` + `ScanAsync`（需 `lib/osu.Game.dll`）
+- [ ] **P2.3** `RealmRowCopier` + `OfficialRealmMapper`（strip 已抽方法，写入待接）
+- [ ] **P2.4** `ApplyAsync`、备份还原、`IRealmDataService` 真实加载
+- [ ] **P2.5** 集成测试 + 手工 Ez→官方验收
 
 ## 仓库结构
 

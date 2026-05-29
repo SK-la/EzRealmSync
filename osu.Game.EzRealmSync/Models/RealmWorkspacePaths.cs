@@ -101,5 +101,18 @@ namespace osu.Game.EzRealmSync.Models
         }
 
         public static string ResolveDataDirectory(string realmFilePath) => Path.GetDirectoryName(Path.GetFullPath(realmFilePath)) ?? string.Empty;
+
+        public static string ResolveClientRealmPath(string? workspacePath)
+        {
+            if (string.IsNullOrWhiteSpace(workspacePath))
+                return string.Empty;
+
+            var files = FindRealmFiles(workspacePath);
+            string? client = files.FirstOrDefault(f => Path.GetFileName(f).Equals("client.realm", StringComparison.OrdinalIgnoreCase));
+            if (client != null)
+                return client;
+
+            return Path.Combine(Path.GetFullPath(workspacePath.Trim()), "data", "client.realm");
+        }
     }
 }

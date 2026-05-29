@@ -1,5 +1,6 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
+    <UseLocalOsuLibs>false</UseLocalOsuLibs>
     <TargetFramework>net8.0</TargetFramework>
     <RootNamespace>osu.Game.EzRealmSync.Tests</RootNamespace>
     <ImplicitUsings>enable</ImplicitUsings>
