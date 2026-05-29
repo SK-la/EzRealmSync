@@ -40,6 +40,10 @@ namespace osu.Game.EzRealmSync.Realm
                     warnings.Add("两个工作区的 files/ 路径不一致；同步后目标端可能仍缺少实体文件。");
             }
 
+            string? processBlock = RealmProcessGuard.TryGetBlockingProcessMessage();
+            if (processBlock != null)
+                errors.Add(processBlock);
+
             if (errors.Count > 0)
                 return Task.FromResult(ValidationResult.Failure(errors.ToArray()));
 
@@ -74,6 +78,10 @@ namespace osu.Game.EzRealmSync.Realm
             string? validationError = RealmApplySupport.ValidateApplyRequest(request);
             if (validationError != null)
                 throw new InvalidOperationException(validationError);
+
+            string? processBlock = RealmProcessGuard.TryGetBlockingProcessMessage();
+            if (processBlock != null)
+                throw new InvalidOperationException(processBlock);
 
             var plan = resolvePlan(request.WritePlan, request.Direction, request.Paths);
 

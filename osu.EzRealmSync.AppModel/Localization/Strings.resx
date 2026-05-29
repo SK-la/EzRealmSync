@@ -114,6 +114,7 @@
   <data name="FixReplacementChar" xml:space="preserve"><value>Replace illegal chars with</value></data>
   <data name="FixIssueMissingFile" xml:space="preserve"><value>Missing file</value></data>
   <data name="FixIssueIllegalCharacter" xml:space="preserve"><value>Illegal character</value></data>
+  <data name="FixIssueOrphanFile" xml:space="preserve"><value>Orphan file</value></data>
   <data name="ColFixKind" xml:space="preserve"><value>Issue</value></data>
   <data name="ColFixField" xml:space="preserve"><value>Field</value></data>
   <data name="ColFixCurrent" xml:space="preserve"><value>Current</value></data>

@@ -114,6 +114,7 @@
   <data name="FixReplacementChar" xml:space="preserve"><value>非法字符替换为</value></data>
   <data name="FixIssueMissingFile" xml:space="preserve"><value>缺少文件</value></data>
   <data name="FixIssueIllegalCharacter" xml:space="preserve"><value>非法字符</value></data>
+  <data name="FixIssueOrphanFile" xml:space="preserve"><value>僵尸文件</value></data>
   <data name="ColFixKind" xml:space="preserve"><value>类型</value></data>
   <data name="ColFixField" xml:space="preserve"><value>字段</value></data>
   <data name="ColFixCurrent" xml:space="preserve"><value>当前值</value></data>

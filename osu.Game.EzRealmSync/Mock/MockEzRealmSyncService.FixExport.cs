@@ -41,6 +41,7 @@ namespace osu.Game.EzRealmSync.Mock
                                 Id = Guid.NewGuid(),
                                 Kind = RealmFixIssueKind.IllegalCharacter,
                                 EntityKind = group.EntityKind,
+                                TargetEntityId = row.Id,
                                 FieldName = nameof(RealmEntityRow.Title),
                                 CurrentValue = row.Title,
                                 SuggestedValue = row.Title.Replace(illegal, options.IllegalCharacterReplacement.Length > 0 ? options.IllegalCharacterReplacement[0] : '_'),
@@ -112,9 +113,20 @@ namespace osu.Game.EzRealmSync.Mock
 
                     applied++;
                 }
-                else if (issue.Kind == RealmFixIssueKind.IllegalCharacter)
+                else if (issue.Kind == RealmFixIssueKind.IllegalCharacter && issue.TargetEntityId != null)
                 {
-                    applied++;
+                    if (applyIllegalCharacterToSnapshot(realmId, issue))
+                        applied++;
+                    else
+                        skipped++;
+                }
+                else if (issue.Kind == RealmFixIssueKind.OrphanFile && issue.ExpectedFilePath != null)
+                {
+                    if (File.Exists(issue.ExpectedFilePath))
+                    {
+                        File.Delete(issue.ExpectedFilePath);
+                        applied++;
+                    }
                 }
                 else
                 {
@@ -270,6 +282,50 @@ namespace osu.Game.EzRealmSync.Mock
                 name = name.Replace(c, '_');
 
             return name.Trim();
+        }
+
+        private bool applyIllegalCharacterToSnapshot(string realmId, RealmFixIssue issue)
+        {
+            if (!loadedSnapshots.TryGetValue(realmId, out var snapshot) || issue.TargetEntityId is not Guid targetId)
+                return false;
+
+            bool updated = false;
+            var newGroups = snapshot.Groups.Select(group =>
+            {
+                var newRows = group.Rows.Select(row =>
+                {
+                    if (row.Id != targetId)
+                        return row;
+
+                    updated = true;
+                    return new RealmEntityRow
+                    {
+                        Id = row.Id,
+                        EntityKind = row.EntityKind,
+                        Title = issue.SuggestedValue,
+                        Artist = row.Artist,
+                        Hash = row.Hash,
+                        Ruleset = row.Ruleset,
+                        Date = row.Date,
+                        Extra = row.Extra,
+                    };
+                }).ToList();
+
+                return new RealmGroupSnapshot { EntityKind = group.EntityKind, Rows = newRows };
+            }).ToList();
+
+            if (!updated)
+                return false;
+
+            loadedSnapshots[realmId] = new RealmSnapshot
+            {
+                RealmId = snapshot.RealmId,
+                DisplayName = snapshot.DisplayName,
+                Classes = snapshot.Classes,
+                Groups = newGroups,
+            };
+
+            return true;
         }
     }
 }

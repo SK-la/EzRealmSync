@@ -1305,6 +1305,7 @@ namespace osu.EzRealmSync.AppModel
         {
             RealmFixIssueKind.MissingFile => Loc.Get("FixIssueMissingFile"),
             RealmFixIssueKind.IllegalCharacter => Loc.Get("FixIssueIllegalCharacter"),
+            RealmFixIssueKind.OrphanFile => Loc.Get("FixIssueOrphanFile"),
             _ => kind.ToString(),
         };
 

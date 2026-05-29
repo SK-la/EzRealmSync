@@ -4,6 +4,8 @@ namespace osu.Game.EzRealmSync.Models
     {
         MissingFile,
         IllegalCharacter,
+        /// <summary>files/ 中存在但 Realm 未引用的磁盘文件。</summary>
+        OrphanFile,
     }
 
     public sealed class RealmFixIssue
@@ -23,6 +25,9 @@ namespace osu.Game.EzRealmSync.Models
         public string Detail { get; init; } = string.Empty;
 
         public string? ExpectedFilePath { get; init; }
+
+        /// <summary>修复目标实体（谱面 / 谱集 / 成绩）的主键。</summary>
+        public Guid? TargetEntityId { get; init; }
     }
 
     public sealed class RealmFixScanOptions
@@ -30,6 +35,8 @@ namespace osu.Game.EzRealmSync.Models
         public bool ScanMissingFiles { get; init; } = true;
 
         public bool ScanIllegalCharacters { get; init; } = true;
+
+        public bool ScanOrphanFiles { get; init; } = true;
 
         public string IllegalCharacterReplacement { get; init; } = "_";
 

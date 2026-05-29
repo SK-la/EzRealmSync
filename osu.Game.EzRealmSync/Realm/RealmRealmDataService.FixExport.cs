@@ -27,73 +27,30 @@ namespace osu.Game.EzRealmSync.Realm
             if (!registry.TryGet(realmId, out var file))
                 throw new InvalidOperationException($"未找到 Realm 文件：{realmId}");
 
-            var snapshot = loadCore(realmId, progress, cancellationToken);
-
             if (!RealmWorkspaceDiscovery.TryResolveSharedFilesDirectory(workspacePath, out string filesDirectory))
                 throw new InvalidOperationException("未找到共享 files/ 目录。请在导入页选择 osu! 数据根目录。");
 
             var issues = new List<RealmFixIssue>();
-            char replacement = string.IsNullOrEmpty(options.IllegalCharacterReplacement)
-                ? '_'
-                : options.IllegalCharacterReplacement[0];
 
-            var fileRows = snapshot.Classes.FirstOrDefault(c => c.Class == RealmObjectClass.File)?.Rows ?? new List<RealmBrowseRow>();
+            progress?.Report(new ScanProgress { Progress = 0, Message = "正在打开 Realm…" });
+            using var access = RealmSchemaProbe.Open(file.FilePath, file.SchemaVersion);
 
-            progress?.Report(new ScanProgress { Progress = 0.2, Message = "正在检查 files/…" });
-
-            foreach (var row in fileRows)
+            if (options.ScanMissingFiles)
             {
-                cancellationToken.ThrowIfCancellationRequested();
+                progress?.Report(new ScanProgress { Progress = 0.2, Message = "正在检查缺失文件…" });
+                RealmOrphanFileScanner.ScanMissingReferencedFiles(access, filesDirectory, issues, cancellationToken);
+            }
 
-                if (!row.Cells.TryGetValue("Hash", out string? hash) || string.IsNullOrWhiteSpace(hash))
-                    continue;
-
-                string expectedPath = RealmFilePathHelper.GetFullPath(filesDirectory, hash);
-                bool exists = File.Exists(expectedPath);
-
-                if (options.ScanMissingFiles && !exists)
-                {
-                    issues.Add(new RealmFixIssue
-                    {
-                        Id = Guid.NewGuid(),
-                        Kind = RealmFixIssueKind.MissingFile,
-                        EntityKind = EntityKind.BeatmapSet,
-                        FieldName = "File",
-                        CurrentValue = hash,
-                        SuggestedValue = string.Empty,
-                        Detail = "Realm 文件表有条目但 files/ 中缺少实体文件",
-                        ExpectedFilePath = expectedPath,
-                    });
-                }
+            if (options.ScanOrphanFiles)
+            {
+                progress?.Report(new ScanProgress { Progress = 0.5, Message = "正在检查僵尸文件…" });
+                RealmOrphanFileScanner.ScanOrphansOnDisk(access, filesDirectory, issues, cancellationToken);
             }
 
             if (options.ScanIllegalCharacters)
             {
-                foreach (var group in snapshot.Groups)
-                {
-                    foreach (var entityRow in group.Rows)
-                    {
-                        cancellationToken.ThrowIfCancellationRequested();
-
-                        foreach (char illegal in options.IllegalCharacters)
-                        {
-                            if (!entityRow.Title.Contains(illegal))
-                                continue;
-
-                            issues.Add(new RealmFixIssue
-                            {
-                                Id = Guid.NewGuid(),
-                                Kind = RealmFixIssueKind.IllegalCharacter,
-                                EntityKind = group.EntityKind,
-                                FieldName = nameof(RealmEntityRow.Title),
-                                CurrentValue = entityRow.Title,
-                                SuggestedValue = entityRow.Title.Replace(illegal, replacement),
-                                Detail = $"标题包含非法字符 '{illegal}'（写入 Realm 需后续版本支持）",
-                            });
-                            break;
-                        }
-                    }
-                }
+                progress?.Report(new ScanProgress { Progress = 0.7, Message = "正在检查非法字符…" });
+                RealmIllegalCharacterFixer.Scan(access, issues, options);
             }
 
             fixIssuesByRealm[realmId] = issues;
@@ -119,16 +76,31 @@ namespace osu.Game.EzRealmSync.Realm
             if (!fixIssuesByRealm.TryGetValue(realmId, out var issues))
                 return new RealmFixApplyResult();
 
+            if (!registry.TryGet(realmId, out var file))
+                throw new InvalidOperationException($"未找到 Realm 文件：{realmId}");
+
+            string? processBlock = RealmProcessGuard.TryGetBlockingProcessMessage();
+            if (processBlock != null)
+                throw new InvalidOperationException(processBlock);
+
             var idSet = issueIds.ToHashSet();
+            var selected = issues.Where(i => idSet.Contains(i.Id)).ToList();
             int applied = 0;
             int skipped = 0;
 
-            foreach (var issue in issues)
+            progress?.Report(new ScanProgress { Progress = 0, Message = "正在写入 Realm…" });
+            using var access = RealmSchemaProbe.Open(file.FilePath, file.SchemaVersion);
+
+            var illegalIssues = selected.Where(i => i.Kind == RealmFixIssueKind.IllegalCharacter).ToList();
+            if (illegalIssues.Count > 0)
+            {
+                applied += RealmIllegalCharacterFixer.Apply(access, illegalIssues, cancellationToken);
+                snapshotCache.Remove(realmId);
+            }
+
+            foreach (var issue in selected)
             {
                 cancellationToken.ThrowIfCancellationRequested();
-
-                if (!idSet.Contains(issue.Id))
-                    continue;
 
                 switch (issue.Kind)
                 {
@@ -145,8 +117,13 @@ namespace osu.Game.EzRealmSync.Realm
                         break;
                     }
 
+                    case RealmFixIssueKind.OrphanFile:
+                        // 批量删除见下方
+                        break;
+
                     case RealmFixIssueKind.IllegalCharacter:
-                        skipped++;
+                        if (!illegalIssues.Contains(issue))
+                            skipped++;
                         break;
 
                     default:
@@ -154,6 +131,9 @@ namespace osu.Game.EzRealmSync.Realm
                         break;
                 }
             }
+
+            int orphanDeleted = RealmOrphanFileScanner.DeleteOrphanFiles(selected);
+            applied += orphanDeleted;
 
             fixIssuesByRealm[realmId] = issues.Where(i => !idSet.Contains(i.Id)).ToList();
             progress?.Report(new ScanProgress { Progress = 1, Message = $"已处理 {applied} 项" });
