@@ -10,8 +10,14 @@ namespace osu.Game.EzRealmSync.Abstractions
 
         Task<ApplyResult> ApplyAsync(ApplyRequest request, IProgress<ApplyProgress>? progress = null, CancellationToken cancellationToken = default);
 
-        Task<IReadOnlyList<BackupEntry>> ListBackupsAsync(CancellationToken cancellationToken = default);
+        Task<IReadOnlyList<BackupEntry>> ListBackupsAsync(string? backupDirectory = null, CancellationToken cancellationToken = default);
 
-        Task RestoreBackupAsync(string backupId, IProgress<ApplyProgress>? progress = null, CancellationToken cancellationToken = default);
+        Task RestoreBackupAsync(
+            string backupId,
+            string targetRealmFilePath,
+            string? backupDirectory = null,
+            string? safetyBackupDirectory = null,
+            IProgress<ApplyProgress>? progress = null,
+            CancellationToken cancellationToken = default);
     }
 }

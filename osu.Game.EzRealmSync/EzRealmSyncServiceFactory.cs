@@ -26,7 +26,11 @@ namespace osu.Game.EzRealmSync
             if (uiTestMode)
                 return new MockEzRealmSyncService(mockOptions ?? new MockEzRealmSyncOptions());
 
+#if HAS_EZ_OSU_GAME
+            return new RealmRealmDataService();
+#else
             return new StubRealmDataService();
+#endif
         }
 
         public static IRealmFixService CreateFixService(bool uiTestMode, MockEzRealmSyncOptions? mockOptions = null)

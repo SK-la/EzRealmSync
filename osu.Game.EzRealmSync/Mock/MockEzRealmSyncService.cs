@@ -94,13 +94,19 @@ namespace osu.Game.EzRealmSync.Mock
             };
         }
 
-        public Task<IReadOnlyList<BackupEntry>> ListBackupsAsync(CancellationToken cancellationToken = default)
+        public Task<IReadOnlyList<BackupEntry>> ListBackupsAsync(string? backupDirectory = null, CancellationToken cancellationToken = default)
         {
             cancellationToken.ThrowIfCancellationRequested();
             return Task.FromResult<IReadOnlyList<BackupEntry>>(backups.ToList());
         }
 
-        public async Task RestoreBackupAsync(string backupId, IProgress<ApplyProgress>? progress = null, CancellationToken cancellationToken = default)
+        public async Task RestoreBackupAsync(
+            string backupId,
+            string targetRealmFilePath,
+            string? backupDirectory = null,
+            string? safetyBackupDirectory = null,
+            IProgress<ApplyProgress>? progress = null,
+            CancellationToken cancellationToken = default)
         {
             if (backups.All(b => b.Id != backupId))
                 throw new InvalidOperationException($"找不到备份 {backupId}");

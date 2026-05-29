@@ -17,8 +17,15 @@ namespace osu.Game.EzRealmSync.Realm
         public Task<ApplyResult> ApplyAsync(ApplyRequest request, IProgress<ApplyProgress>? progress = null, CancellationToken cancellationToken = default) =>
             throw new NotImplementedException(message);
 
-        public Task<IReadOnlyList<BackupEntry>> ListBackupsAsync(CancellationToken cancellationToken = default) => Task.FromResult<IReadOnlyList<BackupEntry>>(Array.Empty<BackupEntry>());
+        public Task<IReadOnlyList<BackupEntry>> ListBackupsAsync(string? backupDirectory = null, CancellationToken cancellationToken = default) =>
+            Task.FromResult<IReadOnlyList<BackupEntry>>(Array.Empty<BackupEntry>());
 
-        public Task RestoreBackupAsync(string backupId, IProgress<ApplyProgress>? progress = null, CancellationToken cancellationToken = default) => throw new NotImplementedException(message);
+        public Task RestoreBackupAsync(
+            string backupId,
+            string targetRealmFilePath,
+            string? backupDirectory = null,
+            string? safetyBackupDirectory = null,
+            IProgress<ApplyProgress>? progress = null,
+            CancellationToken cancellationToken = default) => throw new NotImplementedException(message);
     }
 }

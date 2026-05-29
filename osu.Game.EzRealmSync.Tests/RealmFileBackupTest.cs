@@ -66,5 +66,35 @@ namespace osu.Game.EzRealmSync.Tests
 
             Assert.Throws<FileNotFoundException>(() => RealmFileBackup.CreateTimestampedCopy(source, backupDir));
         }
+
+        [Test]
+        public void RestoreOverTarget_replaces_target_and_preserves_safety_copy()
+        {
+            Directory.CreateDirectory(tempRoot);
+            string backupDir = Path.Combine(tempRoot, "backups");
+            string safetyDir = Path.Combine(tempRoot, "safety");
+            string target = Path.Combine(tempRoot, "client.realm");
+            string backup = Path.Combine(backupDir, "client_20260529_120000.realm");
+
+            Directory.CreateDirectory(backupDir);
+            File.WriteAllText(target, "current");
+            File.WriteAllText(backup, "restored");
+
+            RealmFileBackup.RestoreOverTarget(backup, target, safetyDir);
+
+            Assert.That(File.ReadAllText(target), Is.EqualTo("restored"));
+            Assert.That(Directory.GetFiles(safetyDir, "*.realm"), Has.Length.EqualTo(1));
+            Assert.That(File.ReadAllText(Directory.GetFiles(safetyDir, "*.realm")[0]), Is.EqualTo("current"));
+        }
+
+        [Test]
+        public void RestoreOverTarget_throws_when_paths_are_same()
+        {
+            Directory.CreateDirectory(tempRoot);
+            string path = Path.Combine(tempRoot, "client.realm");
+            File.WriteAllText(path, "x");
+
+            Assert.Throws<InvalidOperationException>(() => RealmFileBackup.RestoreOverTarget(path, path));
+        }
     }
 }

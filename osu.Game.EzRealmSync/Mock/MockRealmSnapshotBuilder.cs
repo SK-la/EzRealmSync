@@ -30,7 +30,7 @@ namespace osu.Game.EzRealmSync.Mock
                 RealmId = file.Id,
                 DisplayName = file.DisplayName,
                 Classes = classes,
-                Groups = deriveGroups(classes),
+                Groups = RealmSnapshotGrouper.DeriveGroups(classes),
             };
         }
 
@@ -186,52 +186,5 @@ namespace osu.Game.EzRealmSync.Mock
             2 => "taiko",
             _ => "catch",
         };
-
-        private static List<RealmGroupSnapshot> deriveGroups(IReadOnlyList<RealmClassGroup> classes)
-        {
-            var result = new List<RealmGroupSnapshot>();
-
-            foreach (var (entityKind, objectClass) in new[]
-            {
-                (EntityKind.BeatmapSet, RealmObjectClass.BeatmapSet),
-                (EntityKind.Beatmap, RealmObjectClass.Beatmap),
-                (EntityKind.Score, RealmObjectClass.Score),
-            })
-            {
-                var group = classes.FirstOrDefault(c => c.Class == objectClass);
-                if (group == null)
-                    continue;
-
-                result.Add(new RealmGroupSnapshot
-                {
-                    EntityKind = entityKind,
-                    Rows = group.Rows.Select(r => toEntityRow(entityKind, r)).ToList(),
-                });
-            }
-
-            return result;
-        }
-
-        private static RealmEntityRow toEntityRow(EntityKind kind, RealmBrowseRow row)
-        {
-            string title = row.Cells.TryGetValue("Title", out string? t) ? t
-                : row.Cells.TryGetValue("Name", out string? n) ? n
-                : row.Cells.TryGetValue("Filename", out string? f) ? f
-                : $"[{kind}] {row.Id:N}".Substring(0, Math.Min(48, $"[{kind}] {row.Id:N}".Length));
-
-            return new RealmEntityRow
-            {
-                Id = row.Id,
-                EntityKind = kind,
-                Title = title,
-                Artist = row.Cells.TryGetValue("Artist", out string? artist) ? artist : "Mock Artist",
-                Hash = row.Cells.TryGetValue("Hash", out string? hash) ? hash : row.Id.ToString("N"),
-                Ruleset = row.Cells.TryGetValue("Ruleset", out string? ruleset) ? ruleset : row.Cells.TryGetValue("ShortName", out string? sn) ? sn : "osu",
-                Date = kind == EntityKind.Score && row.Cells.TryGetValue("Date", out string? date) && DateTimeOffset.TryParse(date, out var parsed)
-                    ? parsed
-                    : null,
-                Extra = kind == EntityKind.BeatmapSet && row.Cells.TryGetValue("OnlineID", out string? onlineId) ? $"OnlineID={onlineId}" : null,
-            };
-        }
     }
 }

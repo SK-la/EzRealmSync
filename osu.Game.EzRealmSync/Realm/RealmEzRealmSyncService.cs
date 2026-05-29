@@ -3,6 +3,7 @@ using osu.Game.Database;
 using osu.Game.EzRealmSync.Abstractions;
 using osu.Game.EzRealmSync.IO;
 using osu.Game.EzRealmSync.Models;
+using osu.Game.EzRealmSync;
 
 namespace osu.Game.EzRealmSync.Realm
 {
@@ -11,8 +12,6 @@ namespace osu.Game.EzRealmSync.Realm
     /// </summary>
     public sealed class RealmEzRealmSyncService : IEzRealmSyncService
     {
-        private readonly List<BackupEntry> backups = new();
-
         public Task<ValidationResult> ValidatePathsAsync(PathConfiguration paths, CancellationToken cancellationToken = default)
         {
             cancellationToken.ThrowIfCancellationRequested();
@@ -105,14 +104,45 @@ namespace osu.Game.EzRealmSync.Realm
             return RealmRowCopier.Apply(request, sourceAccess, targetAccess, progress, cancellationToken);
         }
 
-        public Task<IReadOnlyList<BackupEntry>> ListBackupsAsync(CancellationToken cancellationToken = default)
+        public Task<IReadOnlyList<BackupEntry>> ListBackupsAsync(string? backupDirectory = null, CancellationToken cancellationToken = default)
         {
             cancellationToken.ThrowIfCancellationRequested();
-            return Task.FromResult<IReadOnlyList<BackupEntry>>(backups.ToList());
+            string directory = string.IsNullOrWhiteSpace(backupDirectory) ? EzRealmSyncDefaults.DefaultBackupDirectory : backupDirectory;
+            return Task.FromResult(RealmBackupCatalog.List(directory));
         }
 
-        public Task RestoreBackupAsync(string backupId, IProgress<ApplyProgress>? progress = null, CancellationToken cancellationToken = default) =>
-            throw new NotImplementedException("备份还原尚未实现（P2.4）。");
+        public Task RestoreBackupAsync(
+            string backupId,
+            string targetRealmFilePath,
+            string? backupDirectory = null,
+            string? safetyBackupDirectory = null,
+            IProgress<ApplyProgress>? progress = null,
+            CancellationToken cancellationToken = default) =>
+            Task.Run(() => restoreCore(backupId, targetRealmFilePath, backupDirectory, safetyBackupDirectory, progress, cancellationToken), cancellationToken);
+
+        private static void restoreCore(
+            string backupId,
+            string targetRealmFilePath,
+            string? backupDirectory,
+            string? safetyBackupDirectory,
+            IProgress<ApplyProgress>? progress,
+            CancellationToken cancellationToken)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            progress?.Report(new ApplyProgress { Progress = 0, Message = "正在定位备份…" });
+
+            string directory = string.IsNullOrWhiteSpace(backupDirectory) ? EzRealmSyncDefaults.DefaultBackupDirectory : backupDirectory;
+
+            if (!RealmBackupCatalog.TryFind(directory, backupId, out var entry))
+                throw new InvalidOperationException($"找不到备份：{backupId}");
+
+            progress?.Report(new ApplyProgress { Progress = 0.3, Message = "正在还原…" });
+            cancellationToken.ThrowIfCancellationRequested();
+
+            RealmFileBackup.RestoreOverTarget(entry.Path, targetRealmFilePath, safetyBackupDirectory);
+
+            progress?.Report(new ApplyProgress { Progress = 1, Message = "还原完成" });
+        }
     }
 }
 #endif

@@ -7,7 +7,7 @@
 | 里程碑 | 状态 | 说明 |
 |--------|------|------|
 | **M1** Phase 1 UI | **基本完成** | 独立仓库 WPF Desktop（五 Tab），`--ui-test` Mock |
-| **M2** Phase 2 数据 | **进行中** | P2.1–P2.3 完成；P2.4 备份还原 / 真实数据加载待接 |
+| **M2** Phase 2 数据 | **进行中** | P2.1–P2.4 完成；P2.5 集成测试与手工验收待做 |
 | **M3** Phase 3 | 未开始 | Collections / Zombie / `.osr` |
 
 ### Phase 1 已交付（Desktop）
@@ -23,7 +23,8 @@
 - [x] **P2.1** `OfficialRealmAccess`（`osu.Game`）
 - [x] **P2.2** `RealmDiffEngine` + `RealmDiffReader` + `ScanAsync`（需 `lib/osu.Game.dll`）
 - [x] **P2.3** `RealmRowCopier` + `ApplyAsync`（Ez→官方；`RealmApplySupport` 单测）
-- [ ] **P2.4** 备份还原、`IRealmDataService` 真实加载、官方→Ez
+- [x] **P2.4** `RealmBackupCatalog` / 还原、`RealmRealmDataService` 真实加载与集合比对
+- [ ] **P2.4b** 官方→Ez 写入（`ApplyAsync` 反向）
 - [ ] **P2.5** 集成测试 + 手工 Ez→官方验收
 
 ## 仓库结构
@@ -42,7 +43,7 @@ Phase 2 依赖 `lib/osu.Game.dll`（见 [lib/README.md](../lib/README.md)）。
 
 | 项目 | 覆盖 |
 |------|------|
-| `osu.Game.EzRealmSync.Tests` | Schema 编解码、`RealmFileBackup`、`RealmWorkspacePaths`、Mock 同步/备份、设置持久化 |
+| `osu.Game.EzRealmSync.Tests` | Schema 编解码、`RealmFileBackup`、`RealmBackupCatalog`、`RealmSetCompareHelper`、`RealmFileRegistry`、Mock 同步/备份、设置持久化 |
 | `osu.Game.Tests` | `OfficialRealmAccess` / `EzRealmSchemaProfile` / Ez schema 版本 |
 
 ```bash
