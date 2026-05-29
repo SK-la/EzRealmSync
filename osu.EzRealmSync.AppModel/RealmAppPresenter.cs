@@ -1,5 +1,4 @@
 using System.Collections.ObjectModel;
-using System.Data;
 using osu.EzRealmSync.AppModel.Localization;
 using osu.Framework.Bindables;
 using osu.Game.EzRealmSync.Abstractions;
@@ -30,10 +29,7 @@ namespace osu.EzRealmSync.AppModel
         private readonly List<DiffRowModel> syncRows = new();
         private RealmSnapshot? loadedSnapshot;
         private readonly Dictionary<RealmObjectClass, List<RealmBrowseRow>> browseRowsByClass = new();
-        private readonly DataTable browseTable = new();
-        private bool loadingSettings;
-
-        public const string BrowseIdColumn = "__Id";
+        private readonly bool loadingSettings;
 
         public RealmAppPresenter(
             IEzRealmSyncService syncService,
@@ -47,7 +43,6 @@ namespace osu.EzRealmSync.AppModel
             this.fixService = fixService;
             this.exportService = exportService;
             this.launchOptions = launchOptions;
-            BrowseDataView = browseTable.DefaultView;
 
             loadingSettings = true;
             applySettings(AppSettingsStore.Load());
@@ -70,9 +65,14 @@ namespace osu.EzRealmSync.AppModel
             ExportDirectory.BindValueChanged(_ => persistSettings());
             ExportFolderName.BindValueChanged(_ => persistSettings());
             IllegalCharacterReplacement.BindValueChanged(_ => persistSettings());
+            ConfirmBeforeDelete.BindValueChanged(_ => persistSettings());
         }
 
         public ObservableCollection<RealmFileEntry> RealmFiles { get; } = new();
+
+        public ObservableCollection<RealmFileRowModel> RealmFileRows { get; } = new();
+
+        public ObservableCollection<RealmBrowseRowModel> BrowseRows { get; } = new();
 
         public ObservableCollection<RealmEntityRowModel> DataRows { get; } = new();
 
@@ -93,9 +93,11 @@ namespace osu.EzRealmSync.AppModel
 
         public Bindable<string?> ExportRealmId { get; } = new Bindable<string?>();
 
-        public Bindable<ExportDataKind> SelectedExportKind { get; } = new Bindable<ExportDataKind>(global::osu.Game.EzRealmSync.Models.ExportDataKind.BeatmapSet);
+        public Bindable<ExportDataKind> SelectedExportKind { get; } = new Bindable<ExportDataKind>(ExportDataKind.BeatmapSet);
 
         public Bindable<string> IllegalCharacterReplacement { get; } = new Bindable<string>("_");
+
+        public BindableBool ConfirmBeforeDelete { get; } = new BindableBool(true);
 
         public Bindable<string> ExportDirectory { get; } = new Bindable<string>(string.Empty);
 
@@ -124,8 +126,6 @@ namespace osu.EzRealmSync.AppModel
         public BindableBool IsSelectAllMode { get; } = new BindableBool(true);
 
         public string LoadedSnapshotSummary { get; private set; } = string.Empty;
-
-        public DataView BrowseDataView { get; private set; }
 
         public IReadOnlyList<RealmColumnDefinition> BrowseColumns { get; private set; } = Array.Empty<RealmColumnDefinition>();
 
@@ -190,6 +190,7 @@ namespace osu.EzRealmSync.AppModel
                     foreach (var file in files)
                         RealmFiles.Add(file);
 
+                    refreshRealmFileRows();
                     RealmFilesChanged?.Invoke();
                     updateWorkspaceCapabilities();
 
@@ -508,22 +509,157 @@ namespace osu.EzRealmSync.AppModel
             SyncRowsChanged?.Invoke();
         }
 
-        public int DeleteBrowseRows(IReadOnlyList<Guid> rowIds)
+        public async Task<bool> TryConfirmDeleteAsync(int count)
+        {
+            if (count <= 0)
+                return false;
+
+            if (!ConfirmBeforeDelete.Value)
+                return true;
+
+            if (ConfirmAsync == null)
+                return true;
+
+            return await ConfirmAsync(
+                Loc.Format("ConfirmDeleteRows", count),
+                Loc.Get("DeleteTitle"),
+                true).ConfigureAwait(false);
+        }
+
+        public void SetBrowseRowsChecked(IEnumerable<RealmBrowseRowModel> rows, bool isChecked)
+        {
+            foreach (var row in rows)
+                row.IsSelected = isChecked;
+
+            DataSelectionCount.Value = BrowseRows.Count(r => r.IsSelected);
+            BrowseTableChanged?.Invoke();
+        }
+
+        public void InvertBrowseRowChecks()
+        {
+            foreach (var row in BrowseRows)
+                row.IsSelected = !row.IsSelected;
+
+            DataSelectionCount.Value = BrowseRows.Count(r => r.IsSelected);
+            BrowseTableChanged?.Invoke();
+        }
+
+        public async Task DeleteBrowseRowsAsync(IReadOnlyList<RealmBrowseRowModel> rows)
+        {
+            if (rows.Count == 0)
+                return;
+
+            if (!await TryConfirmDeleteAsync(rows.Count).ConfigureAwait(false))
+                return;
+
+            deleteBrowseRowsCore(rows.Select(r => r.Id).ToList());
+        }
+
+        public async Task DeleteSyncRowsAsync(IReadOnlyList<DiffRowModel> rows)
+        {
+            if (rows.Count == 0)
+                return;
+
+            if (!await TryConfirmDeleteAsync(rows.Count).ConfigureAwait(false))
+                return;
+
+            runOnUi(() =>
+            {
+                foreach (var row in rows)
+                    syncRows.Remove(row);
+
+                updateSelectionCount();
+                SyncRowsChanged?.Invoke();
+                StatusMessage.Value = Loc.Format("StatusBrowseRowsDeleted", rows.Count);
+            });
+        }
+
+        public async Task DeleteFixIssuesAsync(IReadOnlyList<RealmFixIssueModel> issues)
+        {
+            if (issues.Count == 0)
+                return;
+
+            if (!await TryConfirmDeleteAsync(issues.Count).ConfigureAwait(false))
+                return;
+
+            runOnUi(() =>
+            {
+                foreach (var issue in issues)
+                    FixIssues.Remove(issue);
+
+                FixIssuesChanged?.Invoke();
+                StatusMessage.Value = Loc.Format("StatusBrowseRowsDeleted", issues.Count);
+            });
+        }
+
+        public async Task DeleteExportItemsAsync(IReadOnlyList<RealmExportItemModel> items)
+        {
+            if (items.Count == 0)
+                return;
+
+            if (!await TryConfirmDeleteAsync(items.Count).ConfigureAwait(false))
+                return;
+
+            runOnUi(() =>
+            {
+                foreach (var item in items)
+                    ExportItems.Remove(item);
+
+                ExportItemsChanged?.Invoke();
+                StatusMessage.Value = Loc.Format("StatusBrowseRowsDeleted", items.Count);
+            });
+        }
+
+        public async Task DeleteRealmFileRowsAsync(IReadOnlyList<RealmFileRowModel> rows)
+        {
+            if (rows.Count == 0)
+                return;
+
+            if (!await TryConfirmDeleteAsync(rows.Count).ConfigureAwait(false))
+                return;
+
+            runOnUi(() =>
+            {
+                foreach (var row in rows)
+                {
+                    var entry = RealmFiles.FirstOrDefault(f => f.Id == row.Id);
+                    if (entry != null)
+                        RealmFiles.Remove(entry);
+                }
+
+                refreshRealmFileRows();
+                RealmFilesChanged?.Invoke();
+                updateWorkspaceCapabilities();
+                StatusMessage.Value = Loc.Format("StatusBrowseRowsDeleted", rows.Count);
+            });
+        }
+
+        public void SetRealmFileRowsChecked(IEnumerable<RealmFileRowModel> rows, bool isChecked)
+        {
+            foreach (var row in rows)
+                row.IsSelected = isChecked;
+        }
+
+        public void InvertRealmFileRowChecks()
+        {
+            foreach (var row in RealmFileRows)
+                row.IsSelected = !row.IsSelected;
+        }
+
+        private void deleteBrowseRowsCore(IReadOnlyList<Guid> rowIds)
         {
             if (rowIds.Count == 0 || !browseRowsByClass.TryGetValue(SelectedRealmClass.Value, out var rows))
-                return 0;
+                return;
 
             int removed = rows.RemoveAll(r => rowIds.Contains(r.Id));
 
             if (removed == 0)
-                return 0;
+                return;
 
             refreshDataClassCounts();
             refreshBrowseTable();
             updateLoadedSnapshotSummary();
-
             StatusMessage.Value = Loc.Format("StatusBrowseRowsDeleted", removed);
-            return removed;
         }
 
         public async Task ScanFixIssuesAsync()
@@ -572,6 +708,7 @@ namespace osu.EzRealmSync.AppModel
         public async Task ApplySelectedFixesAsync()
         {
             var selected = FixIssues.Where(i => i.IsSelected).Select(i => i.Id).ToList();
+
             if (selected.Count == 0)
             {
                 runOnUi(() => StatusMessage.Value = Loc.Get("ErrorNoSelection"));
@@ -674,6 +811,7 @@ namespace osu.EzRealmSync.AppModel
                 return;
 
             var selected = ExportItems.Where(i => i.IsSelected).Select(i => i.Id).ToList();
+
             if (selected.Count == 0)
             {
                 runOnUi(() => StatusMessage.Value = Loc.Get("ErrorNoSelection"));
@@ -803,6 +941,7 @@ namespace osu.EzRealmSync.AppModel
             }
 
             browseRowsByClass.Clear();
+
             foreach (var group in loadedSnapshot.Classes)
             {
                 browseRowsByClass[group.Class] = group.Rows.ToList();
@@ -822,13 +961,12 @@ namespace osu.EzRealmSync.AppModel
 
         private void refreshBrowseTable() => runOnUi(() =>
         {
-            browseTable.Clear();
-            browseTable.Columns.Clear();
+            BrowseRows.Clear();
 
             if (loadedSnapshot == null)
             {
                 BrowseColumns = Array.Empty<RealmColumnDefinition>();
-                BrowseDataView = browseTable.DefaultView;
+                DataSelectionCount.Value = 0;
                 BrowseTableChanged?.Invoke();
                 return;
             }
@@ -839,31 +977,25 @@ namespace osu.EzRealmSync.AppModel
             if (group == null || !browseRowsByClass.TryGetValue(group.Class, out var rows))
             {
                 BrowseColumns = Array.Empty<RealmColumnDefinition>();
-                BrowseDataView = browseTable.DefaultView;
+                DataSelectionCount.Value = 0;
                 BrowseTableChanged?.Invoke();
                 return;
             }
 
             BrowseColumns = group.Columns;
 
-            browseTable.Columns.Add(BrowseIdColumn, typeof(Guid));
-
-            foreach (var column in group.Columns)
-                browseTable.Columns.Add(column.PropertyKey, typeof(string));
-
             foreach (var row in rows)
-            {
-                var dataRow = browseTable.NewRow();
-                dataRow[BrowseIdColumn] = row.Id;
-                foreach (var column in group.Columns)
-                    dataRow[column.PropertyKey] = row.Cells.TryGetValue(column.PropertyKey, out string? value) ? value : string.Empty;
+                BrowseRows.Add(new RealmBrowseRowModel(row, group.Columns));
 
-                browseTable.Rows.Add(dataRow);
-            }
-
-            BrowseDataView = browseTable.DefaultView;
-            DataSelectionCount.Value = 0;
+            DataSelectionCount.Value = BrowseRows.Count(r => r.IsSelected);
             BrowseTableChanged?.Invoke();
+        });
+
+        private void refreshRealmFileRows() => runOnUi(() =>
+        {
+            RealmFileRows.Clear();
+            foreach (var file in RealmFiles)
+                RealmFileRows.Add(new RealmFileRowModel(file));
         });
 
         private void applySettings(EzRealmSyncAppSettings settings)
@@ -885,6 +1017,8 @@ namespace osu.EzRealmSync.AppModel
             IllegalCharacterReplacement.Value = string.IsNullOrWhiteSpace(settings.IllegalCharacterReplacement)
                 ? "_"
                 : settings.IllegalCharacterReplacement;
+
+            ConfirmBeforeDelete.Value = settings.ConfirmBeforeDelete;
         }
 
         private void persistSettings()
@@ -893,12 +1027,13 @@ namespace osu.EzRealmSync.AppModel
                 return;
 
             AppSettingsStore.Save(new EzRealmSyncAppSettings
-        {
-            SearchDirectory = SearchDirectory.Value,
-            BackupDirectory = BackupDirectory.Value,
-            ExportDirectory = ExportDirectory.Value,
-            ExportFolderName = ExportFolderName.Value,
-            IllegalCharacterReplacement = IllegalCharacterReplacement.Value,
+            {
+                SearchDirectory = SearchDirectory.Value,
+                BackupDirectory = BackupDirectory.Value,
+                ExportDirectory = ExportDirectory.Value,
+                ExportFolderName = ExportFolderName.Value,
+                IllegalCharacterReplacement = IllegalCharacterReplacement.Value,
+                ConfirmBeforeDelete = ConfirmBeforeDelete.Value,
             });
         }
 
@@ -1023,9 +1158,9 @@ namespace osu.EzRealmSync.AppModel
 
         public static string GetExportDataKindLabel(ExportDataKind kind) => kind switch
         {
-            global::osu.Game.EzRealmSync.Models.ExportDataKind.BeatmapSet => Loc.Get("ExportKindBeatmapSet"),
-            global::osu.Game.EzRealmSync.Models.ExportDataKind.Beatmap => Loc.Get("ExportKindBeatmap"),
-            global::osu.Game.EzRealmSync.Models.ExportDataKind.Collection => Loc.Get("ExportKindCollection"),
+            ExportDataKind.BeatmapSet => Loc.Get("ExportKindBeatmapSet"),
+            ExportDataKind.Beatmap => Loc.Get("ExportKindBeatmap"),
+            ExportDataKind.Collection => Loc.Get("ExportKindCollection"),
             _ => kind.ToString(),
         };
 

@@ -1,20 +1,36 @@
+using System.Windows.Controls.Primitives;
+
 namespace osu.EzRealmSync.Desktop.Helpers
 {
     internal static class DataGridContextMenuHelper
     {
         private const string tag_prefix = "EzCtx.";
 
-        public static void Attach(DataGrid grid, Action<ContextMenu> appendItems)
+        /// <summary>
+        /// 禁用剪贴板菜单，仅显示自定义项。
+        /// 注意：不得在 ContextMenuOpening 中设置 e.Handled=true，否则会阻止菜单弹出。
+        /// </summary>
+        public static void AttachExclusive(DataGrid grid, Action<ContextMenu> buildMenu)
         {
-            grid.ContextMenuOpening += (_, _) =>
+            grid.ClipboardCopyMode = DataGridClipboardCopyMode.None;
+
+            var menu = new ContextMenu();
+            buildMenu(menu);
+            grid.ContextMenu = menu;
+
+            // WPF-UI DataGrid 有时不触发标准 ContextMenu 打开，用手动打开作兜底
+            grid.PreviewMouseRightButtonUp += (_, e) =>
             {
-                grid.ContextMenu ??= new ContextMenu();
-                removeTaggedItems(grid.ContextMenu);
+                if (e.ChangedButton != MouseButton.Right)
+                    return;
 
-                if (grid.ContextMenu.Items.Count > 0)
-                    grid.ContextMenu.Items.Add(new Separator { Tag = tag_prefix + "sep" });
+                if (menu.Items.Count == 0)
+                    return;
 
-                appendItems(grid.ContextMenu);
+                menu.PlacementTarget = grid;
+                menu.Placement = PlacementMode.MousePoint;
+                menu.IsOpen = true;
+                e.Handled = true;
             };
         }
 
@@ -28,15 +44,6 @@ namespace osu.EzRealmSync.Desktop.Helpers
             item.Click += click;
             menu.Items.Add(item);
             return item;
-        }
-
-        private static void removeTaggedItems(ContextMenu menu)
-        {
-            for (int i = menu.Items.Count - 1; i >= 0; i--)
-            {
-                if (menu.Items[i] is FrameworkElement { Tag: string tag } && tag.StartsWith(tag_prefix, StringComparison.Ordinal))
-                    menu.Items.RemoveAt(i);
-            }
         }
     }
 }

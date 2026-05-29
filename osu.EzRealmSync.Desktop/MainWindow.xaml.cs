@@ -53,7 +53,7 @@ namespace osu.EzRealmSync.Desktop
 
             RootContentDialogHost.IsHitTestVisible = false;
             DependencyPropertyDescriptor
-                .FromProperty(ContentControl.ContentProperty, typeof(ContentControl))
+                .FromProperty(ContentProperty, typeof(ContentControl))
                 .AddValueChanged(RootContentDialogHost, (_, _) => syncHitTest());
             syncHitTest();
         }
@@ -82,8 +82,12 @@ namespace osu.EzRealmSync.Desktop
                             break;
                         case nameof(ShellViewModel.IsBusy):
                             UiTestModeSwitch.IsEnabled = !shell.IsBusy;
+                            ConfirmDeleteSwitch.IsEnabled = !shell.IsBusy;
                             if (!shell.IsBusy)
                                 lastSnackbarStatus = null;
+                            break;
+                        case nameof(ShellViewModel.ConfirmBeforeDelete):
+                            ConfirmDeleteSwitch.IsChecked = shell.ConfirmBeforeDelete;
                             break;
                         case nameof(ShellViewModel.CanUseFixAndExport):
                             updateFixExportNavEnabled();
@@ -168,6 +172,11 @@ namespace osu.EzRealmSync.Desktop
             UiTestModeSwitch.IsChecked = vm.Presenter.UiTestMode.Value;
             UiTestModeSwitch.IsEnabled = !vm.IsBusy;
 
+            ConfirmDeleteSwitch.Content = Loc.Get("ConfirmBeforeDelete");
+            ConfirmDeleteHint.Text = Loc.Get("ConfirmBeforeDeleteHint");
+            ConfirmDeleteSwitch.IsChecked = vm.ConfirmBeforeDelete;
+            ConfirmDeleteSwitch.IsEnabled = !vm.IsBusy;
+
             bool showMock = vm.Presenter.UiTestMode.Value && vm.Presenter.MockService != null;
             MockSettingsExpander.Visibility = showMock ? Visibility.Visible : Visibility.Collapsed;
 
@@ -229,6 +238,14 @@ namespace osu.EzRealmSync.Desktop
             vm.Presenter.UiTestMode.Value = enabled;
             refreshSettingsFlyout();
             WpfUiSnackbar.Show(vm.WindowTitle, Loc.Get("UiTestModeRestartHint"), ControlAppearance.Info);
+        }
+
+        private void ConfirmDeleteSwitch_OnClick(object sender, RoutedEventArgs e)
+        {
+            if (vm == null)
+                return;
+
+            vm.ConfirmBeforeDelete = ConfirmDeleteSwitch.IsChecked == true;
         }
 
         private void DatasetCombo_OnChanged(object sender, SelectionChangedEventArgs e)

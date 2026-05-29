@@ -1,7 +1,7 @@
-using System.Data;
 using System.Windows.Data;
 using osu.EzRealmSync.AppModel;
 using osu.EzRealmSync.AppModel.Localization;
+using osu.EzRealmSync.Desktop.Converters;
 using osu.EzRealmSync.Desktop.Helpers;
 using osu.EzRealmSync.Desktop.ViewModels;
 using osu.Game.EzRealmSync.Models;
@@ -10,8 +10,11 @@ namespace osu.EzRealmSync.Desktop.Pages
 {
     public partial class DataPage : UserControl
     {
+        private static readonly BrowseCellConverter browseCellConverter = new();
+
         private ShellViewModel? vm;
         private bool suppressClassSelection;
+        private bool browseGridConfigured;
 
         public DataPage()
         {
@@ -28,7 +31,7 @@ namespace osu.EzRealmSync.Desktop.Pages
             vm = shell;
             LoadButton.Content = Loc.Get("LoadRealm");
             ClassesHeader.Text = Loc.Get("DataClasses");
-            attachBrowseContextMenu();
+            configureBrowseGrid();
             refreshRealmCombo();
             refreshSummary();
             refreshClassList();
@@ -45,60 +48,27 @@ namespace osu.EzRealmSync.Desktop.Pages
                     refreshClassList();
                 }
 
-                if (e.PropertyName is nameof(ShellViewModel.BrowseDataView) or nameof(ShellViewModel.BrowseColumns))
+                if (e.PropertyName is nameof(ShellViewModel.BrowseRows) or nameof(ShellViewModel.BrowseColumns))
                     refreshBrowseGrid();
             };
 
             vm.Presenter.SelectedRealmClass.BindValueChanged(_ => Dispatcher.Invoke(syncClassListSelection));
+            vm.Presenter.BrowseTableChanged += () => Dispatcher.Invoke(refreshBrowseGrid);
         }
 
-        private void attachBrowseContextMenu()
+        private void configureBrowseGrid()
         {
-            DataGridContextMenuHelper.Attach(DataGrid, menu =>
-            {
-                DataGridContextMenuHelper.AddItem(menu, "delete", Loc.Get("CtxDelete"), (_, _) => deleteSelectedBrowseRows());
-            });
-        }
-
-        private void deleteSelectedBrowseRows()
-        {
-            if (vm == null)
+            if (browseGridConfigured || vm == null)
                 return;
 
-            var ids = collectSelectedBrowseRowIds();
-            if (ids.Count == 0)
-                return;
+            browseGridConfigured = true;
 
-            vm.Presenter.DeleteBrowseRows(ids);
-            refreshSummary();
-            refreshClassList();
-            refreshBrowseGrid();
-        }
-
-        private List<Guid> collectSelectedBrowseRowIds()
-        {
-            var ids = new List<Guid>();
-
-            foreach (var item in DataGrid.SelectedItems)
-            {
-                if (item is DataRowView rowView)
-                    tryAddRowId(rowView, ids);
-            }
-
-            if (ids.Count == 0 && DataGrid.CurrentItem is DataRowView current)
-                tryAddRowId(current, ids);
-
-            return ids;
-        }
-
-        private static void tryAddRowId(DataRowView rowView, List<Guid> ids)
-        {
-            if (!rowView.Row.Table.Columns.Contains(RealmAppPresenter.BrowseIdColumn))
-                return;
-
-            var value = rowView[RealmAppPresenter.BrowseIdColumn];
-            if (value is Guid id)
-                ids.Add(id);
+            CheckableDataGridHelper.Configure<RealmBrowseRowModel>(
+                DataGrid,
+                () => vm.BrowseRows,
+                (rows, check) => vm.Presenter.SetBrowseRowsChecked(rows, check),
+                () => vm.Presenter.InvertBrowseRowChecks(),
+                rows => vm.Presenter.DeleteBrowseRowsAsync(rows));
         }
 
         private void refreshSummary()
@@ -132,6 +102,7 @@ namespace osu.EzRealmSync.Desktop.Pages
                 return;
 
             suppressClassSelection = true;
+
             foreach (RealmClassListItemModel item in ClassList.Items)
             {
                 if (item.Class == vm.SelectedRealmClass)
@@ -150,19 +121,41 @@ namespace osu.EzRealmSync.Desktop.Pages
                 return;
 
             rebuildBrowseColumns(vm.BrowseColumns);
-            DataGrid.ItemsSource = vm.BrowseDataView;
+            DataGrid.ItemsSource = vm.BrowseRows;
         }
 
         private void rebuildBrowseColumns(IReadOnlyList<RealmColumnDefinition> columns)
         {
             DataGrid.Columns.Clear();
 
+            var checkFactory = new FrameworkElementFactory(typeof(CheckBox));
+            checkFactory.SetBinding(
+                CheckBox.IsCheckedProperty,
+                new Binding(nameof(RealmBrowseRowModel.IsSelected))
+                {
+                    Mode = BindingMode.TwoWay,
+                    UpdateSourceTrigger = UpdateSourceTrigger.PropertyChanged,
+                });
+            checkFactory.SetValue(HorizontalAlignmentProperty, HorizontalAlignment.Center);
+            checkFactory.SetValue(VerticalAlignmentProperty, VerticalAlignment.Center);
+
+            DataGrid.Columns.Add(new DataGridTemplateColumn
+            {
+                Header = string.Empty,
+                Width = 40,
+                CellTemplate = new DataTemplate { VisualTree = checkFactory },
+            });
+
             foreach (var column in columns)
             {
                 DataGrid.Columns.Add(new DataGridTextColumn
                 {
                     Header = formatColumnHeader(column),
-                    Binding = new Binding($"[{column.PropertyKey}]") { Mode = BindingMode.OneWay },
+                    Binding = new Binding
+                    {
+                        Converter = browseCellConverter,
+                        ConverterParameter = column.PropertyKey,
+                    },
                     Width = DataGridLength.Auto,
                     MinWidth = 72,
                     IsReadOnly = true,

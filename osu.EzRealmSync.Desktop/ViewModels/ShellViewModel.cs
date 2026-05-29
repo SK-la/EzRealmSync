@@ -1,6 +1,5 @@
 using System.Collections.ObjectModel;
 using System.ComponentModel;
-using System.Data;
 using System.Runtime.CompilerServices;
 using osu.EzRealmSync.AppModel;
 using osu.EzRealmSync.AppModel.Localization;
@@ -15,7 +14,7 @@ namespace osu.EzRealmSync.Desktop.ViewModels
         public ShellViewModel(RealmAppPresenter presenter, EzRealmSyncLaunchOptions options)
         {
             Presenter = presenter;
-            this.LaunchOptions = options;
+            LaunchOptions = options;
 
             presenter.PickFolderAsync = path =>
             {
@@ -67,6 +66,7 @@ namespace osu.EzRealmSync.Desktop.ViewModels
             bindPresenter(presenter.IllegalCharacterReplacement, nameof(IllegalCharacterReplacement));
             bindPresenter(presenter.ExportDirectory, nameof(ExportDirectory));
             bindPresenter(presenter.ExportFolderName, nameof(ExportFolderName));
+            bindPresenter(presenter.ConfirmBeforeDelete, nameof(ConfirmBeforeDelete));
 
             presenter.RealmFilesChanged += () => Application.Current.Dispatcher.Invoke(onRealmFilesChanged);
             presenter.SyncRowsChanged += () => Application.Current.Dispatcher.Invoke(onSyncRowsChanged);
@@ -118,9 +118,17 @@ namespace osu.EzRealmSync.Desktop.ViewModels
         public string SelectionCountText => Loc.Format("SelectionCount", Presenter.SelectionCount.Value);
         public string LoadedSnapshotSummary => Presenter.LoadedSnapshotSummary;
 
-        public DataView BrowseDataView => Presenter.BrowseDataView;
+        public ObservableCollection<RealmBrowseRowModel> BrowseRows => Presenter.BrowseRows;
+
+        public ObservableCollection<RealmFileRowModel> RealmFileRows => Presenter.RealmFileRows;
 
         public IReadOnlyList<RealmColumnDefinition> BrowseColumns => Presenter.BrowseColumns;
+
+        public bool ConfirmBeforeDelete
+        {
+            get => Presenter.ConfirmBeforeDelete.Value;
+            set => Presenter.ConfirmBeforeDelete.Value = value;
+        }
 
         public MainWorkspaceTab CurrentTab
         {
@@ -269,6 +277,7 @@ namespace osu.EzRealmSync.Desktop.ViewModels
         private void onRealmFilesChanged()
         {
             OnPropertyChanged(nameof(RealmFiles));
+            OnPropertyChanged(nameof(RealmFileRows));
             OnPropertyChanged(nameof(CanUseFixAndExport));
             refreshRealmComboSources();
         }
@@ -296,7 +305,7 @@ namespace osu.EzRealmSync.Desktop.ViewModels
 
         private void onBrowseTableChanged()
         {
-            OnPropertyChanged(nameof(BrowseDataView));
+            OnPropertyChanged(nameof(BrowseRows));
             OnPropertyChanged(nameof(BrowseColumns));
         }
 

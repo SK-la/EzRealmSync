@@ -64,6 +64,9 @@
   <data name="CtxUncheck" xml:space="preserve"><value>取消勾选</value></data>
   <data name="CtxInvertCheck" xml:space="preserve"><value>反选</value></data>
   <data name="StatusBrowseRowsDeleted" xml:space="preserve"><value>已从预览中移除 {0} 行。</value></data>
+  <data name="ConfirmDeleteRows" xml:space="preserve"><value>确定从列表中删除 {0} 行吗？此操作不可撤销。</value></data>
+  <data name="ConfirmBeforeDelete" xml:space="preserve"><value>删除前确认</value></data>
+  <data name="ConfirmBeforeDeleteHint" xml:space="preserve"><value>从表格中移除行前弹出警告对话框。</value></data>
   <data name="Cancel" xml:space="preserve"><value>取消</value></data>
   <data name="Ok" xml:space="preserve"><value>确定</value></data>
   <data name="SettingsTitle" xml:space="preserve"><value>设置</value></data>

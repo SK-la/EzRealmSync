@@ -1,7 +1,7 @@
-using System.Windows.Controls.Primitives;
 using System.Windows.Data;
 using osu.EzRealmSync.AppModel;
 using osu.EzRealmSync.AppModel.Localization;
+using osu.EzRealmSync.Desktop.Helpers;
 using osu.EzRealmSync.Desktop.ViewModels;
 using osu.Game.EzRealmSync.Models;
 
@@ -11,6 +11,7 @@ namespace osu.EzRealmSync.Desktop.Pages
     {
         private ShellViewModel? vm;
         private bool suppressKindChange;
+        private bool exportGridBehaviorConfigured;
 
         public ExportPage()
         {
@@ -27,6 +28,7 @@ namespace osu.EzRealmSync.Desktop.Pages
             vm = shell;
             refreshLabels();
             setupGrid();
+            configureExportGridBehavior();
             setupDataKindCombo();
 
             RealmSelectCombo.ItemsSource = vm.RealmFiles;
@@ -121,9 +123,15 @@ namespace osu.EzRealmSync.Desktop.Pages
                 return;
 
             var checkFactory = new FrameworkElementFactory(typeof(CheckBox));
-            checkFactory.SetBinding(ToggleButton.IsCheckedProperty, new Binding(nameof(RealmExportItemModel.IsSelected)) { Mode = BindingMode.TwoWay });
-            checkFactory.SetValue(FrameworkElement.HorizontalAlignmentProperty, HorizontalAlignment.Center);
-            checkFactory.SetValue(FrameworkElement.VerticalAlignmentProperty, VerticalAlignment.Center);
+            checkFactory.SetBinding(
+                CheckBox.IsCheckedProperty,
+                new Binding(nameof(RealmExportItemModel.IsSelected))
+                {
+                    Mode = BindingMode.TwoWay,
+                    UpdateSourceTrigger = UpdateSourceTrigger.PropertyChanged,
+                });
+            checkFactory.SetValue(HorizontalAlignmentProperty, HorizontalAlignment.Center);
+            checkFactory.SetValue(VerticalAlignmentProperty, VerticalAlignment.Center);
 
             ExportGrid.Columns.Add(new DataGridTemplateColumn
             {
@@ -131,15 +139,38 @@ namespace osu.EzRealmSync.Desktop.Pages
                 Width = 40,
                 CellTemplate = new DataTemplate { VisualTree = checkFactory },
             });
-            ExportGrid.Columns.Add(new DataGridTextColumn { Header = Loc.Get("ColTitle"), Binding = new Binding(nameof(RealmExportItemModel.Title)), Width = new DataGridLength(1, DataGridLengthUnitType.Star) });
-            ExportGrid.Columns.Add(new DataGridTextColumn { Header = Loc.Get("ColArtist"), Binding = new Binding(nameof(RealmExportItemModel.Artist)), Width = 120 });
+            addTextColumn(Loc.Get("ColTitle"), nameof(RealmExportItemModel.Title), new DataGridLength(1, DataGridLengthUnitType.Star));
+            addTextColumn(Loc.Get("ColArtist"), nameof(RealmExportItemModel.Artist), 120);
+            addTextColumn(Loc.Get("ColExportCollection"), nameof(RealmExportItemModel.CollectionName), 120);
+            addTextColumn(Loc.Get("ColExportPath"), nameof(RealmExportItemModel.RelativePath), new DataGridLength(1.5, DataGridLengthUnitType.Star));
+        }
+
+        private void addTextColumn(string header, string path, double width) => addTextColumn(header, path, new DataGridLength(width));
+
+        private void addTextColumn(string header, string path, DataGridLength width)
+        {
             ExportGrid.Columns.Add(new DataGridTextColumn
             {
-                Header = Loc.Get("ColExportCollection"),
-                Binding = new Binding(nameof(RealmExportItemModel.CollectionName)),
-                Width = 120,
+                Header = header,
+                Binding = new Binding(path) { Mode = BindingMode.OneWay },
+                Width = width,
+                IsReadOnly = true,
             });
-            ExportGrid.Columns.Add(new DataGridTextColumn { Header = Loc.Get("ColExportPath"), Binding = new Binding(nameof(RealmExportItemModel.RelativePath)), Width = new DataGridLength(1.5, DataGridLengthUnitType.Star) });
+        }
+
+        private void configureExportGridBehavior()
+        {
+            if (exportGridBehaviorConfigured || vm == null)
+                return;
+
+            exportGridBehaviorConfigured = true;
+
+            CheckableDataGridHelper.Configure<RealmExportItemModel>(
+                ExportGrid,
+                () => vm.ExportItems,
+                (rows, check) => vm.Presenter.SetExportItemsChecked(rows, check),
+                () => vm.Presenter.InvertExportItemChecks(),
+                rows => vm.Presenter.DeleteExportItemsAsync(rows));
         }
 
         private void updateExportGridColumns()

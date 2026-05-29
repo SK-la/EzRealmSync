@@ -1,7 +1,7 @@
-using System.Windows.Controls.Primitives;
 using System.Windows.Data;
 using osu.EzRealmSync.AppModel;
 using osu.EzRealmSync.AppModel.Localization;
+using osu.EzRealmSync.Desktop.Helpers;
 using osu.EzRealmSync.Desktop.ViewModels;
 
 namespace osu.EzRealmSync.Desktop.Pages
@@ -9,6 +9,7 @@ namespace osu.EzRealmSync.Desktop.Pages
     public partial class FixPage : UserControl
     {
         private ShellViewModel? vm;
+        private bool issuesGridBehaviorConfigured;
 
         public FixPage()
         {
@@ -25,6 +26,7 @@ namespace osu.EzRealmSync.Desktop.Pages
             vm = shell;
             refreshLabels();
             setupGrid();
+            configureIssuesGridBehavior();
 
             RealmSelectCombo.ItemsSource = vm.RealmFiles;
             RealmSelectCombo.SelectedValue = vm.FixRealmId ?? vm.SelectedRealmId;
@@ -86,9 +88,15 @@ namespace osu.EzRealmSync.Desktop.Pages
                 return;
 
             var checkFactory = new FrameworkElementFactory(typeof(CheckBox));
-            checkFactory.SetBinding(ToggleButton.IsCheckedProperty, new Binding(nameof(RealmFixIssueModel.IsSelected)) { Mode = BindingMode.TwoWay });
-            checkFactory.SetValue(FrameworkElement.HorizontalAlignmentProperty, HorizontalAlignment.Center);
-            checkFactory.SetValue(FrameworkElement.VerticalAlignmentProperty, VerticalAlignment.Center);
+            checkFactory.SetBinding(
+                CheckBox.IsCheckedProperty,
+                new Binding(nameof(RealmFixIssueModel.IsSelected))
+                {
+                    Mode = BindingMode.TwoWay,
+                    UpdateSourceTrigger = UpdateSourceTrigger.PropertyChanged,
+                });
+            checkFactory.SetValue(HorizontalAlignmentProperty, HorizontalAlignment.Center);
+            checkFactory.SetValue(VerticalAlignmentProperty, VerticalAlignment.Center);
 
             IssuesGrid.Columns.Add(new DataGridTemplateColumn
             {
@@ -96,12 +104,40 @@ namespace osu.EzRealmSync.Desktop.Pages
                 Width = 40,
                 CellTemplate = new DataTemplate { VisualTree = checkFactory },
             });
-            IssuesGrid.Columns.Add(new DataGridTextColumn { Header = Loc.Get("ColFixKind"), Binding = new Binding(nameof(RealmFixIssueModel.KindDisplay)), Width = 100 });
-            IssuesGrid.Columns.Add(new DataGridTextColumn { Header = Loc.Get("ColKind"), Binding = new Binding(nameof(RealmFixIssueModel.EntityKindDisplay)), Width = 88 });
-            IssuesGrid.Columns.Add(new DataGridTextColumn { Header = Loc.Get("ColFixField"), Binding = new Binding(nameof(RealmFixIssueModel.FieldName)), Width = 72 });
-            IssuesGrid.Columns.Add(new DataGridTextColumn { Header = Loc.Get("ColFixCurrent"), Binding = new Binding(nameof(RealmFixIssueModel.CurrentValue)), Width = new DataGridLength(1, DataGridLengthUnitType.Star) });
-            IssuesGrid.Columns.Add(new DataGridTextColumn { Header = Loc.Get("ColFixSuggested"), Binding = new Binding(nameof(RealmFixIssueModel.SuggestedValue)), Width = new DataGridLength(1, DataGridLengthUnitType.Star) });
-            IssuesGrid.Columns.Add(new DataGridTextColumn { Header = Loc.Get("ColFixDetail"), Binding = new Binding(nameof(RealmFixIssueModel.Detail)), Width = new DataGridLength(1.2, DataGridLengthUnitType.Star) });
+            addTextColumn(Loc.Get("ColFixKind"), nameof(RealmFixIssueModel.KindDisplay), 100);
+            addTextColumn(Loc.Get("ColKind"), nameof(RealmFixIssueModel.EntityKindDisplay), 88);
+            addTextColumn(Loc.Get("ColFixField"), nameof(RealmFixIssueModel.FieldName), 72);
+            addTextColumn(Loc.Get("ColFixCurrent"), nameof(RealmFixIssueModel.CurrentValue), new DataGridLength(1, DataGridLengthUnitType.Star));
+            addTextColumn(Loc.Get("ColFixSuggested"), nameof(RealmFixIssueModel.SuggestedValue), new DataGridLength(1, DataGridLengthUnitType.Star));
+            addTextColumn(Loc.Get("ColFixDetail"), nameof(RealmFixIssueModel.Detail), new DataGridLength(1.2, DataGridLengthUnitType.Star));
+        }
+
+        private void addTextColumn(string header, string path, double width) => addTextColumn(header, path, new DataGridLength(width));
+
+        private void addTextColumn(string header, string path, DataGridLength width)
+        {
+            IssuesGrid.Columns.Add(new DataGridTextColumn
+            {
+                Header = header,
+                Binding = new Binding(path) { Mode = BindingMode.OneWay },
+                Width = width,
+                IsReadOnly = true,
+            });
+        }
+
+        private void configureIssuesGridBehavior()
+        {
+            if (issuesGridBehaviorConfigured || vm == null)
+                return;
+
+            issuesGridBehaviorConfigured = true;
+
+            CheckableDataGridHelper.Configure<RealmFixIssueModel>(
+                IssuesGrid,
+                () => vm.FixIssues,
+                (rows, check) => vm.Presenter.SetFixIssuesChecked(rows, check),
+                () => vm.Presenter.InvertFixIssueChecks(),
+                rows => vm.Presenter.DeleteFixIssuesAsync(rows));
         }
 
         private void RealmSelectCombo_OnChanged(object sender, SelectionChangedEventArgs e)

@@ -64,6 +64,9 @@
   <data name="CtxUncheck" xml:space="preserve"><value>Uncheck</value></data>
   <data name="CtxInvertCheck" xml:space="preserve"><value>Invert check</value></data>
   <data name="StatusBrowseRowsDeleted" xml:space="preserve"><value>Removed {0} row(s) from the loaded preview.</value></data>
+  <data name="ConfirmDeleteRows" xml:space="preserve"><value>Delete {0} row(s) from the list? This cannot be undone.</value></data>
+  <data name="ConfirmBeforeDelete" xml:space="preserve"><value>Confirm before delete</value></data>
+  <data name="ConfirmBeforeDeleteHint" xml:space="preserve"><value>Show a warning dialog before removing rows from tables.</value></data>
   <data name="Cancel" xml:space="preserve"><value>Cancel</value></data>
   <data name="Ok" xml:space="preserve"><value>OK</value></data>
   <data name="SettingsTitle" xml:space="preserve"><value>Settings</value></data>

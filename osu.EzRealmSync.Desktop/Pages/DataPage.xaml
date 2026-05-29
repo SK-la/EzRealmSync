@@ -93,7 +93,8 @@
                      CanUserAddRows="False"
                      CanUserDeleteRows="False"
                      IsReadOnly="True"
-                     SelectionMode="Extended" />
+                     SelectionMode="Extended"
+                     ClipboardCopyMode="None" />
       </Grid>
     </ui:Card>
   </Grid>

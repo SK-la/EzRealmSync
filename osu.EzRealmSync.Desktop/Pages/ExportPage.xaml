@@ -106,7 +106,9 @@
                      AutoGenerateColumns="False"
                      CanUserAddRows="False"
                      CanUserDeleteRows="False"
-                     SelectionMode="Extended" />
+                     SelectionMode="Extended"
+                     SelectionUnit="FullRow"
+                     ClipboardCopyMode="None" />
       </Grid>
     </ui:Card>
   </Grid>

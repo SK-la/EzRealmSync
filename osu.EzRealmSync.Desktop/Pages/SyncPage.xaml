@@ -78,7 +78,7 @@
                      CanUserDeleteRows="False"
                      SelectionMode="Extended"
                      SelectionUnit="FullRow"
-                     SelectionChanged="SyncGrid_OnSelectionChanged"
+                     ClipboardCopyMode="None"
                      CurrentCellChanged="SyncGrid_OnCellChanged" />
       </Grid>
     </ui:Card>

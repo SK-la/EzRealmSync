@@ -11,6 +11,7 @@ namespace osu.EzRealmSync.Desktop.Pages
     public partial class SyncPage : UserControl
     {
         private ShellViewModel? vm;
+        private bool syncGridBehaviorConfigured;
 
         public SyncPage()
         {
@@ -28,7 +29,7 @@ namespace osu.EzRealmSync.Desktop.Pages
             refreshLabels();
             setupCombos();
             setupSyncGrid();
-            attachSyncContextMenu();
+            configureSyncGridBehavior();
             refreshRealmCombos();
             SyncGrid.ItemsSource = vm.SyncRows;
 
@@ -116,8 +117,8 @@ namespace osu.EzRealmSync.Desktop.Pages
                     Mode = BindingMode.TwoWay,
                     UpdateSourceTrigger = UpdateSourceTrigger.PropertyChanged,
                 });
-            checkFactory.SetValue(FrameworkElement.HorizontalAlignmentProperty, HorizontalAlignment.Center);
-            checkFactory.SetValue(FrameworkElement.VerticalAlignmentProperty, VerticalAlignment.Center);
+            checkFactory.SetValue(HorizontalAlignmentProperty, HorizontalAlignment.Center);
+            checkFactory.SetValue(VerticalAlignmentProperty, VerticalAlignment.Center);
 
             SyncGrid.Columns.Add(new DataGridTemplateColumn
             {
@@ -134,8 +135,7 @@ namespace osu.EzRealmSync.Desktop.Pages
             addTextColumn(Loc.Get("ColDate"), nameof(DiffRowModel.Date), 120);
         }
 
-        private void addTextColumn(string header, string path, double width) =>
-            addTextColumn(header, path, new DataGridLength(width));
+        private void addTextColumn(string header, string path, double width) => addTextColumn(header, path, new DataGridLength(width));
 
         private void addTextColumn(string header, string path, DataGridLength width)
         {
@@ -148,43 +148,20 @@ namespace osu.EzRealmSync.Desktop.Pages
             });
         }
 
-        private void attachSyncContextMenu()
+        private void configureSyncGridBehavior()
         {
-            DataGridContextMenuHelper.Attach(SyncGrid, menu =>
-            {
-                DataGridContextMenuHelper.AddItem(menu, "check", Loc.Get("CtxCheck"), (_, _) => applyCheckToTargetRows(true));
-                DataGridContextMenuHelper.AddItem(menu, "uncheck", Loc.Get("CtxUncheck"), (_, _) => applyCheckToTargetRows(false));
-                DataGridContextMenuHelper.AddItem(menu, "invert", Loc.Get("CtxInvertCheck"), (_, _) => vm?.Presenter.InvertSyncRowChecks());
-            });
-        }
-
-        private void applyCheckToTargetRows(bool isChecked)
-        {
-            if (vm == null)
+            if (syncGridBehaviorConfigured || vm == null)
                 return;
 
-            var targets = getContextTargetRows().ToList();
-            if (targets.Count == 0)
-                return;
+            syncGridBehaviorConfigured = true;
 
-            vm.Presenter.SetSyncRowsChecked(targets, isChecked);
-        }
-
-        private IEnumerable<DiffRowModel> getContextTargetRows()
-        {
-            if (SyncGrid.SelectedItems.Count > 0)
-            {
-                foreach (var item in SyncGrid.SelectedItems)
-                {
-                    if (item is DiffRowModel row)
-                        yield return row;
-                }
-
-                yield break;
-            }
-
-            if (SyncGrid.CurrentItem is DiffRowModel current)
-                yield return current;
+            CheckableDataGridHelper.Configure<DiffRowModel>(
+                SyncGrid,
+                () => vm.SyncRows,
+                (rows, check) => vm.Presenter.SetSyncRowsChecked(rows, check),
+                () => vm.Presenter.InvertSyncRowChecks(),
+                rows => vm.Presenter.DeleteSyncRowsAsync(rows),
+                () => vm.OnSyncSelectionChanged());
         }
 
         private void refreshRealmCombos()
@@ -264,20 +241,6 @@ namespace osu.EzRealmSync.Desktop.Pages
         private void SelectAll_OnClick(object sender, RoutedEventArgs e) => vm?.ToggleSelectAllCommand.Execute(null);
         private void Compute_OnClick(object sender, RoutedEventArgs e) => vm?.ComputeSetCommand.Execute(null);
         private void Execute_OnClick(object sender, RoutedEventArgs e) => vm?.ExecuteSyncCommand.Execute(null);
-
-        private void SyncGrid_OnSelectionChanged(object sender, SelectionChangedEventArgs e)
-        {
-            if (vm == null)
-                return;
-
-            foreach (var item in e.AddedItems)
-            {
-                if (item is DiffRowModel row)
-                    row.IsSelected = true;
-            }
-
-            vm.OnSyncSelectionChanged();
-        }
 
         private void SyncGrid_OnCellChanged(object? sender, EventArgs e) => vm?.OnSyncSelectionChanged();
     }

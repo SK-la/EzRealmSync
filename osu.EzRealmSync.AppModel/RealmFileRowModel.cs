@@ -4,20 +4,25 @@ using osu.Game.EzRealmSync.Models;
 
 namespace osu.EzRealmSync.AppModel
 {
-    public sealed class RealmBrowseRowModel : INotifyPropertyChanged
+    public sealed class RealmFileRowModel : INotifyPropertyChanged
     {
         private bool isSelected;
 
-        public RealmBrowseRowModel(RealmBrowseRow row, IReadOnlyList<RealmColumnDefinition> columns)
-        {
-            Id = row.Id;
-            foreach (var column in columns)
-                values[column.PropertyKey] = row.Cells.TryGetValue(column.PropertyKey, out string? value) ? value : string.Empty;
-        }
+        public RealmFileRowModel(RealmFileEntry entry) => Entry = entry;
 
-        private readonly Dictionary<string, string> values = new();
+        public RealmFileEntry Entry { get; }
 
-        public Guid Id { get; }
+        public string Id => Entry.Id;
+
+        public string DisplayName => Entry.DisplayName;
+
+        public string OfficialSchemaDisplay => Entry.OfficialSchemaDisplay;
+
+        public string EzSchemaDisplay => Entry.EzSchemaDisplay;
+
+        public string SizeDisplay => Entry.SizeDisplay;
+
+        public string FilePath => Entry.FilePath;
 
         public bool IsSelected
         {
@@ -31,8 +36,6 @@ namespace osu.EzRealmSync.AppModel
                 OnPropertyChanged();
             }
         }
-
-        public string GetCell(string propertyKey) => values.TryGetValue(propertyKey, out string? v) ? v : string.Empty;
 
         public event PropertyChangedEventHandler? PropertyChanged;
 

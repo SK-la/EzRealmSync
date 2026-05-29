@@ -14,6 +14,9 @@ namespace osu.EzRealmSync.AppModel
         public string ExportFolderName { get; set; } = string.Empty;
 
         public string IllegalCharacterReplacement { get; set; } = "_";
+
+        /// <summary>删除表格行前是否弹出确认对话框。</summary>
+        public bool ConfirmBeforeDelete { get; set; } = true;
     }
 
     public static class AppSettingsStore

@@ -132,6 +132,14 @@
                     <ui:TextBlock x:Name="UiTestHint"
                                   TextWrapping="Wrap"
                                   Opacity="0.75" />
+                    <ui:ToggleSwitch x:Name="ConfirmDeleteSwitch"
+                                     Margin="0,12,0,0"
+                                     LabelPosition="Right"
+                                     Click="ConfirmDeleteSwitch_OnClick" />
+                    <ui:TextBlock x:Name="ConfirmDeleteHint"
+                                  Margin="0,4,0,0"
+                                  TextWrapping="Wrap"
+                                  Style="{StaticResource WorkspaceMutedText}" />
                   </StackPanel>
                 </ui:CardExpander>
                 <ui:CardExpander x:Name="MockSettingsExpander"
