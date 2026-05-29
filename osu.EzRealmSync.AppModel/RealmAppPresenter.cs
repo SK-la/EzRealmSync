@@ -523,6 +523,18 @@ namespace osu.EzRealmSync.AppModel
                     return;
                 }
 
+                var pathConfig = writePlan.ToLegacyPathConfiguration();
+                var validation = await syncService.ValidatePathsAsync(pathConfig, token).ConfigureAwait(false);
+
+                if (!validation.IsValid)
+                {
+                    runOnUi(() => StatusMessage.Value = string.Join(Environment.NewLine, validation.Errors));
+                    return;
+                }
+
+                if (validation.Warnings.Count > 0)
+                    runOnUi(() => StatusMessage.Value = string.Join(Environment.NewLine, validation.Warnings));
+
                 if (!delete)
                 {
                     string backupPath = await dataService.CreateTimestampedBackupAsync(targetFile.FilePath, BackupDirectory.Value, token).ConfigureAwait(false);

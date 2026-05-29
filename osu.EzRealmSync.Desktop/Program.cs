@@ -13,11 +13,8 @@ namespace osu.EzRealmSync.Desktop
             var options = EzRealmSyncLaunchOptions.Parse(args);
             Loc.SetLanguage(AppLanguage.ZhHans);
 
-            var syncService = EzRealmSyncServiceFactory.Create(options.UiTestMode, options.MockOptions);
-            var dataService = EzRealmSyncServiceFactory.CreateDataService(options.UiTestMode, options.MockOptions);
-            var fixService = EzRealmSyncServiceFactory.CreateFixService(options.UiTestMode, options.MockOptions);
-            var exportService = EzRealmSyncServiceFactory.CreateExportService(options.UiTestMode, options.MockOptions);
-            var presenter = new RealmAppPresenter(syncService, dataService, fixService, exportService, options);
+            var session = EzRealmSyncServiceFactory.CreateSession(options.UiTestMode, options.MockOptions);
+            var presenter = new RealmAppPresenter(session.Sync, session.Data, session.Fix, session.Export, options);
 
             var app = new App();
             app.InitializeComponent();

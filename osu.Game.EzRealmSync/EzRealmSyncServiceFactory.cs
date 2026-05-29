@@ -21,32 +21,59 @@ namespace osu.Game.EzRealmSync
 #endif
         }
 
-        public static IRealmDataService CreateDataService(bool uiTestMode, MockEzRealmSyncOptions? mockOptions = null)
+        /// <summary>
+        /// 返回共享会话：数据/修复/导出共用同一 <see cref="RealmFileRegistry"/>（真实模式）。
+        /// </summary>
+        public static RealmServiceSession CreateSession(bool uiTestMode, MockEzRealmSyncOptions? mockOptions = null)
         {
             if (uiTestMode)
-                return new MockEzRealmSyncService(mockOptions ?? new MockEzRealmSyncOptions());
+            {
+                var mock = new MockEzRealmSyncService(mockOptions ?? new MockEzRealmSyncOptions());
+                return new RealmServiceSession(mock, mock, mock, mock);
+            }
 
 #if HAS_EZ_OSU_GAME
-            return new RealmRealmDataService();
+            var realm = new RealmRealmDataService();
+            return new RealmServiceSession(realm, realm, realm, realm);
 #else
-            return new StubRealmDataService();
+            return new RealmServiceSession(
+                new StubRealmDataService(),
+                new StubRealmFixExportService(),
+                new StubRealmFixExportService(),
+                new StubRealmEzRealmSyncService());
 #endif
         }
 
-        public static IRealmFixService CreateFixService(bool uiTestMode, MockEzRealmSyncOptions? mockOptions = null)
-        {
-            if (uiTestMode)
-                return new MockEzRealmSyncService(mockOptions ?? new MockEzRealmSyncOptions());
+        public static IRealmDataService CreateDataService(bool uiTestMode, MockEzRealmSyncOptions? mockOptions = null) =>
+            CreateSession(uiTestMode, mockOptions).Data;
 
-            return new StubRealmFixExportService();
+        public static IRealmFixService CreateFixService(bool uiTestMode, MockEzRealmSyncOptions? mockOptions = null) =>
+            CreateSession(uiTestMode, mockOptions).Fix;
+
+        public static IRealmExportService CreateExportService(bool uiTestMode, MockEzRealmSyncOptions? mockOptions = null) =>
+            CreateSession(uiTestMode, mockOptions).Export;
+    }
+
+    public sealed class RealmServiceSession
+    {
+        public RealmServiceSession(
+            IRealmDataService data,
+            IRealmFixService fix,
+            IRealmExportService export,
+            IEzRealmSyncService sync)
+        {
+            Data = data;
+            Fix = fix;
+            Export = export;
+            Sync = sync;
         }
 
-        public static IRealmExportService CreateExportService(bool uiTestMode, MockEzRealmSyncOptions? mockOptions = null)
-        {
-            if (uiTestMode)
-                return new MockEzRealmSyncService(mockOptions ?? new MockEzRealmSyncOptions());
+        public IRealmDataService Data { get; }
 
-            return new StubRealmFixExportService();
-        }
+        public IRealmFixService Fix { get; }
+
+        public IRealmExportService Export { get; }
+
+        public IEzRealmSyncService Sync { get; }
     }
 }

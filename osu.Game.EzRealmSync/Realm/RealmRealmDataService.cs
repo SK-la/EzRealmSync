@@ -8,7 +8,7 @@ namespace osu.Game.EzRealmSync.Realm
     /// <summary>
     /// Phase 2.4：真实 Realm 数据浏览、备份与双库集合比对。
     /// </summary>
-    public sealed class RealmRealmDataService : IRealmDataService
+    public sealed partial class RealmRealmDataService : IRealmDataService, IRealmFixService, IRealmExportService
     {
         private readonly RealmFileRegistry registry = new();
         private readonly Dictionary<string, RealmSnapshot> snapshotCache = new();

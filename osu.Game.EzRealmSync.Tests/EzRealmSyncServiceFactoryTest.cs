@@ -22,5 +22,29 @@ namespace osu.Game.EzRealmSync.Tests
             Assert.That(EzRealmSyncServiceFactory.CreateDataService(uiTestMode: false), Is.InstanceOf<StubRealmDataService>());
 #endif
         }
+
+        [Test]
+        public void CreateSession_ui_test_uses_single_mock_instance()
+        {
+            var session = EzRealmSyncServiceFactory.CreateSession(uiTestMode: true);
+            Assert.That(session.Data, Is.SameAs(session.Fix));
+            Assert.That(session.Fix, Is.SameAs(session.Export));
+            Assert.That(session.Sync, Is.SameAs(session.Data));
+        }
+
+        [Test]
+        public void CreateSession_real_mode_shares_realm_data_service()
+        {
+#if HAS_EZ_OSU_GAME
+            var session = EzRealmSyncServiceFactory.CreateSession(uiTestMode: false);
+            Assert.That(session.Data, Is.SameAs(session.Fix));
+            Assert.That(session.Fix, Is.SameAs(session.Export));
+            Assert.That(session.Data, Is.InstanceOf<RealmRealmDataService>());
+#else
+            var session = EzRealmSyncServiceFactory.CreateSession(uiTestMode: false);
+            Assert.That(session.Data, Is.InstanceOf<StubRealmDataService>());
+            Assert.That(session.Fix, Is.InstanceOf<StubRealmFixExportService>());
+#endif
+        }
     }
 }

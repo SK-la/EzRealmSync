@@ -7,7 +7,7 @@
 | 里程碑 | 状态 | 说明 |
 |--------|------|------|
 | **M1** Phase 1 UI | **基本完成** | 独立仓库 WPF Desktop（五 Tab），`--ui-test` Mock |
-| **M2** Phase 2 数据 | **进行中** | P2.1–P2.4 完成；P2.5 集成测试与手工验收待做 |
+| **M2** Phase 2 数据 | **进行中** | P2.1–P2.4 + 修复/导出真实接入；P2.5 手工验收待做 |
 | **M3** Phase 3 | 未开始 | Collections / Zombie / `.osr` |
 
 ### Phase 1 已交付（Desktop）
@@ -25,7 +25,8 @@
 - [x] **P2.3** `RealmRowCopier` + `ApplyAsync`（Ez→官方；`RealmApplySupport` 单测）
 - [x] **P2.4** `RealmBackupCatalog` / 还原、`RealmRealmDataService` 真实加载与集合比对
 - [x] **P2.4b** 任意 A→B 库对（含同类型/跨版本）Diff+写入；`RealmWritePlan`；导入页备份还原 UI
-- [ ] **P2.5** 集成测试 + 手工 Ez→官方验收
+- [x] **P2.4c** 单目录扫描（Ez 根目录 `*.realm` + 共享 `files/`）；`RealmServiceSession` 共享注册表；真实修复/导出
+- [ ] **P2.5** 手工 Ez→官方验收（需 `lib/osu.Game.dll`）
 
 ## 仓库结构
 

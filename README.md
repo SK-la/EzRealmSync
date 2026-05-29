@@ -26,7 +26,7 @@ dotnet run --project osu.EzRealmSync.Desktop -- --ui-test
 - `--mock-delay=0`：去掉 Mock 加载/计算延迟
 - 无 `lib/osu.Game.dll` 且非 UI 测试：数据/同步会提示放入 `lib/`（见 `StubRealmDataService`）
 
-主界面五 Tab：**导入**（A/B 工作区 + 列表 + 备份）→ **数据**（单库浏览）→ **同步**（A↔B 集合运算与写入）→ **修复** → **导出**。设置持久化至 `%AppData%\EzRealmSync\settings.json`。
+主界面五 Tab：**导入**（osu! 数据目录 + Realm 列表 + 备份）→ **数据**（单库浏览）→ **同步**（A/B 双库集合运算与写入）→ **修复** / **导出**（共用导入目录下 `files/`）。设置持久化至 `%AppData%\EzRealmSync\settings.json`。
 
 路线图：[docs/ROADMAP.md](docs/ROADMAP.md)
 
