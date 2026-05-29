@@ -82,6 +82,10 @@ namespace osu.EzRealmSync.AppModel
 
         public ObservableCollection<RealmExportItemModel> ExportItems { get; } = new();
 
+        public ObservableCollection<BackupEntryRowModel> BackupEntries { get; } = new();
+
+        public Bindable<string?> SelectedBackupId { get; } = new Bindable<string?>();
+
         public Bindable<MainWorkspaceTab> CurrentWorkspaceTab { get; } = new Bindable<MainWorkspaceTab>(MainWorkspaceTab.Import);
 
         public Bindable<string> BackupDirectory { get; } = new Bindable<string>(string.Empty);
@@ -141,6 +145,7 @@ namespace osu.EzRealmSync.AppModel
         public Action<Action>? MarshalToUi { get; set; }
 
         public event Action? RealmFilesChanged;
+        public event Action? BackupEntriesChanged;
         public event Action? SyncRowsChanged;
         public event Action? DataRowsChanged;
         public event Action? BrowseTableChanged;
@@ -301,6 +306,84 @@ namespace osu.EzRealmSync.AppModel
             {
                 string backupPath = await dataService.CreateTimestampedBackupAsync(file.FilePath, BackupDirectory.Value).ConfigureAwait(false);
                 runOnUi(() => StatusMessage.Value = Loc.Format("StatusBackupCreated", backupPath));
+                await RefreshBackupsAsync().ConfigureAwait(false);
+            }
+            catch (Exception ex)
+            {
+                runOnUi(() => StatusMessage.Value = ex.Message);
+            }
+            finally
+            {
+                setBusy(false);
+            }
+        }
+
+        public async Task RefreshBackupsAsync()
+        {
+            setBusy(true);
+
+            try
+            {
+                var backups = await syncService.ListBackupsAsync(BackupDirectory.Value).ConfigureAwait(false);
+
+                runOnUi(() =>
+                {
+                    BackupEntries.Clear();
+                    foreach (var entry in backups)
+                        BackupEntries.Add(new BackupEntryRowModel(entry));
+
+                    if (BackupEntries.Count > 0 && BackupEntries.All(b => b.Id != SelectedBackupId.Value))
+                        SelectedBackupId.Value = BackupEntries[0].Id;
+
+                    StatusMessage.Value = Loc.Format("StatusBackupsListed", BackupEntries.Count);
+                    BackupEntriesChanged?.Invoke();
+                });
+            }
+            catch (Exception ex)
+            {
+                runOnUi(() => StatusMessage.Value = ex.Message);
+            }
+            finally
+            {
+                setBusy(false);
+            }
+        }
+
+        public async Task RestoreSelectedBackupAsync()
+        {
+            var file = getRealmFile(SelectedRealmId.Value);
+            if (file == null)
+            {
+                runOnUi(() => StatusMessage.Value = Loc.Get("ErrorPickRealmForRestore"));
+                return;
+            }
+
+            if (string.IsNullOrEmpty(SelectedBackupId.Value))
+            {
+                runOnUi(() => StatusMessage.Value = Loc.Get("ErrorPickBackup"));
+                return;
+            }
+
+            if (ConfirmAsync != null)
+            {
+                bool ok = await ConfirmAsync(Loc.Format("ConfirmRestore", file.DisplayName), Loc.Get("ConfirmRestoreTitle"), true).ConfigureAwait(false);
+                if (!ok)
+                    return;
+            }
+
+            setBusy(true);
+
+            try
+            {
+                var progress = createApplyProgress();
+                await syncService.RestoreBackupAsync(
+                    SelectedBackupId.Value,
+                    file.FilePath,
+                    BackupDirectory.Value,
+                    BackupDirectory.Value,
+                    progress).ConfigureAwait(false);
+
+                runOnUi(() => StatusMessage.Value = Loc.Format("StatusBackupRestored", file.DisplayName));
             }
             catch (Exception ex)
             {
@@ -430,6 +513,12 @@ namespace osu.EzRealmSync.AppModel
 
             try
             {
+                if (!RealmSyncDirectionHelper.TryInferDirection(sourceFile, targetFile, out var direction, out string? directionError))
+                {
+                    runOnUi(() => StatusMessage.Value = directionError ?? Loc.Get("ErrorPickSourceTarget"));
+                    return;
+                }
+
                 if (!delete)
                 {
                     string backupPath = await dataService.CreateTimestampedBackupAsync(targetFile.FilePath, BackupDirectory.Value, token).ConfigureAwait(false);
@@ -438,12 +527,8 @@ namespace osu.EzRealmSync.AppModel
 
                 var request = new ApplyRequest
                 {
-                    Direction = SyncDirection.EzToOfficial,
-                    Paths = new PathConfiguration
-                    {
-                        EzDataPath = sourceFile.DataDirectory ?? Path.GetDirectoryName(sourceFile.FilePath) ?? string.Empty,
-                        OfficialDataPath = targetFile.DataDirectory ?? Path.GetDirectoryName(targetFile.FilePath) ?? string.Empty,
-                    },
+                    Direction = direction,
+                    Paths = RealmSyncDirectionHelper.CreatePaths(sourceFile, targetFile, direction),
                     ItemIds = selected.Select(i => i.Id).ToList(),
                     CreateBackup = false,
                     DeleteFromSource = delete,

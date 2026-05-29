@@ -8,10 +8,10 @@ namespace osu.Game.EzRealmSync.Tests
     public class RealmApplySupportTest
     {
         [Test]
-        public void SupportsDirection_only_EzToOfficial()
+        public void SupportsDirection_includes_both_ways()
         {
             Assert.That(RealmApplySupport.SupportsDirection(SyncDirection.EzToOfficial), Is.True);
-            Assert.That(RealmApplySupport.SupportsDirection(SyncDirection.OfficialToEz), Is.False);
+            Assert.That(RealmApplySupport.SupportsDirection(SyncDirection.OfficialToEz), Is.True);
         }
 
         [Test]
@@ -34,7 +34,7 @@ namespace osu.Game.EzRealmSync.Tests
         }
 
         [Test]
-        public void ValidateApplyRequest_rejects_official_to_ez()
+        public void ValidateApplyRequest_accepts_official_to_ez()
         {
             var request = new ApplyRequest
             {
@@ -42,7 +42,7 @@ namespace osu.Game.EzRealmSync.Tests
                 ItemIds = new[] { Guid.NewGuid() },
                 Paths = new PathConfiguration { EzDataPath = @"C:\ez", OfficialDataPath = @"C:\off" },
             };
-            Assert.That(RealmApplySupport.ValidateApplyRequest(request), Does.Contain("Ez→官方"));
+            Assert.That(RealmApplySupport.ValidateApplyRequest(request), Is.Null);
         }
     }
 }

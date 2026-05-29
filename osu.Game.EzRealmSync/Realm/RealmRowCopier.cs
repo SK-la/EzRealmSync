@@ -25,6 +25,7 @@ namespace osu.Game.EzRealmSync.Realm
             if (validationError != null)
                 throw new InvalidOperationException(validationError);
 
+            bool stripEzFieldsForOfficial = request.Direction == SyncDirection.EzToOfficial;
             int applied = 0;
             int total = request.ItemIds.Count;
 
@@ -44,7 +45,7 @@ namespace osu.Game.EzRealmSync.Realm
                     if (tryDeleteFromSource(id, sourceAccess))
                         applied++;
                 }
-                else if (tryCopyToTarget(id, sourceAccess, targetAccess))
+                else if (tryCopyToTarget(id, sourceAccess, targetAccess, stripEzFieldsForOfficial))
                 {
                     applied++;
                 }
@@ -55,7 +56,7 @@ namespace osu.Game.EzRealmSync.Realm
             return new ApplyResult { AppliedCount = applied };
         }
 
-        private static bool tryCopyToTarget(Guid id, RealmAccess sourceAccess, RealmAccess targetAccess)
+        private static bool tryCopyToTarget(Guid id, RealmAccess sourceAccess, RealmAccess targetAccess, bool stripEzFieldsForOfficial)
         {
             bool copied = false;
 
@@ -63,7 +64,9 @@ namespace osu.Game.EzRealmSync.Realm
             {
                 if (tryDetachBeatmapSet(source, id, out var set))
                 {
-                    prepareBeatmapSetForOfficial(set);
+                    if (stripEzFieldsForOfficial)
+                        prepareBeatmapSetForOfficial(set);
+
                     targetAccess.Write(target => insertBeatmapSet(set, target));
                     copied = true;
                     return;
@@ -71,7 +74,9 @@ namespace osu.Game.EzRealmSync.Realm
 
                 if (tryDetachBeatmap(source, id, out var beatmap))
                 {
-                    prepareBeatmapForOfficial(beatmap);
+                    if (stripEzFieldsForOfficial)
+                        prepareBeatmapForOfficial(beatmap);
+
                     targetAccess.Write(target => insertBeatmap(beatmap, target));
                     copied = true;
                     return;
@@ -79,7 +84,9 @@ namespace osu.Game.EzRealmSync.Realm
 
                 if (tryDetachScore(source, id, out var score))
                 {
-                    prepareScoreForOfficial(score);
+                    if (stripEzFieldsForOfficial)
+                        prepareScoreForOfficial(score);
+
                     targetAccess.Write(target => insertScore(score, target));
                     copied = true;
                 }

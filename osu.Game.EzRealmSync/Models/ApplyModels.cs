@@ -10,6 +10,9 @@ namespace osu.Game.EzRealmSync.Models
 
         public bool CreateBackup { get; init; } = true;
 
+        /// <summary>写入前备份目标库；为空时使用 <see cref="EzRealmSyncDefaults.DefaultBackupDirectory"/>。</summary>
+        public string? BackupDirectory { get; init; }
+
         public bool DeleteFromSource { get; init; }
     }
 

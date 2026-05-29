@@ -92,17 +92,44 @@ namespace osu.Game.EzRealmSync.Realm
             string ezPath = request.Paths.EzRealmFile;
             string officialPath = request.Paths.OfficialRealmFile;
 
+            string? backupPath = null;
+
             if (request.CreateBackup)
             {
-                string backupDir = Path.Combine(Path.GetDirectoryName(officialPath) ?? string.Empty, "backups");
-                RealmFileBackup.CreateTimestampedCopy(officialPath, backupDir);
+                string targetPath = request.Direction switch
+                {
+                    SyncDirection.EzToOfficial => officialPath,
+                    SyncDirection.OfficialToEz => ezPath,
+                    _ => throw new ArgumentOutOfRangeException(nameof(request)),
+                };
+
+                string backupDir = string.IsNullOrWhiteSpace(request.BackupDirectory)
+                    ? EzRealmSyncDefaults.DefaultBackupDirectory
+                    : request.BackupDirectory;
+
+                backupPath = RealmFileBackup.CreateTimestampedCopy(targetPath, backupDir);
             }
 
-            using var sourceAccess = RealmDiffReader.OpenEzRealm(ezPath);
-            using var targetAccess = RealmDiffReader.OpenOfficialRealm(officialPath);
+            using var sourceAccess = openSourceAccess(request.Direction, ezPath, officialPath);
+            using var targetAccess = openTargetAccess(request.Direction, ezPath, officialPath);
 
-            return RealmRowCopier.Apply(request, sourceAccess, targetAccess, progress, cancellationToken);
+            var result = RealmRowCopier.Apply(request, sourceAccess, targetAccess, progress, cancellationToken);
+            return new ApplyResult { AppliedCount = result.AppliedCount, BackupPath = backupPath };
         }
+
+        private static RealmAccess openSourceAccess(SyncDirection direction, string ezPath, string officialPath) => direction switch
+        {
+            SyncDirection.EzToOfficial => RealmDiffReader.OpenEzRealm(ezPath),
+            SyncDirection.OfficialToEz => RealmDiffReader.OpenOfficialRealm(officialPath),
+            _ => throw new ArgumentOutOfRangeException(nameof(direction)),
+        };
+
+        private static RealmAccess openTargetAccess(SyncDirection direction, string ezPath, string officialPath) => direction switch
+        {
+            SyncDirection.EzToOfficial => RealmDiffReader.OpenOfficialRealm(officialPath),
+            SyncDirection.OfficialToEz => RealmDiffReader.OpenEzRealm(ezPath),
+            _ => throw new ArgumentOutOfRangeException(nameof(direction)),
+        };
 
         public Task<IReadOnlyList<BackupEntry>> ListBackupsAsync(string? backupDirectory = null, CancellationToken cancellationToken = default)
         {

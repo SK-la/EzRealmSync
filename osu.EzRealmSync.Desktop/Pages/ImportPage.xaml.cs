@@ -47,6 +47,18 @@ namespace osu.EzRealmSync.Desktop.Pages
 
             RealmPathBox.LostFocus += (_, _) => applyPathFromBox();
             BackupDirBox.LostFocus += (_, _) => applyBackupFromBox();
+
+            BackupCombo.ItemsSource = vm.Presenter.BackupEntries;
+            BackupCombo.SetBinding(
+                System.Windows.Controls.Primitives.Selector.SelectedValueProperty,
+                new System.Windows.Data.Binding(nameof(ShellViewModel.SelectedBackupId))
+                {
+                    Source = vm,
+                    Mode = System.Windows.Data.BindingMode.TwoWay,
+                });
+
+            vm.Presenter.BackupEntriesChanged += () =>
+                Dispatcher.Invoke(() => BackupCombo.ItemsSource = vm!.Presenter.BackupEntries);
         }
 
         private void configureRealmGrid()
@@ -91,6 +103,9 @@ namespace osu.EzRealmSync.Desktop.Pages
             BackupDirLabel.Text = Loc.Get("BackupDirectory");
             BrowseBackupButton.Content = Loc.Get("Browse");
             BackupButton.Content = Loc.Get("BackupSelected");
+            BackupListLabel.Text = Loc.Get("BackupList");
+            RefreshBackupsButton.Content = Loc.Get("RefreshBackups");
+            RestoreBackupButton.Content = Loc.Get("RestoreBackup");
             RealmListTitle.Text = Loc.Get("RealmFileList");
         }
 
@@ -228,6 +243,10 @@ namespace osu.EzRealmSync.Desktop.Pages
         private void BrowseBackup_OnClick(object sender, RoutedEventArgs e) => vm?.BrowseBackupCommand.Execute(null);
 
         private void Backup_OnClick(object sender, RoutedEventArgs e) => vm?.BackupSelectedCommand.Execute(null);
+
+        private void RefreshBackups_OnClick(object sender, RoutedEventArgs e) => vm?.RefreshBackupsCommand.Execute(null);
+
+        private void RestoreBackup_OnClick(object sender, RoutedEventArgs e) => vm?.RestoreBackupCommand.Execute(null);
 
         private void RealmFilesGrid_OnSelectionChanged(object sender, SelectionChangedEventArgs e)
         {

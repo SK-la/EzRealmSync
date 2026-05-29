@@ -54,6 +54,7 @@ namespace osu.EzRealmSync.Desktop.ViewModels
             bindPresenter(presenter.CurrentWorkspaceTab, nameof(CurrentTab));
             bindPresenter(presenter.BackupDirectory, nameof(BackupDirectory));
             bindPresenter(presenter.SearchDirectory, nameof(SearchDirectory));
+            bindPresenter(presenter.SelectedBackupId, nameof(SelectedBackupId));
             bindPresenter(presenter.SelectedRealmId, nameof(SelectedRealmId));
             bindPresenter(presenter.ActiveSourceRealmId, nameof(ActiveSourceRealmId));
             bindPresenter(presenter.ActiveTargetRealmId, nameof(ActiveTargetRealmId));
@@ -83,6 +84,8 @@ namespace osu.EzRealmSync.Desktop.ViewModels
             RefreshRealmFilesCommand = createAsyncCommand(() => presenter.RefreshRealmFilesAsync(), () => !IsBusy);
             ApplyRealmPathCommand = createAsyncCommand(() => presenter.ApplyRealmPathAsync(), () => !IsBusy);
             BackupSelectedCommand = createAsyncCommand(() => presenter.BackupSelectedRealmAsync(), () => !IsBusy);
+            RefreshBackupsCommand = createAsyncCommand(() => presenter.RefreshBackupsAsync(), () => !IsBusy);
+            RestoreBackupCommand = createAsyncCommand(() => presenter.RestoreSelectedBackupAsync(), () => !IsBusy);
             LoadRealmCommand = createAsyncCommand(() => presenter.LoadSelectedRealmAsync(), () => !IsBusy);
             ComputeSetCommand = createAsyncCommand(() => presenter.ComputeSetAsync(), () => !IsBusy);
             ExecuteSyncCommand = createAsyncCommand(() => presenter.ExecuteSyncActionAsync(), () => !IsBusy);
@@ -163,6 +166,12 @@ namespace osu.EzRealmSync.Desktop.ViewModels
         {
             get => Presenter.SelectedRealmId.Value;
             set => Presenter.SelectedRealmId.Value = value;
+        }
+
+        public string? SelectedBackupId
+        {
+            get => Presenter.SelectedBackupId.Value;
+            set => Presenter.SelectedBackupId.Value = value;
         }
 
         public string? ActiveSourceRealmId
@@ -254,6 +263,8 @@ namespace osu.EzRealmSync.Desktop.ViewModels
         public ICommand RefreshRealmFilesCommand { get; }
         public ICommand ApplyRealmPathCommand { get; }
         public ICommand BackupSelectedCommand { get; }
+        public ICommand RefreshBackupsCommand { get; }
+        public ICommand RestoreBackupCommand { get; }
         public ICommand LoadRealmCommand { get; }
         public ICommand ComputeSetCommand { get; }
         public ICommand ExecuteSyncCommand { get; }

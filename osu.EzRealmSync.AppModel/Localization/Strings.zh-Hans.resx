@@ -134,6 +134,15 @@
   <data name="SearchDirectory" xml:space="preserve"><value>搜索目录</value></data>
   <data name="RefreshList" xml:space="preserve"><value>刷新列表</value></data>
   <data name="BackupSelected" xml:space="preserve"><value>备份选中库</value></data>
+  <data name="BackupList" xml:space="preserve"><value>已有备份</value></data>
+  <data name="RefreshBackups" xml:space="preserve"><value>刷新备份</value></data>
+  <data name="RestoreBackup" xml:space="preserve"><value>还原到选中库</value></data>
+  <data name="StatusBackupRestored" xml:space="preserve"><value>已从备份还原到 {0}</value></data>
+  <data name="StatusBackupsListed" xml:space="preserve"><value>备份目录中共 {0} 个文件</value></data>
+  <data name="ErrorPickRealmForRestore" xml:space="preserve"><value>请先在列表中选中要还原到的 Realm 文件。</value></data>
+  <data name="ErrorPickBackup" xml:space="preserve"><value>请选择一个备份。</value></data>
+  <data name="ConfirmRestore" xml:space="preserve"><value>将用所选备份覆盖「{0}」。是否继续？</value></data>
+  <data name="ConfirmRestoreTitle" xml:space="preserve"><value>还原备份</value></data>
   <data name="RealmFileList" xml:space="preserve"><value>Realm 文件列表</value></data>
   <data name="ColRealmName" xml:space="preserve"><value>名称</value></data>
   <data name="ColRealmPath" xml:space="preserve"><value>路径</value></data>

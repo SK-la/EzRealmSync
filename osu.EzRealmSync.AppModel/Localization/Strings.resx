@@ -134,6 +134,15 @@
   <data name="SearchDirectory" xml:space="preserve"><value>Search folder</value></data>
   <data name="RefreshList" xml:space="preserve"><value>Refresh</value></data>
   <data name="BackupSelected" xml:space="preserve"><value>Backup selected</value></data>
+  <data name="BackupList" xml:space="preserve"><value>Existing backups</value></data>
+  <data name="RefreshBackups" xml:space="preserve"><value>Refresh backups</value></data>
+  <data name="RestoreBackup" xml:space="preserve"><value>Restore to selected</value></data>
+  <data name="StatusBackupRestored" xml:space="preserve"><value>Restored backup to {0}</value></data>
+  <data name="StatusBackupsListed" xml:space="preserve"><value>{0} backup(s) in folder</value></data>
+  <data name="ErrorPickRealmForRestore" xml:space="preserve"><value>Select a Realm file in the list to restore into.</value></data>
+  <data name="ErrorPickBackup" xml:space="preserve"><value>Select a backup.</value></data>
+  <data name="ConfirmRestore" xml:space="preserve"><value>Overwrite "{0}" with the selected backup?</value></data>
+  <data name="ConfirmRestoreTitle" xml:space="preserve"><value>Restore backup</value></data>
   <data name="RealmFileList" xml:space="preserve"><value>Realm files</value></data>
   <data name="ColRealmName" xml:space="preserve"><value>Name</value></data>
   <data name="ColRealmPath" xml:space="preserve"><value>Path</value></data>

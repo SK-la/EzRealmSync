@@ -74,30 +74,66 @@
 
     <ui:Card Grid.Row="2" Padding="14" Margin="0,0,0,12">
       <Grid>
-        <Grid.ColumnDefinitions>
-          <ColumnDefinition Width="112" />
-          <ColumnDefinition Width="*" />
-          <ColumnDefinition Width="Auto" />
-          <ColumnDefinition Width="8" />
-          <ColumnDefinition Width="Auto" />
-        </Grid.ColumnDefinitions>
-        <ui:TextBlock x:Name="BackupDirLabel"
-                      Style="{StaticResource WorkspaceMutedText}"
-                      VerticalAlignment="Center" />
-        <ui:TextBox x:Name="BackupDirBox"
+        <Grid.RowDefinitions>
+          <RowDefinition Height="Auto" />
+          <RowDefinition Height="10" />
+          <RowDefinition Height="Auto" />
+        </Grid.RowDefinitions>
+        <Grid Grid.Row="0">
+          <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="112" />
+            <ColumnDefinition Width="*" />
+            <ColumnDefinition Width="Auto" />
+            <ColumnDefinition Width="8" />
+            <ColumnDefinition Width="Auto" />
+          </Grid.ColumnDefinitions>
+          <ui:TextBlock x:Name="BackupDirLabel"
+                        Style="{StaticResource WorkspaceMutedText}"
+                        VerticalAlignment="Center" />
+          <ui:TextBox x:Name="BackupDirBox"
+                      Grid.Column="1"
+                      Margin="8,0"
+                      MinHeight="36"
+                      VerticalContentAlignment="Center"
+                      Icon="{ui:SymbolIcon Archive24}" />
+          <ui:Button x:Name="BrowseBackupButton"
+                     Grid.Column="2"
+                     MinHeight="36"
+                     Click="BrowseBackup_OnClick" />
+          <ui:Button x:Name="BackupButton"
+                     Grid.Column="4"
+                     MinHeight="36"
+                     Click="Backup_OnClick" />
+        </Grid>
+        <Grid Grid.Row="2">
+          <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="112" />
+            <ColumnDefinition Width="*" />
+            <ColumnDefinition Width="8" />
+            <ColumnDefinition Width="Auto" />
+            <ColumnDefinition Width="8" />
+            <ColumnDefinition Width="Auto" />
+          </Grid.ColumnDefinitions>
+          <ui:TextBlock x:Name="BackupListLabel"
+                        Style="{StaticResource WorkspaceMutedText}"
+                        VerticalAlignment="Center" />
+          <ComboBox x:Name="BackupCombo"
                     Grid.Column="1"
-                    Margin="8,0"
                     MinHeight="36"
                     VerticalContentAlignment="Center"
-                    Icon="{ui:SymbolIcon Archive24}" />
-        <ui:Button x:Name="BrowseBackupButton"
-                   Grid.Column="2"
-                   MinHeight="36"
-                   Click="BrowseBackup_OnClick" />
-        <ui:Button x:Name="BackupButton"
-                   Grid.Column="4"
-                   MinHeight="36"
-                   Click="Backup_OnClick" />
+                    DisplayMemberPath="DisplayText"
+                    SelectedValuePath="Id" />
+          <ui:Button x:Name="RefreshBackupsButton"
+                     Grid.Column="3"
+                     MinHeight="36"
+                     Click="RefreshBackups_OnClick"
+                     Icon="{ui:SymbolIcon ArrowSync24}" />
+          <ui:Button x:Name="RestoreBackupButton"
+                     Grid.Column="5"
+                     MinHeight="36"
+                     Click="RestoreBackup_OnClick"
+                     Icon="{ui:SymbolIcon History24}" />
+        </Grid>
       </Grid>
     </ui:Card>
 

@@ -7,12 +7,13 @@ namespace osu.Game.EzRealmSync.Realm
     /// </summary>
     public static class RealmApplySupport
     {
-        public static bool SupportsDirection(SyncDirection direction) => direction == SyncDirection.EzToOfficial;
+        public static bool SupportsDirection(SyncDirection direction) =>
+            direction is SyncDirection.EzToOfficial or SyncDirection.OfficialToEz;
 
         public static string? ValidateApplyRequest(ApplyRequest request)
         {
             if (!SupportsDirection(request.Direction))
-                return "当前仅支持 Ez→官方 写入。";
+                return "不支持的同步方向。";
 
             if (request.ItemIds.Count == 0)
                 return "未选择任何要处理的项。";
