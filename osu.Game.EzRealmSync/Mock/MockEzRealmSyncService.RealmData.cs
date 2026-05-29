@@ -1,12 +1,13 @@
 using osu.Game.EzRealmSync.Abstractions;
+using osu.Game.EzRealmSync.IO;
 using osu.Game.EzRealmSync.Models;
 
 namespace osu.Game.EzRealmSync.Mock
 {
     public sealed partial class MockEzRealmSyncService : IRealmDataService
     {
-        private readonly Dictionary<string, RealmFileEntry> realmFiles = new();
-        private readonly Dictionary<string, RealmSnapshot> loadedSnapshots = new();
+        private readonly Dictionary<string, RealmFileEntry> realmFiles = new Dictionary<string, RealmFileEntry>();
+        private readonly Dictionary<string, RealmSnapshot> loadedSnapshots = new Dictionary<string, RealmSnapshot>();
 
         public Task<IReadOnlyList<RealmFileEntry>> DiscoverRealmFilesAsync(string? searchDirectory, CancellationToken cancellationToken = default)
         {
@@ -80,27 +81,33 @@ namespace osu.Game.EzRealmSync.Mock
         {
             cancellationToken.ThrowIfCancellationRequested();
 
-            string stamp = DateTimeOffset.Now.ToString("yyyyMMdd_HHmmss");
-            string fileName = Path.GetFileName(realmFilePath);
-            string backupPath = Path.Combine(backupDirectory, $"{Path.GetFileNameWithoutExtension(fileName)}_{stamp}{Path.GetExtension(fileName)}");
-
-            if (!Directory.Exists(backupDirectory))
-                Directory.CreateDirectory(backupDirectory);
-
-            if (File.Exists(realmFilePath))
-                File.Copy(realmFilePath, backupPath, overwrite: false);
-            else
-                File.WriteAllText(backupPath, $"mock backup of {realmFilePath}");
+            string backupPath = File.Exists(realmFilePath)
+                ? RealmFileBackup.CreateTimestampedCopy(realmFilePath, backupDirectory)
+                : createMockPlaceholderBackup(realmFilePath, backupDirectory);
 
             backups.Insert(0, new BackupEntry
             {
                 Id = Guid.NewGuid().ToString("N"),
                 CreatedAt = DateTimeOffset.UtcNow,
-                Description = $"backup {fileName}",
+                Description = $"backup {Path.GetFileName(realmFilePath)}",
                 Path = backupPath,
             });
 
             return Task.FromResult(backupPath);
+        }
+
+        private static string createMockPlaceholderBackup(string realmFilePath, string backupDirectory)
+        {
+            Directory.CreateDirectory(backupDirectory);
+            string stamp = DateTimeOffset.Now.ToString("yyyyMMdd_HHmmss");
+            string fileName = Path.GetFileName(realmFilePath);
+            string backupPath = Path.Combine(backupDirectory, $"{Path.GetFileNameWithoutExtension(fileName)}_{stamp}{Path.GetExtension(fileName)}");
+
+            if (File.Exists(backupPath))
+                throw new IOException($"Backup already exists: {backupPath}");
+
+            File.WriteAllText(backupPath, $"mock backup of {realmFilePath}");
+            return backupPath;
         }
 
         public async Task<ScanResult> CompareRealmSetsAsync(
@@ -129,7 +136,7 @@ namespace osu.Game.EzRealmSync.Mock
             switch (operation)
             {
                 case RealmSetOperation.Intersection:
-                    foreach (var hash in sourceHashes.Select(g => g.Key).Intersect(targetHashes.Select(g => g.Key)))
+                    foreach (string hash in sourceHashes.Select(g => g.Key).Intersect(targetHashes.Select(g => g.Key)))
                     {
                         var a = sourceHashes[hash].First();
                         var b = targetHashes[hash].First();
@@ -144,7 +151,7 @@ namespace osu.Game.EzRealmSync.Mock
                 case RealmSetOperation.Union:
                     var allHashes = sourceHashes.Select(g => g.Key).Union(targetHashes.Select(g => g.Key));
 
-                    foreach (var hash in allHashes)
+                    foreach (string hash in allHashes)
                     {
                         bool inA = sourceHashes.Contains(hash);
                         bool inB = targetHashes.Contains(hash);
@@ -167,7 +174,7 @@ namespace osu.Game.EzRealmSync.Mock
                     break;
 
                 case RealmSetOperation.SymmetricDifference:
-                    foreach (var hash in sourceHashes.Select(g => g.Key).Union(targetHashes.Select(g => g.Key)))
+                    foreach (string hash in sourceHashes.Select(g => g.Key).Union(targetHashes.Select(g => g.Key)))
                     {
                         bool inA = sourceHashes.Contains(hash);
                         bool inB = targetHashes.Contains(hash);
@@ -195,7 +202,7 @@ namespace osu.Game.EzRealmSync.Mock
                             targetOnly.Add(toDiffItem(item, DiffCategory.TargetOnly));
                     }
 
-                    foreach (var hash in sourceHashes.Select(g => g.Key).Intersect(targetHashes.Select(g => g.Key)))
+                    foreach (string hash in sourceHashes.Select(g => g.Key).Intersect(targetHashes.Select(g => g.Key)))
                     {
                         var a = sourceHashes[hash].First();
                         var b = targetHashes[hash].First();
@@ -272,7 +279,7 @@ namespace osu.Game.EzRealmSync.Mock
             return snapshot.Groups.Where(g => kinds.Contains(g.EntityKind)).SelectMany(g => g.Rows).ToList();
         }
 
-        private static DiffItem toDiffItem(RealmEntityRow row, DiffCategory category, bool conflicted = false) => new()
+        private static DiffItem toDiffItem(RealmEntityRow row, DiffCategory category, bool conflicted = false) => new DiffItem
         {
             Id = row.Id,
             Category = category,

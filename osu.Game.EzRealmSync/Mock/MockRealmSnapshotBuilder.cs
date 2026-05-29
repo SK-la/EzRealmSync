@@ -192,11 +192,11 @@ namespace osu.Game.EzRealmSync.Mock
             var result = new List<RealmGroupSnapshot>();
 
             foreach (var (entityKind, objectClass) in new[]
-                     {
-                         (EntityKind.BeatmapSet, RealmObjectClass.BeatmapSet),
-                         (EntityKind.Beatmap, RealmObjectClass.Beatmap),
-                         (EntityKind.Score, RealmObjectClass.Score),
-                     })
+            {
+                (EntityKind.BeatmapSet, RealmObjectClass.BeatmapSet),
+                (EntityKind.Beatmap, RealmObjectClass.Beatmap),
+                (EntityKind.Score, RealmObjectClass.Score),
+            })
             {
                 var group = classes.FirstOrDefault(c => c.Class == objectClass);
                 if (group == null)

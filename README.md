@@ -30,6 +30,13 @@ dotnet run --project osu.EzRealmSync.Desktop -- --ui-test
 
 路线图：[docs/ROADMAP.md](docs/ROADMAP.md)
 
+单元测试：
+
+```bash
+dotnet test EzRealmSync.sln
+dotnet test ../osu/osu.Game.Tests/osu.Game.Tests.csproj --filter "FullyQualifiedName~OfficialRealmAccess|FullyQualifiedName~RealmSchemaProfile|FullyQualifiedName~EzRealmAccessSchema"
+```
+
 ## 中文显示
 
 WPF 使用系统字体（`Microsoft YaHei UI` / `Segoe UI`），无需 `osu.Game.Resources.dll`。

@@ -91,17 +91,17 @@ namespace osu.EzRealmSync.Desktop
             var template = new DataTemplate(typeof(PlaceEntry));
             var panelFactory = new FrameworkElementFactory(typeof(System.Windows.Controls.StackPanel));
             panelFactory.SetValue(System.Windows.Controls.StackPanel.OrientationProperty, Orientation.Horizontal);
-            panelFactory.SetValue(FrameworkElement.MarginProperty, new Thickness(4, 6, 4, 6));
+            panelFactory.SetValue(MarginProperty, new Thickness(4, 6, 4, 6));
 
             var iconFactory = new FrameworkElementFactory(typeof(SymbolIcon));
             iconFactory.SetBinding(SymbolIcon.SymbolProperty, new System.Windows.Data.Binding(nameof(PlaceEntry.Icon)));
-            iconFactory.SetValue(Control.FontSizeProperty, 16.0);
-            iconFactory.SetValue(FrameworkElement.MarginProperty, new Thickness(0, 0, 10, 0));
-            iconFactory.SetValue(FrameworkElement.VerticalAlignmentProperty, VerticalAlignment.Center);
+            iconFactory.SetValue(FontSizeProperty, 16.0);
+            iconFactory.SetValue(MarginProperty, new Thickness(0, 0, 10, 0));
+            iconFactory.SetValue(VerticalAlignmentProperty, VerticalAlignment.Center);
 
             var textFactory = new FrameworkElementFactory(typeof(TextBlock));
             textFactory.SetBinding(System.Windows.Controls.TextBlock.TextProperty, new System.Windows.Data.Binding(nameof(PlaceEntry.Name)));
-            textFactory.SetValue(FrameworkElement.VerticalAlignmentProperty, VerticalAlignment.Center);
+            textFactory.SetValue(VerticalAlignmentProperty, VerticalAlignment.Center);
             textFactory.SetValue(System.Windows.Controls.TextBlock.TextTrimmingProperty, TextTrimming.CharacterEllipsis);
 
             panelFactory.AppendChild(iconFactory);

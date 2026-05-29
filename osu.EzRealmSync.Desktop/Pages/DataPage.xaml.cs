@@ -8,9 +8,9 @@ using osu.Game.EzRealmSync.Models;
 
 namespace osu.EzRealmSync.Desktop.Pages
 {
-    public partial class DataPage : UserControl
+    public partial class DataPage
     {
-        private static readonly BrowseCellConverter browseCellConverter = new();
+        private static readonly BrowseCellConverter browse_cell_converter = new BrowseCellConverter();
 
         private ShellViewModel? vm;
         private bool suppressClassSelection;
@@ -63,7 +63,7 @@ namespace osu.EzRealmSync.Desktop.Pages
 
             browseGridConfigured = true;
 
-            CheckableDataGridHelper.Configure<RealmBrowseRowModel>(
+            CheckableDataGridHelper.Configure(
                 DataGrid,
                 () => vm.BrowseRows,
                 (rows, check) => vm.Presenter.SetBrowseRowsChecked(rows, check),
@@ -153,7 +153,7 @@ namespace osu.EzRealmSync.Desktop.Pages
                     Header = formatColumnHeader(column),
                     Binding = new Binding
                     {
-                        Converter = browseCellConverter,
+                        Converter = browse_cell_converter,
                         ConverterParameter = column.PropertyKey,
                     },
                     Width = DataGridLength.Auto,

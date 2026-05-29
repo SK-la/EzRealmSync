@@ -6,7 +6,7 @@ using osu.EzRealmSync.Desktop.ViewModels;
 
 namespace osu.EzRealmSync.Desktop.Pages
 {
-    public partial class FixPage : UserControl
+    public partial class FixPage
     {
         private ShellViewModel? vm;
         private bool issuesGridBehaviorConfigured;
@@ -54,7 +54,7 @@ namespace osu.EzRealmSync.Desktop.Pages
 
         private void updateEnabled()
         {
-            bool enabled = vm?.CanUseFixAndExport == true && vm.IsBusy == false;
+            bool enabled = vm is { CanUseFixAndExport: true, IsBusy: false };
             ScanButton.IsEnabled = enabled;
             FixSelectedButton.IsEnabled = enabled;
             FixAllButton.IsEnabled = enabled;
@@ -132,7 +132,7 @@ namespace osu.EzRealmSync.Desktop.Pages
 
             issuesGridBehaviorConfigured = true;
 
-            CheckableDataGridHelper.Configure<RealmFixIssueModel>(
+            CheckableDataGridHelper.Configure(
                 IssuesGrid,
                 () => vm.FixIssues,
                 (rows, check) => vm.Presenter.SetFixIssuesChecked(rows, check),

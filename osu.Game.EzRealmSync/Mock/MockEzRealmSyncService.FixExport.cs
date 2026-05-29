@@ -175,6 +175,7 @@ namespace osu.Game.EzRealmSync.Mock
                     for (int c = 0; c < 3; c++)
                     {
                         string collection = $"Collection {c + 1}";
+
                         foreach (var row in snapshot.Groups.First(g => g.EntityKind == EntityKind.Beatmap).Rows.Take(4))
                         {
                             items.Add(new RealmExportItem
@@ -259,10 +260,9 @@ namespace osu.Game.EzRealmSync.Mock
             };
         }
 
-        private static string buildMockRelativePath(RealmEntityRow row, EntityKind kind) =>
-            kind == EntityKind.BeatmapSet
-                ? $"{row.Artist} - {row.Title}"
-                : $"{row.Artist} - {row.Title}/{row.Ruleset}.osu";
+        private static string buildMockRelativePath(RealmEntityRow row, EntityKind kind) => kind == EntityKind.BeatmapSet
+            ? $"{row.Artist} - {row.Title}"
+            : $"{row.Artist} - {row.Title}/{row.Ruleset}.osu";
 
         private static string sanitizePathSegment(string name)
         {

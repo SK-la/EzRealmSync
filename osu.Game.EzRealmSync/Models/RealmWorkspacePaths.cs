@@ -24,6 +24,7 @@ namespace osu.Game.EzRealmSync.Models
                 results.Add(file);
 
             string dataDir = Path.Combine(path, "data");
+
             if (Directory.Exists(dataDir))
             {
                 foreach (string file in Directory.EnumerateFiles(dataDir, "*.realm", SearchOption.TopDirectoryOnly))
@@ -49,6 +50,7 @@ namespace osu.Game.EzRealmSync.Models
                 return false;
 
             string direct = Path.Combine(path, "files");
+
             if (Directory.Exists(direct))
             {
                 filesDirectory = direct;
@@ -58,6 +60,7 @@ namespace osu.Game.EzRealmSync.Models
             if (string.Equals(Path.GetFileName(path.TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar)), "data", StringComparison.OrdinalIgnoreCase))
             {
                 string sibling = Path.Combine(Directory.GetParent(path)?.FullName ?? path, "files");
+
                 if (Directory.Exists(sibling))
                 {
                     filesDirectory = sibling;
@@ -66,9 +69,11 @@ namespace osu.Game.EzRealmSync.Models
             }
 
             string? parent = Directory.GetParent(path)?.FullName;
+
             if (parent != null)
             {
                 string parentFiles = Path.Combine(parent, "files");
+
                 if (Directory.Exists(parentFiles))
                 {
                     filesDirectory = parentFiles;

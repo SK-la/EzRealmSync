@@ -27,19 +27,21 @@ namespace osu.EzRealmSync.AppModel
             DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull,
         };
 
-        private static string settingsPath => Path.Combine(
+        public static string GetDefaultSettingsPath() => Path.Combine(
             Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
             "EzRealmSync",
             "settings.json");
 
-        public static EzRealmSyncAppSettings Load()
+        public static EzRealmSyncAppSettings Load(string? settingsPath = null)
         {
+            string path = settingsPath ?? GetDefaultSettingsPath();
+
             try
             {
-                if (!File.Exists(settingsPath))
+                if (!File.Exists(path))
                     return createDefault();
 
-                string json = File.ReadAllText(settingsPath);
+                string json = File.ReadAllText(path);
                 return JsonSerializer.Deserialize<EzRealmSyncAppSettings>(json, jsonOptions) ?? createDefault();
             }
             catch
@@ -48,14 +50,16 @@ namespace osu.EzRealmSync.AppModel
             }
         }
 
-        public static void Save(EzRealmSyncAppSettings settings)
+        public static void Save(EzRealmSyncAppSettings settings, string? settingsPath = null)
         {
-            string? dir = Path.GetDirectoryName(settingsPath);
+            string path = settingsPath ?? GetDefaultSettingsPath();
+            string? dir = Path.GetDirectoryName(path);
+
             if (!string.IsNullOrEmpty(dir))
                 Directory.CreateDirectory(dir);
 
             string json = JsonSerializer.Serialize(settings, jsonOptions);
-            File.WriteAllText(settingsPath, json);
+            File.WriteAllText(path, json);
         }
 
         private static EzRealmSyncAppSettings createDefault() => new()

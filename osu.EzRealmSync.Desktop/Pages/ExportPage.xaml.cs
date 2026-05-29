@@ -7,7 +7,7 @@ using osu.Game.EzRealmSync.Models;
 
 namespace osu.EzRealmSync.Desktop.Pages
 {
-    public partial class ExportPage : UserControl
+    public partial class ExportPage
     {
         private ShellViewModel? vm;
         private bool suppressKindChange;
@@ -68,7 +68,7 @@ namespace osu.EzRealmSync.Desktop.Pages
 
         private void updateEnabled()
         {
-            bool enabled = vm?.CanUseFixAndExport == true && vm.IsBusy == false;
+            bool enabled = vm is { CanUseFixAndExport: true, IsBusy: false };
             LoadListButton.IsEnabled = enabled;
             ExportButton.IsEnabled = enabled;
             SelectAllButton.IsEnabled = enabled;
@@ -165,7 +165,7 @@ namespace osu.EzRealmSync.Desktop.Pages
 
             exportGridBehaviorConfigured = true;
 
-            CheckableDataGridHelper.Configure<RealmExportItemModel>(
+            CheckableDataGridHelper.Configure(
                 ExportGrid,
                 () => vm.ExportItems,
                 (rows, check) => vm.Presenter.SetExportItemsChecked(rows, check),

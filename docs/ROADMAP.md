@@ -36,3 +36,14 @@ EzRealmSync/
 ```
 
 Phase 2 依赖 `lib/osu.Game.dll`（见 [lib/README.md](../lib/README.md)）。
+
+## 单元测试
+
+| 项目 | 覆盖 |
+|------|------|
+| `osu.Game.EzRealmSync.Tests` | Schema 编解码、`RealmFileBackup`、`RealmWorkspacePaths`、Mock 同步/备份、设置持久化 |
+| `osu.Game.Tests` | `OfficialRealmAccess` / `EzRealmSchemaProfile` / Ez schema 版本 |
+
+```bash
+dotnet test EzRealmSync.sln
+```
