@@ -23,7 +23,7 @@
         <ui:TextBlock x:Name="TitleLabel" FontSize="22" FontWeight="SemiBold" Margin="0,0,0,16" />
         <ui:TextBlock x:Name="LanguageLabel" Opacity="0.75" Margin="0,0,0,4" />
         <ComboBox x:Name="LanguageCombo" Margin="0,0,0,16" SelectionChanged="LanguageCombo_OnChanged" />
-        <CheckBox x:Name="UiTestCheck" Margin="0,0,0,8" IsEnabled="False" />
+        <ui:ToggleSwitch x:Name="UiTestModeSwitch" Margin="0,0,0,8" LabelPosition="Right" IsEnabled="False" />
         <ui:TextBlock x:Name="UiTestHint" TextWrapping="Wrap" Opacity="0.75" Margin="0,0,0,16" />
         <ui:TextBlock x:Name="MockOptionsLabel" FontWeight="SemiBold" Margin="0,0,0,8" Visibility="Collapsed" />
         <ui:TextBlock x:Name="DatasetLabel" Opacity="0.75" Visibility="Collapsed" />

@@ -24,10 +24,10 @@ namespace osu.EzRealmSync.Desktop
             SettingsTitleBar.Title = Loc.Get("SettingsTitle");
             TitleLabel.Text = Loc.Get("SettingsTitle");
             LanguageLabel.Text = Loc.Get("Language");
-            UiTestCheck.Content = Loc.Get("UiTestMode");
+            UiTestModeSwitch.Content = Loc.Get("UiTestMode");
             UiTestHint.Text = Loc.Get("UiTestModeHint");
             CloseButton.Content = Loc.Get("Close");
-            UiTestCheck.IsChecked = presenter.UiTestMode.Value;
+            UiTestModeSwitch.IsChecked = presenter.UiTestMode.Value;
 
             LanguageCombo.Items.Clear();
             LanguageCombo.Items.Add(new ComboBoxItem { Content = Loc.Get("LanguageZh"), Tag = AppLanguage.ZhHans });

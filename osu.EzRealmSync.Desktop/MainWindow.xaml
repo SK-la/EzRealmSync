@@ -38,11 +38,11 @@
         </Grid.ColumnDefinitions>
         <ui:TextBlock x:Name="LabelEndpointA" Grid.Row="0" Grid.Column="0" VerticalAlignment="Center" Opacity="0.75" />
         <ui:TextBox x:Name="PathA" Grid.Row="0" Grid.Column="1" Margin="8,4" Icon="{ui:SymbolIcon Folder24}" />
-        <ui:Button x:Name="BrowseAButton" Grid.Row="0" Grid.Column="2" Margin="4,4" Click="BrowseA_OnClick" />
-        <ui:Button x:Name="ScanButton" Grid.Row="0" Grid.Column="3" Margin="4,4" Click="Scan_OnClick" Appearance="Primary" />
+        <ui:Button x:Name="BrowseAButton" Grid.Row="0" Grid.Column="2" Margin="4,4" Click="BrowseA_OnClick" Icon="{ui:SymbolIcon FolderOpen24}" />
+        <ui:Button x:Name="ScanButton" Grid.Row="0" Grid.Column="3" Margin="4,4" Click="Scan_OnClick" Appearance="Primary" Icon="{ui:SymbolIcon ArrowSync24}" />
         <ui:TextBlock x:Name="LabelEndpointB" Grid.Row="1" Grid.Column="0" VerticalAlignment="Center" Opacity="0.75" />
         <ui:TextBox x:Name="PathB" Grid.Row="1" Grid.Column="1" Margin="8,4" Icon="{ui:SymbolIcon Folder24}" />
-        <ui:Button x:Name="BrowseBButton" Grid.Row="1" Grid.Column="2" Margin="4,4" Click="BrowseB_OnClick" />
+        <ui:Button x:Name="BrowseBButton" Grid.Row="1" Grid.Column="2" Margin="4,4" Click="BrowseB_OnClick" Icon="{ui:SymbolIcon FolderOpen24}" />
       </Grid>
     </ui:Card>
 
@@ -85,7 +85,7 @@
       </ui:Card>
     </Grid>
 
-    <Border Grid.Row="3" Margin="16,0" Padding="0,4" BorderBrush="{StaticResource EzBrushBorder}" BorderThickness="0,1,0,0" Opacity="0.6">
+    <ui:Card Grid.Row="3" Margin="12,0" Padding="12,8">
       <Grid>
         <Grid.ColumnDefinitions>
           <ColumnDefinition Width="*" />
@@ -98,12 +98,12 @@
           <ColumnDefinition Width="160" />
         </Grid.ColumnDefinitions>
         <ui:TextBlock x:Name="SelectionCountText" Grid.Column="0" VerticalAlignment="Center" Opacity="0.75" />
-        <ui:Button x:Name="SettingsButton" Grid.Column="1" Click="SettingsButton_OnClick" />
-        <ui:Button x:Name="ExportButton" Grid.Column="3" IsEnabled="False" Opacity="0.35" />
-        <ui:Button x:Name="DeleteButton" Grid.Column="5" Click="Delete_OnClick" />
-        <ui:Button x:Name="ApplyButton" Grid.Column="7" Click="Apply_OnClick" Appearance="Primary" />
+        <ui:Button x:Name="SettingsButton" Grid.Column="1" Click="SettingsButton_OnClick" Icon="{ui:SymbolIcon Settings24}" />
+        <ui:Button x:Name="ExportButton" Grid.Column="3" IsEnabled="False" Opacity="0.35" Icon="{ui:SymbolIcon ArrowExportUp24}" />
+        <ui:Button x:Name="DeleteButton" Grid.Column="5" Click="Delete_OnClick" Icon="{ui:SymbolIcon Delete24}" />
+        <ui:Button x:Name="ApplyButton" Grid.Column="7" Click="Apply_OnClick" Appearance="Primary" Icon="{ui:SymbolIcon Checkmark24}" />
       </Grid>
-    </Border>
+    </ui:Card>
 
     <Grid Grid.Row="4" Margin="16,0,16,14">
       <Grid.ColumnDefinitions>

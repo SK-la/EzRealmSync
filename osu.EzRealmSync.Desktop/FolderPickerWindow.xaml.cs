@@ -33,8 +33,36 @@ namespace osu.EzRealmSync.Desktop
         private void navigateTo(string path)
         {
             currentPath = Path.GetFullPath(path);
-            PathBox.Text = currentPath;
+            refreshBreadcrumbs();
             refreshList();
+        }
+
+        private void refreshBreadcrumbs()
+        {
+            PathBreadcrumb.Items.Clear();
+
+            if (string.IsNullOrEmpty(currentPath))
+                return;
+
+            var segments = new List<(string label, string path)>();
+            var dir = new DirectoryInfo(currentPath);
+
+            while (dir != null)
+            {
+                var label = string.IsNullOrEmpty(dir.Name) ? dir.FullName.TrimEnd(Path.DirectorySeparatorChar) : dir.Name;
+                segments.Insert(0, (label, dir.FullName));
+                dir = dir.Parent;
+            }
+
+            for (int i = 0; i < segments.Count; i++)
+            {
+                PathBreadcrumb.Items.Add(new BreadcrumbBarItem
+                {
+                    Content = segments[i].label,
+                    Tag = segments[i].path,
+                    IsLast = i == segments.Count - 1,
+                });
+            }
         }
 
         private void refreshList()
@@ -75,6 +103,15 @@ namespace osu.EzRealmSync.Desktop
 
             if (Directory.Exists(entry.FullPath))
                 navigateTo(entry.FullPath);
+        }
+
+        private void PathBreadcrumb_OnItemClicked(object sender, RoutedEventArgs e)
+        {
+            if (e is not BreadcrumbBarItemClickedEventArgs { Item: BreadcrumbBarItem { Tag: string path } })
+                return;
+
+            if (Directory.Exists(path))
+                navigateTo(path);
         }
 
         private void FolderList_OnMouseDoubleClick(object sender, MouseButtonEventArgs e) => enterSelected();

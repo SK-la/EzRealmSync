@@ -22,28 +22,59 @@ namespace osu.EzRealmSync.Desktop.Services
             if (!Application.Current.Dispatcher.CheckAccess())
                 return Application.Current.Dispatcher.Invoke(() => ConfirmAsync(owner, message, title, dangerous));
 
-            return confirmOnUiThreadAsync(owner, message, title, dangerous);
+            return confirmOnUiThreadAsync(message, title, dangerous);
         }
 
-        private static async Task<bool> confirmOnUiThreadAsync(Window owner, string message, string title, bool dangerous)
+        private static async Task<bool> confirmOnUiThreadAsync(string message, string title, bool dangerous)
         {
-            var box = new UiMessageBox
+            if (!WpfUiServices.IsReady)
             {
-                Title = title,
-                Content = new TextBlock
+                var fallback = new UiMessageBox
                 {
-                    Text = message,
-                    TextWrapping = TextWrapping.Wrap,
-                    Margin = new Thickness(0, 8, 0, 0),
-                },
-                PrimaryButtonText = Loc.Get("Yes"),
-                CloseButtonText = Loc.Get("No"),
-                PrimaryButtonAppearance = dangerous ? ControlAppearance.Caution : ControlAppearance.Primary,
-                Owner = owner,
-            };
+                    Title = title,
+                    Content = message,
+                    PrimaryButtonText = Loc.Get("Yes"),
+                    CloseButtonText = Loc.Get("No"),
+                    PrimaryButtonAppearance = dangerous ? ControlAppearance.Caution : ControlAppearance.Primary,
+                    Owner = Application.Current.MainWindow,
+                };
 
-            var result = await box.ShowDialogAsync();
-            return result == UiMessageBoxResult.Primary;
+                return await fallback.ShowDialogAsync() == UiMessageBoxResult.Primary;
+            }
+
+            if (dangerous)
+            {
+                var dialog = new ContentDialog
+                {
+                    Title = title,
+                    Content = new TextBlock
+                    {
+                        Text = message,
+                        TextWrapping = TextWrapping.Wrap,
+                        Margin = new Thickness(0, 8, 0, 0),
+                    },
+                    PrimaryButtonText = Loc.Get("Yes"),
+                    CloseButtonText = Loc.Get("No"),
+                    PrimaryButtonAppearance = ControlAppearance.Caution,
+                    DefaultButton = ContentDialogButton.Primary,
+                };
+
+                var result = await WpfUiServices.ContentDialogs.ShowAsync(dialog, CancellationToken.None);
+                return result == ContentDialogResult.Primary;
+            }
+
+            var simpleResult = await WpfUiServices.ContentDialogs.ShowSimpleDialogAsync(
+                new SimpleContentDialogCreateOptions
+                {
+                    Title = title,
+                    Content = message,
+                    PrimaryButtonText = Loc.Get("Yes"),
+                    CloseButtonText = Loc.Get("No"),
+                    DefaultButton = ContentDialogButton.Primary,
+                },
+                CancellationToken.None);
+
+            return simpleResult == ContentDialogResult.Primary;
         }
     }
 }

@@ -10,6 +10,7 @@ namespace osu.EzRealmSync.Desktop
     {
         private MainViewModel vm = null!;
         private bool suppressDirectionChange;
+        private string? lastSnackbarStatus;
 
         public MainWindow()
         {
@@ -17,7 +18,7 @@ namespace osu.EzRealmSync.Desktop
             ApplicationThemeManager.Apply(this);
             Loaded += (_, _) =>
             {
-                WpfUiSnackbar.Attach(RootSnackbarPresenter);
+                WpfUiServices.Attach(RootContentDialogHost, RootSnackbarPresenter);
                 bindViewModel();
             };
         }
@@ -37,11 +38,14 @@ namespace osu.EzRealmSync.Desktop
         private void setupDataGridColumns()
         {
             DiffGrid.Columns.Clear();
-            DiffGrid.Columns.Add(new DataGridCheckBoxColumn
+            var checkColumn = new DataGridCheckBoxColumn
             {
                 Binding = new System.Windows.Data.Binding(nameof(DiffRowModel.IsSelected)) { UpdateSourceTrigger = System.Windows.Data.UpdateSourceTrigger.PropertyChanged },
                 Width = 40,
-            });
+                ElementStyle = DiffGrid.CheckBoxColumnElementStyle,
+                EditingElementStyle = DiffGrid.CheckBoxColumnEditingElementStyle,
+            };
+            DiffGrid.Columns.Add(checkColumn);
             DiffGrid.Columns.Add(new DataGridTextColumn { Header = Loc.Get("ColTitle"), Binding = new System.Windows.Data.Binding(nameof(DiffRowModel.Title)), Width = new DataGridLength(1, DataGridLengthUnitType.Star) });
             DiffGrid.Columns.Add(new DataGridTextColumn { Header = Loc.Get("ColArtist"), Binding = new System.Windows.Data.Binding(nameof(DiffRowModel.Artist)), Width = 120 });
             DiffGrid.Columns.Add(new DataGridTextColumn { Header = Loc.Get("ColHash"), Binding = new System.Windows.Data.Binding(nameof(DiffRowModel.Hash)), Width = 100 });
@@ -81,7 +85,7 @@ namespace osu.EzRealmSync.Desktop
                             if (PathB.Text != vm.EndpointBPath) PathB.Text = vm.EndpointBPath;
                             break;
                         case nameof(MainViewModel.StatusMessage):
-                            StatusText.Text = vm.StatusMessage;
+                            updateStatus(vm.StatusMessage);
                             break;
                         case nameof(MainViewModel.Progress):
                             ScanProgressRing.Progress = vm.Progress;
@@ -91,6 +95,10 @@ namespace osu.EzRealmSync.Desktop
                             SelectionCountText.Text = vm.SelectionCountText;
                             break;
                         case nameof(MainViewModel.IsBusy):
+                            if (!vm.IsBusy)
+                                lastSnackbarStatus = null;
+                            updateActionButtons();
+                            break;
                         case nameof(MainViewModel.CanApply):
                             updateActionButtons();
                             break;
@@ -122,7 +130,7 @@ namespace osu.EzRealmSync.Desktop
             Title = vm.WindowTitle;
             PathA.Text = vm.EndpointAPath;
             PathB.Text = vm.EndpointBPath;
-            StatusText.Text = vm.StatusMessage;
+            updateStatus(vm.StatusMessage);
             ScanProgressRing.Progress = vm.Progress;
             ScanProgressRing.IsIndeterminate = vm.IsBusy && vm.Progress <= 0;
             SelectionCountText.Text = vm.SelectionCountText;
@@ -130,6 +138,39 @@ namespace osu.EzRealmSync.Desktop
             syncDirectionRadio();
             updateActionButtons();
             updateCategoryTabs();
+        }
+
+        private void updateStatus(string message)
+        {
+            StatusText.Text = message;
+
+            if (vm.IsBusy || string.IsNullOrWhiteSpace(message) || message == lastSnackbarStatus || isTransientStatus(message))
+                return;
+
+            lastSnackbarStatus = message;
+            var appearance = inferStatusAppearance(message);
+            WpfUiSnackbar.Show(vm.WindowTitle, message, appearance);
+        }
+
+        private static bool isTransientStatus(string message) =>
+            message.Contains("扫描", StringComparison.Ordinal) ||
+            message.Contains("Scanning", StringComparison.OrdinalIgnoreCase) ||
+            message.Contains("就绪", StringComparison.Ordinal) ||
+            message.Contains("Ready", StringComparison.OrdinalIgnoreCase);
+
+        private static ControlAppearance inferStatusAppearance(string message)
+        {
+            if (message.Contains('\n'))
+                return ControlAppearance.Caution;
+
+            var lower = message.ToLowerInvariant();
+            if (lower.Contains("error") || lower.Contains("fail") || lower.Contains("错误") || lower.Contains("失败"))
+                return ControlAppearance.Danger;
+
+            if (lower.Contains("complete") || lower.Contains("ready") || lower.Contains("完成") || lower.Contains("就绪"))
+                return ControlAppearance.Success;
+
+            return ControlAppearance.Info;
         }
 
         private void refreshLabels()

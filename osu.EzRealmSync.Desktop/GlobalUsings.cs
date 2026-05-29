@@ -1,9 +1,8 @@
-// WPF-UI 控件约定（包：WPF-UI + WPF-UI.Abstractions，已随 NuGet 引入 ControlsDictionary 主题）：
+// WPF-UI 控件约定（WPF-UI 4.3 + ControlsDictionary 主题）：
 //
 // 1) 独立类型 → 下列别名（C# 中写 Button / TextBox 即 Wpf.Ui.Controls.*）
-// 2) ComboBox / CheckBox / RadioButton → 仍用 System.Windows.Controls 类型名，
-//    但由 ui:ControlsDictionary 提供 Fluent 样式（XAML 不要写 ui: 前缀，也不要加 Std）
-// 3) 仅当必须绕过 WPF-UI 时，使用 Win* 前缀（如 WinMessageBox）
+// 2) ComboBox / CheckBox / RadioButton → System.Windows.Controls，由 ControlsDictionary 提供 Fluent 样式
+// 3) 对话框 / 通知 → WpfUiServices（ContentDialogHost + SnackbarPresenter）
 
 global using System.Windows;
 global using System.Windows.Controls;
@@ -29,14 +28,17 @@ global using ProgressRing = Wpf.Ui.Controls.ProgressRing;
 global using Snackbar = Wpf.Ui.Controls.Snackbar;
 global using SnackbarPresenter = Wpf.Ui.Controls.SnackbarPresenter;
 global using ToggleSwitch = Wpf.Ui.Controls.ToggleSwitch;
+global using BreadcrumbBar = Wpf.Ui.Controls.BreadcrumbBar;
+global using BreadcrumbBarItem = Wpf.Ui.Controls.BreadcrumbBarItem;
 global using UiMessageBox = Wpf.Ui.Controls.MessageBox;
 global using UiMessageBoxResult = Wpf.Ui.Controls.MessageBoxResult;
-global using UiMessageBoxButton = Wpf.Ui.Controls.MessageBoxButton;
 global using ControlAppearance = Wpf.Ui.Controls.ControlAppearance;
 global using ContentDialogResult = Wpf.Ui.Controls.ContentDialogResult;
+global using ContentDialogButton = Wpf.Ui.Controls.ContentDialogButton;
 
-// —— 仅 Windows 基座（无 Fluent 替代）——
-global using WinMessageBox = System.Windows.MessageBox;
-global using WinMessageBoxButton = System.Windows.MessageBoxButton;
-global using WinMessageBoxResult = System.Windows.MessageBoxResult;
-global using WinMessageBoxImage = System.Windows.MessageBoxImage;
+// —— Wpf.Ui 服务 ——
+global using IContentDialogService = Wpf.Ui.IContentDialogService;
+global using ContentDialogService = Wpf.Ui.ContentDialogService;
+global using ISnackbarService = Wpf.Ui.ISnackbarService;
+global using SnackbarService = Wpf.Ui.SnackbarService;
+global using SimpleContentDialogCreateOptions = Wpf.Ui.SimpleContentDialogCreateOptions;

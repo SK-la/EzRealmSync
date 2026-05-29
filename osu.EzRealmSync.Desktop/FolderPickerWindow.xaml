@@ -22,11 +22,10 @@
 
     <ui:TitleBar Grid.Row="0" x:Name="PickerTitleBar" Margin="6,6,6,0" />
 
-    <ui:TextBox x:Name="PathBox"
-                Grid.Row="1"
-                Margin="16,8,16,8"
-                IsReadOnly="True"
-                Icon="{ui:SymbolIcon Folder24}" />
+    <ui:BreadcrumbBar x:Name="PathBreadcrumb"
+                      Grid.Row="1"
+                      Margin="16,8,16,8"
+                      ItemClicked="PathBreadcrumb_OnItemClicked" />
 
     <ui:ListView x:Name="FolderList"
                  Grid.Row="2"
@@ -37,9 +36,9 @@
                 Orientation="Horizontal"
                 HorizontalAlignment="Right"
                 Margin="16,0,16,0">
-      <ui:Button x:Name="UpButton" Margin="0,0,8,0" Click="UpButton_OnClick" />
+      <ui:Button x:Name="UpButton" Margin="0,0,8,0" Click="UpButton_OnClick" Icon="{ui:SymbolIcon ChevronUp24}" />
       <ui:Button x:Name="CancelButton" Margin="0,0,8,0" Click="CancelButton_OnClick" />
-      <ui:Button x:Name="SelectButton" Appearance="Primary" Click="SelectButton_OnClick" />
+      <ui:Button x:Name="SelectButton" Appearance="Primary" Click="SelectButton_OnClick" Icon="{ui:SymbolIcon Checkmark24}" />
     </StackPanel>
   </Grid>
 </ui:FluentWindow>
