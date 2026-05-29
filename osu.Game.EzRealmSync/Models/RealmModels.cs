@@ -67,8 +67,14 @@ namespace osu.Game.EzRealmSync.Models
 
         public required string DisplayName { get; init; }
 
+        /// <summary>Realm Studio 风格的多类型分组（一级列表 + 二级表格）。</summary>
+        public IReadOnlyList<RealmClassGroup> Classes { get; init; } = Array.Empty<RealmClassGroup>();
+
+        /// <summary>同步 Diff 仍使用的简化分组（由 <see cref="Classes"/> 派生）。</summary>
         public IReadOnlyList<RealmGroupSnapshot> Groups { get; init; } = Array.Empty<RealmGroupSnapshot>();
 
-        public int TotalRowCount => Groups.Sum(g => g.Rows.Count);
+        public int TotalRowCount => Classes.Count > 0 ? Classes.Sum(g => g.Count) : Groups.Sum(g => g.Rows.Count);
+
+        public int ClassCount => Classes.Count > 0 ? Classes.Count : Groups.Count;
     }
 }

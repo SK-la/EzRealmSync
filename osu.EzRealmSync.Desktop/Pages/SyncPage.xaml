@@ -4,11 +4,11 @@
              xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
              HorizontalAlignment="Stretch"
              VerticalAlignment="Stretch">
-  <Grid Margin="4">
+  <Grid Margin="4" VerticalAlignment="Stretch">
     <Grid.RowDefinitions>
       <RowDefinition Height="Auto" />
       <RowDefinition Height="Auto" />
-      <RowDefinition Height="*" MinHeight="240" />
+      <RowDefinition Height="*" MinHeight="120" />
       <RowDefinition Height="Auto" />
     </Grid.RowDefinitions>
 
@@ -25,14 +25,30 @@
           <ColumnDefinition Width="*" />
         </Grid.ColumnDefinitions>
 
-        <ui:TextBlock x:Name="SourceLabel" Grid.Row="0" Grid.Column="0" VerticalAlignment="Center" Opacity="0.75" />
+        <ui:TextBlock x:Name="SourceLabel"
+                      Grid.Row="0"
+                      Grid.Column="0"
+                      Style="{StaticResource WorkspaceMutedText}"
+                      VerticalAlignment="Center" />
         <ComboBox x:Name="SourceCombo" Grid.Row="0" Grid.Column="1" Margin="8,4" DisplayMemberPath="DisplayName" SelectedValuePath="Id" SelectionChanged="SourceCombo_OnChanged" />
-        <ui:TextBlock x:Name="TargetLabel" Grid.Row="0" Grid.Column="2" VerticalAlignment="Center" Opacity="0.75" />
+        <ui:TextBlock x:Name="TargetLabel"
+                      Grid.Row="0"
+                      Grid.Column="2"
+                      Style="{StaticResource WorkspaceMutedText}"
+                      VerticalAlignment="Center" />
         <ComboBox x:Name="TargetCombo" Grid.Row="0" Grid.Column="3" Margin="8,4" DisplayMemberPath="DisplayName" SelectedValuePath="Id" SelectionChanged="TargetCombo_OnChanged" />
 
-        <ui:TextBlock x:Name="SetOpLabel" Grid.Row="1" Grid.Column="0" VerticalAlignment="Center" Opacity="0.75" />
+        <ui:TextBlock x:Name="SetOpLabel"
+                      Grid.Row="1"
+                      Grid.Column="0"
+                      Style="{StaticResource WorkspaceMutedText}"
+                      VerticalAlignment="Center" />
         <ComboBox x:Name="SetOpCombo" Grid.Row="1" Grid.Column="1" Margin="8,4" SelectionChanged="SetOpCombo_OnChanged" />
-        <ui:TextBlock x:Name="ActionLabel" Grid.Row="1" Grid.Column="2" VerticalAlignment="Center" Opacity="0.75" />
+        <ui:TextBlock x:Name="ActionLabel"
+                      Grid.Row="1"
+                      Grid.Column="2"
+                      Style="{StaticResource WorkspaceMutedText}"
+                      VerticalAlignment="Center" />
         <ComboBox x:Name="ActionCombo" Grid.Row="1" Grid.Column="3" Margin="8,4" SelectionChanged="ActionCombo_OnChanged" />
       </Grid>
     </ui:Card>
@@ -46,16 +62,25 @@
       <ComboBox x:Name="EntityFilterCombo" Width="148" Margin="0,0,0,6" SelectionChanged="EntityFilter_OnChanged" />
     </WrapPanel>
 
-    <ui:Card Grid.Row="2" Padding="8" Margin="0,0,0,10">
-      <ui:DataGrid x:Name="SyncGrid"
-                   HorizontalAlignment="Stretch"
-                   VerticalAlignment="Stretch"
-                   MinHeight="200"
-                   AutoGenerateColumns="False"
-                   CanUserAddRows="False"
-                   CanUserDeleteRows="False"
-                   SelectionMode="Extended"
-                   CurrentCellChanged="SyncGrid_OnCellChanged" />
+    <ui:Card Grid.Row="2"
+             Style="{StaticResource WorkspaceStretchCard}"
+             Padding="8"
+             Margin="0,0,0,10">
+      <Grid VerticalAlignment="Stretch">
+        <Grid.RowDefinitions>
+          <RowDefinition Height="*" />
+        </Grid.RowDefinitions>
+        <ui:DataGrid x:Name="SyncGrid"
+                     Grid.Row="0"
+                     Style="{StaticResource WorkspaceStretchDataGrid}"
+                     AutoGenerateColumns="False"
+                     CanUserAddRows="False"
+                     CanUserDeleteRows="False"
+                     SelectionMode="Extended"
+                     SelectionUnit="FullRow"
+                     SelectionChanged="SyncGrid_OnSelectionChanged"
+                     CurrentCellChanged="SyncGrid_OnCellChanged" />
+      </Grid>
     </ui:Card>
 
     <ui:Card Grid.Row="3" Padding="12,10">
@@ -64,7 +89,9 @@
           <ColumnDefinition Width="*" />
           <ColumnDefinition Width="Auto" />
         </Grid.ColumnDefinitions>
-        <ui:TextBlock x:Name="SelectionText" VerticalAlignment="Center" Opacity="0.75" />
+        <ui:TextBlock x:Name="SelectionText"
+                      Style="{StaticResource WorkspaceMutedText}"
+                      VerticalAlignment="Center" />
         <ui:Button x:Name="ExecuteButton" Grid.Column="1" Margin="8,0" Click="Execute_OnClick" Appearance="Primary" Icon="{ui:SymbolIcon Checkmark24}" />
       </Grid>
     </ui:Card>

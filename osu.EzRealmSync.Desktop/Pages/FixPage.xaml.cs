@@ -1,3 +1,4 @@
+using System.Windows.Controls.Primitives;
 using System.Windows.Data;
 using osu.EzRealmSync.AppModel;
 using osu.EzRealmSync.AppModel.Localization;
@@ -85,7 +86,7 @@ namespace osu.EzRealmSync.Desktop.Pages
                 return;
 
             var checkFactory = new FrameworkElementFactory(typeof(CheckBox));
-            checkFactory.SetBinding(CheckBox.IsCheckedProperty, new Binding(nameof(RealmFixIssueModel.IsSelected)) { Mode = BindingMode.TwoWay });
+            checkFactory.SetBinding(ToggleButton.IsCheckedProperty, new Binding(nameof(RealmFixIssueModel.IsSelected)) { Mode = BindingMode.TwoWay });
             checkFactory.SetValue(FrameworkElement.HorizontalAlignmentProperty, HorizontalAlignment.Center);
             checkFactory.SetValue(FrameworkElement.VerticalAlignmentProperty, VerticalAlignment.Center);
 

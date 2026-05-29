@@ -36,7 +36,29 @@ namespace osu.EzRealmSync.Desktop.Pages
             {
                 if (e.PropertyName == nameof(ShellViewModel.SearchDirectory))
                     Dispatcher.Invoke(() => RealmPathBox.Text = vm.SearchDirectory);
+
+                if (e.PropertyName == nameof(ShellViewModel.BackupDirectory))
+                    Dispatcher.Invoke(() => BackupDirBox.Text = vm.BackupDirectory);
             };
+
+            RealmPathBox.LostFocus += (_, _) => applyPathFromBox();
+            BackupDirBox.LostFocus += (_, _) => applyBackupFromBox();
+        }
+
+        private void applyPathFromBox()
+        {
+            if (vm == null)
+                return;
+
+            vm.SearchDirectory = RealmPathBox.Text;
+        }
+
+        private void applyBackupFromBox()
+        {
+            if (vm == null)
+                return;
+
+            vm.BackupDirectory = BackupDirBox.Text;
         }
 
         private void refreshLabels()
@@ -118,7 +140,7 @@ namespace osu.EzRealmSync.Desktop.Pages
             if (vm == null)
                 return;
 
-            vm.SearchDirectory = RealmPathBox.Text;
+            applyPathFromBox();
             vm.ApplyRealmPathCommand.Execute(null);
         }
 
@@ -127,7 +149,7 @@ namespace osu.EzRealmSync.Desktop.Pages
             if (vm == null)
                 return;
 
-            vm.SearchDirectory = RealmPathBox.Text;
+            applyPathFromBox();
             vm.RefreshRealmFilesCommand.Execute(null);
         }
 

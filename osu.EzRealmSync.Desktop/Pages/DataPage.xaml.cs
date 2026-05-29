@@ -1,6 +1,8 @@
+using System.Data;
 using System.Windows.Data;
 using osu.EzRealmSync.AppModel;
 using osu.EzRealmSync.AppModel.Localization;
+using osu.EzRealmSync.Desktop.Helpers;
 using osu.EzRealmSync.Desktop.ViewModels;
 using osu.Game.EzRealmSync.Models;
 
@@ -9,6 +11,7 @@ namespace osu.EzRealmSync.Desktop.Pages
     public partial class DataPage : UserControl
     {
         private ShellViewModel? vm;
+        private bool suppressClassSelection;
 
         public DataPage()
         {
@@ -24,50 +27,79 @@ namespace osu.EzRealmSync.Desktop.Pages
 
             vm = shell;
             LoadButton.Content = Loc.Get("LoadRealm");
-            setupDataGrid();
-            setupGroupTabs();
+            ClassesHeader.Text = Loc.Get("DataClasses");
+            attachBrowseContextMenu();
             refreshRealmCombo();
             refreshSummary();
-            updateGroupTabAppearance();
+            refreshClassList();
+            refreshBrowseGrid();
 
             vm.PropertyChanged += (_, e) =>
             {
                 if (e.PropertyName == nameof(ShellViewModel.RealmFiles))
                     refreshRealmCombo();
 
-                if (e.PropertyName is nameof(ShellViewModel.LoadedSnapshotSummary) or nameof(ShellViewModel.DataRows))
+                if (e.PropertyName is nameof(ShellViewModel.LoadedSnapshotSummary) or nameof(ShellViewModel.DataClasses))
                 {
                     refreshSummary();
-                    DataGrid.ItemsSource = vm!.DataRows;
+                    refreshClassList();
                 }
 
-                if (e.PropertyName == nameof(ShellViewModel.SelectedDataGroup))
-                    updateGroupTabAppearance();
+                if (e.PropertyName is nameof(ShellViewModel.BrowseDataView) or nameof(ShellViewModel.BrowseColumns))
+                    refreshBrowseGrid();
             };
 
-            vm.Presenter.SelectedDataGroup.BindValueChanged(_ => Dispatcher.Invoke(updateGroupTabAppearance));
-
-            DataGrid.ItemsSource = vm.DataRows;
+            vm.Presenter.SelectedRealmClass.BindValueChanged(_ => Dispatcher.Invoke(syncClassListSelection));
         }
 
-        private void setupGroupTabs()
+        private void attachBrowseContextMenu()
         {
-            GroupTabBeatmapSet.Content = vm!.GetEntityKindLabel(EntityKind.BeatmapSet);
-            GroupTabBeatmap.Content = vm.GetEntityKindLabel(EntityKind.Beatmap);
-            GroupTabScore.Content = vm.GetEntityKindLabel(EntityKind.Score);
+            DataGridContextMenuHelper.Attach(DataGrid, menu =>
+            {
+                DataGridContextMenuHelper.AddItem(menu, "delete", Loc.Get("CtxDelete"), (_, _) => deleteSelectedBrowseRows());
+            });
         }
 
-        private void updateGroupTabAppearance()
+        private void deleteSelectedBrowseRows()
         {
             if (vm == null)
                 return;
 
-            setGroupAppearance(GroupTabBeatmapSet, vm.SelectedDataGroup == EntityKind.BeatmapSet);
-            setGroupAppearance(GroupTabBeatmap, vm.SelectedDataGroup == EntityKind.Beatmap);
-            setGroupAppearance(GroupTabScore, vm.SelectedDataGroup == EntityKind.Score);
+            var ids = collectSelectedBrowseRowIds();
+            if (ids.Count == 0)
+                return;
+
+            vm.Presenter.DeleteBrowseRows(ids);
+            refreshSummary();
+            refreshClassList();
+            refreshBrowseGrid();
         }
 
-        private static void setGroupAppearance(Button button, bool active) => button.Appearance = active ? ControlAppearance.Primary : ControlAppearance.Secondary;
+        private List<Guid> collectSelectedBrowseRowIds()
+        {
+            var ids = new List<Guid>();
+
+            foreach (var item in DataGrid.SelectedItems)
+            {
+                if (item is DataRowView rowView)
+                    tryAddRowId(rowView, ids);
+            }
+
+            if (ids.Count == 0 && DataGrid.CurrentItem is DataRowView current)
+                tryAddRowId(current, ids);
+
+            return ids;
+        }
+
+        private static void tryAddRowId(DataRowView rowView, List<Guid> ids)
+        {
+            if (!rowView.Row.Table.Columns.Contains(RealmAppPresenter.BrowseIdColumn))
+                return;
+
+            var value = rowView[RealmAppPresenter.BrowseIdColumn];
+            if (value is Guid id)
+                ids.Add(id);
+        }
 
         private void refreshSummary()
         {
@@ -85,18 +117,65 @@ namespace osu.EzRealmSync.Desktop.Pages
             RealmSelectCombo.SelectedValue = vm.SelectedRealmId;
         }
 
-        private void setupDataGrid()
+        private void refreshClassList()
         {
-            if (DataGrid.Columns.Count > 0)
+            if (vm == null)
                 return;
 
-            DataGrid.Columns.Add(new DataGridTextColumn
-                { Header = Loc.Get("ColTitle"), Binding = new Binding(nameof(RealmEntityRowModel.Title)), Width = new DataGridLength(1, DataGridLengthUnitType.Star) });
-            DataGrid.Columns.Add(new DataGridTextColumn { Header = Loc.Get("ColArtist"), Binding = new Binding(nameof(RealmEntityRowModel.Artist)), Width = 120 });
-            DataGrid.Columns.Add(new DataGridTextColumn { Header = Loc.Get("ColHash"), Binding = new Binding(nameof(RealmEntityRowModel.Hash)), Width = 100 });
-            DataGrid.Columns.Add(new DataGridTextColumn { Header = Loc.Get("ColRuleset"), Binding = new Binding(nameof(RealmEntityRowModel.Ruleset)), Width = 72 });
-            DataGrid.Columns.Add(new DataGridTextColumn { Header = Loc.Get("ColDate"), Binding = new Binding(nameof(RealmEntityRowModel.Date)), Width = 130 });
-            DataGrid.Columns.Add(new DataGridTextColumn { Header = Loc.Get("ColExtra"), Binding = new Binding(nameof(RealmEntityRowModel.Extra)), Width = 100 });
+            ClassList.ItemsSource = vm.DataClasses;
+            syncClassListSelection();
+        }
+
+        private void syncClassListSelection()
+        {
+            if (vm == null || ClassList.Items.Count == 0)
+                return;
+
+            suppressClassSelection = true;
+            foreach (RealmClassListItemModel item in ClassList.Items)
+            {
+                if (item.Class == vm.SelectedRealmClass)
+                {
+                    ClassList.SelectedItem = item;
+                    break;
+                }
+            }
+
+            suppressClassSelection = false;
+        }
+
+        private void refreshBrowseGrid()
+        {
+            if (vm == null)
+                return;
+
+            rebuildBrowseColumns(vm.BrowseColumns);
+            DataGrid.ItemsSource = vm.BrowseDataView;
+        }
+
+        private void rebuildBrowseColumns(IReadOnlyList<RealmColumnDefinition> columns)
+        {
+            DataGrid.Columns.Clear();
+
+            foreach (var column in columns)
+            {
+                DataGrid.Columns.Add(new DataGridTextColumn
+                {
+                    Header = formatColumnHeader(column),
+                    Binding = new Binding($"[{column.PropertyKey}]") { Mode = BindingMode.OneWay },
+                    Width = DataGridLength.Auto,
+                    MinWidth = 72,
+                    IsReadOnly = true,
+                });
+            }
+        }
+
+        private static string formatColumnHeader(RealmColumnDefinition column)
+        {
+            if (string.IsNullOrWhiteSpace(column.TypeHint))
+                return column.Header;
+
+            return $"{column.Header}\n{column.TypeHint}";
         }
 
         private void RealmSelectCombo_OnChanged(object sender, SelectionChangedEventArgs e)
@@ -107,13 +186,12 @@ namespace osu.EzRealmSync.Desktop.Pages
             vm.SelectedRealmId = id;
         }
 
-        private void GroupTab_OnClick(object sender, RoutedEventArgs e)
+        private void ClassList_OnSelectionChanged(object sender, SelectionChangedEventArgs e)
         {
-            if (vm == null || sender is not Button { Tag: string tag })
+            if (suppressClassSelection || vm == null || ClassList.SelectedItem is not RealmClassListItemModel item)
                 return;
 
-            if (Enum.TryParse<EntityKind>(tag, out var kind))
-                vm.SelectedDataGroup = kind;
+            vm.SelectedRealmClass = item.Class;
         }
 
         private void Load_OnClick(object sender, RoutedEventArgs e) => vm?.LoadRealmCommand.Execute(null);

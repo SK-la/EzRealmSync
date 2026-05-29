@@ -1,5 +1,6 @@
 using System.Collections.ObjectModel;
 using System.ComponentModel;
+using System.Data;
 using System.Runtime.CompilerServices;
 using osu.EzRealmSync.AppModel;
 using osu.EzRealmSync.AppModel.Localization;
@@ -58,6 +59,7 @@ namespace osu.EzRealmSync.Desktop.ViewModels
             bindPresenter(presenter.SetOperation, nameof(SetOperation));
             bindPresenter(presenter.SyncAction, nameof(SyncAction));
             bindPresenter(presenter.SelectedDataGroup, nameof(SelectedDataGroup));
+            bindPresenter(presenter.SelectedRealmClass, nameof(SelectedRealmClass));
             bindPresenter(presenter.CanUseFixAndExport, nameof(CanUseFixAndExport));
             bindPresenter(presenter.FixRealmId, nameof(FixRealmId));
             bindPresenter(presenter.ExportRealmId, nameof(ExportRealmId));
@@ -69,6 +71,8 @@ namespace osu.EzRealmSync.Desktop.ViewModels
             presenter.RealmFilesChanged += () => Application.Current.Dispatcher.Invoke(onRealmFilesChanged);
             presenter.SyncRowsChanged += () => Application.Current.Dispatcher.Invoke(onSyncRowsChanged);
             presenter.DataRowsChanged += () => Application.Current.Dispatcher.Invoke(onDataRowsChanged);
+            presenter.DataClassesChanged += () => Application.Current.Dispatcher.Invoke(onDataClassesChanged);
+            presenter.BrowseTableChanged += () => Application.Current.Dispatcher.Invoke(onBrowseTableChanged);
             presenter.LabelsChanged += () => Application.Current.Dispatcher.Invoke(() => OnPropertyChanged(nameof(WindowTitle)));
             Loc.LanguageChanged += () => Application.Current.Dispatcher.Invoke(() => OnPropertyChanged(nameof(WindowTitle)));
 
@@ -99,6 +103,7 @@ namespace osu.EzRealmSync.Desktop.ViewModels
 
         public ObservableCollection<RealmFileEntry> RealmFiles => Presenter.RealmFiles;
         public ObservableCollection<RealmEntityRowModel> DataRows => Presenter.DataRows;
+        public ObservableCollection<RealmClassListItemModel> DataClasses => Presenter.DataClasses;
         public ObservableCollection<DiffRowModel> SyncRows { get; } = new();
 
         public ObservableCollection<RealmFixIssueModel> FixIssues => Presenter.FixIssues;
@@ -112,6 +117,10 @@ namespace osu.EzRealmSync.Desktop.ViewModels
         public string StatusMessage => Presenter.StatusMessage.Value;
         public string SelectionCountText => Loc.Format("SelectionCount", Presenter.SelectionCount.Value);
         public string LoadedSnapshotSummary => Presenter.LoadedSnapshotSummary;
+
+        public DataView BrowseDataView => Presenter.BrowseDataView;
+
+        public IReadOnlyList<RealmColumnDefinition> BrowseColumns => Presenter.BrowseColumns;
 
         public MainWorkspaceTab CurrentTab
         {
@@ -177,6 +186,12 @@ namespace osu.EzRealmSync.Desktop.ViewModels
         {
             get => Presenter.SelectedDataGroup.Value;
             set => Presenter.SelectedDataGroup.Value = value;
+        }
+
+        public RealmObjectClass SelectedRealmClass
+        {
+            get => Presenter.SelectedRealmClass.Value;
+            set => Presenter.SelectedRealmClass.Value = value;
         }
 
         public bool CanUseFixAndExport => Presenter.CanUseFixAndExport.Value;
@@ -271,6 +286,18 @@ namespace osu.EzRealmSync.Desktop.ViewModels
         {
             OnPropertyChanged(nameof(DataRows));
             OnPropertyChanged(nameof(LoadedSnapshotSummary));
+        }
+
+        private void onDataClassesChanged()
+        {
+            OnPropertyChanged(nameof(DataClasses));
+            OnPropertyChanged(nameof(LoadedSnapshotSummary));
+        }
+
+        private void onBrowseTableChanged()
+        {
+            OnPropertyChanged(nameof(BrowseDataView));
+            OnPropertyChanged(nameof(BrowseColumns));
         }
 
         private void refreshRealmComboSources() => OnPropertyChanged(nameof(RealmFiles));

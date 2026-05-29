@@ -59,6 +59,11 @@
   <data name="ConfirmAdd" xml:space="preserve"><value>Add {0} item(s) to {1}.</value></data>
   <data name="ConfirmTitle" xml:space="preserve"><value>Confirm</value></data>
   <data name="DeleteTitle" xml:space="preserve"><value>Delete</value></data>
+  <data name="CtxDelete" xml:space="preserve"><value>Delete</value></data>
+  <data name="CtxCheck" xml:space="preserve"><value>Check</value></data>
+  <data name="CtxUncheck" xml:space="preserve"><value>Uncheck</value></data>
+  <data name="CtxInvertCheck" xml:space="preserve"><value>Invert check</value></data>
+  <data name="StatusBrowseRowsDeleted" xml:space="preserve"><value>Removed {0} row(s) from the loaded preview.</value></data>
   <data name="Cancel" xml:space="preserve"><value>Cancel</value></data>
   <data name="Ok" xml:space="preserve"><value>OK</value></data>
   <data name="SettingsTitle" xml:space="preserve"><value>Settings</value></data>
@@ -154,6 +159,15 @@
   <data name="StatusSetComplete" xml:space="preserve"><value>Set result — A only: {0}, B only: {1}, conflicted: {2}</value></data>
   <data name="ErrorPickSourceTarget" xml:space="preserve"><value>Select source and target realm files.</value></data>
   <data name="SelectRealmHint" xml:space="preserve"><value>Select a realm file and click Load</value></data>
+  <data name="DataClasses" xml:space="preserve"><value>CLASSES</value></data>
   <data name="TabOnlyInA" xml:space="preserve"><value>Only in A</value></data>
   <data name="TabOnlyInB" xml:space="preserve"><value>Only in B</value></data>
+  <data name="RealmClassBeatmap" xml:space="preserve"><value>Beatmap</value></data>
+  <data name="RealmClassBeatmapCollection" xml:space="preserve"><value>BeatmapCollection</value></data>
+  <data name="RealmClassBeatmapMetadata" xml:space="preserve"><value>BeatmapMetadata</value></data>
+  <data name="RealmClassBeatmapSet" xml:space="preserve"><value>BeatmapSet</value></data>
+  <data name="RealmClassFile" xml:space="preserve"><value>File</value></data>
+  <data name="RealmClassRuleset" xml:space="preserve"><value>Ruleset</value></data>
+  <data name="RealmClassScore" xml:space="preserve"><value>Score</value></data>
+  <data name="RealmClassSkin" xml:space="preserve"><value>Skin</value></data>
 </root>

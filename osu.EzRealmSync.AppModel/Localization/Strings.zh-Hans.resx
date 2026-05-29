@@ -59,6 +59,11 @@
   <data name="ConfirmAdd" xml:space="preserve"><value>将 {0} 项添加到 {1} 端。</value></data>
   <data name="ConfirmTitle" xml:space="preserve"><value>确认</value></data>
   <data name="DeleteTitle" xml:space="preserve"><value>删除</value></data>
+  <data name="CtxDelete" xml:space="preserve"><value>删除</value></data>
+  <data name="CtxCheck" xml:space="preserve"><value>勾选</value></data>
+  <data name="CtxUncheck" xml:space="preserve"><value>取消勾选</value></data>
+  <data name="CtxInvertCheck" xml:space="preserve"><value>反选</value></data>
+  <data name="StatusBrowseRowsDeleted" xml:space="preserve"><value>已从预览中移除 {0} 行。</value></data>
   <data name="Cancel" xml:space="preserve"><value>取消</value></data>
   <data name="Ok" xml:space="preserve"><value>确定</value></data>
   <data name="SettingsTitle" xml:space="preserve"><value>设置</value></data>
@@ -154,6 +159,15 @@
   <data name="StatusSetComplete" xml:space="preserve"><value>集合结果 — 仅 A：{0}，仅 B：{1}，冲突：{2}</value></data>
   <data name="ErrorPickSourceTarget" xml:space="preserve"><value>请选择数据源与目标源。</value></data>
   <data name="SelectRealmHint" xml:space="preserve"><value>选择 Realm 文件后点击「完整加载」</value></data>
+  <data name="DataClasses" xml:space="preserve"><value>类</value></data>
   <data name="TabOnlyInA" xml:space="preserve"><value>仅 A</value></data>
   <data name="TabOnlyInB" xml:space="preserve"><value>仅 B</value></data>
+  <data name="RealmClassBeatmap" xml:space="preserve"><value>谱面</value></data>
+  <data name="RealmClassBeatmapCollection" xml:space="preserve"><value>收藏夹</value></data>
+  <data name="RealmClassBeatmapMetadata" xml:space="preserve"><value>谱面元数据</value></data>
+  <data name="RealmClassBeatmapSet" xml:space="preserve"><value>谱面集</value></data>
+  <data name="RealmClassFile" xml:space="preserve"><value>文件</value></data>
+  <data name="RealmClassRuleset" xml:space="preserve"><value>规则集</value></data>
+  <data name="RealmClassScore" xml:space="preserve"><value>成绩</value></data>
+  <data name="RealmClassSkin" xml:space="preserve"><value>皮肤</value></data>
 </root>

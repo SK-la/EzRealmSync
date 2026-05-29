@@ -1,13 +1,66 @@
 <ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
-                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                    xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml">
 
-  <!-- 仅保留 Ez 品牌色；控件外观由 WPF-UI ControlsDictionary 提供 -->
   <Color x:Key="EzBgCard">#88222233</Color>
+  <Color x:Key="EzFgPrimary">#E4E4EA</Color>
   <Color x:Key="EzFgMuted">#B4B4BE</Color>
   <Color x:Key="EzBorder">#3A3A4A</Color>
 
   <SolidColorBrush x:Key="EzBrushBgCard" Color="{StaticResource EzBgCard}" />
+  <SolidColorBrush x:Key="EzBrushFgPrimary" Color="{StaticResource EzFgPrimary}" />
   <SolidColorBrush x:Key="EzBrushFgMuted" Color="{StaticResource EzFgMuted}" />
   <SolidColorBrush x:Key="EzBrushBorder" Color="{StaticResource EzBorder}" />
+
+  <Style x:Key="WorkspaceBodyText" TargetType="ui:TextBlock">
+    <Setter Property="Foreground" Value="{StaticResource EzBrushFgPrimary}" />
+  </Style>
+
+  <Style x:Key="WorkspaceMutedText" TargetType="ui:TextBlock">
+    <Setter Property="Foreground" Value="{StaticResource EzBrushFgMuted}" />
+  </Style>
+
+  <!-- 勿对 ComboBox 写隐式 Style：会盖掉 ControlsDictionary 的 Fluent 模板 -->
+  <!-- DataTemplate / 类列表等处的 System.TextBlock -->
+  <Style TargetType="{x:Type TextBlock}">
+    <Setter Property="Foreground" Value="{StaticResource EzBrushFgPrimary}" />
+  </Style>
+
+  <Style TargetType="ui:TextBlock">
+    <Setter Property="Foreground" Value="{StaticResource EzBrushFgPrimary}" />
+  </Style>
+
+  <Style x:Key="WorkspaceStretchCard" TargetType="ui:Card">
+    <Setter Property="HorizontalAlignment" Value="Stretch" />
+    <Setter Property="VerticalAlignment" Value="Stretch" />
+  </Style>
+
+  <!-- 继承 WPF-UI DataGrid 亚克力/深色模板，仅补充布局；勿覆盖 CellStyle/Background -->
+  <Style x:Key="WorkspaceStretchDataGrid"
+         TargetType="ui:DataGrid"
+         BasedOn="{StaticResource {x:Type ui:DataGrid}}">
+    <Setter Property="HorizontalAlignment" Value="Stretch" />
+    <Setter Property="VerticalAlignment" Value="Stretch" />
+    <Setter Property="MinHeight" Value="0" />
+    <Setter Property="RowHeight" Value="32" />
+    <Setter Property="ScrollViewer.VerticalScrollBarVisibility" Value="Auto" />
+    <Setter Property="ScrollViewer.HorizontalScrollBarVisibility" Value="Auto" />
+  </Style>
+
+  <Style x:Key="WorkspaceClassList"
+         TargetType="{x:Type ListBox}"
+         BasedOn="{StaticResource {x:Type ListBox}}">
+    <Setter Property="Background" Value="Transparent" />
+    <Setter Property="BorderThickness" Value="0" />
+    <Setter Property="ScrollViewer.HorizontalScrollBarVisibility" Value="Disabled" />
+  </Style>
+
+  <Style x:Key="WorkspaceClassListItem"
+         TargetType="{x:Type ListBoxItem}"
+         BasedOn="{StaticResource {x:Type ListBoxItem}}">
+    <Setter Property="MinHeight" Value="36" />
+    <Setter Property="Padding" Value="6,4" />
+    <Setter Property="VerticalContentAlignment" Value="Center" />
+  </Style>
 
 </ResourceDictionary>

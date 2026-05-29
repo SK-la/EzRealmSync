@@ -1,6 +1,8 @@
+using System.Windows.Controls.Primitives;
 using System.Windows.Data;
 using osu.EzRealmSync.AppModel;
 using osu.EzRealmSync.AppModel.Localization;
+using osu.EzRealmSync.Desktop.Helpers;
 using osu.EzRealmSync.Desktop.ViewModels;
 using osu.Game.EzRealmSync.Models;
 
@@ -26,6 +28,7 @@ namespace osu.EzRealmSync.Desktop.Pages
             refreshLabels();
             setupCombos();
             setupSyncGrid();
+            attachSyncContextMenu();
             refreshRealmCombos();
             SyncGrid.ItemsSource = vm.SyncRows;
 
@@ -105,26 +108,83 @@ namespace osu.EzRealmSync.Desktop.Pages
             if (SyncGrid.Columns.Count > 0)
                 return;
 
-            var checkColumn = new DataGridCheckBoxColumn
-            {
-                Binding = new Binding(nameof(DiffRowModel.IsSelected)) { UpdateSourceTrigger = UpdateSourceTrigger.PropertyChanged },
-                Width = 40,
-            };
+            var checkFactory = new FrameworkElementFactory(typeof(CheckBox));
+            checkFactory.SetBinding(
+                ToggleButton.IsCheckedProperty,
+                new Binding(nameof(DiffRowModel.IsSelected))
+                {
+                    Mode = BindingMode.TwoWay,
+                    UpdateSourceTrigger = UpdateSourceTrigger.PropertyChanged,
+                });
+            checkFactory.SetValue(FrameworkElement.HorizontalAlignmentProperty, HorizontalAlignment.Center);
+            checkFactory.SetValue(FrameworkElement.VerticalAlignmentProperty, VerticalAlignment.Center);
 
-            if (SyncGrid.CheckBoxColumnElementStyle != null)
+            SyncGrid.Columns.Add(new DataGridTemplateColumn
             {
-                checkColumn.ElementStyle = SyncGrid.CheckBoxColumnElementStyle;
-                checkColumn.EditingElementStyle = SyncGrid.CheckBoxColumnEditingElementStyle;
+                Header = string.Empty,
+                Width = 40,
+                CellTemplate = new DataTemplate { VisualTree = checkFactory },
+            });
+
+            addTextColumn(Loc.Get("ColKind"), nameof(DiffRowModel.EntityKind), 80);
+            addTextColumn(Loc.Get("ColTitle"), nameof(DiffRowModel.Title), new DataGridLength(1, DataGridLengthUnitType.Star));
+            addTextColumn(Loc.Get("ColArtist"), nameof(DiffRowModel.Artist), 110);
+            addTextColumn(Loc.Get("ColHash"), nameof(DiffRowModel.Hash), 100);
+            addTextColumn(Loc.Get("ColRuleset"), nameof(DiffRowModel.Ruleset), 72);
+            addTextColumn(Loc.Get("ColDate"), nameof(DiffRowModel.Date), 120);
+        }
+
+        private void addTextColumn(string header, string path, double width) =>
+            addTextColumn(header, path, new DataGridLength(width));
+
+        private void addTextColumn(string header, string path, DataGridLength width)
+        {
+            SyncGrid.Columns.Add(new DataGridTextColumn
+            {
+                Header = header,
+                Binding = new Binding(path) { Mode = BindingMode.OneWay },
+                Width = width,
+                IsReadOnly = true,
+            });
+        }
+
+        private void attachSyncContextMenu()
+        {
+            DataGridContextMenuHelper.Attach(SyncGrid, menu =>
+            {
+                DataGridContextMenuHelper.AddItem(menu, "check", Loc.Get("CtxCheck"), (_, _) => applyCheckToTargetRows(true));
+                DataGridContextMenuHelper.AddItem(menu, "uncheck", Loc.Get("CtxUncheck"), (_, _) => applyCheckToTargetRows(false));
+                DataGridContextMenuHelper.AddItem(menu, "invert", Loc.Get("CtxInvertCheck"), (_, _) => vm?.Presenter.InvertSyncRowChecks());
+            });
+        }
+
+        private void applyCheckToTargetRows(bool isChecked)
+        {
+            if (vm == null)
+                return;
+
+            var targets = getContextTargetRows().ToList();
+            if (targets.Count == 0)
+                return;
+
+            vm.Presenter.SetSyncRowsChecked(targets, isChecked);
+        }
+
+        private IEnumerable<DiffRowModel> getContextTargetRows()
+        {
+            if (SyncGrid.SelectedItems.Count > 0)
+            {
+                foreach (var item in SyncGrid.SelectedItems)
+                {
+                    if (item is DiffRowModel row)
+                        yield return row;
+                }
+
+                yield break;
             }
 
-            SyncGrid.Columns.Add(checkColumn);
-            SyncGrid.Columns.Add(new DataGridTextColumn { Header = Loc.Get("ColKind"), Binding = new Binding(nameof(DiffRowModel.EntityKind)), Width = 80 });
-            SyncGrid.Columns.Add(new DataGridTextColumn
-                { Header = Loc.Get("ColTitle"), Binding = new Binding(nameof(DiffRowModel.Title)), Width = new DataGridLength(1, DataGridLengthUnitType.Star) });
-            SyncGrid.Columns.Add(new DataGridTextColumn { Header = Loc.Get("ColArtist"), Binding = new Binding(nameof(DiffRowModel.Artist)), Width = 110 });
-            SyncGrid.Columns.Add(new DataGridTextColumn { Header = Loc.Get("ColHash"), Binding = new Binding(nameof(DiffRowModel.Hash)), Width = 100 });
-            SyncGrid.Columns.Add(new DataGridTextColumn { Header = Loc.Get("ColRuleset"), Binding = new Binding(nameof(DiffRowModel.Ruleset)), Width = 72 });
-            SyncGrid.Columns.Add(new DataGridTextColumn { Header = Loc.Get("ColDate"), Binding = new Binding(nameof(DiffRowModel.Date)), Width = 120 });
+            if (SyncGrid.CurrentItem is DiffRowModel current)
+                yield return current;
         }
 
         private void refreshRealmCombos()
@@ -204,6 +264,21 @@ namespace osu.EzRealmSync.Desktop.Pages
         private void SelectAll_OnClick(object sender, RoutedEventArgs e) => vm?.ToggleSelectAllCommand.Execute(null);
         private void Compute_OnClick(object sender, RoutedEventArgs e) => vm?.ComputeSetCommand.Execute(null);
         private void Execute_OnClick(object sender, RoutedEventArgs e) => vm?.ExecuteSyncCommand.Execute(null);
+
+        private void SyncGrid_OnSelectionChanged(object sender, SelectionChangedEventArgs e)
+        {
+            if (vm == null)
+                return;
+
+            foreach (var item in e.AddedItems)
+            {
+                if (item is DiffRowModel row)
+                    row.IsSelected = true;
+            }
+
+            vm.OnSyncSelectionChanged();
+        }
+
         private void SyncGrid_OnCellChanged(object? sender, EventArgs e) => vm?.OnSyncSelectionChanged();
     }
 }

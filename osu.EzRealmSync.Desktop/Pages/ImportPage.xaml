@@ -4,12 +4,12 @@
              xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
              HorizontalAlignment="Stretch"
              VerticalAlignment="Stretch">
-  <Grid Margin="4">
+  <Grid Margin="4" VerticalAlignment="Stretch">
     <Grid.RowDefinitions>
       <RowDefinition Height="Auto" />
       <RowDefinition Height="Auto" />
       <RowDefinition Height="Auto" />
-      <RowDefinition Height="*" MinHeight="200" />
+      <RowDefinition Height="*" MinHeight="120" />
     </Grid.RowDefinitions>
 
     <ui:Card x:Name="DropZone"
@@ -26,11 +26,11 @@
                        Margin="0,0,0,10"
                        Opacity="0.85" />
         <ui:TextBlock x:Name="DropHintText"
+                      Style="{StaticResource WorkspaceMutedText}"
                       HorizontalAlignment="Center"
                       TextWrapping="Wrap"
                       TextAlignment="Center"
-                      LineHeight="22"
-                      Opacity="0.85" />
+                      LineHeight="22" />
       </StackPanel>
     </ui:Card>
 
@@ -46,8 +46,8 @@
           <ColumnDefinition Width="Auto" />
         </Grid.ColumnDefinitions>
         <ui:TextBlock x:Name="RealmPathLabel"
-                      VerticalAlignment="Center"
-                      Opacity="0.75" />
+                      Style="{StaticResource WorkspaceMutedText}"
+                      VerticalAlignment="Center" />
         <ui:TextBox x:Name="RealmPathBox"
                     Grid.Column="1"
                     Margin="8,0"
@@ -81,7 +81,9 @@
           <ColumnDefinition Width="8" />
           <ColumnDefinition Width="Auto" />
         </Grid.ColumnDefinitions>
-        <ui:TextBlock x:Name="BackupDirLabel" VerticalAlignment="Center" Opacity="0.75" />
+        <ui:TextBlock x:Name="BackupDirLabel"
+                      Style="{StaticResource WorkspaceMutedText}"
+                      VerticalAlignment="Center" />
         <ui:TextBox x:Name="BackupDirBox"
                     Grid.Column="1"
                     Margin="8,0"
@@ -99,17 +101,23 @@
       </Grid>
     </ui:Card>
 
-    <ui:Card Grid.Row="3" Padding="12">
-      <DockPanel LastChildFill="True">
+    <ui:Card Grid.Row="3"
+             Style="{StaticResource WorkspaceStretchCard}"
+             Padding="12">
+      <Grid VerticalAlignment="Stretch">
+        <Grid.RowDefinitions>
+          <RowDefinition Height="Auto" />
+          <RowDefinition Height="*" />
+        </Grid.RowDefinitions>
         <ui:TextBlock x:Name="RealmListTitle"
-                      DockPanel.Dock="Top"
+                      Grid.Row="0"
+                      Style="{StaticResource WorkspaceBodyText}"
                       FontWeight="SemiBold"
                       Margin="0,0,0,8"
                       LineHeight="20" />
         <ui:DataGrid x:Name="RealmFilesGrid"
-                     HorizontalAlignment="Stretch"
-                     VerticalAlignment="Stretch"
-                     MinHeight="160"
+                     Grid.Row="1"
+                     Style="{StaticResource WorkspaceStretchDataGrid}"
                      RowHeight="32"
                      AutoGenerateColumns="False"
                      CanUserAddRows="False"
@@ -117,7 +125,7 @@
                      IsReadOnly="True"
                      SelectionMode="Single"
                      SelectionChanged="RealmFilesGrid_OnSelectionChanged" />
-      </DockPanel>
+      </Grid>
     </ui:Card>
   </Grid>
 </UserControl>

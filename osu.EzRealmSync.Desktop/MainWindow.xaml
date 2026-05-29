@@ -24,6 +24,8 @@
     <ui:NavigationView x:Name="WorkspaceNav"
                      Grid.Row="1"
                      Margin="8,4,8,4"
+                     HorizontalAlignment="Stretch"
+                     VerticalAlignment="Stretch"
                      PaneDisplayMode="Top"
                      IsBackButtonVisible="Collapsed"
                      IsPaneToggleVisible="False"

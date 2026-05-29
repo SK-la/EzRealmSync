@@ -71,7 +71,7 @@ namespace osu.Game.EzRealmSync.Mock
 
             await simulateWorkAsync(progress, $"正在加载 {file.DisplayName}…", cancellationToken).ConfigureAwait(false);
 
-            var snapshot = buildSnapshot(file, Options.DatasetSize);
+            var snapshot = MockRealmSnapshotBuilder.Build(file, Options.DatasetSize);
             loadedSnapshots[realmId] = snapshot;
             return snapshot;
         }
@@ -257,70 +257,6 @@ namespace osu.Game.EzRealmSync.Mock
                 FileSizeBytes = size,
                 IsLocked = false,
             };
-        }
-
-        private static RealmSnapshot buildSnapshot(RealmFileEntry file, MockDatasetSize size)
-        {
-            int scale = size switch
-            {
-                MockDatasetSize.Empty => 0,
-                MockDatasetSize.Large => 5,
-                _ => 1,
-            };
-
-            var groups = new List<RealmGroupSnapshot>
-            {
-                new()
-                {
-                    EntityKind = EntityKind.BeatmapSet,
-                    Rows = generateRows(EntityKind.BeatmapSet, 8 * scale),
-                },
-                new()
-                {
-                    EntityKind = EntityKind.Beatmap,
-                    Rows = generateRows(EntityKind.Beatmap, 24 * scale),
-                },
-                new()
-                {
-                    EntityKind = EntityKind.Score,
-                    Rows = generateRows(EntityKind.Score, 40 * scale),
-                },
-            };
-
-            return new RealmSnapshot
-            {
-                RealmId = file.Id,
-                DisplayName = file.DisplayName,
-                Groups = groups,
-            };
-        }
-
-        private static List<RealmEntityRow> generateRows(EntityKind kind, int count)
-        {
-            var list = new List<RealmEntityRow>(count);
-
-            for (int i = 0; i < count; i++)
-            {
-                list.Add(new RealmEntityRow
-                {
-                    Id = Guid.NewGuid(),
-                    EntityKind = kind,
-                    Title = i % 4 == 0 ? $"[{kind}] Mock, #{i + 1}" : $"[{kind}] Mock #{i + 1}",
-                    Artist = "Mock Artist",
-                    Hash = Convert.ToHexString(Guid.NewGuid().ToByteArray())[..32].ToLowerInvariant(),
-                    Ruleset = (i % 4) switch
-                    {
-                        0 => "osu",
-                        1 => "mania",
-                        2 => "taiko",
-                        _ => "catch"
-                    },
-                    Date = kind == EntityKind.Score ? DateTimeOffset.UtcNow.AddDays(-i) : null,
-                    Extra = kind == EntityKind.BeatmapSet ? $"SetId={1000 + i}" : null,
-                });
-            }
-
-            return list;
         }
 
         private static List<RealmEntityRow> flattenSnapshot(RealmSnapshot snapshot, EntityKindFilter filter)

@@ -35,8 +35,14 @@ namespace osu.EzRealmSync.Desktop.Services
                 pages[pageType] = page;
             }
 
-            if (page is FrameworkElement element && shell != null)
-                element.DataContext = shell;
+            if (page is FrameworkElement element)
+            {
+                element.HorizontalAlignment = HorizontalAlignment.Stretch;
+                element.VerticalAlignment = VerticalAlignment.Stretch;
+
+                if (shell != null)
+                    element.DataContext = shell;
+            }
 
             return page;
         }
