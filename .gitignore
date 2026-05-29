@@ -1,7 +1,14 @@
-*.ss~
-*.ss#*
-.#*.ss
+bin/
+obj/
+.vs/
 
-*.scm~
-*.scm#*
-.#*.scm
+# 可选本地 osu 构建产物（见 lib/README.md）
+lib/*.dll
+lib/**/*.dll
+
+*.user
+*.suo
+*.DotSettings.user
+
+# 本地复制的 Noto 字体（见 scripts/copy-cjk-fonts.ps1）
+osu.EzRealmSync/Assets/Fonts/Noto/

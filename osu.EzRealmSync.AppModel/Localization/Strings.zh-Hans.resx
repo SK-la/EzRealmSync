@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <resheader name="resmimetype"><value>text/microsoft-resx</value></resheader>
+  <resheader name="version"><value>2.0</value></resheader>
+  <resheader name="reader"><value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
+  <resheader name="writer"><value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
+  <data name="AppTitle" xml:space="preserve"><value>Ez Realm 同步</value></data>
+  <data name="AppTitleUiTest" xml:space="preserve"><value>Ez Realm 同步 [UI 测试]</value></data>
+  <data name="Settings" xml:space="preserve"><value>设置</value></data>
+  <data name="EndpointA" xml:space="preserve"><value>A 端</value></data>
+  <data name="EndpointB" xml:space="preserve"><value>B 端</value></data>
+  <data name="Browse" xml:space="preserve"><value>浏览…</value></data>
+  <data name="ScanDiff" xml:space="preserve"><value>扫描 Diff</value></data>
+  <data name="SyncDirection" xml:space="preserve"><value>同步方向</value></data>
+  <data name="DirectionAToB" xml:space="preserve"><value>A → B</value></data>
+  <data name="DirectionBToA" xml:space="preserve"><value>B → A</value></data>
+  <data name="EntityFilter" xml:space="preserve"><value>数据类型</value></data>
+  <data name="CollectionsPhase2" xml:space="preserve"><value>收藏夹 (Phase 2)</value></data>
+  <data name="SelectAll" xml:space="preserve"><value>全选</value></data>
+  <data name="DeselectAll" xml:space="preserve"><value>取消全选</value></data>
+  <data name="ExportOsrPhase2" xml:space="preserve"><value>导出 .osr (Phase 2)</value></data>
+  <data name="DeleteFromSource" xml:space="preserve"><value>从 {0} 端删除</value></data>
+  <data name="AddToTarget" xml:space="preserve"><value>添加到 {0} 端</value></data>
+  <data name="SelectionCount" xml:space="preserve"><value>已选 {0} 项</value></data>
+  <data name="StatusReady" xml:space="preserve"><value>就绪</value></data>
+  <data name="StatusUiTest" xml:space="preserve"><value>UI 测试模式 — 未连接真实数据库</value></data>
+  <data name="StatusScanning" xml:space="preserve"><value>正在扫描…</value></data>
+  <data name="StatusScanComplete" xml:space="preserve"><value>扫描完成 — {1}端有{3}端无 {2}，{3}端有{1}端无 {4}，不一致 {5}</value></data>
+  <data name="StatusDeleted" xml:space="preserve"><value>已从 {1} 端删除 {0} 项</value></data>
+  <data name="StatusAdded" xml:space="preserve"><value>已添加 {0} 项{1}</value></data>
+  <data name="StatusBackupSuffix" xml:space="preserve"><value>，备份: {0}</value></data>
+  <data name="TabSourceOnly" xml:space="preserve"><value>{0} 端有 · {1} 端无</value></data>
+  <data name="TabTargetOnly" xml:space="preserve"><value>{1} 端有 · {0} 端无</value></data>
+  <data name="TabConflicted" xml:space="preserve"><value>不一致</value></data>
+  <data name="ErrorNoSelection" xml:space="preserve"><value>请先选择要处理的条目。</value></data>
+  <data name="ErrorConflictedApply" xml:space="preserve"><value>「不一致」条目仅展示，不能添加到目标端。</value></data>
+  <data name="ConfirmDelete" xml:space="preserve"><value>确定从 {1} 端删除 {0} 项？此操作不可撤销。</value></data>
+  <data name="ConfirmAdd" xml:space="preserve"><value>将 {0} 项添加到 {1} 端。</value></data>
+  <data name="ConfirmTitle" xml:space="preserve"><value>确认</value></data>
+  <data name="DeleteTitle" xml:space="preserve"><value>删除</value></data>
+  <data name="Cancel" xml:space="preserve"><value>取消</value></data>
+  <data name="Ok" xml:space="preserve"><value>确定</value></data>
+  <data name="SettingsTitle" xml:space="preserve"><value>设置</value></data>
+  <data name="UiTestMode" xml:space="preserve"><value>UI 测试模式</value></data>
+  <data name="UiTestModeHint" xml:space="preserve"><value>关闭 UI 测试模式并连接真实数据库需重启应用（Phase 2）。</value></data>
+  <data name="Close" xml:space="preserve"><value>关闭</value></data>
+  <data name="MockOptions" xml:space="preserve"><value>模拟选项（仅 UI 测试模式）</value></data>
+  <data name="MockDataset" xml:space="preserve"><value>数据集</value></data>
+  <data name="MockErrorInjection" xml:space="preserve"><value>错误注入</value></data>
+  <data name="Language" xml:space="preserve"><value>语言</value></data>
+  <data name="LanguageZh" xml:space="preserve"><value>中文</value></data>
+  <data name="LanguageEn" xml:space="preserve"><value>English</value></data>
+  <data name="EntityAll" xml:space="preserve"><value>全部</value></data>
+  <data name="EntityBeatmapSet" xml:space="preserve"><value>谱面集</value></data>
+  <data name="EntityBeatmap" xml:space="preserve"><value>难度</value></data>
+  <data name="EntityScore" xml:space="preserve"><value>成绩</value></data>
+  <data name="ColTitle" xml:space="preserve"><value>标题</value></data>
+  <data name="ColArtist" xml:space="preserve"><value>艺术家</value></data>
+  <data name="ColHash" xml:space="preserve"><value>Hash</value></data>
+  <data name="ColRuleset" xml:space="preserve"><value>规则集</value></data>
+  <data name="ColDate" xml:space="preserve"><value>日期</value></data>
+</root>

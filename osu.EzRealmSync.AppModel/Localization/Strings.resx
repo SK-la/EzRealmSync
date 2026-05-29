@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <resheader name="resmimetype"><value>text/microsoft-resx</value></resheader>
+  <resheader name="version"><value>2.0</value></resheader>
+  <resheader name="reader"><value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
+  <resheader name="writer"><value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
+  <data name="AppTitle" xml:space="preserve"><value>Ez Realm Sync</value></data>
+  <data name="AppTitleUiTest" xml:space="preserve"><value>Ez Realm Sync [UI Test]</value></data>
+  <data name="Settings" xml:space="preserve"><value>Settings</value></data>
+  <data name="EndpointA" xml:space="preserve"><value>A endpoint</value></data>
+  <data name="EndpointB" xml:space="preserve"><value>B endpoint</value></data>
+  <data name="Browse" xml:space="preserve"><value>Browse…</value></data>
+  <data name="ScanDiff" xml:space="preserve"><value>Scan diff</value></data>
+  <data name="SyncDirection" xml:space="preserve"><value>Sync direction</value></data>
+  <data name="DirectionAToB" xml:space="preserve"><value>A → B</value></data>
+  <data name="DirectionBToA" xml:space="preserve"><value>B → A</value></data>
+  <data name="EntityFilter" xml:space="preserve"><value>Data type</value></data>
+  <data name="CollectionsPhase2" xml:space="preserve"><value>Collections (Phase 2)</value></data>
+  <data name="SelectAll" xml:space="preserve"><value>Select all</value></data>
+  <data name="DeselectAll" xml:space="preserve"><value>Deselect all</value></data>
+  <data name="ExportOsrPhase2" xml:space="preserve"><value>Export .osr (Phase 2)</value></data>
+  <data name="DeleteFromSource" xml:space="preserve"><value>Delete from {0}</value></data>
+  <data name="AddToTarget" xml:space="preserve"><value>Add to {0}</value></data>
+  <data name="SelectionCount" xml:space="preserve"><value>{0} selected</value></data>
+  <data name="StatusReady" xml:space="preserve"><value>Ready</value></data>
+  <data name="StatusUiTest" xml:space="preserve"><value>UI test mode — not connected to a real database</value></data>
+  <data name="StatusScanning" xml:space="preserve"><value>Scanning…</value></data>
+  <data name="StatusScanComplete" xml:space="preserve"><value>Scan complete — {0} only in {1}: {2}, only in {3}: {4}, conflicted: {5}</value></data>
+  <data name="StatusDeleted" xml:space="preserve"><value>Deleted {0} item(s) from {1}</value></data>
+  <data name="StatusAdded" xml:space="preserve"><value>Added {0} item(s){1}</value></data>
+  <data name="StatusBackupSuffix" xml:space="preserve"><value>, backup: {0}</value></data>
+  <data name="TabSourceOnly" xml:space="preserve"><value>{0} only · missing in {1}</value></data>
+  <data name="TabTargetOnly" xml:space="preserve"><value>{0} only · missing in {1}</value></data>
+  <data name="TabConflicted" xml:space="preserve"><value>Conflicted</value></data>
+  <data name="ErrorNoSelection" xml:space="preserve"><value>Select at least one item first.</value></data>
+  <data name="ErrorConflictedApply" xml:space="preserve"><value>Conflicted items are view-only and cannot be added to the target.</value></data>
+  <data name="ConfirmDelete" xml:space="preserve"><value>Delete {0} item(s) from {1}? This cannot be undone.</value></data>
+  <data name="ConfirmAdd" xml:space="preserve"><value>Add {0} item(s) to {1}.</value></data>
+  <data name="ConfirmTitle" xml:space="preserve"><value>Confirm</value></data>
+  <data name="DeleteTitle" xml:space="preserve"><value>Delete</value></data>
+  <data name="Cancel" xml:space="preserve"><value>Cancel</value></data>
+  <data name="Ok" xml:space="preserve"><value>OK</value></data>
+  <data name="SettingsTitle" xml:space="preserve"><value>Settings</value></data>
+  <data name="UiTestMode" xml:space="preserve"><value>UI test mode</value></data>
+  <data name="UiTestModeHint" xml:space="preserve"><value>Disable UI test mode and use a real database after restart (Phase 2).</value></data>
+  <data name="Close" xml:space="preserve"><value>Close</value></data>
+  <data name="MockOptions" xml:space="preserve"><value>Mock options (UI test only)</value></data>
+  <data name="MockDataset" xml:space="preserve"><value>Dataset</value></data>
+  <data name="MockErrorInjection" xml:space="preserve"><value>Error injection</value></data>
+  <data name="Language" xml:space="preserve"><value>Language</value></data>
+  <data name="LanguageZh" xml:space="preserve"><value>中文</value></data>
+  <data name="LanguageEn" xml:space="preserve"><value>English</value></data>
+  <data name="EntityAll" xml:space="preserve"><value>All</value></data>
+  <data name="EntityBeatmapSet" xml:space="preserve"><value>Beatmap sets</value></data>
+  <data name="EntityBeatmap" xml:space="preserve"><value>Beatmaps</value></data>
+  <data name="EntityScore" xml:space="preserve"><value>Scores</value></data>
+  <data name="ColTitle" xml:space="preserve"><value>Title</value></data>
+  <data name="ColArtist" xml:space="preserve"><value>Artist</value></data>
+  <data name="ColHash" xml:space="preserve"><value>Hash</value></data>
+  <data name="ColRuleset" xml:space="preserve"><value>Ruleset</value></data>
+  <data name="ColDate" xml:space="preserve"><value>Date</value></data>
+</root>

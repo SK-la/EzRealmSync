@@ -1,0 +1,22 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net8.0-windows</TargetFramework>
+    <RootNamespace>osu.EzRealmSync.Desktop</RootNamespace>
+    <AssemblyName>EzRealmSync</AssemblyName>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <UseWPF>true</UseWPF>
+    <StartupObject>osu.EzRealmSync.Desktop.Program</StartupObject>
+    <ApplicationManifest>..\app.manifest</ApplicationManifest>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\osu.EzRealmSync.AppModel\osu.EzRealmSync.AppModel.csproj" />
+    <ProjectReference Include="..\osu.Game.EzRealmSync\osu.Game.EzRealmSync.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="WPF-UI" Version="4.0.0" />
+  </ItemGroup>
+</Project>

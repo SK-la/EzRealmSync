@@ -1,0 +1,21 @@
+﻿<!-- EzRealmSync 独立仓库：UI 仅 osu.Framework；Phase2 数据层可选 lib/*.dll -->
+<Project>
+  <Import Project="$(MSBuildThisFileDirectory)EzRealmSync.LocalLibs.props" Condition="Exists('$(MSBuildThisFileDirectory)EzRealmSync.LocalLibs.props')"/>
+
+  <PropertyGroup Label="EzRealmSync">
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <LangVersion>latest</LangVersion>
+    <ApplicationManifest Condition="'$(OutputType)' == 'WinExe'">$(MSBuildThisFileDirectory)app.manifest</ApplicationManifest>
+  </PropertyGroup>
+
+  <PropertyGroup Label="Nuget">
+    <PackageProjectUrl>https://github.com/Ez2Lazer/EzRealmSync</PackageProjectUrl>
+    <RepositoryUrl>https://github.com/Ez2Lazer/EzRealmSync</RepositoryUrl>
+    <PackageTags>osu ez2lazer realm sync</PackageTags>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <EmbeddedResource Remove="Resources\**\*.*"/>
+  </ItemGroup>
+</Project>

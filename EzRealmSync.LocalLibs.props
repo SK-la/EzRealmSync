@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project>
+  <!--
+    lib/osu.Game.dll = Ez2Lazer 构建的 osu.Game（含 RealmAccess、Ez Realm 模型/迁移、工具方法）。
+    仅 osu.Game.EzRealmSync 引用；osu.EzRealmSync（UI）不引用。
+    见 lib/README.md
+  -->
+  <PropertyGroup>
+    <EzRealmSyncLibDir>$(MSBuildThisFileDirectory)lib</EzRealmSyncLibDir>
+    <UseLocalOsuLibs Condition="'$(UseLocalOsuLibs)' == ''">false</UseLocalOsuLibs>
+    <UseLocalOsuLibs Condition="Exists('$(EzRealmSyncLibDir)\osu.Game.dll')">true</UseLocalOsuLibs>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(UseLocalOsuLibs)' == 'true' AND '$(MSBuildProjectName)' == 'osu.Game.EzRealmSync'">
+    <DefineConstants>$(DefineConstants);HAS_EZ_OSU_GAME</DefineConstants>
+  </PropertyGroup>
+
+  <ItemGroup Condition="'$(UseLocalOsuLibs)' == 'true' AND '$(MSBuildProjectName)' == 'osu.Game.EzRealmSync'">
+    <EzRealmSyncLibDll Include="$(EzRealmSyncLibDir)\*.dll"
+                       Exclude="$(EzRealmSyncLibDir)\*Game.Resources*.dll;$(EzRealmSyncLibDir)\*Resources.dll" />
+    <Reference Include="@(EzRealmSyncLibDll)">
+      <HintPath>%(Identity)</HintPath>
+      <Private>true</Private>
+    </Reference>
+  </ItemGroup>
+</Project>

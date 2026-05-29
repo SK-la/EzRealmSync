@@ -1,0 +1,7 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup Label="Project">
+    <TargetFramework>net8.0</TargetFramework>
+    <RootNamespace>osu.Game.EzRealmSync</RootNamespace>
+    <Description>Ez Realm 同步契约与引擎；可选 lib/osu.Game.dll 提供 RealmAccess / Ez 表（见 lib/README.md）。</Description>
+  </PropertyGroup>
+</Project>

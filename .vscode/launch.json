@@ -1,0 +1,24 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "EzRealmSync (UI Test)",
+      "type": "coreclr",
+      "request": "launch",
+      "preLaunchTask": "build",
+      "program": "${workspaceFolder}/osu.EzRealmSync.Desktop/bin/Debug/net8.0-windows/EzRealmSync.dll",
+      "args": ["--ui-test", "--mock-delay=0"],
+      "cwd": "${workspaceFolder}",
+      "console": "integratedTerminal"
+    },
+    {
+      "name": "EzRealmSync",
+      "type": "coreclr",
+      "request": "launch",
+      "preLaunchTask": "build",
+      "program": "${workspaceFolder}/osu.EzRealmSync.Desktop/bin/Debug/net8.0-windows/EzRealmSync.dll",
+      "cwd": "${workspaceFolder}",
+      "console": "integratedTerminal"
+    }
+  ]
+}
