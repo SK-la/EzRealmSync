@@ -1,9 +1,6 @@
-using System.Windows;
-using System.Windows.Controls;
 using osu.EzRealmSync.AppModel;
 using osu.EzRealmSync.AppModel.Localization;
 using osu.Game.EzRealmSync.Models;
-using Wpf.Ui.Controls;
 
 namespace osu.EzRealmSync.Desktop
 {
@@ -17,12 +14,14 @@ namespace osu.EzRealmSync.Desktop
             this.presenter = presenter;
             this.options = options;
             InitializeComponent();
+            ApplicationThemeManager.Apply(this);
             Loaded += (_, _) => refreshUi();
         }
 
         private void refreshUi()
         {
             Title = Loc.Get("SettingsTitle");
+            SettingsTitleBar.Title = Loc.Get("SettingsTitle");
             TitleLabel.Text = Loc.Get("SettingsTitle");
             LanguageLabel.Text = Loc.Get("Language");
             UiTestCheck.Content = Loc.Get("UiTestMode");

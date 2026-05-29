@@ -24,7 +24,7 @@
                  Title="{Binding WindowTitle}"
                  Margin="8,6,8,0" />
 
-    <Border Grid.Row="1" Padding="16,10" Background="{StaticResource EzBrushBgCard}" BorderBrush="{StaticResource EzBrushBorder}" BorderThickness="1" CornerRadius="8" Margin="12,6,12,0">
+    <ui:Card Grid.Row="1" Margin="12,6,12,0" Padding="16,10">
       <Grid>
         <Grid.RowDefinitions>
           <RowDefinition Height="Auto" />
@@ -36,15 +36,15 @@
           <ColumnDefinition Width="92" />
           <ColumnDefinition Width="128" />
         </Grid.ColumnDefinitions>
-        <TextBlock x:Name="LabelEndpointA" Grid.Row="0" Grid.Column="0" VerticalAlignment="Center" Foreground="{StaticResource EzBrushFgMuted}" />
-        <TextBox x:Name="PathA" Grid.Row="0" Grid.Column="1" Margin="8,4" />
+        <ui:TextBlock x:Name="LabelEndpointA" Grid.Row="0" Grid.Column="0" VerticalAlignment="Center" Opacity="0.75" />
+        <ui:TextBox x:Name="PathA" Grid.Row="0" Grid.Column="1" Margin="8,4" Icon="{ui:SymbolIcon Folder24}" />
         <ui:Button x:Name="BrowseAButton" Grid.Row="0" Grid.Column="2" Margin="4,4" Click="BrowseA_OnClick" />
         <ui:Button x:Name="ScanButton" Grid.Row="0" Grid.Column="3" Margin="4,4" Click="Scan_OnClick" Appearance="Primary" />
-        <TextBlock x:Name="LabelEndpointB" Grid.Row="1" Grid.Column="0" VerticalAlignment="Center" Foreground="{StaticResource EzBrushFgMuted}" />
-        <TextBox x:Name="PathB" Grid.Row="1" Grid.Column="1" Margin="8,4" />
+        <ui:TextBlock x:Name="LabelEndpointB" Grid.Row="1" Grid.Column="0" VerticalAlignment="Center" Opacity="0.75" />
+        <ui:TextBox x:Name="PathB" Grid.Row="1" Grid.Column="1" Margin="8,4" Icon="{ui:SymbolIcon Folder24}" />
         <ui:Button x:Name="BrowseBButton" Grid.Row="1" Grid.Column="2" Margin="4,4" Click="BrowseB_OnClick" />
       </Grid>
-    </Border>
+    </ui:Card>
 
     <Grid Grid.Row="2" Margin="16,10">
       <Grid.ColumnDefinitions>
@@ -52,20 +52,18 @@
         <ColumnDefinition Width="*" />
       </Grid.ColumnDefinitions>
 
-      <Border Grid.Column="0" Background="{StaticResource EzBrushBgPanel}" CornerRadius="10" Padding="14" Margin="0,0,10,0"
-              BorderBrush="{StaticResource EzBrushBorder}" BorderThickness="1">
+      <ui:Card Grid.Column="0" Margin="0,0,10,0" Padding="14">
         <StackPanel>
-          <TextBlock x:Name="LabelSyncDirection" FontWeight="SemiBold" Margin="0,0,0,10" />
+          <ui:TextBlock x:Name="LabelSyncDirection" FontWeight="SemiBold" Margin="0,0,0,10" />
           <RadioButton x:Name="DirectionAToB" GroupName="Direction" Checked="Direction_OnChecked" />
           <RadioButton x:Name="DirectionBToA" GroupName="Direction" Checked="Direction_OnChecked" />
-          <TextBlock x:Name="LabelEntityFilter" FontWeight="SemiBold" Margin="0,18,0,8" />
+          <ui:TextBlock x:Name="LabelEntityFilter" FontWeight="SemiBold" Margin="0,18,0,8" />
           <ComboBox x:Name="EntityFilterCombo" SelectionChanged="EntityFilter_OnChanged" />
-          <TextBlock x:Name="CollectionsPhase2Text" Foreground="{StaticResource EzBrushFgMuted}" FontSize="12" Margin="0,12,0,0" Opacity="0.7" />
+          <ui:TextBlock x:Name="CollectionsPhase2Text" FontSize="12" Margin="0,12,0,0" Opacity="0.7" />
         </StackPanel>
-      </Border>
+      </ui:Card>
 
-      <Border Grid.Column="1" Background="{StaticResource EzBrushBgPanel}" CornerRadius="10" Padding="12"
-              BorderBrush="{StaticResource EzBrushBorder}" BorderThickness="1">
+      <ui:Card Grid.Column="1" Padding="12">
         <Grid>
           <Grid.RowDefinitions>
             <RowDefinition Height="Auto" />
@@ -77,17 +75,17 @@
             <ui:Button x:Name="TabConflicted" Margin="0,0,8,6" Click="TabConflicted_OnClick" />
             <ui:Button x:Name="SelectAllButton" Margin="0,0,0,6" Click="SelectAll_OnClick" />
           </WrapPanel>
-          <DataGrid x:Name="DiffGrid" Grid.Row="1"
-                    AutoGenerateColumns="False"
-                    CanUserAddRows="False"
-                    CanUserDeleteRows="False"
-                    SelectionMode="Extended"
-                    CurrentCellChanged="DiffGrid_OnCellChanged" />
+          <ui:DataGrid x:Name="DiffGrid" Grid.Row="1"
+                       AutoGenerateColumns="False"
+                       CanUserAddRows="False"
+                       CanUserDeleteRows="False"
+                       SelectionMode="Extended"
+                       CurrentCellChanged="DiffGrid_OnCellChanged" />
         </Grid>
-      </Border>
+      </ui:Card>
     </Grid>
 
-    <Border Grid.Row="3" Margin="16,0" Padding="0,4" BorderBrush="{StaticResource EzBrushBorder}" BorderThickness="0,1,0,0">
+    <Border Grid.Row="3" Margin="16,0" Padding="0,4" BorderBrush="{StaticResource EzBrushBorder}" BorderThickness="0,1,0,0" Opacity="0.6">
       <Grid>
         <Grid.ColumnDefinitions>
           <ColumnDefinition Width="*" />
@@ -99,7 +97,7 @@
           <ColumnDefinition Width="8" />
           <ColumnDefinition Width="160" />
         </Grid.ColumnDefinitions>
-        <TextBlock x:Name="SelectionCountText" Grid.Column="0" VerticalAlignment="Center" Foreground="{StaticResource EzBrushFgMuted}" />
+        <ui:TextBlock x:Name="SelectionCountText" Grid.Column="0" VerticalAlignment="Center" Opacity="0.75" />
         <ui:Button x:Name="SettingsButton" Grid.Column="1" Click="SettingsButton_OnClick" />
         <ui:Button x:Name="ExportButton" Grid.Column="3" IsEnabled="False" Opacity="0.35" />
         <ui:Button x:Name="DeleteButton" Grid.Column="5" Click="Delete_OnClick" />
@@ -113,8 +111,11 @@
         <ColumnDefinition Width="12" />
         <ColumnDefinition Width="*" />
       </Grid.ColumnDefinitions>
-      <ProgressBar x:Name="ProgressBar" Grid.Column="0" Maximum="1" VerticalAlignment="Center" />
-      <TextBlock x:Name="StatusText" Grid.Column="2" VerticalAlignment="Center" TextTrimming="CharacterEllipsis" Foreground="{StaticResource EzBrushFgMuted}" />
+      <ui:ProgressRing x:Name="ScanProgressRing" Grid.Column="0" Height="28" VerticalAlignment="Center" IsIndeterminate="False" />
+      <ui:TextBlock x:Name="StatusText" Grid.Column="2" VerticalAlignment="Center" TextTrimming="CharacterEllipsis" Opacity="0.75" />
     </Grid>
+
+    <ui:ContentDialogHost x:Name="RootContentDialogHost" Grid.RowSpan="5" />
+    <ui:SnackbarPresenter x:Name="RootSnackbarPresenter" Grid.RowSpan="5" />
   </Grid>
 </ui:FluentWindow>

@@ -10,19 +10,6 @@
         <ResourceDictionary Source="Themes/DarkTheme.xaml" />
       </ResourceDictionary.MergedDictionaries>
       <FontFamily x:Key="AppFont">Microsoft YaHei UI, Segoe UI</FontFamily>
-      <Style TargetType="TextBlock">
-        <Setter Property="FontFamily" Value="{StaticResource AppFont}" />
-        <Setter Property="Foreground" Value="{StaticResource EzBrushFgPrimary}" />
-      </Style>
-      <Style TargetType="TextBox">
-        <Setter Property="FontFamily" Value="{StaticResource AppFont}" />
-      </Style>
-      <Style TargetType="ComboBox">
-        <Setter Property="FontFamily" Value="{StaticResource AppFont}" />
-      </Style>
-      <Style TargetType="ui:Button">
-        <Setter Property="FontFamily" Value="{StaticResource AppFont}" />
-      </Style>
     </ResourceDictionary>
   </Application.Resources>
 </Application>

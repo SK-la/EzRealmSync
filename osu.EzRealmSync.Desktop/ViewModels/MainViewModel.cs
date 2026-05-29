@@ -1,10 +1,8 @@
 using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Runtime.CompilerServices;
-using System.Windows;
-using System.Windows.Input;
-using Microsoft.Win32;
 using osu.EzRealmSync.AppModel;
+using osu.EzRealmSync.Desktop.Services;
 using osu.EzRealmSync.AppModel.Localization;
 using osu.EzRealmSync.Desktop.Commands;
 using osu.Game.EzRealmSync.Models;
@@ -25,22 +23,14 @@ namespace osu.EzRealmSync.Desktop.ViewModels
 
             presenter.PickFolderAsync = path =>
             {
-                var dialog = new OpenFolderDialog();
-
-                if (!string.IsNullOrWhiteSpace(path))
-                    dialog.InitialDirectory = path;
-
-                return Task.FromResult(dialog.ShowDialog() == true ? dialog.FolderName : null);
+                var owner = Application.Current.MainWindow ?? throw new InvalidOperationException("Main window is not available.");
+                return WpfUiDialogService.PickFolderAsync(owner, path);
             };
 
             presenter.ConfirmAsync = (message, title, dangerous) =>
             {
-                var result = MessageBox.Show(
-                    message,
-                    title,
-                    MessageBoxButton.YesNo,
-                    dangerous ? MessageBoxImage.Warning : MessageBoxImage.Question);
-                return Task.FromResult(result == MessageBoxResult.Yes);
+                var owner = Application.Current.MainWindow ?? throw new InvalidOperationException("Main window is not available.");
+                return WpfUiDialogService.ConfirmAsync(owner, message, title, dangerous);
             };
 
             presenter.RowsChanged += () => Application.Current.Dispatcher.Invoke(refreshRows);

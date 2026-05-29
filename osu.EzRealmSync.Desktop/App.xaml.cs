@@ -1,6 +1,3 @@
-using System.Windows;
-using Wpf.Ui.Appearance;
-
 namespace osu.EzRealmSync.Desktop
 {
     public partial class App : Application

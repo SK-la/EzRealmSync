@@ -1,5 +1,3 @@
-using System.Windows.Input;
-
 namespace osu.EzRealmSync.Desktop.Commands
 {
     public sealed class RelayCommand : ICommand

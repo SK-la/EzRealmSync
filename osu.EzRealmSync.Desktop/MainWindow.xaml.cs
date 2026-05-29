@@ -1,10 +1,8 @@
-using System.Windows;
-using System.Windows.Controls;
 using osu.EzRealmSync.AppModel;
 using osu.EzRealmSync.AppModel.Localization;
+using osu.EzRealmSync.Desktop.Services;
 using osu.EzRealmSync.Desktop.ViewModels;
 using osu.Game.EzRealmSync.Models;
-using Wpf.Ui.Controls;
 
 namespace osu.EzRealmSync.Desktop
 {
@@ -16,7 +14,12 @@ namespace osu.EzRealmSync.Desktop
         public MainWindow()
         {
             InitializeComponent();
-            Loaded += (_, _) => bindViewModel();
+            ApplicationThemeManager.Apply(this);
+            Loaded += (_, _) =>
+            {
+                WpfUiSnackbar.Attach(RootSnackbarPresenter);
+                bindViewModel();
+            };
         }
 
         private void bindViewModel()
@@ -81,7 +84,8 @@ namespace osu.EzRealmSync.Desktop
                             StatusText.Text = vm.StatusMessage;
                             break;
                         case nameof(MainViewModel.Progress):
-                            ProgressBar.Value = vm.Progress;
+                            ScanProgressRing.Progress = vm.Progress;
+                            ScanProgressRing.IsIndeterminate = vm.IsBusy && vm.Progress <= 0;
                             break;
                         case nameof(MainViewModel.SelectionCountText):
                             SelectionCountText.Text = vm.SelectionCountText;
@@ -119,7 +123,8 @@ namespace osu.EzRealmSync.Desktop
             PathA.Text = vm.EndpointAPath;
             PathB.Text = vm.EndpointBPath;
             StatusText.Text = vm.StatusMessage;
-            ProgressBar.Value = vm.Progress;
+            ScanProgressRing.Progress = vm.Progress;
+            ScanProgressRing.IsIndeterminate = vm.IsBusy && vm.Progress <= 0;
             SelectionCountText.Text = vm.SelectionCountText;
             refreshLabels();
             syncDirectionRadio();

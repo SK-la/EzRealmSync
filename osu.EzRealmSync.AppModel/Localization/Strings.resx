@@ -10,6 +10,12 @@
   <data name="EndpointA" xml:space="preserve"><value>A endpoint</value></data>
   <data name="EndpointB" xml:space="preserve"><value>B endpoint</value></data>
   <data name="Browse" xml:space="preserve"><value>Browse…</value></data>
+  <data name="FolderPickerTitle" xml:space="preserve"><value>Select folder</value></data>
+  <data name="FolderPickerUp" xml:space="preserve"><value>Up</value></data>
+  <data name="FolderPickerCancel" xml:space="preserve"><value>Cancel</value></data>
+  <data name="FolderPickerSelect" xml:space="preserve"><value>Select folder</value></data>
+  <data name="Yes" xml:space="preserve"><value>Yes</value></data>
+  <data name="No" xml:space="preserve"><value>No</value></data>
   <data name="ScanDiff" xml:space="preserve"><value>Scan diff</value></data>
   <data name="SyncDirection" xml:space="preserve"><value>Sync direction</value></data>
   <data name="DirectionAToB" xml:space="preserve"><value>A → B</value></data>

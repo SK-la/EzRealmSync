@@ -10,6 +10,12 @@
   <data name="EndpointA" xml:space="preserve"><value>A 端</value></data>
   <data name="EndpointB" xml:space="preserve"><value>B 端</value></data>
   <data name="Browse" xml:space="preserve"><value>浏览…</value></data>
+  <data name="FolderPickerTitle" xml:space="preserve"><value>选择文件夹</value></data>
+  <data name="FolderPickerUp" xml:space="preserve"><value>上一级</value></data>
+  <data name="FolderPickerCancel" xml:space="preserve"><value>取消</value></data>
+  <data name="FolderPickerSelect" xml:space="preserve"><value>选择此文件夹</value></data>
+  <data name="Yes" xml:space="preserve"><value>是</value></data>
+  <data name="No" xml:space="preserve"><value>否</value></data>
   <data name="ScanDiff" xml:space="preserve"><value>扫描 Diff</value></data>
   <data name="SyncDirection" xml:space="preserve"><value>同步方向</value></data>
   <data name="DirectionAToB" xml:space="preserve"><value>A → B</value></data>
