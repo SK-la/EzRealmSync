@@ -24,7 +24,7 @@
 - [x] **P2.2** `RealmDiffEngine` + `RealmDiffReader` + `ScanAsync`（需 `lib/osu.Game.dll`）
 - [x] **P2.3** `RealmRowCopier` + `ApplyAsync`（Ez→官方；`RealmApplySupport` 单测）
 - [x] **P2.4** `RealmBackupCatalog` / 还原、`RealmRealmDataService` 真实加载与集合比对
-- [x] **P2.4b** 官方→Ez 写入；数据页按 schema 推断方向；导入页备份还原 UI
+- [x] **P2.4b** 任意 A→B 库对（含同类型/跨版本）Diff+写入；`RealmWritePlan`；导入页备份还原 UI
 - [ ] **P2.5** 集成测试 + 手工 Ez→官方验收
 
 ## 仓库结构

@@ -99,6 +99,8 @@
   <data name="TabExport" xml:space="preserve"><value>导出</value></data>
   <data name="ImportDropHint" xml:space="preserve"><value>拖入 .realm 文件或文件夹，或点击浏览</value></data>
   <data name="RealmLocation" xml:space="preserve"><value>Realm 路径</value></data>
+  <data name="ApplyEndpointA" xml:space="preserve"><value>应用 A 端</value></data>
+  <data name="ApplyEndpointB" xml:space="preserve"><value>应用 B 端</value></data>
   <data name="ApplyRealmPath" xml:space="preserve"><value>应用</value></data>
   <data name="StatusInvalidRealmPath" xml:space="preserve"><value>路径必须是 .realm 文件或已存在的文件夹。</value></data>
   <data name="StatusNoRealmInPath" xml:space="preserve"><value>该文件夹内未找到 .realm 文件。请选择包含 client.realm（或在 data/ 下）的路径。</value></data>

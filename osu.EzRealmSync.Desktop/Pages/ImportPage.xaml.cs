@@ -28,13 +28,17 @@ namespace osu.EzRealmSync.Desktop.Pages
             setupRealmGrid();
             configureRealmGrid();
 
-            RealmPathBox.Text = vm.SearchDirectory;
+            EndpointABox.Text = vm.EndpointAWorkspace;
+            EndpointBBox.Text = vm.EndpointBWorkspace;
             BackupDirBox.Text = vm.BackupDirectory;
 
             vm.PropertyChanged += (_, e) =>
             {
-                if (e.PropertyName == nameof(ShellViewModel.SearchDirectory))
-                    Dispatcher.Invoke(() => RealmPathBox.Text = vm.SearchDirectory);
+                if (e.PropertyName == nameof(ShellViewModel.EndpointAWorkspace))
+                    Dispatcher.Invoke(() => EndpointABox.Text = vm.EndpointAWorkspace);
+
+                if (e.PropertyName == nameof(ShellViewModel.EndpointBWorkspace))
+                    Dispatcher.Invoke(() => EndpointBBox.Text = vm.EndpointBWorkspace);
 
                 if (e.PropertyName == nameof(ShellViewModel.BackupDirectory))
                     Dispatcher.Invoke(() => BackupDirBox.Text = vm.BackupDirectory);
@@ -45,7 +49,8 @@ namespace osu.EzRealmSync.Desktop.Pages
 
             vm.Presenter.RealmFilesChanged += () => Dispatcher.Invoke(() => RealmFilesGrid.ItemsSource = vm!.RealmFileRows);
 
-            RealmPathBox.LostFocus += (_, _) => applyPathFromBox();
+            EndpointABox.LostFocus += (_, _) => applyEndpointPathsFromBoxes();
+            EndpointBBox.LostFocus += (_, _) => applyEndpointPathsFromBoxes();
             BackupDirBox.LostFocus += (_, _) => applyBackupFromBox();
 
             BackupCombo.ItemsSource = vm.Presenter.BackupEntries;
@@ -77,12 +82,13 @@ namespace osu.EzRealmSync.Desktop.Pages
                 rows => vm.Presenter.DeleteRealmFileRowsAsync(rows));
         }
 
-        private void applyPathFromBox()
+        private void applyEndpointPathsFromBoxes()
         {
             if (vm == null)
                 return;
 
-            vm.SearchDirectory = RealmPathBox.Text;
+            vm.EndpointAWorkspace = EndpointABox.Text;
+            vm.EndpointBWorkspace = EndpointBBox.Text;
         }
 
         private void applyBackupFromBox()
@@ -96,9 +102,12 @@ namespace osu.EzRealmSync.Desktop.Pages
         private void refreshLabels()
         {
             DropHintText.Text = Loc.Get("ImportDropHint");
-            RealmPathLabel.Text = Loc.Get("RealmLocation");
-            BrowseRealmButton.Content = Loc.Get("Browse");
-            ApplyPathButton.Content = Loc.Get("ApplyRealmPath");
+            EndpointALabel.Text = Loc.Get("EndpointA");
+            EndpointBLabel.Text = Loc.Get("EndpointB");
+            BrowseEndpointAButton.Content = Loc.Get("Browse");
+            BrowseEndpointBButton.Content = Loc.Get("Browse");
+            ApplyEndpointAButton.Content = Loc.Get("ApplyEndpointA");
+            ApplyEndpointBButton.Content = Loc.Get("ApplyEndpointB");
             RefreshButton.Content = Loc.Get("RefreshList");
             BackupDirLabel.Text = Loc.Get("BackupDirectory");
             BrowseBackupButton.Content = Loc.Get("Browse");
@@ -196,9 +205,15 @@ namespace osu.EzRealmSync.Desktop.Pages
                         await vm!.RegisterDroppedRealmAsync(action.Path).ConfigureAwait(true);
                         break;
 
-                    case ImportDropActionKind.SetSearchDirectory:
-                        vm!.SearchDirectory = action.Path;
-                        RealmPathBox.Text = action.Path;
+                    case ImportDropActionKind.SetEndpointAWorkspace:
+                        vm!.EndpointAWorkspace = action.Path;
+                        EndpointABox.Text = action.Path;
+                        vm.RefreshRealmFilesCommand.Execute(null);
+                        break;
+
+                    case ImportDropActionKind.SetEndpointBWorkspace:
+                        vm!.EndpointBWorkspace = action.Path;
+                        EndpointBBox.Text = action.Path;
                         vm.RefreshRealmFilesCommand.Execute(null);
                         break;
                 }
@@ -218,15 +233,24 @@ namespace osu.EzRealmSync.Desktop.Pages
             DropZone.MouseLeave += (_, _) => DropZone.Opacity = 1;
         }
 
-        private void DropZone_OnClick(object sender, MouseButtonEventArgs e) => BrowseRealm_OnClick(sender, e);
+        private void DropZone_OnClick(object sender, MouseButtonEventArgs e) => BrowseEndpointA_OnClick(sender, e);
 
-        private void ApplyPath_OnClick(object sender, RoutedEventArgs e)
+        private void ApplyEndpointA_OnClick(object sender, RoutedEventArgs e)
         {
             if (vm == null)
                 return;
 
-            applyPathFromBox();
-            vm.ApplyRealmPathCommand.Execute(null);
+            applyEndpointPathsFromBoxes();
+            vm.ApplyEndpointAPathCommand.Execute(null);
+        }
+
+        private void ApplyEndpointB_OnClick(object sender, RoutedEventArgs e)
+        {
+            if (vm == null)
+                return;
+
+            applyEndpointPathsFromBoxes();
+            vm.ApplyEndpointBPathCommand.Execute(null);
         }
 
         private void Refresh_OnClick(object sender, RoutedEventArgs e)
@@ -234,11 +258,13 @@ namespace osu.EzRealmSync.Desktop.Pages
             if (vm == null)
                 return;
 
-            applyPathFromBox();
+            applyEndpointPathsFromBoxes();
             vm.RefreshRealmFilesCommand.Execute(null);
         }
 
-        private void BrowseRealm_OnClick(object sender, RoutedEventArgs e) => vm?.BrowseRealmLocationCommand.Execute(null);
+        private void BrowseEndpointA_OnClick(object sender, RoutedEventArgs e) => vm?.BrowseEndpointACommand.Execute(null);
+
+        private void BrowseEndpointB_OnClick(object sender, RoutedEventArgs e) => vm?.BrowseEndpointBCommand.Execute(null);
 
         private void BrowseBackup_OnClick(object sender, RoutedEventArgs e) => vm?.BrowseBackupCommand.Execute(null);
 

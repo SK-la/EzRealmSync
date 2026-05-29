@@ -53,7 +53,8 @@ namespace osu.EzRealmSync.Desktop.ViewModels
             bindPresenter(presenter.SelectionCount, nameof(SelectionCountText));
             bindPresenter(presenter.CurrentWorkspaceTab, nameof(CurrentTab));
             bindPresenter(presenter.BackupDirectory, nameof(BackupDirectory));
-            bindPresenter(presenter.SearchDirectory, nameof(SearchDirectory));
+            bindPresenter(presenter.EndpointAWorkspace, nameof(EndpointAWorkspace));
+            bindPresenter(presenter.EndpointBWorkspace, nameof(EndpointBWorkspace));
             bindPresenter(presenter.SelectedBackupId, nameof(SelectedBackupId));
             bindPresenter(presenter.SelectedRealmId, nameof(SelectedRealmId));
             bindPresenter(presenter.ActiveSourceRealmId, nameof(ActiveSourceRealmId));
@@ -82,7 +83,8 @@ namespace osu.EzRealmSync.Desktop.ViewModels
             Loc.LanguageChanged += () => Application.Current.Dispatcher.Invoke(() => OnPropertyChanged(nameof(WindowTitle)));
 
             RefreshRealmFilesCommand = createAsyncCommand(() => presenter.RefreshRealmFilesAsync(), () => !IsBusy);
-            ApplyRealmPathCommand = createAsyncCommand(() => presenter.ApplyRealmPathAsync(), () => !IsBusy);
+            ApplyEndpointAPathCommand = createAsyncCommand(() => presenter.ApplyEndpointAPathAsync(), () => !IsBusy);
+            ApplyEndpointBPathCommand = createAsyncCommand(() => presenter.ApplyEndpointBPathAsync(), () => !IsBusy);
             BackupSelectedCommand = createAsyncCommand(() => presenter.BackupSelectedRealmAsync(), () => !IsBusy);
             RefreshBackupsCommand = createAsyncCommand(() => presenter.RefreshBackupsAsync(), () => !IsBusy);
             RestoreBackupCommand = createAsyncCommand(() => presenter.RestoreSelectedBackupAsync(), () => !IsBusy);
@@ -90,7 +92,8 @@ namespace osu.EzRealmSync.Desktop.ViewModels
             ComputeSetCommand = createAsyncCommand(() => presenter.ComputeSetAsync(), () => !IsBusy);
             ExecuteSyncCommand = createAsyncCommand(() => presenter.ExecuteSyncActionAsync(), () => !IsBusy);
             BrowseBackupCommand = createAsyncCommand(presenter.BrowseBackupDirectoryAsync);
-            BrowseRealmLocationCommand = createAsyncCommand(presenter.BrowseRealmLocationAsync);
+            BrowseEndpointACommand = createAsyncCommand(presenter.BrowseEndpointAWorkspaceAsync);
+            BrowseEndpointBCommand = createAsyncCommand(presenter.BrowseEndpointBWorkspaceAsync);
             ToggleSelectAllCommand = new RelayCommand(presenter.ToggleSyncSelectAll);
             ScanFixIssuesCommand = createAsyncCommand(() => presenter.ScanFixIssuesAsync(), () => !IsBusy && CanUseFixAndExport);
             ApplyFixSelectedCommand = createAsyncCommand(() => presenter.ApplySelectedFixesAsync(), () => !IsBusy && CanUseFixAndExport);
@@ -156,10 +159,16 @@ namespace osu.EzRealmSync.Desktop.ViewModels
             set => Presenter.BackupDirectory.Value = value;
         }
 
-        public string SearchDirectory
+        public string EndpointAWorkspace
         {
-            get => Presenter.SearchDirectory.Value;
-            set => Presenter.SearchDirectory.Value = value;
+            get => Presenter.EndpointAWorkspace.Value;
+            set => Presenter.EndpointAWorkspace.Value = value;
+        }
+
+        public string EndpointBWorkspace
+        {
+            get => Presenter.EndpointBWorkspace.Value;
+            set => Presenter.EndpointBWorkspace.Value = value;
         }
 
         public string? SelectedRealmId
@@ -261,7 +270,8 @@ namespace osu.EzRealmSync.Desktop.ViewModels
         }
 
         public ICommand RefreshRealmFilesCommand { get; }
-        public ICommand ApplyRealmPathCommand { get; }
+        public ICommand ApplyEndpointAPathCommand { get; }
+        public ICommand ApplyEndpointBPathCommand { get; }
         public ICommand BackupSelectedCommand { get; }
         public ICommand RefreshBackupsCommand { get; }
         public ICommand RestoreBackupCommand { get; }
@@ -269,7 +279,8 @@ namespace osu.EzRealmSync.Desktop.ViewModels
         public ICommand ComputeSetCommand { get; }
         public ICommand ExecuteSyncCommand { get; }
         public ICommand BrowseBackupCommand { get; }
-        public ICommand BrowseRealmLocationCommand { get; }
+        public ICommand BrowseEndpointACommand { get; }
+        public ICommand BrowseEndpointBCommand { get; }
         public ICommand ToggleSelectAllCommand { get; }
         public ICommand ScanFixIssuesCommand { get; }
         public ICommand ApplyFixSelectedCommand { get; }

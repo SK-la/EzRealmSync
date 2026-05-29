@@ -19,14 +19,26 @@ namespace osu.Game.EzRealmSync.Realm
             var errors = new List<string>();
             var warnings = new List<string>();
 
-            if (!RealmSyncPathHelper.TryValidateRealmFileAccessible(paths.EzRealmFile, out string? ezError) && ezError != null)
-                errors.Add($"Ez：{ezError}");
+            if (!string.IsNullOrWhiteSpace(paths.SourceRealmFilePath)
+                && !string.IsNullOrWhiteSpace(paths.TargetRealmFilePath))
+            {
+                if (!RealmSyncPathHelper.TryValidateRealmFileAccessible(paths.SourceRealmFilePath, out string? sourceError) && sourceError != null)
+                    errors.Add($"源（A）：{sourceError}");
 
-            if (!RealmSyncPathHelper.TryValidateRealmFileAccessible(paths.OfficialRealmFile, out string? officialError) && officialError != null)
-                errors.Add($"官方：{officialError}");
+                if (!RealmSyncPathHelper.TryValidateRealmFileAccessible(paths.TargetRealmFilePath, out string? targetError) && targetError != null)
+                    errors.Add($"目标（B）：{targetError}");
+            }
+            else
+            {
+                if (!RealmSyncPathHelper.TryValidateRealmFileAccessible(paths.EzRealmFile, out string? ezError) && ezError != null)
+                    errors.Add($"源库：{ezError}");
 
-            if (errors.Count == 0 && !RealmSyncPathHelper.SharedFilesDirectoriesMatch(paths.EzDataPath, paths.OfficialDataPath))
-                warnings.Add("两个数据目录的 files/ 路径不一致；同步后官方客户端可能仍缺少实体文件。");
+                if (!RealmSyncPathHelper.TryValidateRealmFileAccessible(paths.OfficialRealmFile, out string? officialError) && officialError != null)
+                    errors.Add($"目标库：{officialError}");
+
+                if (errors.Count == 0 && !RealmSyncPathHelper.SharedFilesDirectoriesMatch(paths.EzDataPath, paths.OfficialDataPath))
+                    warnings.Add("两个工作区的 files/ 路径不一致；同步后目标端可能仍缺少实体文件。");
+            }
 
             if (errors.Count > 0)
                 return Task.FromResult(ValidationResult.Failure(errors.ToArray()));
@@ -39,45 +51,19 @@ namespace osu.Game.EzRealmSync.Realm
 
         private static ScanResult scanCore(ScanRequest request, IProgress<ScanProgress>? progress, CancellationToken cancellationToken)
         {
-            var paths = request.Paths;
+            var plan = resolvePlan(request.WritePlan, request.Direction, request.Paths);
 
-            string sourcePath = request.Direction switch
-            {
-                SyncDirection.EzToOfficial => paths.EzRealmFile,
-                SyncDirection.OfficialToEz => paths.OfficialRealmFile,
-                _ => throw new ArgumentOutOfRangeException(nameof(request)),
-            };
-
-            string targetPath = request.Direction switch
-            {
-                SyncDirection.EzToOfficial => paths.OfficialRealmFile,
-                SyncDirection.OfficialToEz => paths.EzRealmFile,
-                _ => throw new ArgumentOutOfRangeException(nameof(request)),
-            };
-
-            progress?.Report(new ScanProgress { Progress = 0, Message = "正在打开源库…" });
+            progress?.Report(new ScanProgress { Progress = 0, Message = "正在打开源库（A）…" });
             cancellationToken.ThrowIfCancellationRequested();
 
-            using var sourceAccess = openRealm(sourcePath, request.Direction, source: true);
-            using var targetAccess = openRealm(targetPath, request.Direction, source: false);
+            using var sourceAccess = RealmAccessOpener.Open(plan.SourceKind, plan.SourceRealmFilePath);
+            using var targetAccess = RealmAccessOpener.Open(plan.TargetKind, plan.TargetRealmFilePath);
 
             var sourceSnapshot = RealmDiffReader.Read(sourceAccess, progress, cancellationToken);
-            progress?.Report(new ScanProgress { Progress = 0.5, Message = "正在读取目标库…" });
+            progress?.Report(new ScanProgress { Progress = 0.5, Message = "正在读取目标库（B）…" });
             var targetSnapshot = RealmDiffReader.Read(targetAccess, progress, cancellationToken);
 
             return RealmDiffEngine.Compare(sourceSnapshot, targetSnapshot, request.EntityKinds, progress, cancellationToken);
-        }
-
-        private static RealmAccess openRealm(string realmFilePath, SyncDirection direction, bool source)
-        {
-            bool ez = direction switch
-            {
-                SyncDirection.EzToOfficial => source,
-                SyncDirection.OfficialToEz => !source,
-                _ => throw new ArgumentOutOfRangeException(nameof(direction)),
-            };
-
-            return ez ? RealmDiffReader.OpenEzRealm(realmFilePath) : RealmDiffReader.OpenOfficialRealm(realmFilePath);
         }
 
         public Task<ApplyResult> ApplyAsync(ApplyRequest request, IProgress<ApplyProgress>? progress = null, CancellationToken cancellationToken = default) =>
@@ -89,47 +75,104 @@ namespace osu.Game.EzRealmSync.Realm
             if (validationError != null)
                 throw new InvalidOperationException(validationError);
 
-            string ezPath = request.Paths.EzRealmFile;
-            string officialPath = request.Paths.OfficialRealmFile;
+            var plan = resolvePlan(request.WritePlan, request.Direction, request.Paths);
 
             string? backupPath = null;
 
             if (request.CreateBackup)
             {
-                string targetPath = request.Direction switch
-                {
-                    SyncDirection.EzToOfficial => officialPath,
-                    SyncDirection.OfficialToEz => ezPath,
-                    _ => throw new ArgumentOutOfRangeException(nameof(request)),
-                };
-
                 string backupDir = string.IsNullOrWhiteSpace(request.BackupDirectory)
                     ? EzRealmSyncDefaults.DefaultBackupDirectory
                     : request.BackupDirectory;
 
-                backupPath = RealmFileBackup.CreateTimestampedCopy(targetPath, backupDir);
+                backupPath = RealmFileBackup.CreateTimestampedCopy(plan.TargetRealmFilePath, backupDir);
             }
 
-            using var sourceAccess = openSourceAccess(request.Direction, ezPath, officialPath);
-            using var targetAccess = openTargetAccess(request.Direction, ezPath, officialPath);
+            using var sourceAccess = RealmAccessOpener.Open(plan.SourceKind, plan.SourceRealmFilePath);
+            using var targetAccess = RealmAccessOpener.Open(plan.TargetKind, plan.TargetRealmFilePath);
 
             var result = RealmRowCopier.Apply(request, sourceAccess, targetAccess, progress, cancellationToken);
             return new ApplyResult { AppliedCount = result.AppliedCount, BackupPath = backupPath };
         }
 
-        private static RealmAccess openSourceAccess(SyncDirection direction, string ezPath, string officialPath) => direction switch
+        private static RealmWritePlan resolvePlan(RealmWritePlan? explicitPlan, SyncDirection direction, PathConfiguration paths)
         {
-            SyncDirection.EzToOfficial => RealmDiffReader.OpenEzRealm(ezPath),
-            SyncDirection.OfficialToEz => RealmDiffReader.OpenOfficialRealm(officialPath),
-            _ => throw new ArgumentOutOfRangeException(nameof(direction)),
-        };
+            if (explicitPlan != null)
+                return explicitPlan;
 
-        private static RealmAccess openTargetAccess(SyncDirection direction, string ezPath, string officialPath) => direction switch
-        {
-            SyncDirection.EzToOfficial => RealmDiffReader.OpenOfficialRealm(officialPath),
-            SyncDirection.OfficialToEz => RealmDiffReader.OpenEzRealm(ezPath),
-            _ => throw new ArgumentOutOfRangeException(nameof(direction)),
-        };
+            if (!string.IsNullOrWhiteSpace(paths.SourceRealmFilePath)
+                && !string.IsNullOrWhiteSpace(paths.TargetRealmFilePath))
+            {
+                return direction switch
+                {
+                    SyncDirection.EzToOfficial => new RealmWritePlan
+                    {
+                        SourceRealmFilePath = paths.SourceRealmFilePath!,
+                        TargetRealmFilePath = paths.TargetRealmFilePath!,
+                        SourceKind = RealmDiskSchemaKind.EzExtended,
+                        TargetKind = RealmDiskSchemaKind.PpyClient,
+                        LegacyDirection = direction,
+                    },
+                    SyncDirection.OfficialToEz => new RealmWritePlan
+                    {
+                        SourceRealmFilePath = paths.SourceRealmFilePath!,
+                        TargetRealmFilePath = paths.TargetRealmFilePath!,
+                        SourceKind = RealmDiskSchemaKind.PpyClient,
+                        TargetKind = RealmDiskSchemaKind.EzExtended,
+                        LegacyDirection = direction,
+                    },
+                    SyncDirection.EzToEz => new RealmWritePlan
+                    {
+                        SourceRealmFilePath = paths.SourceRealmFilePath!,
+                        TargetRealmFilePath = paths.TargetRealmFilePath!,
+                        SourceKind = RealmDiskSchemaKind.EzExtended,
+                        TargetKind = RealmDiskSchemaKind.EzExtended,
+                        LegacyDirection = direction,
+                    },
+                    SyncDirection.PpyToPpy => new RealmWritePlan
+                    {
+                        SourceRealmFilePath = paths.SourceRealmFilePath!,
+                        TargetRealmFilePath = paths.TargetRealmFilePath!,
+                        SourceKind = RealmDiskSchemaKind.PpyClient,
+                        TargetKind = RealmDiskSchemaKind.PpyClient,
+                        LegacyDirection = direction,
+                    },
+                    _ => throw new ArgumentOutOfRangeException(nameof(direction)),
+                };
+            }
+
+            string sourcePath = direction switch
+            {
+                SyncDirection.EzToOfficial or SyncDirection.EzToEz => paths.EzRealmFile,
+                SyncDirection.OfficialToEz or SyncDirection.PpyToPpy => paths.OfficialRealmFile,
+                _ => throw new ArgumentOutOfRangeException(nameof(direction)),
+            };
+
+            string targetPath = direction switch
+            {
+                SyncDirection.EzToOfficial or SyncDirection.PpyToPpy => paths.OfficialRealmFile,
+                SyncDirection.OfficialToEz or SyncDirection.EzToEz => paths.EzRealmFile,
+                _ => throw new ArgumentOutOfRangeException(nameof(direction)),
+            };
+
+            var (sourceKind, targetKind) = direction switch
+            {
+                SyncDirection.EzToOfficial => (RealmDiskSchemaKind.EzExtended, RealmDiskSchemaKind.PpyClient),
+                SyncDirection.OfficialToEz => (RealmDiskSchemaKind.PpyClient, RealmDiskSchemaKind.EzExtended),
+                SyncDirection.EzToEz => (RealmDiskSchemaKind.EzExtended, RealmDiskSchemaKind.EzExtended),
+                SyncDirection.PpyToPpy => (RealmDiskSchemaKind.PpyClient, RealmDiskSchemaKind.PpyClient),
+                _ => throw new ArgumentOutOfRangeException(nameof(direction)),
+            };
+
+            return new RealmWritePlan
+            {
+                SourceRealmFilePath = sourcePath,
+                TargetRealmFilePath = targetPath,
+                SourceKind = sourceKind,
+                TargetKind = targetKind,
+                LegacyDirection = direction,
+            };
+        }
 
         public Task<IReadOnlyList<BackupEntry>> ListBackupsAsync(string? backupDirectory = null, CancellationToken cancellationToken = default)
         {

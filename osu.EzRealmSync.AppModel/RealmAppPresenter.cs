@@ -60,7 +60,8 @@ namespace osu.EzRealmSync.AppModel
             SelectedRealmClass.BindValueChanged(_ => refreshBrowseTable(), true);
             SyncAction.BindValueChanged(_ => updateCanApply(), true);
 
-            SearchDirectory.BindValueChanged(_ => persistSettings());
+            EndpointAWorkspace.BindValueChanged(_ => persistSettings());
+            EndpointBWorkspace.BindValueChanged(_ => persistSettings());
             BackupDirectory.BindValueChanged(_ => persistSettings());
             ExportDirectory.BindValueChanged(_ => persistSettings());
             ExportFolderName.BindValueChanged(_ => persistSettings());
@@ -89,7 +90,9 @@ namespace osu.EzRealmSync.AppModel
         public Bindable<MainWorkspaceTab> CurrentWorkspaceTab { get; } = new Bindable<MainWorkspaceTab>(MainWorkspaceTab.Import);
 
         public Bindable<string> BackupDirectory { get; } = new Bindable<string>(string.Empty);
-        public Bindable<string> SearchDirectory { get; } = new Bindable<string>(string.Empty);
+        public Bindable<string> EndpointAWorkspace { get; } = new Bindable<string>(string.Empty);
+
+        public Bindable<string> EndpointBWorkspace { get; } = new Bindable<string>(string.Empty);
 
         public BindableBool CanUseFixAndExport { get; } = new BindableBool();
 
@@ -157,10 +160,16 @@ namespace osu.EzRealmSync.AppModel
 
         public async Task InitializeAsync()
         {
-            if (string.IsNullOrWhiteSpace(SearchDirectory.Value)
-                && !string.IsNullOrWhiteSpace(launchOptions.CreateDefaultPaths().EzDataPath))
+            var defaults = launchOptions.CreateDefaultPaths();
+            if (string.IsNullOrWhiteSpace(EndpointAWorkspace.Value) && !string.IsNullOrWhiteSpace(defaults.EzDataPath))
             {
-                SearchDirectory.Value = launchOptions.CreateDefaultPaths().EzDataPath;
+                EndpointAWorkspace.Value = defaults.EzDataPath;
+                persistSettings();
+            }
+
+            if (string.IsNullOrWhiteSpace(EndpointBWorkspace.Value) && !string.IsNullOrWhiteSpace(defaults.OfficialDataPath))
+            {
+                EndpointBWorkspace.Value = defaults.OfficialDataPath;
                 persistSettings();
             }
 
@@ -187,7 +196,8 @@ namespace osu.EzRealmSync.AppModel
 
             try
             {
-                var files = await dataService.DiscoverRealmFilesAsync(SearchDirectory.Value).ConfigureAwait(false);
+                await dataService.DiscoverRealmFilesAsync(EndpointAWorkspace.Value).ConfigureAwait(false);
+                var files = await dataService.DiscoverRealmFilesAsync(EndpointBWorkspace.Value).ConfigureAwait(false);
 
                 runOnUi(() =>
                 {
@@ -199,10 +209,9 @@ namespace osu.EzRealmSync.AppModel
                     RealmFilesChanged?.Invoke();
                     updateWorkspaceCapabilities();
 
-                    if (!string.IsNullOrWhiteSpace(SearchDirectory.Value)
-                        && Directory.Exists(SearchDirectory.Value.Trim())
-                        && RealmFiles.Count == 0
-                        && RealmWorkspacePaths.FindRealmFiles(SearchDirectory.Value).Count == 0)
+                    if (RealmFiles.Count == 0
+                        && RealmWorkspaceDiscovery.FindRealmFilesInWorkspaces(EndpointAWorkspace.Value, EndpointBWorkspace.Value).Count == 0
+                        && (!string.IsNullOrWhiteSpace(EndpointAWorkspace.Value) || !string.IsNullOrWhiteSpace(EndpointBWorkspace.Value)))
                     {
                         StatusMessage.Value = Loc.Get("StatusNoRealmInPath");
                     }
@@ -222,9 +231,13 @@ namespace osu.EzRealmSync.AppModel
             }
         }
 
-        public async Task ApplyRealmPathAsync()
+        public Task ApplyEndpointAPathAsync() => applyEndpointPathAsync(EndpointAWorkspace);
+
+        public Task ApplyEndpointBPathAsync() => applyEndpointPathAsync(EndpointBWorkspace);
+
+        private async Task applyEndpointPathAsync(Bindable<string> workspace)
         {
-            string path = SearchDirectory.Value.Trim();
+            string path = workspace.Value.Trim();
             if (string.IsNullOrEmpty(path))
                 return;
 
@@ -277,16 +290,20 @@ namespace osu.EzRealmSync.AppModel
                 runOnUi(() => BackupDirectory.Value = picked);
         }
 
-        public async Task BrowseRealmLocationAsync()
+        public Task BrowseEndpointAWorkspaceAsync() => browseEndpointWorkspaceAsync(EndpointAWorkspace);
+
+        public Task BrowseEndpointBWorkspaceAsync() => browseEndpointWorkspaceAsync(EndpointBWorkspace);
+
+        private async Task browseEndpointWorkspaceAsync(Bindable<string> workspace)
         {
             if (PickRealmPathAsync == null)
                 return;
 
-            string? picked = await PickRealmPathAsync(SearchDirectory.Value).ConfigureAwait(false);
+            string? picked = await PickRealmPathAsync(workspace.Value).ConfigureAwait(false);
             if (string.IsNullOrEmpty(picked))
                 return;
 
-            runOnUi(() => SearchDirectory.Value = picked);
+            runOnUi(() => workspace.Value = picked);
 
             if (File.Exists(picked) && picked.EndsWith(".realm", StringComparison.OrdinalIgnoreCase))
                 await RegisterRealmFileAsync(picked).ConfigureAwait(false);
@@ -513,9 +530,9 @@ namespace osu.EzRealmSync.AppModel
 
             try
             {
-                if (!RealmSyncDirectionHelper.TryInferDirection(sourceFile, targetFile, out var direction, out string? directionError))
+                if (!RealmWritePlan.TryFromEndpoints(sourceFile, targetFile, out var writePlan, out string? planError) || writePlan == null)
                 {
-                    runOnUi(() => StatusMessage.Value = directionError ?? Loc.Get("ErrorPickSourceTarget"));
+                    runOnUi(() => StatusMessage.Value = planError ?? Loc.Get("ErrorPickSourceTarget"));
                     return;
                 }
 
@@ -527,8 +544,9 @@ namespace osu.EzRealmSync.AppModel
 
                 var request = new ApplyRequest
                 {
-                    Direction = direction,
-                    Paths = RealmSyncDirectionHelper.CreatePaths(sourceFile, targetFile, direction),
+                    WritePlan = writePlan,
+                    Direction = writePlan.LegacyDirection,
+                    Paths = writePlan.ToLegacyPathConfiguration(),
                     ItemIds = selected.Select(i => i.Id).ToList(),
                     CreateBackup = false,
                     DeleteFromSource = delete,
@@ -765,7 +783,7 @@ namespace osu.EzRealmSync.AppModel
 
                 var issues = await fixService.ScanIssuesAsync(
                     file.Id,
-                    SearchDirectory.Value,
+                    resolveWorkspaceRootForFile(file),
                     new RealmFixScanOptions { IllegalCharacterReplacement = replacement },
                     progress).ConfigureAwait(false);
 
@@ -903,15 +921,15 @@ namespace osu.EzRealmSync.AppModel
                 return;
             }
 
-            if (!RealmWorkspacePaths.TryResolveFilesDirectory(SearchDirectory.Value, out string filesDirectory)
+            if (!RealmWorkspaceDiscovery.TryResolveFilesDirectory(EndpointAWorkspace.Value, EndpointBWorkspace.Value, out string filesDirectory)
                 && !launchOptions.UiTestMode)
             {
                 runOnUi(() => StatusMessage.Value = Loc.Get("StatusFilesFolderRequired"));
                 return;
             }
 
-            if (launchOptions.UiTestMode && !RealmWorkspacePaths.TryResolveFilesDirectory(SearchDirectory.Value, out filesDirectory))
-                filesDirectory = Path.Combine(SearchDirectory.Value, "files");
+            if (launchOptions.UiTestMode && !RealmWorkspaceDiscovery.TryResolveFilesDirectory(EndpointAWorkspace.Value, EndpointBWorkspace.Value, out filesDirectory))
+                filesDirectory = Path.Combine(EndpointAWorkspace.Value, "files");
 
             setBusy(true);
 
@@ -977,7 +995,7 @@ namespace osu.EzRealmSync.AppModel
 
                 var result = await fixService.ApplyFixesAsync(
                     file.Id,
-                    SearchDirectory.Value,
+                    resolveWorkspaceRootForFile(file),
                     issueIds,
                     new RealmFixApplyOptions { IllegalCharacterReplacement = replacement },
                     progress).ConfigureAwait(false);
@@ -1006,7 +1024,7 @@ namespace osu.EzRealmSync.AppModel
         private void updateWorkspaceCapabilities()
         {
             bool hasRealm = RealmFiles.Count > 0;
-            bool hasFiles = RealmWorkspacePaths.WorkspaceHasFilesFolder(SearchDirectory.Value);
+            bool hasFiles = RealmWorkspaceDiscovery.AnyWorkspaceHasFilesFolder(EndpointAWorkspace.Value, EndpointBWorkspace.Value);
             CanUseFixAndExport.Value = launchOptions.UiTestMode || (hasRealm && hasFiles);
             WorkspaceCapabilitiesChanged?.Invoke();
         }
@@ -1085,8 +1103,13 @@ namespace osu.EzRealmSync.AppModel
 
         private void applySettings(EzRealmSyncAppSettings settings)
         {
-            if (!string.IsNullOrWhiteSpace(settings.SearchDirectory))
-                SearchDirectory.Value = settings.SearchDirectory;
+            if (!string.IsNullOrWhiteSpace(settings.EndpointAWorkspace))
+                EndpointAWorkspace.Value = settings.EndpointAWorkspace;
+            else if (!string.IsNullOrWhiteSpace(settings.SearchDirectory))
+                EndpointAWorkspace.Value = settings.SearchDirectory;
+
+            if (!string.IsNullOrWhiteSpace(settings.EndpointBWorkspace))
+                EndpointBWorkspace.Value = settings.EndpointBWorkspace;
 
             BackupDirectory.Value = string.IsNullOrWhiteSpace(settings.BackupDirectory)
                 ? Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments), "EzRealmSync", "backups")
@@ -1113,7 +1136,9 @@ namespace osu.EzRealmSync.AppModel
 
             AppSettingsStore.Save(new EzRealmSyncAppSettings
             {
-                SearchDirectory = SearchDirectory.Value,
+                EndpointAWorkspace = EndpointAWorkspace.Value,
+                EndpointBWorkspace = EndpointBWorkspace.Value,
+                SearchDirectory = EndpointAWorkspace.Value,
                 BackupDirectory = BackupDirectory.Value,
                 ExportDirectory = ExportDirectory.Value,
                 ExportFolderName = ExportFolderName.Value,
@@ -1174,6 +1199,18 @@ namespace osu.EzRealmSync.AppModel
         private void updateSelectionCount() => SelectionCount.Value = syncRows.Count(r => r.IsSelected);
 
         private RealmFileEntry? getRealmFile(string? id) => string.IsNullOrEmpty(id) ? null : RealmFiles.FirstOrDefault(f => f.Id == id);
+
+        private string resolveWorkspaceRootForFile(RealmFileEntry file)
+        {
+            if (RealmWorkspaceDiscovery.TryResolveFilesDirectory(EndpointAWorkspace.Value, EndpointBWorkspace.Value, out string filesDirectory))
+            {
+                string? parent = Directory.GetParent(filesDirectory)?.FullName;
+                if (!string.IsNullOrEmpty(parent))
+                    return parent;
+            }
+
+            return RealmWorkspacePaths.ResolveStorageRoot(file.FilePath);
+        }
 
         private void setBusy(bool busy) => runOnUi(() =>
         {

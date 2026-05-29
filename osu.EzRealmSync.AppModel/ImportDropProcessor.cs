@@ -3,7 +3,10 @@ namespace osu.EzRealmSync.AppModel
     public enum ImportDropActionKind
     {
         RegisterRealm,
-        SetSearchDirectory,
+        SetEndpointAWorkspace,
+        SetEndpointBWorkspace,
+        /// <summary>兼容旧枚举名。</summary>
+        SetSearchDirectory = SetEndpointAWorkspace,
     }
 
     public readonly record struct ImportDropAction(ImportDropActionKind Kind, string Path);
@@ -31,7 +34,7 @@ namespace osu.EzRealmSync.AppModel
                 }
 
                 if (Directory.Exists(fullPath))
-                    actions.Add(new ImportDropAction(ImportDropActionKind.SetSearchDirectory, fullPath));
+                    actions.Add(new ImportDropAction(ImportDropActionKind.SetEndpointAWorkspace, fullPath));
             }
 
             return actions;

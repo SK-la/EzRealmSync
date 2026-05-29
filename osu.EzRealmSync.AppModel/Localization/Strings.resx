@@ -99,6 +99,8 @@
   <data name="TabExport" xml:space="preserve"><value>Export</value></data>
   <data name="ImportDropHint" xml:space="preserve"><value>Drag a .realm file or folder here, or click to browse</value></data>
   <data name="RealmLocation" xml:space="preserve"><value>Realm path</value></data>
+  <data name="ApplyEndpointA" xml:space="preserve"><value>Apply A</value></data>
+  <data name="ApplyEndpointB" xml:space="preserve"><value>Apply B</value></data>
   <data name="ApplyRealmPath" xml:space="preserve"><value>Apply</value></data>
   <data name="StatusInvalidRealmPath" xml:space="preserve"><value>Path must be a .realm file or an existing folder.</value></data>
   <data name="StatusNoRealmInPath" xml:space="preserve"><value>No .realm file found in this folder. Choose a path that contains client.realm (or under data/).</value></data>

@@ -25,7 +25,8 @@ namespace osu.Game.EzRealmSync.Realm
             if (validationError != null)
                 throw new InvalidOperationException(validationError);
 
-            bool stripEzFieldsForOfficial = request.Direction == SyncDirection.EzToOfficial;
+            bool stripEzFieldsForOfficial = request.WritePlan?.StripEzFieldsForTarget
+                ?? request.Direction == SyncDirection.EzToOfficial;
             int applied = 0;
             int total = request.ItemIds.Count;
 

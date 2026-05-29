@@ -2,6 +2,9 @@ namespace osu.Game.EzRealmSync.Models
 {
     public sealed class ApplyRequest
     {
+        /// <summary>A→B 写入计划；设置后优先于 <see cref="Direction"/> / <see cref="Paths"/>。</summary>
+        public RealmWritePlan? WritePlan { get; init; }
+
         public SyncDirection Direction { get; init; }
 
         public PathConfiguration Paths { get; init; } = new();

@@ -7,42 +7,38 @@ namespace osu.Game.EzRealmSync.Tests
     public class RealmSyncDirectionHelperTest
     {
         [Test]
-        public void TryInferDirection_ez_to_official()
+        public void TryResolveWritePlan_ez_to_ppy_on_A_B()
         {
-            var ez = entry(schema: 51_006);
-            var official = entry(schema: 51);
+            var ez = entry(51_006);
+            var ppy = entry(51);
 
-            Assert.That(RealmSyncDirectionHelper.TryInferDirection(ez, official, out var direction, out _), Is.True);
+            Assert.That(RealmSyncDirectionHelper.TryResolveWritePlan(ez, ppy, out var direction, out var paths, out _), Is.True);
             Assert.That(direction, Is.EqualTo(SyncDirection.EzToOfficial));
+            Assert.That(paths.SourceRealmFilePath, Is.EqualTo(ez.FilePath));
+            Assert.That(paths.TargetRealmFilePath, Is.EqualTo(ppy.FilePath));
         }
 
         [Test]
-        public void TryInferDirection_official_to_ez()
+        public void TryResolveWritePlan_same_ez_versions()
         {
-            var official = entry(schema: 51);
-            var ez = entry(schema: 51_006);
+            var older = entry(51_003);
+            var newer = entry(51_006);
 
-            Assert.That(RealmSyncDirectionHelper.TryInferDirection(official, ez, out var direction, out _), Is.True);
-            Assert.That(direction, Is.EqualTo(SyncDirection.OfficialToEz));
+            Assert.That(RealmSyncDirectionHelper.TryResolveWritePlan(older, newer, out var direction, out _, out _), Is.True);
+            Assert.That(direction, Is.EqualTo(SyncDirection.EzToEz));
         }
 
-        [Test]
-        public void TryInferDirection_rejects_same_kind()
+        private static RealmFileEntry entry(int schema)
         {
-            var a = entry(schema: 51_006);
-            var b = entry(schema: 51_003);
-
-            Assert.That(RealmSyncDirectionHelper.TryInferDirection(a, b, out _, out string? error), Is.False);
-            Assert.That(error, Is.Not.Null);
+            const string dataDir = @"C:\osu\storage\data";
+            return new RealmFileEntry
+            {
+                Id = "test",
+                DisplayName = "client.realm",
+                FilePath = Path.Combine(dataDir, "client.realm"),
+                DataDirectory = dataDir,
+                SchemaVersion = schema,
+            };
         }
-
-        private static RealmFileEntry entry(int schema) => new()
-        {
-            Id = "test",
-            DisplayName = "test.realm",
-            FilePath = @"C:\data\client.realm",
-            DataDirectory = @"C:\data",
-            SchemaVersion = schema,
-        };
     }
 }

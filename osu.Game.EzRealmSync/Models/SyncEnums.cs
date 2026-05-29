@@ -6,6 +6,10 @@ namespace osu.Game.EzRealmSync.Models
     {
         EzToOfficial,
         OfficialToEz,
+        /// <summary>Ez 扩展库 → Ez 扩展库（A→B，同类型）。</summary>
+        EzToEz,
+        /// <summary>ppy 客户端库 → ppy 客户端库（A→B，同类型）。</summary>
+        PpyToPpy,
     }
 
     public enum EntityKind

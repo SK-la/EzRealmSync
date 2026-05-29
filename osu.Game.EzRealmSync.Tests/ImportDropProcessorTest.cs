@@ -43,7 +43,7 @@ namespace osu.Game.EzRealmSync.Tests
             Directory.CreateDirectory(tempRoot);
             var actions = ImportDropProcessor.ParseDroppedPaths(new[] { tempRoot });
             Assert.That(actions, Has.Count.EqualTo(1));
-            Assert.That(actions[0].Kind, Is.EqualTo(ImportDropActionKind.SetSearchDirectory));
+            Assert.That(actions[0].Kind, Is.EqualTo(ImportDropActionKind.SetEndpointAWorkspace));
         }
 
         [Test]

@@ -5,7 +5,12 @@ namespace osu.EzRealmSync.AppModel
 {
     public sealed class EzRealmSyncAppSettings
     {
+        /// <summary>兼容旧版 settings；新安装请使用 <see cref="EndpointAWorkspace"/>。</summary>
         public string SearchDirectory { get; set; } = string.Empty;
+
+        public string EndpointAWorkspace { get; set; } = string.Empty;
+
+        public string EndpointBWorkspace { get; set; } = string.Empty;
 
         public string BackupDirectory { get; set; } = string.Empty;
 
@@ -42,7 +47,9 @@ namespace osu.EzRealmSync.AppModel
                     return createDefault();
 
                 string json = File.ReadAllText(path);
-                return JsonSerializer.Deserialize<EzRealmSyncAppSettings>(json, jsonOptions) ?? createDefault();
+                var settings = JsonSerializer.Deserialize<EzRealmSyncAppSettings>(json, jsonOptions) ?? createDefault();
+                migrateLegacyPaths(settings);
+                return settings;
             }
             catch
             {
@@ -68,5 +75,11 @@ namespace osu.EzRealmSync.AppModel
             ExportDirectory = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments), "EzRealmSync", "exports"),
             IllegalCharacterReplacement = "_",
         };
+
+        private static void migrateLegacyPaths(EzRealmSyncAppSettings settings)
+        {
+            if (string.IsNullOrWhiteSpace(settings.EndpointAWorkspace) && !string.IsNullOrWhiteSpace(settings.SearchDirectory))
+                settings.EndpointAWorkspace = settings.SearchDirectory;
+        }
     }
 }

@@ -2,6 +2,8 @@ namespace osu.Game.EzRealmSync.Models
 {
     public sealed class ScanRequest
     {
+        public RealmWritePlan? WritePlan { get; init; }
+
         public SyncDirection Direction { get; init; }
 
         public PathConfiguration Paths { get; init; } = new();

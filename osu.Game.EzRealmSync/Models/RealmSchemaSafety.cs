@@ -14,5 +14,13 @@ namespace osu.Game.EzRealmSync.Models
         public static bool RequiresOfficialRealmAccess(int? diskSchemaVersion) => IsOfficialDiskSchema(diskSchemaVersion);
 
         public static bool RequiresEzRealmAccess(int? diskSchemaVersion) => IsEzClientDiskSchema(diskSchemaVersion);
+
+        public static RealmDiskSchemaKind Classify(int? diskSchemaVersion) => diskSchemaVersion switch
+        {
+            null => RealmDiskSchemaKind.Unknown,
+            _ when IsEzClientDiskSchema(diskSchemaVersion) => RealmDiskSchemaKind.EzExtended,
+            _ when IsOfficialDiskSchema(diskSchemaVersion) => RealmDiskSchemaKind.PpyClient,
+            _ => RealmDiskSchemaKind.Unknown,
+        };
     }
 }
