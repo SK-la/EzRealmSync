@@ -1,6 +1,7 @@
 #if HAS_EZ_OSU_GAME
 using osu.Game.Database;
 using osu.Game.EzRealmSync.Abstractions;
+using osu.Game.EzRealmSync.IO;
 using osu.Game.EzRealmSync.Models;
 
 namespace osu.Game.EzRealmSync.Realm
@@ -81,7 +82,28 @@ namespace osu.Game.EzRealmSync.Realm
         }
 
         public Task<ApplyResult> ApplyAsync(ApplyRequest request, IProgress<ApplyProgress>? progress = null, CancellationToken cancellationToken = default) =>
-            throw new NotImplementedException("RealmRowCopier / 写入尚未实现（P2.3–P2.4）。");
+            Task.Run(() => applyCore(request, progress, cancellationToken), cancellationToken);
+
+        private static ApplyResult applyCore(ApplyRequest request, IProgress<ApplyProgress>? progress, CancellationToken cancellationToken)
+        {
+            string? validationError = RealmApplySupport.ValidateApplyRequest(request);
+            if (validationError != null)
+                throw new InvalidOperationException(validationError);
+
+            string ezPath = request.Paths.EzRealmFile;
+            string officialPath = request.Paths.OfficialRealmFile;
+
+            if (request.CreateBackup)
+            {
+                string backupDir = Path.Combine(Path.GetDirectoryName(officialPath) ?? string.Empty, "backups");
+                RealmFileBackup.CreateTimestampedCopy(officialPath, backupDir);
+            }
+
+            using var sourceAccess = RealmDiffReader.OpenEzRealm(ezPath);
+            using var targetAccess = RealmDiffReader.OpenOfficialRealm(officialPath);
+
+            return RealmRowCopier.Apply(request, sourceAccess, targetAccess, progress, cancellationToken);
+        }
 
         public Task<IReadOnlyList<BackupEntry>> ListBackupsAsync(CancellationToken cancellationToken = default)
         {
