@@ -5,7 +5,7 @@
 | 层 | 项目 | 职责 |
 |----|------|------|
 | **UI** | `osu.EzRealmSync.Desktop` | WPF + **WPF-UI**（Fluent 深色），`net8.0-windows` |
-| **状态** | `osu.EzRealmSync.AppModel` | `SyncPresenter` + **osu.Framework.Bindables** |
+| **状态** | `osu.EzRealmSync.AppModel` | `RealmAppPresenter` + **osu.Framework.Bindables** |
 | **数据** | `osu.Game.EzRealmSync` | `IEzRealmSyncService`、Mock；可选 **`lib/osu.Game.dll`** |
 
 UI **不引用** `osu.Game` / `osu.Game.Resources`。中文/英文见 `Strings.resx`（设置中切换）。
@@ -22,9 +22,11 @@ dotnet build EzRealmSync.sln
 dotnet run --project osu.EzRealmSync.Desktop -- --ui-test
 ```
 
-- `--ui-test`：Mock，不读写 `.realm`
-- `--mock-delay=0`：去掉 Mock 扫描延迟
-- 无 `lib/osu.Game.dll` 且非 UI 测试：扫描会提示放入 `lib/`（见 `StubRealmEzRealmSyncService`）
+- `--ui-test`：Mock Realm 列表 + 分组数据 + 集合运算（不读写真实 `.realm`）
+- `--mock-delay=0`：去掉 Mock 加载/计算延迟
+- 无 `lib/osu.Game.dll` 且非 UI 测试：数据/同步会提示放入 `lib/`（见 `StubRealmDataService`）
+
+主界面三 Tab：**导入**（拖入/注册 `.realm`、备份目录、Realm 文件列表）→ **数据**（完整加载、谱面集/难度/成绩分组表）→ **同步**（选 A/B 源、交集/并集/差集、添加/删除）。
 
 ## 中文显示
 

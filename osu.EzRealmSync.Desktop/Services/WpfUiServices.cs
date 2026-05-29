@@ -19,12 +19,14 @@ namespace osu.EzRealmSync.Desktop.Services
             snackbars.SetSnackbarPresenter(snackbarPresenter);
         }
 
-        public static IContentDialogService ContentDialogs =>
-            contentDialogs ?? throw new InvalidOperationException("WPF-UI services are not initialized. Call Attach from MainWindow first.");
+        public static IContentDialogService ContentDialogs => contentDialogs ?? throw new InvalidOperationException("WPF-UI services are not initialized. Call Attach from MainWindow first.");
 
         public static void ShowSnackbar(string title, string message, ControlAppearance appearance = ControlAppearance.Secondary)
         {
-            snackbars?.Show(title, message, appearance);
+            if (snackbars == null)
+                return;
+
+            snackbars.Show(title, message, appearance);
         }
     }
 }

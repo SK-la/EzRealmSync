@@ -5,7 +5,6 @@ namespace osu.EzRealmSync.Desktop.Services
     /// </summary>
     internal static class WpfUiSnackbar
     {
-        public static void Show(string title, string message, ControlAppearance appearance = ControlAppearance.Secondary) =>
-            WpfUiServices.ShowSnackbar(title, message, appearance);
+        public static void Show(string title, string message, ControlAppearance appearance = ControlAppearance.Secondary) => WpfUiServices.ShowSnackbar(title, message, appearance);
     }
 }

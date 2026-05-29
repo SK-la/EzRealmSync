@@ -20,5 +20,41 @@ namespace osu.Game.EzRealmSync
             return new StubRealmEzRealmSyncService();
 #endif
         }
+
+        public static IRealmDataService CreateDataService(bool uiTestMode, MockEzRealmSyncOptions? mockOptions = null)
+        {
+            if (uiTestMode)
+                return new MockEzRealmSyncService(mockOptions ?? new MockEzRealmSyncOptions());
+
+#if HAS_EZ_OSU_GAME
+            return new RealmEzRealmSyncService();
+#else
+            return new StubRealmDataService();
+#endif
+        }
+
+        public static IRealmFixService CreateFixService(bool uiTestMode, MockEzRealmSyncOptions? mockOptions = null)
+        {
+            if (uiTestMode)
+                return new MockEzRealmSyncService(mockOptions ?? new MockEzRealmSyncOptions());
+
+#if HAS_EZ_OSU_GAME
+            return new RealmEzRealmSyncService();
+#else
+            return new StubRealmFixExportService();
+#endif
+        }
+
+        public static IRealmExportService CreateExportService(bool uiTestMode, MockEzRealmSyncOptions? mockOptions = null)
+        {
+            if (uiTestMode)
+                return new MockEzRealmSyncService(mockOptions ?? new MockEzRealmSyncOptions());
+
+#if HAS_EZ_OSU_GAME
+            return new RealmEzRealmSyncService();
+#else
+            return new StubRealmFixExportService();
+#endif
+        }
     }
 }

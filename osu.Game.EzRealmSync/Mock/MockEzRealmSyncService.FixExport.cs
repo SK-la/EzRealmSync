@@ -1,0 +1,275 @@
+using osu.Game.EzRealmSync.Abstractions;
+using osu.Game.EzRealmSync.Models;
+
+namespace osu.Game.EzRealmSync.Mock
+{
+    public sealed partial class MockEzRealmSyncService : IRealmFixService, IRealmExportService
+    {
+        private readonly Dictionary<string, List<RealmFixIssue>> fixIssuesByRealm = new();
+        private readonly Dictionary<(string realmId, ExportDataKind kind), RealmExportCatalog> exportCatalogs = new();
+
+        public async Task<IReadOnlyList<RealmFixIssue>> ScanIssuesAsync(
+            string realmId,
+            string workspacePath,
+            RealmFixScanOptions options,
+            IProgress<ScanProgress>? progress = null,
+            CancellationToken cancellationToken = default)
+        {
+            var snapshot = await ensureLoadedAsync(realmId, progress, cancellationToken).ConfigureAwait(false);
+            await simulateWorkAsync(progress, "正在扫描修复项…", cancellationToken).ConfigureAwait(false);
+
+            var issues = new List<RealmFixIssue>();
+            string filesDir = RealmWorkspacePaths.TryResolveFilesDirectory(workspacePath, out string resolved)
+                ? resolved
+                : Path.Combine(workspacePath, "files");
+
+            foreach (var group in snapshot.Groups)
+            {
+                foreach (var row in group.Rows)
+                {
+                    cancellationToken.ThrowIfCancellationRequested();
+
+                    if (options.ScanIllegalCharacters)
+                    {
+                        foreach (char illegal in options.IllegalCharacters)
+                        {
+                            if (!row.Title.Contains(illegal))
+                                continue;
+
+                            issues.Add(new RealmFixIssue
+                            {
+                                Id = Guid.NewGuid(),
+                                Kind = RealmFixIssueKind.IllegalCharacter,
+                                EntityKind = group.EntityKind,
+                                FieldName = nameof(RealmEntityRow.Title),
+                                CurrentValue = row.Title,
+                                SuggestedValue = row.Title.Replace(illegal, options.IllegalCharacterReplacement.Length > 0 ? options.IllegalCharacterReplacement[0] : '_'),
+                                Detail = $"包含非法字符 '{illegal}'",
+                            });
+                            break;
+                        }
+                    }
+
+                    if (options.ScanMissingFiles && group.EntityKind != EntityKind.Score)
+                    {
+                        string relative = buildMockRelativePath(row, group.EntityKind);
+                        string expected = Path.Combine(filesDir, relative);
+
+                        if (!File.Exists(expected) && !Directory.Exists(expected))
+                        {
+                            issues.Add(new RealmFixIssue
+                            {
+                                Id = Guid.NewGuid(),
+                                Kind = RealmFixIssueKind.MissingFile,
+                                EntityKind = group.EntityKind,
+                                FieldName = "Files",
+                                CurrentValue = relative,
+                                SuggestedValue = string.Empty,
+                                Detail = "Realm 有条目但 files 中缺少对应文件",
+                                ExpectedFilePath = expected,
+                            });
+                        }
+                    }
+                }
+            }
+
+            fixIssuesByRealm[realmId] = issues;
+            return issues;
+        }
+
+        public async Task<RealmFixApplyResult> ApplyFixesAsync(
+            string realmId,
+            string workspacePath,
+            IReadOnlyList<Guid> issueIds,
+            RealmFixApplyOptions options,
+            IProgress<ScanProgress>? progress = null,
+            CancellationToken cancellationToken = default)
+        {
+            if (!fixIssuesByRealm.TryGetValue(realmId, out var issues))
+                return new RealmFixApplyResult();
+
+            await simulateWorkAsync(progress, "正在应用修复…", cancellationToken).ConfigureAwait(false);
+
+            var idSet = issueIds.ToHashSet();
+            int applied = 0;
+            int skipped = 0;
+
+            foreach (var issue in issues)
+            {
+                if (!idSet.Contains(issue.Id))
+                    continue;
+
+                if (issue.Kind == RealmFixIssueKind.MissingFile)
+                {
+                    if (issue.ExpectedFilePath != null)
+                    {
+                        string? dir = Path.GetDirectoryName(issue.ExpectedFilePath);
+                        if (!string.IsNullOrEmpty(dir))
+                            Directory.CreateDirectory(dir);
+
+                        await File.WriteAllTextAsync(issue.ExpectedFilePath, $"// mock restored file for {issue.CurrentValue}", cancellationToken).ConfigureAwait(false);
+                    }
+
+                    applied++;
+                }
+                else if (issue.Kind == RealmFixIssueKind.IllegalCharacter)
+                {
+                    applied++;
+                }
+                else
+                {
+                    skipped++;
+                }
+            }
+
+            fixIssuesByRealm[realmId] = issues.Where(i => !idSet.Contains(i.Id)).ToList();
+            return new RealmFixApplyResult { AppliedCount = applied, SkippedCount = skipped };
+        }
+
+        public async Task<RealmExportCatalog> LoadCatalogAsync(
+            string realmId,
+            ExportDataKind kind,
+            IProgress<ScanProgress>? progress = null,
+            CancellationToken cancellationToken = default)
+        {
+            var snapshot = await ensureLoadedAsync(realmId, progress, cancellationToken).ConfigureAwait(false);
+            await simulateWorkAsync(progress, "正在加载导出列表…", cancellationToken).ConfigureAwait(false);
+
+            var key = (realmId, kind);
+            if (exportCatalogs.TryGetValue(key, out var cached))
+                return cached;
+
+            var items = new List<RealmExportItem>();
+
+            switch (kind)
+            {
+                case ExportDataKind.BeatmapSet:
+                    foreach (var row in snapshot.Groups.First(g => g.EntityKind == EntityKind.BeatmapSet).Rows)
+                    {
+                        items.Add(new RealmExportItem
+                        {
+                            Id = row.Id,
+                            Title = row.Title,
+                            Artist = row.Artist,
+                            RelativePath = $"{row.Artist} - {row.Title}",
+                        });
+                    }
+
+                    break;
+
+                case ExportDataKind.Beatmap:
+                    foreach (var row in snapshot.Groups.First(g => g.EntityKind == EntityKind.Beatmap).Rows)
+                    {
+                        items.Add(new RealmExportItem
+                        {
+                            Id = row.Id,
+                            Title = row.Title,
+                            Artist = row.Artist,
+                            RelativePath = $"{row.Artist} - {row.Title}/{row.Ruleset}.osu",
+                        });
+                    }
+
+                    break;
+
+                case ExportDataKind.Collection:
+                    for (int c = 0; c < 3; c++)
+                    {
+                        string collection = $"Collection {c + 1}";
+                        foreach (var row in snapshot.Groups.First(g => g.EntityKind == EntityKind.Beatmap).Rows.Take(4))
+                        {
+                            items.Add(new RealmExportItem
+                            {
+                                Id = Guid.NewGuid(),
+                                Title = row.Title,
+                                Artist = row.Artist,
+                                CollectionName = collection,
+                                RelativePath = $"{row.Artist} - {row.Title}/{row.Ruleset}.osu",
+                            });
+                        }
+                    }
+
+                    break;
+            }
+
+            var catalog = new RealmExportCatalog { Kind = kind, Items = items };
+            exportCatalogs[key] = catalog;
+            return catalog;
+        }
+
+        public async Task<RealmExportResult> ExportAsync(
+            RealmExportRequest request,
+            IProgress<ScanProgress>? progress = null,
+            CancellationToken cancellationToken = default)
+        {
+            if (!exportCatalogs.TryGetValue((request.RealmId, request.Kind), out var catalog))
+                catalog = await LoadCatalogAsync(request.RealmId, request.Kind, progress, cancellationToken).ConfigureAwait(false);
+
+            string folderName = string.IsNullOrWhiteSpace(request.FolderName)
+                ? $"songs-{DateTime.Now:yyyyMMdd_HHmmss}"
+                : request.FolderName.Trim();
+
+            string outputRoot = Path.Combine(request.OutputDirectory, folderName);
+            Directory.CreateDirectory(outputRoot);
+
+            var idSet = request.ItemIds.ToHashSet();
+            int exported = 0;
+            int skipped = 0;
+            int index = 0;
+
+            foreach (var item in catalog.Items)
+            {
+                cancellationToken.ThrowIfCancellationRequested();
+
+                if (!idSet.Contains(item.Id))
+                    continue;
+
+                index++;
+                progress?.Report(new ScanProgress
+                {
+                    Progress = (double)index / Math.Max(1, idSet.Count),
+                    Message = item.Title,
+                });
+
+                string targetDir = request.Kind == ExportDataKind.Collection && !string.IsNullOrEmpty(item.CollectionName)
+                    ? Path.Combine(outputRoot, sanitizePathSegment(item.CollectionName))
+                    : outputRoot;
+
+                string destPath = Path.Combine(targetDir, item.RelativePath);
+                string? destDir = Path.GetDirectoryName(destPath);
+                if (!string.IsNullOrEmpty(destDir))
+                    Directory.CreateDirectory(destDir);
+
+                string sourcePath = Path.Combine(request.FilesDirectory, item.RelativePath);
+                if (File.Exists(sourcePath))
+                    File.Copy(sourcePath, destPath, overwrite: true);
+                else
+                    await File.WriteAllTextAsync(destPath, $"// mock export\n// {item.Artist} - {item.Title}", cancellationToken).ConfigureAwait(false);
+
+                exported++;
+            }
+
+            skipped = idSet.Count - exported;
+            await simulateWorkAsync(progress, "导出完成", cancellationToken).ConfigureAwait(false);
+
+            return new RealmExportResult
+            {
+                OutputRoot = outputRoot,
+                ExportedCount = exported,
+                SkippedCount = skipped,
+            };
+        }
+
+        private static string buildMockRelativePath(RealmEntityRow row, EntityKind kind) =>
+            kind == EntityKind.BeatmapSet
+                ? $"{row.Artist} - {row.Title}"
+                : $"{row.Artist} - {row.Title}/{row.Ruleset}.osu";
+
+        private static string sanitizePathSegment(string name)
+        {
+            foreach (char c in Path.GetInvalidFileNameChars())
+                name = name.Replace(c, '_');
+
+            return name.Trim();
+        }
+    }
+}

@@ -1,3 +1,4 @@
+using System.ComponentModel;
 using osu.EzRealmSync.AppModel;
 using osu.EzRealmSync.AppModel.Localization;
 using osu.EzRealmSync.Desktop.Services;
@@ -6,253 +7,256 @@ using osu.Game.EzRealmSync.Models;
 
 namespace osu.EzRealmSync.Desktop
 {
-    public partial class MainWindow : FluentWindow
+    public partial class MainWindow
     {
-        private MainViewModel vm = null!;
-        private bool suppressDirectionChange;
+        private ShellViewModel? vm;
+        private WorkspacePageProvider? pageProvider;
         private string? lastSnackbarStatus;
+        private bool suppressLanguageChange;
+        private bool suppressNavChange;
 
         public MainWindow()
         {
             InitializeComponent();
             ApplicationThemeManager.Apply(this);
-            Loaded += (_, _) =>
-            {
-                WpfUiServices.Attach(RootContentDialogHost, RootSnackbarPresenter);
-                bindViewModel();
-            };
+            Loaded += onLoaded;
         }
 
-        private void bindViewModel()
+        private void onLoaded(object sender, RoutedEventArgs e)
         {
-            if (DataContext is not MainViewModel viewModel)
+            wireContentDialogHitTest();
+            WpfUiServices.Attach(RootContentDialogHost, RootSnackbarPresenter);
+
+            if (DataContext is not ShellViewModel shell)
                 return;
 
-            vm = viewModel;
-            setupDataGridColumns();
-            setupEntityFilterCombo();
-            wirePresenterEvents();
-            refreshAllUi();
-        }
+            vm = shell;
+            pageProvider = new WorkspacePageProvider();
+            pageProvider.Attach(shell);
+            WorkspaceNav.SetPageProviderService(pageProvider);
 
-        private void setupDataGridColumns()
-        {
-            DiffGrid.Columns.Clear();
-            var checkColumn = new DataGridCheckBoxColumn
+            wireViewModel(shell);
+            refreshChrome();
+            refreshSettingsFlyout();
+            navigateToTab(MainWorkspaceTab.Import);
+
+            Loc.LanguageChanged += () => Dispatcher.Invoke(() =>
             {
-                Binding = new System.Windows.Data.Binding(nameof(DiffRowModel.IsSelected)) { UpdateSourceTrigger = System.Windows.Data.UpdateSourceTrigger.PropertyChanged },
-                Width = 40,
-                ElementStyle = DiffGrid.CheckBoxColumnElementStyle,
-                EditingElementStyle = DiffGrid.CheckBoxColumnEditingElementStyle,
-            };
-            DiffGrid.Columns.Add(checkColumn);
-            DiffGrid.Columns.Add(new DataGridTextColumn { Header = Loc.Get("ColTitle"), Binding = new System.Windows.Data.Binding(nameof(DiffRowModel.Title)), Width = new DataGridLength(1, DataGridLengthUnitType.Star) });
-            DiffGrid.Columns.Add(new DataGridTextColumn { Header = Loc.Get("ColArtist"), Binding = new System.Windows.Data.Binding(nameof(DiffRowModel.Artist)), Width = 120 });
-            DiffGrid.Columns.Add(new DataGridTextColumn { Header = Loc.Get("ColHash"), Binding = new System.Windows.Data.Binding(nameof(DiffRowModel.Hash)), Width = 100 });
-            DiffGrid.Columns.Add(new DataGridTextColumn { Header = Loc.Get("ColRuleset"), Binding = new System.Windows.Data.Binding(nameof(DiffRowModel.Ruleset)), Width = 80 });
-            DiffGrid.Columns.Add(new DataGridTextColumn { Header = Loc.Get("ColDate"), Binding = new System.Windows.Data.Binding(nameof(DiffRowModel.Date)), Width = 130 });
-            DiffGrid.ItemsSource = vm.DiffRows;
+                refreshChrome();
+                refreshSettingsFlyout();
+            });
         }
 
-        private void setupEntityFilterCombo()
+        private void wireContentDialogHitTest()
         {
-            EntityFilterCombo.Items.Clear();
+            void syncHitTest() => RootContentDialogHost.IsHitTestVisible = RootContentDialogHost.Content != null;
 
-            foreach (var filter in vm.EntityFilters)
-            {
-                EntityFilterCombo.Items.Add(new ComboBoxItem
-                {
-                    Content = vm.GetEntityFilterLabel(filter),
-                    Tag = filter,
-                });
-            }
-
-            EntityFilterCombo.SelectedIndex = 0;
+            RootContentDialogHost.IsHitTestVisible = false;
+            DependencyPropertyDescriptor
+                .FromProperty(ContentControl.ContentProperty, typeof(ContentControl))
+                .AddValueChanged(RootContentDialogHost, (_, _) => syncHitTest());
+            syncHitTest();
         }
 
-        private void wirePresenterEvents()
+        private void wireViewModel(ShellViewModel shell)
         {
-            vm.PropertyChanged += (_, e) =>
+            shell.PropertyChanged += (_, e) =>
             {
                 Dispatcher.Invoke(() =>
                 {
                     switch (e.PropertyName)
                     {
-                        case nameof(MainViewModel.EndpointAPath):
-                            if (PathA.Text != vm.EndpointAPath) PathA.Text = vm.EndpointAPath;
+                        case nameof(ShellViewModel.WindowTitle):
+                            Title = shell.WindowTitle;
+                            MainTitleBar.Title = shell.WindowTitle;
                             break;
-                        case nameof(MainViewModel.EndpointBPath):
-                            if (PathB.Text != vm.EndpointBPath) PathB.Text = vm.EndpointBPath;
+                        case nameof(ShellViewModel.StatusMessage):
+                            updateStatus(shell.StatusMessage);
                             break;
-                        case nameof(MainViewModel.StatusMessage):
-                            updateStatus(vm.StatusMessage);
+                        case nameof(ShellViewModel.Progress):
+                            StatusProgressRing.Progress = shell.Progress;
+                            StatusProgressRing.IsIndeterminate = shell is { IsBusy: true, Progress: <= 0 };
                             break;
-                        case nameof(MainViewModel.Progress):
-                            ScanProgressRing.Progress = vm.Progress;
-                            ScanProgressRing.IsIndeterminate = vm.IsBusy && vm.Progress <= 0;
+                        case nameof(ShellViewModel.CurrentTab):
+                            navigateToTab(shell.CurrentTab);
                             break;
-                        case nameof(MainViewModel.SelectionCountText):
-                            SelectionCountText.Text = vm.SelectionCountText;
-                            break;
-                        case nameof(MainViewModel.IsBusy):
-                            if (!vm.IsBusy)
+                        case nameof(ShellViewModel.IsBusy):
+                            UiTestModeSwitch.IsEnabled = !shell.IsBusy;
+                            if (!shell.IsBusy)
                                 lastSnackbarStatus = null;
-                            updateActionButtons();
                             break;
-                        case nameof(MainViewModel.CanApply):
-                            updateActionButtons();
-                            break;
-                        case nameof(MainViewModel.Direction):
-                            syncDirectionRadio();
-                            break;
-                        case nameof(MainViewModel.DeleteButtonText):
-                        case nameof(MainViewModel.ApplyButtonText):
-                        case nameof(MainViewModel.TabSourceOnlyLabel):
-                        case nameof(MainViewModel.TabTargetOnlyLabel):
-                        case nameof(MainViewModel.TabConflictedLabel):
-                        case nameof(MainViewModel.SelectAllButtonText):
-                        case nameof(MainViewModel.WindowTitle):
-                            refreshLabels();
-                            break;
-                        case nameof(MainViewModel.CurrentCategory):
-                            updateCategoryTabs();
+                        case nameof(ShellViewModel.CanUseFixAndExport):
+                            updateFixExportNavEnabled();
                             break;
                     }
                 });
             };
 
-            PathA.TextChanged += (_, _) => vm.EndpointAPath = PathA.Text;
-            PathB.TextChanged += (_, _) => vm.EndpointBPath = PathB.Text;
+            shell.Presenter.UiTestMode.BindValueChanged(_ => Dispatcher.Invoke(() => UiTestModeSwitch.IsChecked = shell.Presenter.UiTestMode.Value));
+            shell.Presenter.WorkspaceCapabilitiesChanged += () => Dispatcher.Invoke(updateFixExportNavEnabled);
+            updateFixExportNavEnabled();
         }
 
-        private void refreshAllUi()
+        private void updateFixExportNavEnabled()
         {
+            if (vm == null)
+                return;
+
+            bool enabled = vm.CanUseFixAndExport;
+            NavFix.IsEnabled = enabled;
+            NavExport.IsEnabled = enabled;
+        }
+
+        private void WorkspaceNav_OnSelectionChanged(object sender, RoutedEventArgs e)
+        {
+            if (suppressNavChange || vm == null)
+                return;
+
+            if (WorkspaceNav.SelectedItem is NavigationViewItem { TargetPageType: { } pageType })
+                vm.CurrentTab = WorkspacePageProvider.TabForPageType(pageType);
+        }
+
+        private void navigateToTab(MainWorkspaceTab tab)
+        {
+            suppressNavChange = true;
+            WorkspaceNav.Navigate(WorkspacePageProvider.PageTypeForTab(tab));
+            suppressNavChange = false;
+        }
+
+        private void refreshChrome()
+        {
+            if (vm == null)
+                return;
+
             Title = vm.WindowTitle;
-            PathA.Text = vm.EndpointAPath;
-            PathB.Text = vm.EndpointBPath;
+            MainTitleBar.Title = vm.WindowTitle;
+            NavImport.Content = Loc.Get("TabImport");
+            NavData.Content = Loc.Get("TabData");
+            NavSync.Content = Loc.Get("TabSync");
+            NavFix.Content = Loc.Get("TabFix");
+            NavExport.Content = Loc.Get("TabExport");
+            updateFixExportNavEnabled();
+            refreshLanguageCombo();
             updateStatus(vm.StatusMessage);
-            ScanProgressRing.Progress = vm.Progress;
-            ScanProgressRing.IsIndeterminate = vm.IsBusy && vm.Progress <= 0;
-            SelectionCountText.Text = vm.SelectionCountText;
-            refreshLabels();
-            syncDirectionRadio();
-            updateActionButtons();
-            updateCategoryTabs();
+            StatusProgressRing.Progress = vm.Progress;
+            StatusProgressRing.IsIndeterminate = vm.IsBusy && vm.Progress <= 0;
+            UiTestModeSwitch.IsEnabled = !vm.IsBusy;
+        }
+
+        private void refreshLanguageCombo()
+        {
+            suppressLanguageChange = true;
+
+            LanguageLabel.Text = Loc.Get("Language");
+            LanguageCombo.Items.Clear();
+            LanguageCombo.Items.Add(new ComboBoxItem { Content = Loc.Get("LanguageZh"), Tag = AppLanguage.ZhHans });
+            LanguageCombo.Items.Add(new ComboBoxItem { Content = Loc.Get("LanguageEn"), Tag = AppLanguage.En });
+            LanguageCombo.SelectedIndex = Loc.CurrentLanguage == AppLanguage.En ? 1 : 0;
+
+            suppressLanguageChange = false;
+        }
+
+        private void refreshSettingsFlyout()
+        {
+            if (vm == null)
+                return;
+
+            SettingsButton.Content = Loc.Get("Settings");
+            GeneralSettingsExpander.Header = Loc.Get("SettingsGeneral");
+            UiTestModeSwitch.Content = Loc.Get("UiTestMode");
+            UiTestHint.Text = Loc.Get("UiTestModeHint");
+            UiTestModeSwitch.IsChecked = vm.Presenter.UiTestMode.Value;
+            UiTestModeSwitch.IsEnabled = !vm.IsBusy;
+
+            bool showMock = vm.Presenter.UiTestMode.Value && vm.Presenter.MockService != null;
+            MockSettingsExpander.Visibility = showMock ? Visibility.Visible : Visibility.Collapsed;
+
+            if (!showMock || vm.Presenter.MockService == null)
+                return;
+
+            MockSettingsExpander.Header = Loc.Get("MockOptions");
+            DatasetLabel.Text = Loc.Get("MockDataset");
+            ErrorInjectionLabel.Text = Loc.Get("MockErrorInjection");
+
+            DatasetCombo.Items.Clear();
+            foreach (MockDatasetSize size in Enum.GetValues<MockDatasetSize>())
+                DatasetCombo.Items.Add(new ComboBoxItem { Content = size.ToString(), Tag = size });
+
+            ErrorInjectionCombo.Items.Clear();
+            foreach (MockErrorInjection injection in Enum.GetValues<MockErrorInjection>())
+                ErrorInjectionCombo.Items.Add(new ComboBoxItem { Content = injection.ToString(), Tag = injection });
+
+            DatasetCombo.SelectedItem = findComboItem(DatasetCombo, vm.Presenter.MockService.Options.DatasetSize);
+            ErrorInjectionCombo.SelectedItem = findComboItem(ErrorInjectionCombo, vm.Presenter.MockService.Options.ErrorInjection);
+        }
+
+        private static ComboBoxItem? findComboItem(ComboBox combo, object value)
+        {
+            foreach (object? item in combo.Items)
+            {
+                if (item is ComboBoxItem { Tag: var tag } boxItem && tag.Equals(value))
+                    return boxItem;
+            }
+
+            return null;
+        }
+
+        private void LanguageCombo_OnChanged(object sender, SelectionChangedEventArgs e)
+        {
+            if (suppressLanguageChange)
+                return;
+
+            if (LanguageCombo.SelectedItem is ComboBoxItem { Tag: AppLanguage language })
+                Loc.SetLanguage(language);
+        }
+
+        private void SettingsButton_OnClick(object sender, RoutedEventArgs e)
+        {
+            SettingsPopup.IsOpen = !SettingsPopup.IsOpen;
+            if (SettingsPopup.IsOpen)
+                refreshSettingsFlyout();
+        }
+
+        private void UiTestModeSwitch_OnClick(object sender, RoutedEventArgs e)
+        {
+            if (vm == null)
+                return;
+
+            bool enabled = UiTestModeSwitch.IsChecked == true;
+            if (vm.Presenter.UiTestMode.Value == enabled)
+                return;
+
+            vm.Presenter.UiTestMode.Value = enabled;
+            refreshSettingsFlyout();
+            WpfUiSnackbar.Show(vm.WindowTitle, Loc.Get("UiTestModeRestartHint"), ControlAppearance.Info);
+        }
+
+        private void DatasetCombo_OnChanged(object sender, SelectionChangedEventArgs e)
+        {
+            if (vm?.Presenter.MockService != null && DatasetCombo.SelectedItem is ComboBoxItem { Tag: MockDatasetSize size })
+                vm.Presenter.MockService.Options.DatasetSize = size;
+        }
+
+        private void ErrorInjectionCombo_OnChanged(object sender, SelectionChangedEventArgs e)
+        {
+            if (vm?.Presenter.MockService != null && ErrorInjectionCombo.SelectedItem is ComboBoxItem { Tag: MockErrorInjection injection })
+                vm.Presenter.MockService.Options.ErrorInjection = injection;
         }
 
         private void updateStatus(string message)
         {
             StatusText.Text = message;
 
-            if (vm.IsBusy || string.IsNullOrWhiteSpace(message) || message == lastSnackbarStatus || isTransientStatus(message))
+            if (vm == null || vm.IsBusy || string.IsNullOrWhiteSpace(message) || message == lastSnackbarStatus || isTransientStatus(message))
                 return;
 
             lastSnackbarStatus = message;
-            var appearance = inferStatusAppearance(message);
-            WpfUiSnackbar.Show(vm.WindowTitle, message, appearance);
+            WpfUiSnackbar.Show(vm.WindowTitle, message, ControlAppearance.Info);
         }
 
-        private static bool isTransientStatus(string message) =>
-            message.Contains("扫描", StringComparison.Ordinal) ||
-            message.Contains("Scanning", StringComparison.OrdinalIgnoreCase) ||
-            message.Contains("就绪", StringComparison.Ordinal) ||
-            message.Contains("Ready", StringComparison.OrdinalIgnoreCase);
-
-        private static ControlAppearance inferStatusAppearance(string message)
-        {
-            if (message.Contains('\n'))
-                return ControlAppearance.Caution;
-
-            var lower = message.ToLowerInvariant();
-            if (lower.Contains("error") || lower.Contains("fail") || lower.Contains("错误") || lower.Contains("失败"))
-                return ControlAppearance.Danger;
-
-            if (lower.Contains("complete") || lower.Contains("ready") || lower.Contains("完成") || lower.Contains("就绪"))
-                return ControlAppearance.Success;
-
-            return ControlAppearance.Info;
-        }
-
-        private void refreshLabels()
-        {
-            SettingsButton.Content = vm.LocSettings;
-            LabelEndpointA.Text = vm.LocEndpointA;
-            LabelEndpointB.Text = vm.LocEndpointB;
-            BrowseAButton.Content = vm.LocBrowse;
-            BrowseBButton.Content = vm.LocBrowse;
-            ScanButton.Content = vm.LocScanDiff;
-            LabelSyncDirection.Text = vm.LocSyncDirection;
-            DirectionAToB.Content = vm.LocDirectionAToB;
-            DirectionBToA.Content = vm.LocDirectionBToA;
-            LabelEntityFilter.Text = vm.LocEntityFilter;
-            CollectionsPhase2Text.Text = vm.LocCollectionsPhase2;
-            TabSourceOnly.Content = vm.TabSourceOnlyLabel;
-            TabTargetOnly.Content = vm.TabTargetOnlyLabel;
-            TabConflicted.Content = vm.TabConflictedLabel;
-            SelectAllButton.Content = vm.SelectAllButtonText;
-            ExportButton.Content = vm.LocExportOsr;
-            DeleteButton.Content = vm.DeleteButtonText;
-            ApplyButton.Content = vm.ApplyButtonText;
-
-            for (int i = 0; i < EntityFilterCombo.Items.Count; i++)
-            {
-                if (EntityFilterCombo.Items[i] is ComboBoxItem item && item.Tag is EntityKindFilter filter)
-                    item.Content = vm.GetEntityFilterLabel(filter);
-            }
-        }
-
-        private void syncDirectionRadio()
-        {
-            suppressDirectionChange = true;
-            DirectionAToB.IsChecked = vm.Direction == SyncDirection.EzToOfficial;
-            DirectionBToA.IsChecked = vm.Direction == SyncDirection.OfficialToEz;
-            suppressDirectionChange = false;
-        }
-
-        private void updateActionButtons()
-        {
-            ScanButton.IsEnabled = BrowseAButton.IsEnabled = BrowseBButton.IsEnabled = !vm.IsBusy;
-            DeleteButton.IsEnabled = !vm.IsBusy;
-            ApplyButton.IsEnabled = vm.CanApply && !vm.IsBusy;
-            SelectAllButton.IsEnabled = !vm.IsBusy;
-        }
-
-        private void updateCategoryTabs()
-        {
-            TabSourceOnly.Appearance = vm.CurrentCategory == DiffCategory.SourceOnly ? ControlAppearance.Primary : ControlAppearance.Secondary;
-            TabTargetOnly.Appearance = vm.CurrentCategory == DiffCategory.TargetOnly ? ControlAppearance.Primary : ControlAppearance.Secondary;
-            TabConflicted.Appearance = vm.CurrentCategory == DiffCategory.Conflicted ? ControlAppearance.Primary : ControlAppearance.Secondary;
-        }
-
-        private void Direction_OnChecked(object sender, RoutedEventArgs e)
-        {
-            if (suppressDirectionChange || vm == null)
-                return;
-
-            if (DirectionAToB.IsChecked == true)
-                vm.Direction = SyncDirection.EzToOfficial;
-            else if (DirectionBToA.IsChecked == true)
-                vm.Direction = SyncDirection.OfficialToEz;
-        }
-
-        private void EntityFilter_OnChanged(object sender, SelectionChangedEventArgs e)
-        {
-            if (EntityFilterCombo.SelectedItem is ComboBoxItem { Tag: EntityKindFilter filter })
-                vm.EntityFilter = filter;
-        }
-
-        private void TabSourceOnly_OnClick(object sender, RoutedEventArgs e) => vm.CurrentCategory = DiffCategory.SourceOnly;
-        private void TabTargetOnly_OnClick(object sender, RoutedEventArgs e) => vm.CurrentCategory = DiffCategory.TargetOnly;
-        private void TabConflicted_OnClick(object sender, RoutedEventArgs e) => vm.CurrentCategory = DiffCategory.Conflicted;
-
-        private async void BrowseA_OnClick(object sender, RoutedEventArgs e) => await vm.BrowseAAsync();
-        private async void BrowseB_OnClick(object sender, RoutedEventArgs e) => await vm.BrowseBAsync();
-        private void Scan_OnClick(object sender, RoutedEventArgs e) => vm.ScanCommand.Execute(null);
-        private void Apply_OnClick(object sender, RoutedEventArgs e) => vm.ApplyCommand.Execute(null);
-        private void Delete_OnClick(object sender, RoutedEventArgs e) => vm.DeleteCommand.Execute(null);
-        private void SelectAll_OnClick(object sender, RoutedEventArgs e) => vm.SelectAllCommand.Execute(null);
-        private void SettingsButton_OnClick(object sender, RoutedEventArgs e) => vm.OpenSettingsCommand.Execute(null);
-
-        private void DiffGrid_OnCellChanged(object? sender, EventArgs e) => vm.OnDiffSelectionChanged();
+        private static bool isTransientStatus(string message) => message.Contains("扫描", StringComparison.Ordinal) ||
+                                                                 message.Contains("Scanning", StringComparison.OrdinalIgnoreCase) ||
+                                                                 message.Contains("计算", StringComparison.Ordinal) ||
+                                                                 message.Contains("Computing", StringComparison.OrdinalIgnoreCase);
     }
 }

@@ -4,16 +4,30 @@ using osu.Game.EzRealmSync.Models;
 
 namespace osu.EzRealmSync.AppModel
 {
-    public sealed class DiffRowModel : INotifyPropertyChanged
+    public sealed class RealmEntityRowModel : INotifyPropertyChanged
     {
         private bool isSelected;
 
-        public DiffRowModel(DiffItem item)
+        public RealmEntityRowModel(RealmEntityRow row)
         {
-            Item = item;
+            Row = row;
         }
 
-        public DiffItem Item { get; }
+        public RealmEntityRow Row { get; }
+
+        public EntityKind EntityKind => Row.EntityKind;
+
+        public string Title => Row.Title;
+
+        public string Artist => Row.Artist;
+
+        public string Hash => Row.Hash;
+
+        public string Ruleset => Row.Ruleset;
+
+        public string Date => Row.Date?.ToString("yyyy-MM-dd HH:mm") ?? string.Empty;
+
+        public string Extra => Row.Extra ?? string.Empty;
 
         public bool IsSelected
         {
@@ -27,18 +41,6 @@ namespace osu.EzRealmSync.AppModel
                 OnPropertyChanged();
             }
         }
-
-        public string Title => Item.Title;
-
-        public string Artist => Item.Artist;
-
-        public string Hash => Item.Hash;
-
-        public string Ruleset => Item.Ruleset;
-
-        public string Date => Item.Date?.ToString("yyyy-MM-dd HH:mm") ?? string.Empty;
-
-        public string EntityKind => Item.EntityKind.ToString();
 
         public event PropertyChangedEventHandler? PropertyChanged;
 

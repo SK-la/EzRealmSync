@@ -4,15 +4,15 @@ namespace osu.EzRealmSync.Desktop.Services
 {
     internal static class WpfUiDialogService
     {
-        public static Task<string?> PickFolderAsync(Window owner, string? initialPath)
+        public static Task<string?> PickFolderAsync(Window owner, string? initialPath) => showPickerAsync(owner, PathPickerMode.Folder, initialPath, Loc.Get("FolderPickerTitle"));
+
+        public static Task<string?> PickRealmPathAsync(Window owner, string? initialPath) => showPickerAsync(owner, PathPickerMode.RealmPath, initialPath, Loc.Get("PathPickerTitleRealm"));
+
+        private static Task<string?> showPickerAsync(Window owner, PathPickerMode mode, string? initialPath, string title)
         {
             return Application.Current.Dispatcher.InvokeAsync(() =>
             {
-                var dialog = new FolderPickerWindow(initialPath, Loc.Get("FolderPickerTitle"))
-                {
-                    Owner = owner,
-                };
-
+                var dialog = new PathPickerWindow(mode, initialPath, title) { Owner = owner };
                 return dialog.ShowDialog() == true ? dialog.SelectedPath : null;
             }).Task;
         }

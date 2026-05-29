@@ -14,6 +14,21 @@
   <data name="FolderPickerUp" xml:space="preserve"><value>上一级</value></data>
   <data name="FolderPickerCancel" xml:space="preserve"><value>取消</value></data>
   <data name="FolderPickerSelect" xml:space="preserve"><value>选择此文件夹</value></data>
+  <data name="PathPickerTitleRealm" xml:space="preserve"><value>选择 Realm 文件或文件夹</value></data>
+  <data name="PathPickerRefresh" xml:space="preserve"><value>刷新</value></data>
+  <data name="PathPickerGo" xml:space="preserve"><value>转到</value></data>
+  <data name="PathPickerPlaces" xml:space="preserve"><value>位置</value></data>
+  <data name="PathPickerDesktop" xml:space="preserve"><value>桌面</value></data>
+  <data name="PathPickerDocuments" xml:space="preserve"><value>文档</value></data>
+  <data name="PathPickerDownloads" xml:space="preserve"><value>下载</value></data>
+  <data name="PathPickerSelect" xml:space="preserve"><value>确定</value></data>
+  <data name="PathPickerSelectFolder" xml:space="preserve"><value>选择文件夹</value></data>
+  <data name="PathPickerColName" xml:space="preserve"><value>名称</value></data>
+  <data name="PathPickerColType" xml:space="preserve"><value>类型</value></data>
+  <data name="PathPickerColModified" xml:space="preserve"><value>修改时间</value></data>
+  <data name="PathPickerColSize" xml:space="preserve"><value>大小</value></data>
+  <data name="PathPickerTypeFolder" xml:space="preserve"><value>文件夹</value></data>
+  <data name="PathPickerTypeRealm" xml:space="preserve"><value>Realm 文件</value></data>
   <data name="Yes" xml:space="preserve"><value>是</value></data>
   <data name="No" xml:space="preserve"><value>否</value></data>
   <data name="ScanDiff" xml:space="preserve"><value>扫描 Diff</value></data>
@@ -47,8 +62,10 @@
   <data name="Cancel" xml:space="preserve"><value>取消</value></data>
   <data name="Ok" xml:space="preserve"><value>确定</value></data>
   <data name="SettingsTitle" xml:space="preserve"><value>设置</value></data>
+  <data name="SettingsGeneral" xml:space="preserve"><value>常规</value></data>
   <data name="UiTestMode" xml:space="preserve"><value>UI 测试模式</value></data>
-  <data name="UiTestModeHint" xml:space="preserve"><value>关闭 UI 测试模式并连接真实数据库需重启应用（Phase 2）。</value></data>
+  <data name="UiTestModeHint" xml:space="preserve"><value>开启后使用 Mock 数据。修改后需重启应用生效。</value></data>
+  <data name="UiTestModeRestartHint" xml:space="preserve"><value>UI 测试模式已更改，请重启应用后生效。</value></data>
   <data name="Close" xml:space="preserve"><value>关闭</value></data>
   <data name="MockOptions" xml:space="preserve"><value>模拟选项（仅 UI 测试模式）</value></data>
   <data name="MockDataset" xml:space="preserve"><value>数据集</value></data>
@@ -65,4 +82,78 @@
   <data name="ColHash" xml:space="preserve"><value>Hash</value></data>
   <data name="ColRuleset" xml:space="preserve"><value>规则集</value></data>
   <data name="ColDate" xml:space="preserve"><value>日期</value></data>
+  <data name="ColKind" xml:space="preserve"><value>类型</value></data>
+  <data name="ColExtra" xml:space="preserve"><value>附加</value></data>
+  <data name="TabImport" xml:space="preserve"><value>导入</value></data>
+  <data name="TabData" xml:space="preserve"><value>数据</value></data>
+  <data name="TabSync" xml:space="preserve"><value>同步</value></data>
+  <data name="TabFix" xml:space="preserve"><value>修复</value></data>
+  <data name="TabExport" xml:space="preserve"><value>导出</value></data>
+  <data name="ImportDropHint" xml:space="preserve"><value>拖入 .realm 文件或文件夹，或点击浏览</value></data>
+  <data name="RealmLocation" xml:space="preserve"><value>Realm 路径</value></data>
+  <data name="ApplyRealmPath" xml:space="preserve"><value>应用</value></data>
+  <data name="StatusInvalidRealmPath" xml:space="preserve"><value>路径必须是 .realm 文件或已存在的文件夹。</value></data>
+  <data name="StatusNoRealmInPath" xml:space="preserve"><value>该文件夹内未找到 .realm 文件。请选择包含 client.realm（或在 data/ 下）的路径。</value></data>
+  <data name="StatusFilesFolderRequired" xml:space="preserve"><value>需要在 Realm 数据目录旁存在 files/ 文件夹。</value></data>
+  <data name="FixRequiresFilesHint" xml:space="preserve"><value>修复与导出需要同时包含 .realm 与 files/ 的存储路径（请在导入页设置）。</value></data>
+  <data name="FixScan" xml:space="preserve"><value>扫描问题</value></data>
+  <data name="FixApplySelected" xml:space="preserve"><value>修复选中</value></data>
+  <data name="FixApplyAll" xml:space="preserve"><value>全部修复</value></data>
+  <data name="FixReplacementChar" xml:space="preserve"><value>非法字符替换为</value></data>
+  <data name="FixIssueMissingFile" xml:space="preserve"><value>缺少文件</value></data>
+  <data name="FixIssueIllegalCharacter" xml:space="preserve"><value>非法字符</value></data>
+  <data name="ColFixKind" xml:space="preserve"><value>类型</value></data>
+  <data name="ColFixField" xml:space="preserve"><value>字段</value></data>
+  <data name="ColFixCurrent" xml:space="preserve"><value>当前值</value></data>
+  <data name="ColFixSuggested" xml:space="preserve"><value>建议值</value></data>
+  <data name="ColFixDetail" xml:space="preserve"><value>说明</value></data>
+  <data name="StatusFixScanComplete" xml:space="preserve"><value>发现 {0} 个问题</value></data>
+  <data name="StatusFixApplied" xml:space="preserve"><value>已应用 {0} 项修复</value></data>
+  <data name="ExportDataType" xml:space="preserve"><value>数据类型</value></data>
+  <data name="ExportKindBeatmapSet" xml:space="preserve"><value>谱包</value></data>
+  <data name="ExportKindBeatmap" xml:space="preserve"><value>谱面</value></data>
+  <data name="ExportKindCollection" xml:space="preserve"><value>收藏夹</value></data>
+  <data name="ExportLoadList" xml:space="preserve"><value>加载列表</value></data>
+  <data name="ExportRun" xml:space="preserve"><value>导出</value></data>
+  <data name="ExportDirectory" xml:space="preserve"><value>输出目录</value></data>
+  <data name="ExportFolderName" xml:space="preserve"><value>子文件夹名（可选）</value></data>
+  <data name="ExportFolderNameHint" xml:space="preserve"><value>留空则使用 songs-日期时间</value></data>
+  <data name="ColExportCollection" xml:space="preserve"><value>收藏夹</value></data>
+  <data name="ColExportPath" xml:space="preserve"><value>路径</value></data>
+  <data name="StatusExportCatalogLoaded" xml:space="preserve"><value>已加载 {0} 项可导出</value></data>
+  <data name="StatusExportComplete" xml:space="preserve"><value>已导出 {0} 项到 {1}</value></data>
+  <data name="BackupDirectory" xml:space="preserve"><value>备份目录</value></data>
+  <data name="SearchDirectory" xml:space="preserve"><value>搜索目录</value></data>
+  <data name="RefreshList" xml:space="preserve"><value>刷新列表</value></data>
+  <data name="BackupSelected" xml:space="preserve"><value>备份选中库</value></data>
+  <data name="RealmFileList" xml:space="preserve"><value>Realm 文件列表</value></data>
+  <data name="ColRealmName" xml:space="preserve"><value>名称</value></data>
+  <data name="ColRealmPath" xml:space="preserve"><value>路径</value></data>
+  <data name="ColSchema" xml:space="preserve"><value>Schema</value></data>
+  <data name="ColOfficialSchema" xml:space="preserve"><value>官方</value></data>
+  <data name="ColEzSchema" xml:space="preserve"><value>Ez</value></data>
+  <data name="ColSize" xml:space="preserve"><value>大小</value></data>
+  <data name="LoadRealm" xml:space="preserve"><value>完整加载</value></data>
+  <data name="SourceRealm" xml:space="preserve"><value>数据源 A</value></data>
+  <data name="TargetRealm" xml:space="preserve"><value>目标源 B</value></data>
+  <data name="SetOperation" xml:space="preserve"><value>集合运算</value></data>
+  <data name="SetIntersection" xml:space="preserve"><value>交集</value></data>
+  <data name="SetUnion" xml:space="preserve"><value>并集</value></data>
+  <data name="SetDifference" xml:space="preserve"><value>差集 (A−B)</value></data>
+  <data name="SetSymmetricDifference" xml:space="preserve"><value>对称差</value></data>
+  <data name="SyncAction" xml:space="preserve"><value>动作</value></data>
+  <data name="ActionAdd" xml:space="preserve"><value>添加到目标</value></data>
+  <data name="ActionDelete" xml:space="preserve"><value>从源删除</value></data>
+  <data name="ComputeSet" xml:space="preserve"><value>计算</value></data>
+  <data name="ExecuteAction" xml:space="preserve"><value>执行</value></data>
+  <data name="StatusRealmList" xml:space="preserve"><value>列表中共 {0} 个 Realm 文件</value></data>
+  <data name="StatusRealmRegistered" xml:space="preserve"><value>已注册：{0}</value></data>
+  <data name="StatusBackupCreated" xml:space="preserve"><value>已创建备份：{0}</value></data>
+  <data name="StatusRealmLoaded" xml:space="preserve"><value>已加载 {0}，全部分组共 {1} 行</value></data>
+  <data name="StatusComputingSet" xml:space="preserve"><value>正在计算集合…</value></data>
+  <data name="StatusSetComplete" xml:space="preserve"><value>集合结果 — 仅 A：{0}，仅 B：{1}，冲突：{2}</value></data>
+  <data name="ErrorPickSourceTarget" xml:space="preserve"><value>请选择数据源与目标源。</value></data>
+  <data name="SelectRealmHint" xml:space="preserve"><value>选择 Realm 文件后点击「完整加载」</value></data>
+  <data name="TabOnlyInA" xml:space="preserve"><value>仅 A</value></data>
+  <data name="TabOnlyInB" xml:space="preserve"><value>仅 B</value></data>
 </root>

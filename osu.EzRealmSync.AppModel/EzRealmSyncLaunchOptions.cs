@@ -11,13 +11,16 @@ namespace osu.EzRealmSync.AppModel
 
         public static EzRealmSyncLaunchOptions Parse(string[] args)
         {
-            bool uiTest = false;
+            // 暂时默认开启 UI 测试；使用 --no-ui-test 连接真实 Realm。
+            bool uiTest = true;
             var mock = new MockEzRealmSyncOptions();
 
             foreach (string arg in args)
             {
                 if (arg is "--ui-test" or "-ui-test")
                     uiTest = true;
+                else if (arg is "--no-ui-test" or "-no-ui-test")
+                    uiTest = false;
                 else if (arg.StartsWith("--mock-delay=", StringComparison.OrdinalIgnoreCase) && int.TryParse(arg.Split('=')[1], out int delay))
                     mock.SimulatedDelayMilliseconds = delay;
             }
@@ -36,7 +39,7 @@ namespace osu.EzRealmSync.AppModel
 
             return new PathConfiguration
             {
-                EzDataPath = @"C:\Fake\Ez2Lazer\data",
+                EzDataPath = @"C:\Fake\Ez2Lazer",
                 OfficialDataPath = @"C:\Fake\osu\data",
             };
         }

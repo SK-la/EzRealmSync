@@ -3,7 +3,7 @@ using osu.Game.EzRealmSync.Models;
 
 namespace osu.Game.EzRealmSync.Mock
 {
-    public sealed class MockEzRealmSyncService : IEzRealmSyncService
+    public sealed partial class MockEzRealmSyncService : IEzRealmSyncService
     {
         private ScanResult currentResult = new();
         private readonly List<BackupEntry> backups = new();

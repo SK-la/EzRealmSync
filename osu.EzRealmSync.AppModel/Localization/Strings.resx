@@ -14,6 +14,21 @@
   <data name="FolderPickerUp" xml:space="preserve"><value>Up</value></data>
   <data name="FolderPickerCancel" xml:space="preserve"><value>Cancel</value></data>
   <data name="FolderPickerSelect" xml:space="preserve"><value>Select folder</value></data>
+  <data name="PathPickerTitleRealm" xml:space="preserve"><value>Select Realm file or folder</value></data>
+  <data name="PathPickerRefresh" xml:space="preserve"><value>Refresh</value></data>
+  <data name="PathPickerGo" xml:space="preserve"><value>Go</value></data>
+  <data name="PathPickerPlaces" xml:space="preserve"><value>Places</value></data>
+  <data name="PathPickerDesktop" xml:space="preserve"><value>Desktop</value></data>
+  <data name="PathPickerDocuments" xml:space="preserve"><value>Documents</value></data>
+  <data name="PathPickerDownloads" xml:space="preserve"><value>Downloads</value></data>
+  <data name="PathPickerSelect" xml:space="preserve"><value>Select</value></data>
+  <data name="PathPickerSelectFolder" xml:space="preserve"><value>Select folder</value></data>
+  <data name="PathPickerColName" xml:space="preserve"><value>Name</value></data>
+  <data name="PathPickerColType" xml:space="preserve"><value>Type</value></data>
+  <data name="PathPickerColModified" xml:space="preserve"><value>Modified</value></data>
+  <data name="PathPickerColSize" xml:space="preserve"><value>Size</value></data>
+  <data name="PathPickerTypeFolder" xml:space="preserve"><value>Folder</value></data>
+  <data name="PathPickerTypeRealm" xml:space="preserve"><value>Realm file</value></data>
   <data name="Yes" xml:space="preserve"><value>Yes</value></data>
   <data name="No" xml:space="preserve"><value>No</value></data>
   <data name="ScanDiff" xml:space="preserve"><value>Scan diff</value></data>
@@ -47,8 +62,10 @@
   <data name="Cancel" xml:space="preserve"><value>Cancel</value></data>
   <data name="Ok" xml:space="preserve"><value>OK</value></data>
   <data name="SettingsTitle" xml:space="preserve"><value>Settings</value></data>
+  <data name="SettingsGeneral" xml:space="preserve"><value>General</value></data>
   <data name="UiTestMode" xml:space="preserve"><value>UI test mode</value></data>
-  <data name="UiTestModeHint" xml:space="preserve"><value>Disable UI test mode and use a real database after restart (Phase 2).</value></data>
+  <data name="UiTestModeHint" xml:space="preserve"><value>Uses mock data when enabled. Restart the app to apply.</value></data>
+  <data name="UiTestModeRestartHint" xml:space="preserve"><value>UI test mode changed. Restart the app to apply.</value></data>
   <data name="Close" xml:space="preserve"><value>Close</value></data>
   <data name="MockOptions" xml:space="preserve"><value>Mock options (UI test only)</value></data>
   <data name="MockDataset" xml:space="preserve"><value>Dataset</value></data>
@@ -65,4 +82,78 @@
   <data name="ColHash" xml:space="preserve"><value>Hash</value></data>
   <data name="ColRuleset" xml:space="preserve"><value>Ruleset</value></data>
   <data name="ColDate" xml:space="preserve"><value>Date</value></data>
+  <data name="ColKind" xml:space="preserve"><value>Kind</value></data>
+  <data name="ColExtra" xml:space="preserve"><value>Extra</value></data>
+  <data name="TabImport" xml:space="preserve"><value>Import</value></data>
+  <data name="TabData" xml:space="preserve"><value>Data</value></data>
+  <data name="TabSync" xml:space="preserve"><value>Sync</value></data>
+  <data name="TabFix" xml:space="preserve"><value>Fix</value></data>
+  <data name="TabExport" xml:space="preserve"><value>Export</value></data>
+  <data name="ImportDropHint" xml:space="preserve"><value>Drag a .realm file or folder here, or click to browse</value></data>
+  <data name="RealmLocation" xml:space="preserve"><value>Realm path</value></data>
+  <data name="ApplyRealmPath" xml:space="preserve"><value>Apply</value></data>
+  <data name="StatusInvalidRealmPath" xml:space="preserve"><value>Path must be a .realm file or an existing folder.</value></data>
+  <data name="StatusNoRealmInPath" xml:space="preserve"><value>No .realm file found in this folder. Choose a path that contains client.realm (or under data/).</value></data>
+  <data name="StatusFilesFolderRequired" xml:space="preserve"><value>A files/ folder is required next to the Realm data directory.</value></data>
+  <data name="FixRequiresFilesHint" xml:space="preserve"><value>Fix and Export require a storage path with both .realm and files/ (set on Import tab).</value></data>
+  <data name="FixScan" xml:space="preserve"><value>Scan issues</value></data>
+  <data name="FixApplySelected" xml:space="preserve"><value>Fix selected</value></data>
+  <data name="FixApplyAll" xml:space="preserve"><value>Fix all</value></data>
+  <data name="FixReplacementChar" xml:space="preserve"><value>Replace illegal chars with</value></data>
+  <data name="FixIssueMissingFile" xml:space="preserve"><value>Missing file</value></data>
+  <data name="FixIssueIllegalCharacter" xml:space="preserve"><value>Illegal character</value></data>
+  <data name="ColFixKind" xml:space="preserve"><value>Issue</value></data>
+  <data name="ColFixField" xml:space="preserve"><value>Field</value></data>
+  <data name="ColFixCurrent" xml:space="preserve"><value>Current</value></data>
+  <data name="ColFixSuggested" xml:space="preserve"><value>Suggested</value></data>
+  <data name="ColFixDetail" xml:space="preserve"><value>Detail</value></data>
+  <data name="StatusFixScanComplete" xml:space="preserve"><value>Found {0} issue(s)</value></data>
+  <data name="StatusFixApplied" xml:space="preserve"><value>Applied {0} fix(es)</value></data>
+  <data name="ExportDataType" xml:space="preserve"><value>Data type</value></data>
+  <data name="ExportKindBeatmapSet" xml:space="preserve"><value>Beatmap sets</value></data>
+  <data name="ExportKindBeatmap" xml:space="preserve"><value>Beatmaps</value></data>
+  <data name="ExportKindCollection" xml:space="preserve"><value>Collections</value></data>
+  <data name="ExportLoadList" xml:space="preserve"><value>Load list</value></data>
+  <data name="ExportRun" xml:space="preserve"><value>Export</value></data>
+  <data name="ExportDirectory" xml:space="preserve"><value>Output folder</value></data>
+  <data name="ExportFolderName" xml:space="preserve"><value>Subfolder name (optional)</value></data>
+  <data name="ExportFolderNameHint" xml:space="preserve"><value>Leave empty for songs-yyyyMMdd_HHmmss</value></data>
+  <data name="ColExportCollection" xml:space="preserve"><value>Collection</value></data>
+  <data name="ColExportPath" xml:space="preserve"><value>Path</value></data>
+  <data name="StatusExportCatalogLoaded" xml:space="preserve"><value>{0} item(s) ready to export</value></data>
+  <data name="StatusExportComplete" xml:space="preserve"><value>Exported {0} item(s) to {1}</value></data>
+  <data name="BackupDirectory" xml:space="preserve"><value>Backup folder</value></data>
+  <data name="SearchDirectory" xml:space="preserve"><value>Search folder</value></data>
+  <data name="RefreshList" xml:space="preserve"><value>Refresh</value></data>
+  <data name="BackupSelected" xml:space="preserve"><value>Backup selected</value></data>
+  <data name="RealmFileList" xml:space="preserve"><value>Realm files</value></data>
+  <data name="ColRealmName" xml:space="preserve"><value>Name</value></data>
+  <data name="ColRealmPath" xml:space="preserve"><value>Path</value></data>
+  <data name="ColSchema" xml:space="preserve"><value>Schema</value></data>
+  <data name="ColOfficialSchema" xml:space="preserve"><value>ppy</value></data>
+  <data name="ColEzSchema" xml:space="preserve"><value>Ez</value></data>
+  <data name="ColSize" xml:space="preserve"><value>Size</value></data>
+  <data name="LoadRealm" xml:space="preserve"><value>Load full data</value></data>
+  <data name="SourceRealm" xml:space="preserve"><value>Source (A)</value></data>
+  <data name="TargetRealm" xml:space="preserve"><value>Target (B)</value></data>
+  <data name="SetOperation" xml:space="preserve"><value>Set operation</value></data>
+  <data name="SetIntersection" xml:space="preserve"><value>Intersection</value></data>
+  <data name="SetUnion" xml:space="preserve"><value>Union</value></data>
+  <data name="SetDifference" xml:space="preserve"><value>Difference (A−B)</value></data>
+  <data name="SetSymmetricDifference" xml:space="preserve"><value>Symmetric difference</value></data>
+  <data name="SyncAction" xml:space="preserve"><value>Action</value></data>
+  <data name="ActionAdd" xml:space="preserve"><value>Add to target</value></data>
+  <data name="ActionDelete" xml:space="preserve"><value>Delete from source</value></data>
+  <data name="ComputeSet" xml:space="preserve"><value>Compute</value></data>
+  <data name="ExecuteAction" xml:space="preserve"><value>Execute</value></data>
+  <data name="StatusRealmList" xml:space="preserve"><value>{0} realm file(s) in list</value></data>
+  <data name="StatusRealmRegistered" xml:space="preserve"><value>Registered: {0}</value></data>
+  <data name="StatusBackupCreated" xml:space="preserve"><value>Backup created: {0}</value></data>
+  <data name="StatusRealmLoaded" xml:space="preserve"><value>Loaded {0} — {1} row(s) in all groups</value></data>
+  <data name="StatusComputingSet" xml:space="preserve"><value>Computing set operation…</value></data>
+  <data name="StatusSetComplete" xml:space="preserve"><value>Set result — A only: {0}, B only: {1}, conflicted: {2}</value></data>
+  <data name="ErrorPickSourceTarget" xml:space="preserve"><value>Select source and target realm files.</value></data>
+  <data name="SelectRealmHint" xml:space="preserve"><value>Select a realm file and click Load</value></data>
+  <data name="TabOnlyInA" xml:space="preserve"><value>Only in A</value></data>
+  <data name="TabOnlyInB" xml:space="preserve"><value>Only in B</value></data>
 </root>

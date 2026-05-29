@@ -1,0 +1,830 @@
+using System.Collections.ObjectModel;
+using osu.EzRealmSync.AppModel.Localization;
+using osu.Framework.Bindables;
+using osu.Game.EzRealmSync.Abstractions;
+using osu.Game.EzRealmSync.Mock;
+using osu.Game.EzRealmSync.Models;
+
+namespace osu.EzRealmSync.AppModel
+{
+    public enum MainWorkspaceTab
+    {
+        Import,
+        Data,
+        Sync,
+        Fix,
+        Export,
+    }
+
+    public sealed class RealmAppPresenter
+    {
+        private readonly IEzRealmSyncService syncService;
+        private readonly IRealmDataService dataService;
+        private readonly IRealmFixService fixService;
+        private readonly IRealmExportService exportService;
+        private readonly EzRealmSyncLaunchOptions launchOptions;
+
+        private ScanResult? lastScanResult;
+        private CancellationTokenSource? operationCts;
+        private readonly List<DiffRowModel> syncRows = new();
+        private RealmSnapshot? loadedSnapshot;
+
+        public RealmAppPresenter(
+            IEzRealmSyncService syncService,
+            IRealmDataService dataService,
+            IRealmFixService fixService,
+            IRealmExportService exportService,
+            EzRealmSyncLaunchOptions launchOptions)
+        {
+            this.syncService = syncService;
+            this.dataService = dataService;
+            this.fixService = fixService;
+            this.exportService = exportService;
+            this.launchOptions = launchOptions;
+
+            UiTestMode.Value = launchOptions.UiTestMode;
+            BackupDirectory.Value = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments), "EzRealmSync", "backups");
+            ExportDirectory.Value = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments), "EzRealmSync", "exports");
+            IllegalCharacterReplacement.Value = "_";
+            StatusMessage.Value = launchOptions.UiTestMode ? Loc.Get("StatusUiTest") : Loc.Get("StatusReady");
+
+            CurrentWorkspaceTab.BindValueChanged(_ => { }, true);
+            EntityFilter.BindValueChanged(_ => refreshSyncRows(), true);
+            CurrentCategory.BindValueChanged(_ =>
+            {
+                refreshSyncRows();
+                updateCanApply();
+            }, true);
+            SelectedDataGroup.BindValueChanged(_ => refreshDataRows(), true);
+            SyncAction.BindValueChanged(_ => updateCanApply(), true);
+        }
+
+        public ObservableCollection<RealmFileEntry> RealmFiles { get; } = new();
+
+        public ObservableCollection<RealmEntityRowModel> DataRows { get; } = new();
+
+        public ObservableCollection<RealmFixIssueModel> FixIssues { get; } = new();
+
+        public ObservableCollection<RealmExportItemModel> ExportItems { get; } = new();
+
+        public Bindable<MainWorkspaceTab> CurrentWorkspaceTab { get; } = new Bindable<MainWorkspaceTab>(MainWorkspaceTab.Import);
+
+        public Bindable<string> BackupDirectory { get; } = new Bindable<string>(string.Empty);
+        public Bindable<string> SearchDirectory { get; } = new Bindable<string>(string.Empty);
+
+        public BindableBool CanUseFixAndExport { get; } = new BindableBool();
+
+        public Bindable<string?> FixRealmId { get; } = new Bindable<string?>();
+
+        public Bindable<string?> ExportRealmId { get; } = new Bindable<string?>();
+
+        public Bindable<ExportDataKind> SelectedExportKind { get; } = new Bindable<ExportDataKind>(global::osu.Game.EzRealmSync.Models.ExportDataKind.BeatmapSet);
+
+        public Bindable<string> IllegalCharacterReplacement { get; } = new Bindable<string>("_");
+
+        public Bindable<string> ExportDirectory { get; } = new Bindable<string>(string.Empty);
+
+        public Bindable<string> ExportFolderName { get; } = new Bindable<string>(string.Empty);
+
+        public Bindable<string?> SelectedRealmId { get; } = new Bindable<string?>();
+        public Bindable<string?> ActiveSourceRealmId { get; } = new Bindable<string?>();
+        public Bindable<string?> ActiveTargetRealmId { get; } = new Bindable<string?>();
+
+        public Bindable<EntityKind> SelectedDataGroup { get; } = new Bindable<EntityKind>(EntityKind.BeatmapSet);
+        public Bindable<RealmSetOperation> SetOperation { get; } = new Bindable<RealmSetOperation>(RealmSetOperation.Difference);
+        public Bindable<RealmSyncAction> SyncAction { get; } = new Bindable<RealmSyncAction>(RealmSyncAction.Add);
+
+        public BindableBool UiTestMode { get; } = new BindableBool();
+        public Bindable<EntityKindFilter> EntityFilter { get; } = new Bindable<EntityKindFilter>(EntityKindFilter.All);
+        public Bindable<DiffCategory> CurrentCategory { get; } = new Bindable<DiffCategory>(DiffCategory.SourceOnly);
+
+        public Bindable<string> StatusMessage { get; } = new Bindable<string>(string.Empty);
+        public Bindable<double> Progress { get; } = new Bindable<double>();
+        public BindableInt SelectionCount { get; } = new BindableInt();
+        public BindableInt DataSelectionCount { get; } = new BindableInt();
+        public BindableBool IsBusy { get; } = new BindableBool();
+        public BindableBool CanApply { get; } = new BindableBool(true);
+        public BindableBool IsSelectAllMode { get; } = new BindableBool(true);
+
+        public string LoadedSnapshotSummary { get; private set; } = string.Empty;
+
+        public IReadOnlyList<DiffRowModel> SyncRows => syncRows;
+
+        public MockEzRealmSyncService? MockService => syncService as MockEzRealmSyncService;
+
+        public Func<string, string, bool, Task<bool>>? ConfirmAsync { get; set; }
+        public Func<string, Task<string?>>? PickFolderAsync { get; set; }
+        public Func<string, Task<string?>>? PickRealmPathAsync { get; set; }
+
+        /// <summary>由 Desktop 注入，将集合/绑定更新封送到 UI 线程。</summary>
+        public Action<Action>? MarshalToUi { get; set; }
+
+        public event Action? RealmFilesChanged;
+        public event Action? SyncRowsChanged;
+        public event Action? DataRowsChanged;
+        public event Action? FixIssuesChanged;
+        public event Action? ExportItemsChanged;
+        public event Action? WorkspaceCapabilitiesChanged;
+        public event Action? LabelsChanged;
+
+        public async Task InitializeAsync()
+        {
+            if (!string.IsNullOrWhiteSpace(launchOptions.CreateDefaultPaths().EzDataPath))
+                SearchDirectory.Value = launchOptions.CreateDefaultPaths().EzDataPath;
+
+            await RefreshRealmFilesAsync().ConfigureAwait(false);
+
+            runOnUi(() =>
+            {
+                if (RealmFiles.Count > 0)
+                {
+                    SelectedRealmId.Value = RealmFiles[0].Id;
+                    FixRealmId.Value = RealmFiles[0].Id;
+                    ExportRealmId.Value = RealmFiles[0].Id;
+                    ActiveSourceRealmId.Value = RealmFiles[0].Id;
+                    ActiveTargetRealmId.Value = RealmFiles.Count > 1 ? RealmFiles[1].Id : RealmFiles[0].Id;
+                }
+
+                updateWorkspaceCapabilities();
+            });
+        }
+
+        public async Task RefreshRealmFilesAsync()
+        {
+            setBusy(true);
+
+            try
+            {
+                var files = await dataService.DiscoverRealmFilesAsync(SearchDirectory.Value).ConfigureAwait(false);
+
+                runOnUi(() =>
+                {
+                    RealmFiles.Clear();
+                    foreach (var file in files)
+                        RealmFiles.Add(file);
+
+                    RealmFilesChanged?.Invoke();
+                    updateWorkspaceCapabilities();
+
+                    if (!string.IsNullOrWhiteSpace(SearchDirectory.Value)
+                        && Directory.Exists(SearchDirectory.Value.Trim())
+                        && RealmFiles.Count == 0
+                        && RealmWorkspacePaths.FindRealmFiles(SearchDirectory.Value).Count == 0)
+                    {
+                        StatusMessage.Value = Loc.Get("StatusNoRealmInPath");
+                    }
+                    else
+                    {
+                        StatusMessage.Value = Loc.Format("StatusRealmList", RealmFiles.Count);
+                    }
+                });
+            }
+            catch (Exception ex)
+            {
+                runOnUi(() => StatusMessage.Value = ex.Message);
+            }
+            finally
+            {
+                setBusy(false);
+            }
+        }
+
+        public async Task ApplyRealmPathAsync()
+        {
+            string path = SearchDirectory.Value.Trim();
+            if (string.IsNullOrEmpty(path))
+                return;
+
+            if (File.Exists(path) && path.EndsWith(".realm", StringComparison.OrdinalIgnoreCase))
+            {
+                await RegisterRealmFileAsync(path).ConfigureAwait(false);
+                return;
+            }
+
+            if (Directory.Exists(path))
+            {
+                await RefreshRealmFilesAsync().ConfigureAwait(false);
+                return;
+            }
+
+            runOnUi(() => StatusMessage.Value = Loc.Get("StatusInvalidRealmPath"));
+        }
+
+        public async Task RegisterRealmFileAsync(string realmFilePath)
+        {
+            setBusy(true);
+
+            try
+            {
+                var entry = await dataService.RegisterRealmFileAsync(realmFilePath).ConfigureAwait(false);
+                await RefreshRealmFilesAsync().ConfigureAwait(false);
+                runOnUi(() =>
+                {
+                    SelectedRealmId.Value = entry.Id;
+                    StatusMessage.Value = Loc.Format("StatusRealmRegistered", entry.DisplayName);
+                });
+            }
+            catch (Exception ex)
+            {
+                runOnUi(() => StatusMessage.Value = ex.Message);
+            }
+            finally
+            {
+                setBusy(false);
+            }
+        }
+
+        public async Task BrowseBackupDirectoryAsync()
+        {
+            if (PickFolderAsync == null)
+                return;
+
+            string? picked = await PickFolderAsync(BackupDirectory.Value).ConfigureAwait(false);
+            if (!string.IsNullOrEmpty(picked))
+                runOnUi(() => BackupDirectory.Value = picked);
+        }
+
+        public async Task BrowseRealmLocationAsync()
+        {
+            if (PickRealmPathAsync == null)
+                return;
+
+            string? picked = await PickRealmPathAsync(SearchDirectory.Value).ConfigureAwait(false);
+            if (string.IsNullOrEmpty(picked))
+                return;
+
+            runOnUi(() => SearchDirectory.Value = picked);
+
+            if (File.Exists(picked) && picked.EndsWith(".realm", StringComparison.OrdinalIgnoreCase))
+                await RegisterRealmFileAsync(picked).ConfigureAwait(false);
+            else
+                await RefreshRealmFilesAsync().ConfigureAwait(false);
+        }
+
+        public async Task BackupSelectedRealmAsync()
+        {
+            var file = getRealmFile(SelectedRealmId.Value);
+            if (file == null)
+                return;
+
+            setBusy(true);
+
+            try
+            {
+                string backupPath = await dataService.CreateTimestampedBackupAsync(file.FilePath, BackupDirectory.Value).ConfigureAwait(false);
+                runOnUi(() => StatusMessage.Value = Loc.Format("StatusBackupCreated", backupPath));
+            }
+            catch (Exception ex)
+            {
+                runOnUi(() => StatusMessage.Value = ex.Message);
+            }
+            finally
+            {
+                setBusy(false);
+            }
+        }
+
+        public async Task LoadSelectedRealmAsync()
+        {
+            if (string.IsNullOrEmpty(SelectedRealmId.Value))
+                return;
+
+            setBusy(true);
+
+            try
+            {
+                var progress = createScanProgress();
+                var snapshot = await dataService.LoadRealmSnapshotAsync(SelectedRealmId.Value, progress).ConfigureAwait(false);
+
+                runOnUi(() =>
+                {
+                    loadedSnapshot = snapshot;
+                    LoadedSnapshotSummary = Loc.Format("StatusRealmLoaded", loadedSnapshot.DisplayName, loadedSnapshot.TotalRowCount);
+                    StatusMessage.Value = LoadedSnapshotSummary;
+                    Progress.Value = 1;
+                    refreshDataRows();
+                });
+            }
+            catch (Exception ex)
+            {
+                runOnUi(() => StatusMessage.Value = ex.Message);
+            }
+            finally
+            {
+                setBusy(false);
+            }
+        }
+
+        public async Task ComputeSetAsync()
+        {
+            if (string.IsNullOrEmpty(ActiveSourceRealmId.Value) || string.IsNullOrEmpty(ActiveTargetRealmId.Value))
+            {
+                runOnUi(() => StatusMessage.Value = Loc.Get("ErrorPickSourceTarget"));
+                return;
+            }
+
+            operationCts?.Cancel();
+            operationCts = new CancellationTokenSource();
+            var token = operationCts.Token;
+
+            setBusy(true);
+            runOnUi(() => StatusMessage.Value = Loc.Get("StatusComputingSet"));
+
+            try
+            {
+                var progress = createScanProgress();
+
+                var scanResult = await dataService.CompareRealmSetsAsync(
+                    SetOperation.Value,
+                    ActiveSourceRealmId.Value,
+                    ActiveTargetRealmId.Value,
+                    EntityFilter.Value,
+                    progress,
+                    token).ConfigureAwait(false);
+
+                runOnUi(() =>
+                {
+                    lastScanResult = scanResult;
+                    StatusMessage.Value = Loc.Format(
+                        "StatusSetComplete",
+                        lastScanResult.SourceOnly.Count,
+                        lastScanResult.TargetOnly.Count,
+                        lastScanResult.Conflicted.Count);
+
+                    Progress.Value = 1;
+                    CurrentCategory.Value = DiffCategory.SourceOnly;
+                    refreshSyncRows();
+                    updateCanApply();
+                });
+            }
+            catch (Exception ex)
+            {
+                runOnUi(() => StatusMessage.Value = ex.Message);
+            }
+            finally
+            {
+                setBusy(false);
+            }
+        }
+
+        public async Task ExecuteSyncActionAsync()
+        {
+            var selected = syncRows.Where(r => r.IsSelected).Select(r => r.Item).ToList();
+
+            if (selected.Count == 0)
+            {
+                runOnUi(() => StatusMessage.Value = Loc.Get("ErrorNoSelection"));
+                return;
+            }
+
+            bool delete = SyncAction.Value == RealmSyncAction.Delete;
+            var sourceFile = getRealmFile(ActiveSourceRealmId.Value);
+            var targetFile = getRealmFile(ActiveTargetRealmId.Value);
+
+            if (sourceFile == null || targetFile == null)
+                return;
+
+            if (ConfirmAsync == null)
+                return;
+
+            string confirmMessage = delete
+                ? Loc.Format("ConfirmDelete", selected.Count, sourceFile.DisplayName)
+                : Loc.Format("ConfirmAdd", selected.Count, targetFile.DisplayName);
+
+            if (!await ConfirmAsync(confirmMessage, Loc.Get("ConfirmTitle"), delete).ConfigureAwait(false))
+                return;
+
+            operationCts?.Cancel();
+            operationCts = new CancellationTokenSource();
+            var token = operationCts.Token;
+
+            setBusy(true);
+
+            try
+            {
+                if (!delete)
+                {
+                    string backupPath = await dataService.CreateTimestampedBackupAsync(targetFile.FilePath, BackupDirectory.Value, token).ConfigureAwait(false);
+                    runOnUi(() => StatusMessage.Value = Loc.Format("StatusBackupCreated", backupPath));
+                }
+
+                var request = new ApplyRequest
+                {
+                    Direction = SyncDirection.EzToOfficial,
+                    Paths = new PathConfiguration
+                    {
+                        EzDataPath = sourceFile.DataDirectory ?? Path.GetDirectoryName(sourceFile.FilePath) ?? string.Empty,
+                        OfficialDataPath = targetFile.DataDirectory ?? Path.GetDirectoryName(targetFile.FilePath) ?? string.Empty,
+                    },
+                    ItemIds = selected.Select(i => i.Id).ToList(),
+                    CreateBackup = false,
+                    DeleteFromSource = delete,
+                };
+
+                var progress = createApplyProgress();
+
+                var result = await syncService.ApplyAsync(request, progress, token).ConfigureAwait(false);
+
+                runOnUi(() =>
+                {
+                    StatusMessage.Value = delete
+                        ? Loc.Format("StatusDeleted", result.AppliedCount, sourceFile.DisplayName)
+                        : Loc.Format("StatusAdded", result.AppliedCount, string.Empty);
+
+                    Progress.Value = 1;
+                });
+
+                await ComputeSetAsync().ConfigureAwait(false);
+            }
+            catch (Exception ex)
+            {
+                runOnUi(() => StatusMessage.Value = ex.Message);
+            }
+            finally
+            {
+                setBusy(false);
+            }
+        }
+
+        public void ToggleSyncSelectAll()
+        {
+            if (syncRows.Count == 0)
+                return;
+
+            bool anyUnselected = syncRows.Any(r => !r.IsSelected);
+            foreach (var row in syncRows)
+                row.IsSelected = anyUnselected;
+
+            IsSelectAllMode.Value = anyUnselected;
+            updateSelectionCount();
+            SyncRowsChanged?.Invoke();
+        }
+
+        public void UpdateSyncSelectionFromGrid() => updateSelectionCount();
+
+        public async Task ScanFixIssuesAsync()
+        {
+            var file = getRealmFile(FixRealmId.Value ?? SelectedRealmId.Value);
+            if (file == null)
+                return;
+
+            setBusy(true);
+
+            try
+            {
+                var progress = createScanProgress();
+
+                string replacement = string.IsNullOrEmpty(IllegalCharacterReplacement.Value)
+                    ? "_"
+                    : IllegalCharacterReplacement.Value[..1];
+
+                var issues = await fixService.ScanIssuesAsync(
+                    file.Id,
+                    SearchDirectory.Value,
+                    new RealmFixScanOptions { IllegalCharacterReplacement = replacement },
+                    progress).ConfigureAwait(false);
+
+                runOnUi(() =>
+                {
+                    FixIssues.Clear();
+                    foreach (var issue in issues)
+                        FixIssues.Add(new RealmFixIssueModel(issue));
+
+                    FixIssuesChanged?.Invoke();
+                    StatusMessage.Value = Loc.Format("StatusFixScanComplete", FixIssues.Count);
+                    Progress.Value = 1;
+                });
+            }
+            catch (Exception ex)
+            {
+                runOnUi(() => StatusMessage.Value = ex.Message);
+            }
+            finally
+            {
+                setBusy(false);
+            }
+        }
+
+        public async Task ApplySelectedFixesAsync()
+        {
+            var selected = FixIssues.Where(i => i.IsSelected).Select(i => i.Id).ToList();
+            if (selected.Count == 0)
+            {
+                runOnUi(() => StatusMessage.Value = Loc.Get("ErrorNoSelection"));
+                return;
+            }
+
+            await applyFixesAsync(selected).ConfigureAwait(false);
+        }
+
+        public async Task ApplyAllFixesAsync() => await applyFixesAsync(FixIssues.Select(i => i.Id).ToList()).ConfigureAwait(false);
+
+        public async Task LoadExportCatalogAsync()
+        {
+            var file = getRealmFile(ExportRealmId.Value ?? SelectedRealmId.Value);
+            if (file == null)
+                return;
+
+            setBusy(true);
+
+            try
+            {
+                var progress = createScanProgress();
+                var catalog = await exportService.LoadCatalogAsync(file.Id, SelectedExportKind.Value, progress).ConfigureAwait(false);
+
+                runOnUi(() =>
+                {
+                    ExportItems.Clear();
+                    foreach (var item in catalog.Items)
+                        ExportItems.Add(new RealmExportItemModel(item));
+
+                    ExportItemsChanged?.Invoke();
+                    StatusMessage.Value = Loc.Format("StatusExportCatalogLoaded", ExportItems.Count);
+                    Progress.Value = 1;
+                });
+            }
+            catch (Exception ex)
+            {
+                runOnUi(() => StatusMessage.Value = ex.Message);
+            }
+            finally
+            {
+                setBusy(false);
+            }
+        }
+
+        public void ToggleFixSelectAll()
+        {
+            if (FixIssues.Count == 0)
+                return;
+
+            bool anyUnselected = FixIssues.Any(i => !i.IsSelected);
+            foreach (var issue in FixIssues)
+                issue.IsSelected = anyUnselected;
+
+            FixIssuesChanged?.Invoke();
+        }
+
+        public void ToggleExportSelectAll()
+        {
+            if (ExportItems.Count == 0)
+                return;
+
+            bool anyUnselected = ExportItems.Any(i => !i.IsSelected);
+            foreach (var item in ExportItems)
+                item.IsSelected = anyUnselected;
+
+            ExportItemsChanged?.Invoke();
+        }
+
+        public async Task ExportSelectedAsync()
+        {
+            var file = getRealmFile(ExportRealmId.Value ?? SelectedRealmId.Value);
+            if (file == null)
+                return;
+
+            var selected = ExportItems.Where(i => i.IsSelected).Select(i => i.Id).ToList();
+            if (selected.Count == 0)
+            {
+                runOnUi(() => StatusMessage.Value = Loc.Get("ErrorNoSelection"));
+                return;
+            }
+
+            if (!RealmWorkspacePaths.TryResolveFilesDirectory(SearchDirectory.Value, out string filesDirectory)
+                && !launchOptions.UiTestMode)
+            {
+                runOnUi(() => StatusMessage.Value = Loc.Get("StatusFilesFolderRequired"));
+                return;
+            }
+
+            if (launchOptions.UiTestMode && !RealmWorkspacePaths.TryResolveFilesDirectory(SearchDirectory.Value, out filesDirectory))
+                filesDirectory = Path.Combine(SearchDirectory.Value, "files");
+
+            setBusy(true);
+
+            try
+            {
+                var progress = createScanProgress();
+
+                var result = await exportService.ExportAsync(
+                    new RealmExportRequest
+                    {
+                        RealmId = file.Id,
+                        Kind = SelectedExportKind.Value,
+                        ItemIds = selected,
+                        OutputDirectory = ExportDirectory.Value,
+                        FolderName = string.IsNullOrWhiteSpace(ExportFolderName.Value) ? null : ExportFolderName.Value.Trim(),
+                        FilesDirectory = filesDirectory,
+                    },
+                    progress).ConfigureAwait(false);
+
+                runOnUi(() =>
+                {
+                    StatusMessage.Value = Loc.Format("StatusExportComplete", result.ExportedCount, result.OutputRoot);
+                    Progress.Value = 1;
+                });
+            }
+            catch (Exception ex)
+            {
+                runOnUi(() => StatusMessage.Value = ex.Message);
+            }
+            finally
+            {
+                setBusy(false);
+            }
+        }
+
+        public async Task BrowseExportDirectoryAsync()
+        {
+            if (PickFolderAsync == null)
+                return;
+
+            string? picked = await PickFolderAsync(ExportDirectory.Value).ConfigureAwait(false);
+            if (!string.IsNullOrEmpty(picked))
+                runOnUi(() => ExportDirectory.Value = picked);
+        }
+
+        public void OnLanguageChanged() => LabelsChanged?.Invoke();
+
+        private async Task applyFixesAsync(IReadOnlyList<Guid> issueIds)
+        {
+            var file = getRealmFile(FixRealmId.Value ?? SelectedRealmId.Value);
+            if (file == null || issueIds.Count == 0)
+                return;
+
+            setBusy(true);
+
+            try
+            {
+                string replacement = string.IsNullOrEmpty(IllegalCharacterReplacement.Value)
+                    ? "_"
+                    : IllegalCharacterReplacement.Value[..1];
+
+                var progress = createScanProgress();
+
+                var result = await fixService.ApplyFixesAsync(
+                    file.Id,
+                    SearchDirectory.Value,
+                    issueIds,
+                    new RealmFixApplyOptions { IllegalCharacterReplacement = replacement },
+                    progress).ConfigureAwait(false);
+
+                runOnUi(() =>
+                {
+                    var remaining = FixIssues.Where(i => !issueIds.Contains(i.Id)).ToList();
+                    FixIssues.Clear();
+                    foreach (var item in remaining)
+                        FixIssues.Add(item);
+
+                    FixIssuesChanged?.Invoke();
+                    StatusMessage.Value = Loc.Format("StatusFixApplied", result.AppliedCount);
+                });
+            }
+            catch (Exception ex)
+            {
+                runOnUi(() => StatusMessage.Value = ex.Message);
+            }
+            finally
+            {
+                setBusy(false);
+            }
+        }
+
+        private void updateWorkspaceCapabilities()
+        {
+            bool hasRealm = RealmFiles.Count > 0;
+            bool hasFiles = RealmWorkspacePaths.WorkspaceHasFilesFolder(SearchDirectory.Value);
+            CanUseFixAndExport.Value = launchOptions.UiTestMode || (hasRealm && hasFiles);
+            WorkspaceCapabilitiesChanged?.Invoke();
+        }
+
+        private void refreshDataRows() => runOnUi(() =>
+        {
+            DataRows.Clear();
+
+            if (loadedSnapshot == null)
+            {
+                DataRowsChanged?.Invoke();
+                return;
+            }
+
+            var group = loadedSnapshot.Groups.FirstOrDefault(g => g.EntityKind == SelectedDataGroup.Value);
+
+            if (group != null)
+            {
+                foreach (var row in group.Rows)
+                    DataRows.Add(new RealmEntityRowModel(row));
+            }
+
+            DataSelectionCount.Value = 0;
+            DataRowsChanged?.Invoke();
+        });
+
+        private void refreshSyncRows() => runOnUi(() =>
+        {
+            syncRows.Clear();
+
+            if (lastScanResult != null)
+            {
+                var items = CurrentCategory.Value switch
+                {
+                    DiffCategory.SourceOnly => lastScanResult.SourceOnly,
+                    DiffCategory.TargetOnly => lastScanResult.TargetOnly,
+                    DiffCategory.Conflicted => lastScanResult.Conflicted,
+                    _ => Array.Empty<DiffItem>(),
+                };
+
+                foreach (var item in items)
+                    syncRows.Add(new DiffRowModel(item));
+            }
+
+            IsSelectAllMode.Value = true;
+            updateSelectionCount();
+            SyncRowsChanged?.Invoke();
+        });
+
+        private void updateCanApply()
+        {
+            bool conflicted = CurrentCategory.Value == DiffCategory.Conflicted;
+            CanApply.Value = !IsBusy.Value && !conflicted && SyncAction.Value == RealmSyncAction.Add;
+        }
+
+        private void updateSelectionCount() => SelectionCount.Value = syncRows.Count(r => r.IsSelected);
+
+        private RealmFileEntry? getRealmFile(string? id) => string.IsNullOrEmpty(id) ? null : RealmFiles.FirstOrDefault(f => f.Id == id);
+
+        private void setBusy(bool busy) => runOnUi(() =>
+        {
+            IsBusy.Value = busy;
+            updateCanApply();
+        });
+
+        private void runOnUi(Action action)
+        {
+            if (MarshalToUi != null)
+                MarshalToUi(action);
+            else
+                action();
+        }
+
+        private IProgress<ScanProgress> createScanProgress() => new Progress<ScanProgress>(p => runOnUi(() =>
+        {
+            Progress.Value = p.Progress;
+            StatusMessage.Value = p.Message;
+        }));
+
+        private IProgress<ApplyProgress> createApplyProgress() => new Progress<ApplyProgress>(p => runOnUi(() =>
+        {
+            Progress.Value = p.Progress;
+            StatusMessage.Value = p.Message;
+        }));
+
+        public static string GetEntityFilterLabel(EntityKindFilter filter) => filter switch
+        {
+            EntityKindFilter.All => Loc.Get("EntityAll"),
+            EntityKindFilter.BeatmapSet => Loc.Get("EntityBeatmapSet"),
+            EntityKindFilter.Beatmap => Loc.Get("EntityBeatmap"),
+            EntityKindFilter.Score => Loc.Get("EntityScore"),
+            _ => filter.ToString(),
+        };
+
+        public static string GetSetOperationLabel(RealmSetOperation op) => op switch
+        {
+            RealmSetOperation.Intersection => Loc.Get("SetIntersection"),
+            RealmSetOperation.Union => Loc.Get("SetUnion"),
+            RealmSetOperation.Difference => Loc.Get("SetDifference"),
+            RealmSetOperation.SymmetricDifference => Loc.Get("SetSymmetricDifference"),
+            _ => op.ToString(),
+        };
+
+        public static string GetSyncActionLabel(RealmSyncAction action) => action switch
+        {
+            RealmSyncAction.Add => Loc.Get("ActionAdd"),
+            RealmSyncAction.Delete => Loc.Get("ActionDelete"),
+            _ => action.ToString(),
+        };
+
+        public static string GetEntityKindLabel(EntityKind kind) => kind switch
+        {
+            EntityKind.BeatmapSet => Loc.Get("EntityBeatmapSet"),
+            EntityKind.Beatmap => Loc.Get("EntityBeatmap"),
+            EntityKind.Score => Loc.Get("EntityScore"),
+            _ => kind.ToString(),
+        };
+
+        public static string GetFixIssueKindLabel(RealmFixIssueKind kind) => kind switch
+        {
+            RealmFixIssueKind.MissingFile => Loc.Get("FixIssueMissingFile"),
+            RealmFixIssueKind.IllegalCharacter => Loc.Get("FixIssueIllegalCharacter"),
+            _ => kind.ToString(),
+        };
+
+        public static string GetExportDataKindLabel(ExportDataKind kind) => kind switch
+        {
+            global::osu.Game.EzRealmSync.Models.ExportDataKind.BeatmapSet => Loc.Get("ExportKindBeatmapSet"),
+            global::osu.Game.EzRealmSync.Models.ExportDataKind.Beatmap => Loc.Get("ExportKindBeatmap"),
+            global::osu.Game.EzRealmSync.Models.ExportDataKind.Collection => Loc.Get("ExportKindCollection"),
+            _ => kind.ToString(),
+        };
+    }
+}
