@@ -273,7 +273,8 @@ namespace osu.Game.EzRealmSync.Mock
                 EntityKindFilter.BeatmapSet => new[] { EntityKind.BeatmapSet },
                 EntityKindFilter.Beatmap => new[] { EntityKind.Beatmap },
                 EntityKindFilter.Score => new[] { EntityKind.Score },
-                _ => new[] { EntityKind.BeatmapSet, EntityKind.Beatmap, EntityKind.Score },
+                EntityKindFilter.BeatmapCollection => new[] { EntityKind.BeatmapCollection },
+                _ => new[] { EntityKind.BeatmapSet, EntityKind.Beatmap, EntityKind.Score, EntityKind.BeatmapCollection },
             };
 
             return snapshot.Groups.Where(g => kinds.Contains(g.EntityKind)).SelectMany(g => g.Rows).ToList();
@@ -291,5 +292,56 @@ namespace osu.Game.EzRealmSync.Mock
             Date = row.Date,
             ConflictSummary = conflicted ? row.Extra ?? "字段不一致 (mock)" : null,
         };
+
+        public Task<int> DeleteBrowseEntitiesAsync(
+            string realmId,
+            RealmObjectClass objectClass,
+            IReadOnlyList<Guid> entityIds,
+            CancellationToken cancellationToken = default)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+
+            if (!loadedSnapshots.TryGetValue(realmId, out var snapshot))
+                return Task.FromResult(0);
+
+            var idSet = entityIds.ToHashSet();
+            int removed = 0;
+            var newClasses = new List<RealmClassGroup>();
+
+            foreach (var group in snapshot.Classes)
+            {
+                if (group.Class != objectClass)
+                {
+                    newClasses.Add(group);
+                    continue;
+                }
+
+                var remaining = group.Rows.Where(r => !idSet.Contains(r.Id)).ToList();
+                removed += group.Rows.Count - remaining.Count;
+
+                if (remaining.Count > 0)
+                {
+                    newClasses.Add(new RealmClassGroup
+                    {
+                        Class = group.Class,
+                        Columns = group.Columns,
+                        Rows = remaining,
+                    });
+                }
+            }
+
+            if (removed > 0)
+            {
+                loadedSnapshots[realmId] = new RealmSnapshot
+                {
+                    RealmId = snapshot.RealmId,
+                    DisplayName = snapshot.DisplayName,
+                    Classes = newClasses,
+                    Groups = RealmSnapshotGrouper.DeriveGroups(newClasses),
+                };
+            }
+
+            return Task.FromResult(removed);
+        }
     }
 }

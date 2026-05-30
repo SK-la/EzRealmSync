@@ -19,7 +19,7 @@ namespace osu.EzRealmSync.Desktop.Helpers
 
             grid.SelectionChanged += (_, e) =>
             {
-                syncSelectionToChecks(grid, e, getAllItems, setItemsChecked);
+                SyncSelectionToChecks(grid, e, getAllItems, setItemsChecked);
                 afterSelectionChanged?.Invoke();
             };
 
@@ -40,7 +40,7 @@ namespace osu.EzRealmSync.Desktop.Helpers
             });
         }
 
-        private static void syncSelectionToChecks<T>(
+        public static void SyncSelectionToChecks<T>(
             DataGrid grid,
             SelectionChangedEventArgs e,
             Func<IEnumerable<T>> getAllItems,

@@ -29,7 +29,8 @@ namespace osu.Game.EzRealmSync.Realm
             EntityKindFilter.BeatmapSet => new[] { EntityKind.BeatmapSet },
             EntityKindFilter.Beatmap => new[] { EntityKind.Beatmap },
             EntityKindFilter.Score => new[] { EntityKind.Score },
-            _ => new[] { EntityKind.BeatmapSet, EntityKind.Beatmap, EntityKind.Score },
+            EntityKindFilter.BeatmapCollection => new[] { EntityKind.BeatmapCollection },
+            _ => new[] { EntityKind.BeatmapSet, EntityKind.Beatmap, EntityKind.Score, EntityKind.BeatmapCollection },
         };
     }
 }

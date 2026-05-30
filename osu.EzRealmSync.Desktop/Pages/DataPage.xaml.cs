@@ -64,12 +64,50 @@ namespace osu.EzRealmSync.Desktop.Pages
 
             browseGridConfigured = true;
 
-            CheckableDataGridHelper.Configure(
-                DataGrid,
-                () => vm.BrowseRows,
-                (rows, check) => vm.Presenter.SetBrowseRowsChecked(rows, check),
-                () => vm.Presenter.InvertBrowseRowChecks(),
-                rows => vm.Presenter.DeleteBrowseRowsAsync(rows));
+            DataGrid.ClipboardCopyMode = DataGridClipboardCopyMode.None;
+            DataGrid.SelectionUnit = DataGridSelectionUnit.FullRow;
+            DataGrid.SelectionMode = DataGridSelectionMode.Extended;
+
+            DataGrid.SelectionChanged += (_, e) =>
+            {
+                CheckableDataGridHelper.SyncSelectionToChecks(
+                    DataGrid,
+                    e,
+                    () => vm.BrowseRows,
+                    (rows, check) => vm.Presenter.SetBrowseRowsChecked(rows, check));
+            };
+
+            DataGridContextMenuHelper.AttachExclusive(DataGrid, menu =>
+            {
+                DataGridContextMenuHelper.AddItem(menu, "check", Loc.Get("CtxCheck"), (_, _) =>
+                    vm.Presenter.SetBrowseRowsChecked(CheckableDataGridHelper.GetContextTargets<RealmBrowseRowModel>(DataGrid), true));
+
+                DataGridContextMenuHelper.AddItem(menu, "uncheck", Loc.Get("CtxUncheck"), (_, _) =>
+                    vm.Presenter.SetBrowseRowsChecked(CheckableDataGridHelper.GetContextTargets<RealmBrowseRowModel>(DataGrid), false));
+
+                DataGridContextMenuHelper.AddItem(menu, "invert", Loc.Get("CtxInvertCheck"), (_, _) => vm.Presenter.InvertBrowseRowChecks());
+
+                var exportItem = DataGridContextMenuHelper.AddItem(menu, "export", Loc.Get("CtxExport"), async (_, _) =>
+                {
+                    var targets = CheckableDataGridHelper.GetContextTargets<RealmBrowseRowModel>(DataGrid);
+                    if (targets.Count > 0)
+                        await vm.Presenter.ExportBrowseRowsAsync(targets);
+                });
+
+                var deleteItem = DataGridContextMenuHelper.AddItem(menu, "delete", Loc.Get("CtxDelete"), async (_, _) =>
+                {
+                    var targets = CheckableDataGridHelper.GetContextTargets<RealmBrowseRowModel>(DataGrid);
+                    if (targets.Count > 0)
+                        await vm.Presenter.DeleteBrowseRowsAsync(targets);
+                });
+
+                menu.Opened += (_, _) =>
+                {
+                    var cls = vm.SelectedRealmClass;
+                    exportItem.IsEnabled = RealmAppPresenter.IsExportableBrowseClass(cls);
+                    deleteItem.IsEnabled = RealmAppPresenter.IsMutableBrowseClass(cls);
+                };
+            });
         }
 
         private void refreshSummary()

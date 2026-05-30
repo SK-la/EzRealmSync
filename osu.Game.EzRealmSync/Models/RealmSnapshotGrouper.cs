@@ -14,6 +14,7 @@ namespace osu.Game.EzRealmSync.Models
                 (EntityKind.BeatmapSet, RealmObjectClass.BeatmapSet),
                 (EntityKind.Beatmap, RealmObjectClass.Beatmap),
                 (EntityKind.Score, RealmObjectClass.Score),
+                (EntityKind.BeatmapCollection, RealmObjectClass.BeatmapCollection),
             })
             {
                 var group = classes.FirstOrDefault(c => c.Class == objectClass);

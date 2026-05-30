@@ -179,7 +179,7 @@ namespace osu.Game.EzRealmSync.Mock
         private static List<DiffItem> generateItems(DiffCategory category, int count, bool conflicted = false)
         {
             var list = new List<DiffItem>(count);
-            var kinds = new[] { EntityKind.BeatmapSet, EntityKind.Beatmap, EntityKind.Score };
+            var kinds = new[] { EntityKind.BeatmapSet, EntityKind.Beatmap, EntityKind.Score, EntityKind.BeatmapCollection };
 
             for (int i = 0; i < count; i++)
             {

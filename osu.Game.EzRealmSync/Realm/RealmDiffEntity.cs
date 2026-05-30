@@ -24,5 +24,9 @@ namespace osu.Game.EzRealmSync.Realm
         public long? OnlineId { get; init; }
 
         public string? DifficultyName { get; init; }
+
+        public int? CollectionBeatmapCount { get; init; }
+
+        public string? CollectionHashFingerprint { get; init; }
     }
 }

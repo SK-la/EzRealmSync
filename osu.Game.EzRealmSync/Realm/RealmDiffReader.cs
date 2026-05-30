@@ -1,5 +1,6 @@
 #if HAS_EZ_OSU_GAME
 using osu.Framework.Platform;
+using osu.Game.Collections;
 using osu.Game.Database;
 using osu.Game.EzRealmSync.Models;
 using RealmInstance = Realms.Realm;
@@ -28,8 +29,12 @@ namespace osu.Game.EzRealmSync.Realm
                 entities.AddRange(readBeatmaps(realm));
                 cancellationToken.ThrowIfCancellationRequested();
 
-                progress?.Report(new ScanProgress { Progress = 0.7, Message = "正在读取成绩…" });
+                progress?.Report(new ScanProgress { Progress = 0.65, Message = "正在读取成绩…" });
                 entities.AddRange(readScores(realm));
+                cancellationToken.ThrowIfCancellationRequested();
+
+                progress?.Report(new ScanProgress { Progress = 0.85, Message = "正在读取收藏夹…" });
+                entities.AddRange(readCollections(realm));
 
                 snapshot = new RealmDiffSnapshot { Entities = entities };
             });
@@ -103,6 +108,30 @@ namespace osu.Game.EzRealmSync.Realm
                     Date = score.Date,
                 };
             }
+        }
+
+        private static IEnumerable<RealmDiffEntity> readCollections(RealmInstance realm)
+        {
+            foreach (var collection in realm.All<BeatmapCollection>().AsEnumerable())
+            {
+                yield return new RealmDiffEntity
+                {
+                    Id = collection.ID,
+                    EntityKind = EntityKind.BeatmapCollection,
+                    Title = collection.Name,
+                    CollectionBeatmapCount = collection.BeatmapMD5Hashes.Count,
+                    CollectionHashFingerprint = fingerprintHashes(collection.BeatmapMD5Hashes),
+                };
+            }
+        }
+
+        private static string fingerprintHashes(IList<string> hashes)
+        {
+            if (hashes.Count == 0)
+                return string.Empty;
+
+            var sorted = hashes.OrderBy(h => h, StringComparer.Ordinal).ToArray();
+            return string.Join("|", sorted);
         }
     }
 }

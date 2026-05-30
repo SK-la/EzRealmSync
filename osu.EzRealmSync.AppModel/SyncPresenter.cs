@@ -306,10 +306,11 @@ namespace osu.EzRealmSync.AppModel
 
         private List<EntityKind> getEntityKindsFromFilter() => EntityFilter.Value switch
         {
-            EntityKindFilter.All => new List<EntityKind> { EntityKind.BeatmapSet, EntityKind.Beatmap, EntityKind.Score },
+            EntityKindFilter.All => new List<EntityKind> { EntityKind.BeatmapSet, EntityKind.Beatmap, EntityKind.Score, EntityKind.BeatmapCollection },
             EntityKindFilter.BeatmapSet => new List<EntityKind> { EntityKind.BeatmapSet },
             EntityKindFilter.Beatmap => new List<EntityKind> { EntityKind.Beatmap },
             EntityKindFilter.Score => new List<EntityKind> { EntityKind.Score },
+            EntityKindFilter.BeatmapCollection => new List<EntityKind> { EntityKind.BeatmapCollection },
             _ => new List<EntityKind>(),
         };
 
@@ -325,6 +326,7 @@ namespace osu.EzRealmSync.AppModel
             EntityKindFilter.BeatmapSet => Loc.Get("EntityBeatmapSet"),
             EntityKindFilter.Beatmap => Loc.Get("EntityBeatmap"),
             EntityKindFilter.Score => Loc.Get("EntityScore"),
+            EntityKindFilter.BeatmapCollection => Loc.Get("EntityBeatmapCollection"),
             _ => filter.ToString(),
         };
     }

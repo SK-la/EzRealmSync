@@ -66,7 +66,7 @@
   <data name="CtxUncheck" xml:space="preserve"><value>Uncheck</value></data>
   <data name="CtxInvertCheck" xml:space="preserve"><value>Invert check</value></data>
   <data name="StatusBrowseRowsDeleted" xml:space="preserve"><value>Removed {0} row(s) from the loaded preview.</value></data>
-  <data name="ConfirmDeleteRows" xml:space="preserve"><value>Delete {0} row(s) from the list? This cannot be undone.</value></data>
+  <data name="ConfirmDeleteRows" xml:space="preserve"><value>Delete {0} record(s) from Realm? Sets/scores are soft-deleted; collections are removed. Close the game first.</value></data>
   <data name="ConfirmBeforeDelete" xml:space="preserve"><value>Confirm before delete</value></data>
   <data name="ConfirmBeforeDeleteHint" xml:space="preserve"><value>Show a warning dialog before removing rows from tables.</value></data>
   <data name="Cancel" xml:space="preserve"><value>Cancel</value></data>
@@ -89,6 +89,12 @@
   <data name="EntityBeatmapSet" xml:space="preserve"><value>Beatmap sets</value></data>
   <data name="EntityBeatmap" xml:space="preserve"><value>Beatmaps</value></data>
   <data name="EntityScore" xml:space="preserve"><value>Scores</value></data>
+  <data name="EntityBeatmapCollection" xml:space="preserve"><value>Collections</value></data>
+  <data name="CtxExport" xml:space="preserve"><value>Export files…</value></data>
+  <data name="StatusBrowseEntitiesDeleted" xml:space="preserve"><value>Deleted {0} record(s) from Realm (schema unchanged).</value></data>
+  <data name="ErrorBrowseClassNotMutable" xml:space="preserve"><value>This class is browse-only. Delete is available for beatmap sets, scores, and collections.</value></data>
+  <data name="ErrorBrowseDeleteNone" xml:space="preserve"><value>No records were deleted.</value></data>
+  <data name="ErrorBrowseExportNotSupported" xml:space="preserve"><value>File export is only supported for beatmap sets and collections.</value></data>
   <data name="ColTitle" xml:space="preserve"><value>Title</value></data>
   <data name="ColArtist" xml:space="preserve"><value>Artist</value></data>
   <data name="ColHash" xml:space="preserve"><value>Hash</value></data>

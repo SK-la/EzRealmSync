@@ -519,10 +519,11 @@ namespace osu.EzRealmSync.Screens
         {
             return sidebar.EntityFilter.Value switch
             {
-                EntityKindFilter.All => new List<EntityKind> { EntityKind.BeatmapSet, EntityKind.Beatmap, EntityKind.Score },
+                EntityKindFilter.All => new List<EntityKind> { EntityKind.BeatmapSet, EntityKind.Beatmap, EntityKind.Score, EntityKind.BeatmapCollection },
                 EntityKindFilter.BeatmapSet => new List<EntityKind> { EntityKind.BeatmapSet },
                 EntityKindFilter.Beatmap => new List<EntityKind> { EntityKind.Beatmap },
                 EntityKindFilter.Score => new List<EntityKind> { EntityKind.Score },
+                EntityKindFilter.BeatmapCollection => new List<EntityKind> { EntityKind.BeatmapCollection },
                 _ => new List<EntityKind>(),
             };
         }

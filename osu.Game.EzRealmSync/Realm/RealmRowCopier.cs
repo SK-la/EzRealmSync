@@ -1,5 +1,6 @@
 #if HAS_EZ_OSU_GAME
 using osu.Game.Beatmaps;
+using osu.Game.Collections;
 using osu.Game.Database;
 using osu.Game.EzRealmSync.Models;
 using osu.Game.Models;
@@ -90,6 +91,13 @@ namespace osu.Game.EzRealmSync.Realm
 
                     targetAccess.Write(target => insertScore(score, target));
                     copied = true;
+                    return;
+                }
+
+                if (tryDetachCollection(source, id, out var collection))
+                {
+                    targetAccess.Write(target => insertCollection(collection, target));
+                    copied = true;
                 }
             });
 
@@ -112,6 +120,13 @@ namespace osu.Game.EzRealmSync.Realm
                 if (source.Find<ScoreInfo>(id) is ScoreInfo score)
                 {
                     score.DeletePending = true;
+                    deleted = true;
+                    return;
+                }
+
+                if (source.Find<BeatmapCollection>(id) is BeatmapCollection collection)
+                {
+                    source.Remove(collection);
                     deleted = true;
                 }
             });
@@ -149,6 +164,16 @@ namespace osu.Game.EzRealmSync.Realm
                 return false;
 
             detached = score.Detach();
+            return true;
+        }
+
+        private static bool tryDetachCollection(RealmInstance source, Guid id, out BeatmapCollection detached)
+        {
+            detached = null!;
+            if (source.Find<BeatmapCollection>(id) is not BeatmapCollection collection)
+                return false;
+
+            detached = collection.Detach();
             return true;
         }
 
@@ -203,6 +228,14 @@ namespace osu.Game.EzRealmSync.Realm
 
             detached.BeatmapSet = managedSet;
             detached.Ruleset = resolveRuleset(target, detached.Ruleset);
+            target.Add(detached);
+        }
+
+        private static void insertCollection(BeatmapCollection detached, RealmInstance target)
+        {
+            if (target.Find<BeatmapCollection>(detached.ID) != null)
+                return;
+
             target.Add(detached);
         }
 

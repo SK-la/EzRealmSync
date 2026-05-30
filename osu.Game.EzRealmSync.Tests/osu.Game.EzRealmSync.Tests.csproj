@@ -1,12 +1,20 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
-    <UseLocalOsuLibs>false</UseLocalOsuLibs>
+    <UseLocalOsuLibs Condition="'$(UseLocalOsuLibs)' == ''">false</UseLocalOsuLibs>
     <TargetFramework>net8.0</TargetFramework>
     <RootNamespace>osu.Game.EzRealmSync.Tests</RootNamespace>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
     <IsPackable>false</IsPackable>
   </PropertyGroup>
+
+  <PropertyGroup Condition="'$(UseLocalOsuLibs)' == 'true'">
+    <DefineConstants>$(DefineConstants);HAS_EZ_OSU_GAME</DefineConstants>
+  </PropertyGroup>
+
+  <ItemGroup Condition="'$(UseLocalOsuLibs)' == 'true'">
+    <PackageReference Include="Realm" Version="20.1.0" />
+  </ItemGroup>
 
   <ItemGroup>
     <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.11.1" />

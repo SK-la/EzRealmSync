@@ -66,7 +66,7 @@
   <data name="CtxUncheck" xml:space="preserve"><value>取消勾选</value></data>
   <data name="CtxInvertCheck" xml:space="preserve"><value>反选</value></data>
   <data name="StatusBrowseRowsDeleted" xml:space="preserve"><value>已从预览中移除 {0} 行。</value></data>
-  <data name="ConfirmDeleteRows" xml:space="preserve"><value>确定从列表中删除 {0} 行吗？此操作不可撤销。</value></data>
+  <data name="ConfirmDeleteRows" xml:space="preserve"><value>确定从 Realm 删除 {0} 条记录？谱面集/成绩为软删，收藏夹为永久移除。请先关闭游戏。</value></data>
   <data name="ConfirmBeforeDelete" xml:space="preserve"><value>删除前确认</value></data>
   <data name="ConfirmBeforeDeleteHint" xml:space="preserve"><value>从表格中移除行前弹出警告对话框。</value></data>
   <data name="Cancel" xml:space="preserve"><value>取消</value></data>
@@ -89,6 +89,12 @@
   <data name="EntityBeatmapSet" xml:space="preserve"><value>谱面集</value></data>
   <data name="EntityBeatmap" xml:space="preserve"><value>难度</value></data>
   <data name="EntityScore" xml:space="preserve"><value>成绩</value></data>
+  <data name="EntityBeatmapCollection" xml:space="preserve"><value>收藏夹</value></data>
+  <data name="CtxExport" xml:space="preserve"><value>导出文件…</value></data>
+  <data name="StatusBrowseEntitiesDeleted" xml:space="preserve"><value>已从 Realm 删除 {0} 条记录（schema 未变更）。</value></data>
+  <data name="ErrorBrowseClassNotMutable" xml:space="preserve"><value>当前类型仅支持浏览；谱面集、成绩、收藏夹可删除。</value></data>
+  <data name="ErrorBrowseDeleteNone" xml:space="preserve"><value>未删除任何记录（可能已被删除或 ID 无效）。</value></data>
+  <data name="ErrorBrowseExportNotSupported" xml:space="preserve"><value>当前类型不支持文件导出；谱面集与收藏夹可复制 files/ 实体。</value></data>
   <data name="ColTitle" xml:space="preserve"><value>标题</value></data>
   <data name="ColArtist" xml:space="preserve"><value>艺术家</value></data>
   <data name="ColHash" xml:space="preserve"><value>Hash</value></data>

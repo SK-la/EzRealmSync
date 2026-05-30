@@ -272,6 +272,28 @@ namespace osu.Game.EzRealmSync.Mock
             };
         }
 
+        public Task<RealmExportResult> ExportBrowseEntitiesAsync(
+            string realmId,
+            string filesDirectory,
+            RealmObjectClass objectClass,
+            IReadOnlyList<Guid> entityIds,
+            string outputDirectory,
+            string? folderName = null,
+            IProgress<ScanProgress>? progress = null,
+            CancellationToken cancellationToken = default) =>
+            ExportAsync(
+                new RealmExportRequest
+                {
+                    RealmId = realmId,
+                    Kind = objectClass == RealmObjectClass.BeatmapCollection ? ExportDataKind.Collection : ExportDataKind.BeatmapSet,
+                    FilesDirectory = filesDirectory,
+                    OutputDirectory = outputDirectory,
+                    FolderName = folderName,
+                    ItemIds = entityIds,
+                },
+                progress,
+                cancellationToken);
+
         private static string buildMockRelativePath(RealmEntityRow row, EntityKind kind) => kind == EntityKind.BeatmapSet
             ? $"{row.Artist} - {row.Title}"
             : $"{row.Artist} - {row.Title}/{row.Ruleset}.osu";

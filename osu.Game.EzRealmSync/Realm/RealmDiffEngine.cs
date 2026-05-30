@@ -3,7 +3,7 @@ using osu.Game.EzRealmSync.Models;
 namespace osu.Game.EzRealmSync.Realm
 {
     /// <summary>
-    /// 双库 Diff：BeatmapSet / Beatmap / Score 按 <see cref="Guid"/> 匹配。
+    /// 双库 Diff：谱面集 / 难度 / 成绩 / 收藏夹 按 <see cref="Guid"/> 匹配。
     /// </summary>
     public static class RealmDiffEngine
     {

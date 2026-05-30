@@ -32,5 +32,15 @@ namespace osu.Game.EzRealmSync.Realm
             RealmExportRequest request,
             IProgress<ScanProgress>? progress = null,
             CancellationToken cancellationToken = default) => throw new InvalidOperationException(message);
+
+        public Task<RealmExportResult> ExportBrowseEntitiesAsync(
+            string realmId,
+            string filesDirectory,
+            RealmObjectClass objectClass,
+            IReadOnlyList<Guid> entityIds,
+            string outputDirectory,
+            string? folderName = null,
+            IProgress<ScanProgress>? progress = null,
+            CancellationToken cancellationToken = default) => throw new InvalidOperationException(message);
     }
 }

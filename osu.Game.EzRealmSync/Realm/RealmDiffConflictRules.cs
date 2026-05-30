@@ -12,6 +12,7 @@ namespace osu.Game.EzRealmSync.Realm
                 Models.EntityKind.BeatmapSet => compareBeatmapSet(source, target),
                 Models.EntityKind.Beatmap => compareBeatmap(source, target),
                 Models.EntityKind.Score => compareScore(source, target),
+                Models.EntityKind.BeatmapCollection => compareCollection(source, target),
                 _ => null,
             };
         }
@@ -60,6 +61,22 @@ namespace osu.Game.EzRealmSync.Realm
 
             if (source.Date != target.Date)
                 parts.Add("Date");
+
+            return format(parts);
+        }
+
+        private static string? compareCollection(RealmDiffEntity source, RealmDiffEntity target)
+        {
+            var parts = new List<string>();
+
+            if (!string.Equals(source.Title, target.Title, StringComparison.Ordinal))
+                parts.Add("名称");
+
+            if (source.CollectionBeatmapCount != target.CollectionBeatmapCount)
+                parts.Add("谱面数");
+
+            if (!string.Equals(source.CollectionHashFingerprint, target.CollectionHashFingerprint, StringComparison.Ordinal))
+                parts.Add("谱面列表");
 
             return format(parts);
         }

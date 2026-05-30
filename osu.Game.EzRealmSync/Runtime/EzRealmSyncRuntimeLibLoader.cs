@@ -29,6 +29,8 @@ namespace osu.Game.EzRealmSync.Runtime
             foreach (string name in preloadOrder)
                 tryLoadManaged(name);
 
+            verifyRealmNativeLibraryPresent();
+
             AssemblyLoadContext.Default.Resolving += onResolving;
             AssemblyLoadContext.Default.ResolvingUnmanagedDll += onResolvingUnmanagedDll;
         }
@@ -119,6 +121,19 @@ namespace osu.Game.EzRealmSync.Runtime
 
             yield return Path.Combine(AppContext.BaseDirectory, "runtimes", rid, "native");
             yield return AppContext.BaseDirectory;
+        }
+
+        private static void verifyRealmNativeLibraryPresent()
+        {
+            if (resolveNativeLibraryPath("realm-wrappers") != null)
+                return;
+
+            string hint = runtimeLibDirectory != null
+                ? Path.Combine(runtimeLibDirectory, "runtimes", resolveRuntimeIdentifier(), "native", "realm-wrappers.dll")
+                : "exe/lib/runtimes/.../realm-wrappers.dll";
+
+            throw new InvalidOperationException(
+                $"未找到 Realm 原生库 realm-wrappers.dll（预期路径：{hint}）。请执行：dotnet build -t:SyncEzRealmLibs EzRealmSync.sln -c Debug，并重新生成 Desktop。");
         }
 
         private static string resolveRuntimeIdentifier()

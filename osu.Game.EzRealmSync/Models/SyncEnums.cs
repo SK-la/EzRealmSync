@@ -17,6 +17,7 @@ namespace osu.Game.EzRealmSync.Models
         BeatmapSet,
         Beatmap,
         Score,
+        BeatmapCollection,
     }
 
     /// <summary>
@@ -35,6 +36,9 @@ namespace osu.Game.EzRealmSync.Models
 
         [Description("成绩")]
         Score,
+
+        [Description("收藏夹")]
+        BeatmapCollection,
     }
 
     public enum DiffCategory

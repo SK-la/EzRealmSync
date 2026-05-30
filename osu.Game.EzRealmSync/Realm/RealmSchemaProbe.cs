@@ -18,7 +18,11 @@ namespace osu.Game.EzRealmSync.Realm
             int? schema = diskSchemaVersion ?? TryReadSchemaVersion(realmFilePath);
 
             if (schema == null)
-                throw new InvalidOperationException($"无法读取 Realm schema 版本：{realmFilePath}");
+            {
+                RealmDiskSchemaReader.TryReadSchemaVersion(realmFilePath, out string? detail);
+                string suffix = string.IsNullOrWhiteSpace(detail) ? string.Empty : $" {detail}";
+                throw new InvalidOperationException($"无法读取 Realm schema 版本：{realmFilePath}.{suffix}");
+            }
 
             RealmSchemaToolPolicy.EnsureCanOpen(schema.Value);
 

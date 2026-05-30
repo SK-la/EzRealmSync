@@ -34,7 +34,9 @@ dotnet build -t:SyncEzRealmLibs EzRealmSync.sln -c Debug
 dotnet build EzRealmSync.sln
 ```
 
-主界面五 Tab：**导入**（osu! 数据目录 + Realm 列表 + 备份）→ **数据**（单库浏览）→ **同步**（A/B 双库集合运算与写入）→ **修复** / **导出**（共用导入目录下 `files/`）。设置持久化至 `%AppData%\EzRealmSync\settings.json`。
+主界面五 Tab：**导入**（osu! 数据目录 + Realm 列表 + 备份）→ **数据**（单库完整浏览；谱面集/成绩/收藏夹可写删与导出）→ **同步**（A/B 跨版本复制谱面集、难度、成绩、收藏夹，**不**改 schema）→ **修复** / **导出**（共用导入目录下 `files/`）。设置持久化至 `%AppData%\EzRealmSync\settings.json`。
+
+数据安全与三类操作说明：[docs/DATA-OPERATIONS.zh.md](docs/DATA-OPERATIONS.zh.md)
 
 路线图：[docs/ROADMAP.md](docs/ROADMAP.md)
 

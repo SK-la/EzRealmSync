@@ -730,11 +730,122 @@ namespace osu.EzRealmSync.AppModel
             if (rows.Count == 0)
                 return;
 
+            if (!isMutableBrowseClass(SelectedRealmClass.Value))
+            {
+                runOnUi(() => StatusMessage.Value = Loc.Get("ErrorBrowseClassNotMutable"));
+                return;
+            }
+
             if (!await TryConfirmDeleteAsync(rows.Count).ConfigureAwait(false))
                 return;
 
-            deleteBrowseRowsCore(rows.Select(r => r.Id).ToList());
+            var file = getRealmFile(DataRealmId.Value);
+            if (file == null)
+                return;
+
+            setBusy(true);
+
+            try
+            {
+                int deleted = await dataService.DeleteBrowseEntitiesAsync(
+                    file.Id,
+                    SelectedRealmClass.Value,
+                    rows.Select(r => r.Id).ToList()).ConfigureAwait(false);
+
+                if (deleted > 0)
+                {
+                    var progress = createScanProgress();
+                    var snapshot = await dataService.LoadRealmSnapshotAsync(file.Id, progress).ConfigureAwait(false);
+
+                    runOnUi(() =>
+                    {
+                        loadedSnapshot = snapshot;
+                        refreshDataBrowse();
+                        updateLoadedSnapshotSummary();
+                        StatusMessage.Value = Loc.Format("StatusBrowseEntitiesDeleted", deleted);
+                    });
+                }
+                else
+                {
+                    runOnUi(() => StatusMessage.Value = Loc.Get("ErrorBrowseDeleteNone"));
+                }
+            }
+            catch (Exception ex)
+            {
+                runOnUi(() => StatusMessage.Value = ex.Message);
+            }
+            finally
+            {
+                setBusy(false);
+            }
         }
+
+        public async Task ExportBrowseRowsAsync(IReadOnlyList<RealmBrowseRowModel> rows)
+        {
+            if (rows.Count == 0)
+                return;
+
+            var objectClass = SelectedRealmClass.Value;
+
+            if (!isExportableBrowseClass(objectClass))
+            {
+                runOnUi(() => StatusMessage.Value = Loc.Get("ErrorBrowseExportNotSupported"));
+                return;
+            }
+
+            var file = getRealmFile(DataRealmId.Value);
+            if (file == null)
+                return;
+
+            if (!RealmWorkspaceDiscovery.TryResolveSharedFilesDirectory(resolveWorkspaceRootForFile(file), out string filesDirectory))
+            {
+                runOnUi(() => StatusMessage.Value = Loc.Get("StatusFilesFolderRequired"));
+                return;
+            }
+
+            setBusy(true);
+
+            try
+            {
+                var progress = createScanProgress();
+                var result = await exportService.ExportBrowseEntitiesAsync(
+                    file.Id,
+                    filesDirectory,
+                    objectClass,
+                    rows.Select(r => r.Id).ToList(),
+                    ExportDirectory.Value,
+                    progress: progress).ConfigureAwait(false);
+
+                runOnUi(() => StatusMessage.Value = Loc.Format("StatusExportComplete", result.ExportedCount, result.OutputRoot));
+            }
+            catch (Exception ex)
+            {
+                runOnUi(() => StatusMessage.Value = ex.Message);
+            }
+            finally
+            {
+                setBusy(false);
+            }
+        }
+
+        public static bool IsMutableBrowseClass(RealmObjectClass objectClass) => objectClass switch
+        {
+            RealmObjectClass.BeatmapSet => true,
+            RealmObjectClass.Score => true,
+            RealmObjectClass.BeatmapCollection => true,
+            _ => false,
+        };
+
+        public static bool IsExportableBrowseClass(RealmObjectClass objectClass) => objectClass switch
+        {
+            RealmObjectClass.BeatmapSet => true,
+            RealmObjectClass.BeatmapCollection => true,
+            _ => false,
+        };
+
+        private static bool isMutableBrowseClass(RealmObjectClass objectClass) => IsMutableBrowseClass(objectClass);
+
+        private static bool isExportableBrowseClass(RealmObjectClass objectClass) => IsExportableBrowseClass(objectClass);
 
         public async Task DeleteSyncRowsAsync(IReadOnlyList<DiffRowModel> rows)
         {
@@ -827,21 +938,6 @@ namespace osu.EzRealmSync.AppModel
                 row.IsSelected = !row.IsSelected;
         }
 
-        private void deleteBrowseRowsCore(IReadOnlyList<Guid> rowIds)
-        {
-            if (rowIds.Count == 0 || !browseRowsByClass.TryGetValue(SelectedRealmClass.Value, out var rows))
-                return;
-
-            int removed = rows.RemoveAll(r => rowIds.Contains(r.Id));
-
-            if (removed == 0)
-                return;
-
-            refreshDataClassCounts();
-            refreshBrowseTable();
-            updateLoadedSnapshotSummary();
-            StatusMessage.Value = Loc.Format("StatusBrowseRowsDeleted", removed);
-        }
 
         public async Task ScanFixIssuesAsync()
         {
@@ -1425,6 +1521,7 @@ namespace osu.EzRealmSync.AppModel
             EntityKindFilter.BeatmapSet => Loc.Get("EntityBeatmapSet"),
             EntityKindFilter.Beatmap => Loc.Get("EntityBeatmap"),
             EntityKindFilter.Score => Loc.Get("EntityScore"),
+            EntityKindFilter.BeatmapCollection => Loc.Get("EntityBeatmapCollection"),
             _ => filter.ToString(),
         };
 
@@ -1449,6 +1546,7 @@ namespace osu.EzRealmSync.AppModel
             EntityKind.BeatmapSet => Loc.Get("EntityBeatmapSet"),
             EntityKind.Beatmap => Loc.Get("EntityBeatmap"),
             EntityKind.Score => Loc.Get("EntityScore"),
+            EntityKind.BeatmapCollection => Loc.Get("EntityBeatmapCollection"),
             _ => kind.ToString(),
         };
 

@@ -19,5 +19,12 @@ namespace osu.Game.EzRealmSync.Abstractions
             EntityKindFilter entityFilter,
             IProgress<ScanProgress>? progress = null,
             CancellationToken cancellationToken = default);
+
+        /// <summary>数据 Tab：从 Realm 删除谱面集 / 成绩 / 收藏夹（不迁移 schema）。</summary>
+        Task<int> DeleteBrowseEntitiesAsync(
+            string realmId,
+            RealmObjectClass objectClass,
+            IReadOnlyList<Guid> entityIds,
+            CancellationToken cancellationToken = default);
     }
 }

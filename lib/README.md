@@ -55,7 +55,8 @@ UI（按钮、列表、对话框）**不要**引用本目录；界面继续用 F
 - 打开时锁定**磁盘上已有**的 schema 版本（`RealmAccess.OpenWithoutMigration` / `OfficialRealmAccess.OpenWithoutMigration`）。
 - 若库比本工具**更旧**（例如官方 50）：请先用 osu!/Ez2Lazer 打开一次完成升级，再用本工具。
 - 若库比本工具**更新**：请更新 EzRealmSync 与 `lib/`。
-- 探测 schema 仅用 Realm 动态只读打开，**不**经过游戏的 `RealmAccess` 构造逻辑。
+- 探测 schema：Realm 动态只读 + `SharedRealmHandle.GetSchemaVersion()`（Realm 20 下 `Config.SchemaVersion` 在探测时为 0，不能用它判断）。
+- **不**经过游戏的 `RealmAccess` 构造逻辑。
 
 ## 与 NuGet 的关系
 
