@@ -186,19 +186,14 @@ namespace osu.Game.EzRealmSync.Mock
                 case ExportDataKind.Collection:
                     foreach (var collectionRow in snapshot.Groups.First(g => g.EntityKind == EntityKind.BeatmapCollection).Rows)
                     {
-                        string collection = collectionRow.Title;
-
-                        foreach (var row in snapshot.Groups.First(g => g.EntityKind == EntityKind.Beatmap).Rows)
+                        int count = snapshot.Groups.First(g => g.EntityKind == EntityKind.Beatmap).Rows.Count;
+                        items.Add(new RealmExportItem
                         {
-                            items.Add(new RealmExportItem
-                            {
-                                Id = Guid.NewGuid(),
-                                Title = row.Title,
-                                Artist = row.Artist,
-                                CollectionName = collection,
-                                RelativePath = $"{row.Artist} - {row.Title}/{row.Ruleset}.osu",
-                            });
-                        }
+                            Id = collectionRow.Id,
+                            Title = collectionRow.Title,
+                            CollectionName = collectionRow.Title,
+                            BeatmapCount = count,
+                        });
                     }
 
                     break;
@@ -206,14 +201,20 @@ namespace osu.Game.EzRealmSync.Mock
                 case ExportDataKind.Score:
                     foreach (var row in snapshot.Groups.First(g => g.EntityKind == EntityKind.Score).Rows)
                     {
+                        string player = row.Artist;
                         string destName = $"{row.Title} ({row.Date?.LocalDateTime ?? DateTime.Now:yyyy-MM-dd_HH-mm}).osr";
+                        string dest = !string.IsNullOrWhiteSpace(player)
+                            ? Path.Combine("replays", sanitizePathSegment(player), destName)
+                            : Path.Combine("replays", destName);
+
                         items.Add(new RealmExportItem
                         {
                             Id = row.Id,
                             Title = row.Title,
                             Artist = row.Artist,
+                            PlayerName = player,
                             RelativePath = $"0/0/{row.Hash}",
-                            DestinationRelativePath = Path.Combine("replays", destName),
+                            DestinationRelativePath = dest,
                         });
                     }
 
@@ -247,40 +248,73 @@ namespace osu.Game.EzRealmSync.Mock
             int skipped = 0;
             int index = 0;
 
-            foreach (var item in catalog.Items)
+            if (request.Kind == ExportDataKind.Collection)
             {
-                cancellationToken.ThrowIfCancellationRequested();
+                var snapshot = await ensureLoadedAsync(request.RealmId, progress, cancellationToken).ConfigureAwait(false);
 
-                if (!idSet.Contains(item.Id))
-                    continue;
-
-                index++;
-                progress?.Report(new ScanProgress
+                foreach (var collectionRow in catalog.Items.Where(i => idSet.Contains(i.Id)))
                 {
-                    Progress = (double)index / Math.Max(1, idSet.Count),
-                    Message = item.Title,
-                });
+                    cancellationToken.ThrowIfCancellationRequested();
+                    index++;
+                    string collectionDir = Path.Combine(outputRoot, sanitizePathSegment(collectionRow.Title));
 
-                string targetDir = request.Kind == ExportDataKind.Collection && !string.IsNullOrEmpty(item.CollectionName)
-                    ? Path.Combine(outputRoot, sanitizePathSegment(item.CollectionName))
-                    : outputRoot;
+                    foreach (var beatmap in snapshot.Groups.First(g => g.EntityKind == EntityKind.Beatmap).Rows)
+                    {
+                        string relative = $"{beatmap.Artist} - {beatmap.Title}/{beatmap.Ruleset}.osu";
+                        string destPath = Path.Combine(collectionDir, relative);
+                        string? destDir = Path.GetDirectoryName(destPath);
+                        if (!string.IsNullOrEmpty(destDir))
+                            Directory.CreateDirectory(destDir);
 
-                string destRelative = string.IsNullOrWhiteSpace(item.DestinationRelativePath)
-                    ? item.RelativePath
-                    : item.DestinationRelativePath;
+                        string sourcePath = Path.Combine(request.FilesDirectory, relative);
+                        if (File.Exists(sourcePath))
+                            File.Copy(sourcePath, destPath, overwrite: true);
+                        else
+                            await File.WriteAllTextAsync(destPath, $"// mock export\n// {beatmap.Artist} - {beatmap.Title}", cancellationToken).ConfigureAwait(false);
 
-                string destPath = Path.Combine(targetDir, destRelative);
-                string? destDir = Path.GetDirectoryName(destPath);
-                if (!string.IsNullOrEmpty(destDir))
-                    Directory.CreateDirectory(destDir);
+                        exported++;
+                    }
+                }
+            }
+            else
+            {
+                foreach (var item in catalog.Items)
+                {
+                    cancellationToken.ThrowIfCancellationRequested();
 
-                string sourcePath = Path.Combine(request.FilesDirectory, item.RelativePath);
-                if (File.Exists(sourcePath))
-                    File.Copy(sourcePath, destPath, overwrite: true);
-                else
-                    await File.WriteAllTextAsync(destPath, $"// mock export\n// {item.Artist} - {item.Title}", cancellationToken).ConfigureAwait(false);
+                    if (!idSet.Contains(item.Id))
+                        continue;
 
-                exported++;
+                    index++;
+                    progress?.Report(new ScanProgress
+                    {
+                        Progress = (double)index / Math.Max(1, idSet.Count),
+                        Message = item.Title,
+                    });
+
+                    string targetDir = outputRoot;
+                    string destRelative = string.IsNullOrWhiteSpace(item.DestinationRelativePath)
+                        ? item.RelativePath
+                        : item.DestinationRelativePath;
+
+                    if (request.Kind == ExportDataKind.Score && request.GroupScoresByPlayer && !string.IsNullOrWhiteSpace(item.PlayerName))
+                        destRelative = Path.Combine("replays", sanitizePathSegment(item.PlayerName), Path.GetFileName(destRelative) ?? destRelative);
+                    else if (request.Kind == ExportDataKind.Score && !request.GroupScoresByPlayer)
+                        destRelative = Path.Combine("replays", Path.GetFileName(destRelative) ?? destRelative);
+
+                    string destPath = Path.Combine(targetDir, destRelative);
+                    string? destDir = Path.GetDirectoryName(destPath);
+                    if (!string.IsNullOrEmpty(destDir))
+                        Directory.CreateDirectory(destDir);
+
+                    string sourcePath = Path.Combine(request.FilesDirectory, item.RelativePath);
+                    if (File.Exists(sourcePath))
+                        File.Copy(sourcePath, destPath, overwrite: true);
+                    else
+                        await File.WriteAllTextAsync(destPath, $"// mock export\n// {item.Title}", cancellationToken).ConfigureAwait(false);
+
+                    exported++;
+                }
             }
 
             skipped = idSet.Count - exported;
@@ -301,25 +335,26 @@ namespace osu.Game.EzRealmSync.Mock
             IReadOnlyList<Guid> entityIds,
             string outputDirectory,
             string? folderName = null,
+            bool groupScoresByPlayer = true,
             IProgress<ScanProgress>? progress = null,
-            CancellationToken cancellationToken = default) =>
-            ExportAsync(
-                new RealmExportRequest
+            CancellationToken cancellationToken = default) => ExportAsync(
+            new RealmExportRequest
+            {
+                RealmId = realmId,
+                Kind = objectClass switch
                 {
-                    RealmId = realmId,
-                    Kind = objectClass switch
-                    {
-                        RealmObjectClass.BeatmapCollection => ExportDataKind.Collection,
-                        RealmObjectClass.Score => ExportDataKind.Score,
-                        _ => ExportDataKind.BeatmapSet,
-                    },
-                    FilesDirectory = filesDirectory,
-                    OutputDirectory = outputDirectory,
-                    FolderName = folderName,
-                    ItemIds = entityIds,
+                    RealmObjectClass.BeatmapCollection => ExportDataKind.Collection,
+                    RealmObjectClass.Score => ExportDataKind.Score,
+                    _ => ExportDataKind.BeatmapSet,
                 },
-                progress,
-                cancellationToken);
+                FilesDirectory = filesDirectory,
+                OutputDirectory = outputDirectory,
+                FolderName = folderName,
+                ItemIds = entityIds,
+                GroupScoresByPlayer = groupScoresByPlayer,
+            },
+            progress,
+            cancellationToken);
 
         private static string buildMockRelativePath(RealmEntityRow row, EntityKind kind) => kind == EntityKind.BeatmapSet
             ? $"{row.Artist} - {row.Title}"

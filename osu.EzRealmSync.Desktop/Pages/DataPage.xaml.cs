@@ -79,24 +79,24 @@ namespace osu.EzRealmSync.Desktop.Pages
 
             DataGridContextMenuHelper.AttachExclusive(DataGrid, menu =>
             {
-                DataGridContextMenuHelper.AddItem(menu, "check", Loc.Get("CtxCheck"), (_, _) =>
-                    vm.Presenter.SetBrowseRowsChecked(CheckableDataGridHelper.GetContextTargets<RealmBrowseRowModel>(DataGrid), true));
+                DataGridContextMenuHelper.AddItem(menu, "check", Loc.Get("CtxCheck"),
+                    (_, _) => vm.Presenter.SetBrowseRowsChecked(CheckableDataGridHelper.GetContextTargets(DataGrid, () => vm.BrowseRows), true));
 
-                DataGridContextMenuHelper.AddItem(menu, "uncheck", Loc.Get("CtxUncheck"), (_, _) =>
-                    vm.Presenter.SetBrowseRowsChecked(CheckableDataGridHelper.GetContextTargets<RealmBrowseRowModel>(DataGrid), false));
+                DataGridContextMenuHelper.AddItem(menu, "uncheck", Loc.Get("CtxUncheck"),
+                    (_, _) => vm.Presenter.SetBrowseRowsChecked(CheckableDataGridHelper.GetContextTargets(DataGrid, () => vm.BrowseRows), false));
 
                 DataGridContextMenuHelper.AddItem(menu, "invert", Loc.Get("CtxInvertCheck"), (_, _) => vm.Presenter.InvertBrowseRowChecks());
 
                 var exportItem = DataGridContextMenuHelper.AddItem(menu, "export", Loc.Get("CtxExport"), async (_, _) =>
                 {
-                    var targets = CheckableDataGridHelper.GetContextTargets<RealmBrowseRowModel>(DataGrid);
+                    var targets = CheckableDataGridHelper.GetContextTargets(DataGrid, () => vm.BrowseRows);
                     if (targets.Count > 0)
                         await vm.Presenter.ExportBrowseRowsAsync(targets);
                 });
 
                 var deleteItem = DataGridContextMenuHelper.AddItem(menu, "delete", Loc.Get("CtxDelete"), async (_, _) =>
                 {
-                    var targets = CheckableDataGridHelper.GetContextTargets<RealmBrowseRowModel>(DataGrid);
+                    var targets = CheckableDataGridHelper.GetContextTargets(DataGrid, () => vm.BrowseRows);
                     if (targets.Count > 0)
                         await vm.Presenter.DeleteBrowseRowsAsync(targets);
                 });
@@ -167,23 +167,7 @@ namespace osu.EzRealmSync.Desktop.Pages
         {
             DataGrid.Columns.Clear();
 
-            var checkFactory = new FrameworkElementFactory(typeof(CheckBox));
-            checkFactory.SetBinding(
-                CheckBox.IsCheckedProperty,
-                new Binding(nameof(RealmBrowseRowModel.IsSelected))
-                {
-                    Mode = BindingMode.TwoWay,
-                    UpdateSourceTrigger = UpdateSourceTrigger.PropertyChanged,
-                });
-            checkFactory.SetValue(HorizontalAlignmentProperty, HorizontalAlignment.Center);
-            checkFactory.SetValue(VerticalAlignmentProperty, VerticalAlignment.Center);
-
-            DataGrid.Columns.Add(new DataGridTemplateColumn
-            {
-                Header = string.Empty,
-                Width = 40,
-                CellTemplate = new DataTemplate { VisualTree = checkFactory },
-            });
+            DataGrid.Columns.Add(DataGridCheckColumnHelper.CreateColumn());
 
             foreach (var column in columns)
             {

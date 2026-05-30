@@ -23,6 +23,7 @@ namespace osu.Game.EzRealmSync.Abstractions
             IReadOnlyList<Guid> entityIds,
             string outputDirectory,
             string? folderName = null,
+            bool groupScoresByPlayer = true,
             IProgress<ScanProgress>? progress = null,
             CancellationToken cancellationToken = default);
     }

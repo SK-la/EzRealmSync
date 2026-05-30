@@ -87,23 +87,7 @@ namespace osu.EzRealmSync.Desktop.Pages
             if (IssuesGrid.Columns.Count > 0)
                 return;
 
-            var checkFactory = new FrameworkElementFactory(typeof(CheckBox));
-            checkFactory.SetBinding(
-                CheckBox.IsCheckedProperty,
-                new Binding(nameof(RealmFixIssueModel.IsSelected))
-                {
-                    Mode = BindingMode.TwoWay,
-                    UpdateSourceTrigger = UpdateSourceTrigger.PropertyChanged,
-                });
-            checkFactory.SetValue(HorizontalAlignmentProperty, HorizontalAlignment.Center);
-            checkFactory.SetValue(VerticalAlignmentProperty, VerticalAlignment.Center);
-
-            IssuesGrid.Columns.Add(new DataGridTemplateColumn
-            {
-                Header = string.Empty,
-                Width = 40,
-                CellTemplate = new DataTemplate { VisualTree = checkFactory },
-            });
+            IssuesGrid.Columns.Add(DataGridCheckColumnHelper.CreateColumn());
             addTextColumn(Loc.Get("ColFixKind"), nameof(RealmFixIssueModel.KindDisplay), 100);
             addTextColumn(Loc.Get("ColKind"), nameof(RealmFixIssueModel.EntityKindDisplay), 88);
             addTextColumn(Loc.Get("ColFixField"), nameof(RealmFixIssueModel.FieldName), 72);

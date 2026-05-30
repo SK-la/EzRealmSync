@@ -32,6 +32,9 @@ namespace osu.EzRealmSync.AppModel
 
         public string ExportFolderName { get; set; } = string.Empty;
 
+        /// <summary>批量导出成绩时按玩家名创建子文件夹。</summary>
+        public bool ExportGroupScoresByPlayer { get; set; } = true;
+
         public string IllegalCharacterReplacement { get; set; } = "_";
 
         /// <summary>删除表格行前是否弹出确认对话框。</summary>

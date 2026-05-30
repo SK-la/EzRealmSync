@@ -12,6 +12,9 @@ namespace osu.EzRealmSync.Desktop.Pages
         private ShellViewModel? vm;
         private bool suppressKindChange;
         private bool exportGridBehaviorConfigured;
+        private DataGridTextColumn? colSecondary;
+        private DataGridTextColumn? colExtra;
+        private DataGridTextColumn? colPath;
 
         public ExportPage()
         {
@@ -34,6 +37,7 @@ namespace osu.EzRealmSync.Desktop.Pages
             refreshRealmCombo();
             ExportDirBox.Text = vm.ExportDirectory;
             FolderNameBox.Text = vm.ExportFolderName;
+            GroupScoresByPlayerCheck.IsChecked = vm.ExportGroupScoresByPlayer;
 
             ExportGrid.ItemsSource = vm.ExportItems;
 
@@ -55,15 +59,30 @@ namespace osu.EzRealmSync.Desktop.Pages
                     });
                 }
 
+                if (e.PropertyName == nameof(ShellViewModel.ExportGroupScoresByPlayer))
+                    Dispatcher.Invoke(() => GroupScoresByPlayerCheck.IsChecked = vm!.ExportGroupScoresByPlayer);
+
                 if (e.PropertyName == nameof(ShellViewModel.CanUseFixAndExport))
                     Dispatcher.Invoke(updateEnabled);
+
+                if (e.PropertyName == nameof(ShellViewModel.ExportDataKind))
+                    Dispatcher.Invoke(updateExportGridColumns);
             };
 
             vm.Presenter.ExportItemsChanged += () => Dispatcher.Invoke(() => ExportGrid.ItemsSource = vm!.ExportItems);
             vm.Presenter.WorkspaceCapabilitiesChanged += () => Dispatcher.Invoke(updateEnabled);
 
+            GroupScoresByPlayerCheck.Checked += (_, _) => setGroupScoresByPlayer(true);
+            GroupScoresByPlayerCheck.Unchecked += (_, _) => setGroupScoresByPlayer(false);
+
             updateEnabled();
             updateExportGridColumns();
+        }
+
+        private void setGroupScoresByPlayer(bool value)
+        {
+            if (vm != null)
+                vm.ExportGroupScoresByPlayer = value;
         }
 
         private void updateEnabled()
@@ -77,6 +96,7 @@ namespace osu.EzRealmSync.Desktop.Pages
             ExportDirBox.IsEnabled = enabled;
             BrowseExportButton.IsEnabled = enabled;
             FolderNameBox.IsEnabled = enabled;
+            GroupScoresByPlayerCheck.IsEnabled = enabled;
         }
 
         private void refreshLabels()
@@ -88,6 +108,7 @@ namespace osu.EzRealmSync.Desktop.Pages
             BrowseExportButton.Content = Loc.Get("Browse");
             SelectAllButton.Content = Loc.Get("SelectAll");
             FolderNameBox.ToolTip = Loc.Get("ExportFolderNameHint");
+            GroupScoresByPlayerCheck.Content = Loc.Get("ExportGroupScoresByPlayer");
         }
 
         private void setupDataKindCombo()
@@ -122,40 +143,29 @@ namespace osu.EzRealmSync.Desktop.Pages
             if (ExportGrid.Columns.Count > 0)
                 return;
 
-            var checkFactory = new FrameworkElementFactory(typeof(CheckBox));
-            checkFactory.SetBinding(
-                CheckBox.IsCheckedProperty,
-                new Binding(nameof(RealmExportItemModel.IsSelected))
-                {
-                    Mode = BindingMode.TwoWay,
-                    UpdateSourceTrigger = UpdateSourceTrigger.PropertyChanged,
-                });
-            checkFactory.SetValue(HorizontalAlignmentProperty, HorizontalAlignment.Center);
-            checkFactory.SetValue(VerticalAlignmentProperty, VerticalAlignment.Center);
+            ExportGrid.Columns.Add(DataGridCheckColumnHelper.CreateColumn());
 
-            ExportGrid.Columns.Add(new DataGridTemplateColumn
-            {
-                Header = string.Empty,
-                Width = 40,
-                CellTemplate = new DataTemplate { VisualTree = checkFactory },
-            });
-            addTextColumn(Loc.Get("ColTitle"), nameof(RealmExportItemModel.Title), new DataGridLength(1, DataGridLengthUnitType.Star));
-            addTextColumn(Loc.Get("ColArtist"), nameof(RealmExportItemModel.Artist), 120);
-            addTextColumn(Loc.Get("ColExportCollection"), nameof(RealmExportItemModel.CollectionName), 120);
-            addTextColumn(Loc.Get("ColExportPath"), nameof(RealmExportItemModel.RelativePath), new DataGridLength(1.5, DataGridLengthUnitType.Star));
+            colSecondary = addTextColumn(Loc.Get("ColArtist"), nameof(RealmExportItemModel.Artist), 120);
+            colExtra = addTextColumn(Loc.Get("ColExportPlayer"), nameof(RealmExportItemModel.PlayerName), 120);
+            colPath = addTextColumn(Loc.Get("ColExportPath"), nameof(RealmExportItemModel.RelativePath), new DataGridLength(1.5, DataGridLengthUnitType.Star));
+
+            ExportGrid.Columns.Insert(1, addTextColumn(Loc.Get("ColTitle"), nameof(RealmExportItemModel.Title), new DataGridLength(1, DataGridLengthUnitType.Star)));
         }
 
-        private void addTextColumn(string header, string path, double width) => addTextColumn(header, path, new DataGridLength(width));
+        private DataGridTextColumn addTextColumn(string header, string path, double width) => addTextColumn(header, path, new DataGridLength(width));
 
-        private void addTextColumn(string header, string path, DataGridLength width)
+        private DataGridTextColumn addTextColumn(string header, string path, DataGridLength width)
         {
-            ExportGrid.Columns.Add(new DataGridTextColumn
+            var column = new DataGridTextColumn
             {
                 Header = header,
                 Binding = new Binding(path) { Mode = BindingMode.OneWay },
                 Width = width,
                 IsReadOnly = true,
-            });
+            };
+
+            ExportGrid.Columns.Add(column);
+            return column;
         }
 
         private void configureExportGridBehavior()
@@ -175,11 +185,24 @@ namespace osu.EzRealmSync.Desktop.Pages
 
         private void updateExportGridColumns()
         {
-            if (ExportGrid.Columns.Count < 4 || vm == null)
+            if (colSecondary == null || colExtra == null || colPath == null || vm == null)
                 return;
 
-            bool showCollection = vm.ExportDataKind == ExportDataKind.Collection;
-            ExportGrid.Columns[3].Visibility = showCollection ? Visibility.Visible : Visibility.Collapsed;
+            bool isCollection = vm.ExportDataKind == ExportDataKind.Collection;
+            bool isScore = vm.ExportDataKind == ExportDataKind.Score;
+
+            GroupScoresByPlayerCheck.Visibility = isScore ? Visibility.Visible : Visibility.Collapsed;
+
+            colSecondary.Header = isCollection ? Loc.Get("ColBeatmapCount") : Loc.Get("ColArtist");
+            colSecondary.Binding = new Binding(isCollection ? nameof(RealmExportItemModel.BeatmapCountLabel) : nameof(RealmExportItemModel.Artist))
+            {
+                Mode = BindingMode.OneWay,
+            };
+
+            colExtra.Visibility = isScore ? Visibility.Visible : Visibility.Collapsed;
+            colExtra.Header = Loc.Get("ColExportPlayer");
+
+            colPath.Visibility = isCollection ? Visibility.Collapsed : Visibility.Visible;
         }
 
         private void RealmSelectCombo_OnChanged(object sender, SelectionChangedEventArgs e)
@@ -194,6 +217,7 @@ namespace osu.EzRealmSync.Desktop.Pages
                 return;
 
             vm.ExportDataKind = kind;
+            vm.Presenter.ClearExportItems();
             updateExportGridColumns();
         }
 

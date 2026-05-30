@@ -114,23 +114,7 @@ namespace osu.EzRealmSync.Desktop.Pages
             if (RealmFilesGrid.Columns.Count > 0)
                 return;
 
-            var checkFactory = new FrameworkElementFactory(typeof(CheckBox));
-            checkFactory.SetBinding(
-                CheckBox.IsCheckedProperty,
-                new Binding(nameof(RealmFileRowModel.IsSelected))
-                {
-                    Mode = BindingMode.TwoWay,
-                    UpdateSourceTrigger = UpdateSourceTrigger.PropertyChanged,
-                });
-            checkFactory.SetValue(HorizontalAlignmentProperty, HorizontalAlignment.Center);
-            checkFactory.SetValue(VerticalAlignmentProperty, VerticalAlignment.Center);
-
-            RealmFilesGrid.Columns.Add(new DataGridTemplateColumn
-            {
-                Header = string.Empty,
-                Width = 40,
-                CellTemplate = new DataTemplate { VisualTree = checkFactory },
-            });
+            RealmFilesGrid.Columns.Add(DataGridCheckColumnHelper.CreateColumn());
 
             RealmFilesGrid.Columns.Add(new DataGridTextColumn
             {

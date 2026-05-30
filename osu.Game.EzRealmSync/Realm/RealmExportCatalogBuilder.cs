@@ -2,8 +2,8 @@
 using osu.Game.Beatmaps;
 using osu.Game.Collections;
 using osu.Game.Database;
-using osu.Game.EzRealmSync.Models;
 using osu.Game.Extensions;
+using osu.Game.EzRealmSync.Models;
 using osu.Game.Scoring;
 using RealmInstance = Realms.Realm;
 
@@ -73,9 +73,9 @@ namespace osu.Game.EzRealmSync.Realm
         {
             int index = 0;
             var beatmaps = realm.All<BeatmapInfo>()
-                .Where(b => b.BeatmapSet == null || !b.BeatmapSet.DeletePending)
-                .AsEnumerable()
-                .ToList();
+                                .Where(b => b.BeatmapSet == null || !b.BeatmapSet.DeletePending)
+                                .AsEnumerable()
+                                .ToList();
 
             foreach (var beatmap in beatmaps)
             {
@@ -94,12 +94,6 @@ namespace osu.Game.EzRealmSync.Realm
 
         private static void addCollections(RealmInstance realm, List<RealmExportItem> items, IProgress<ScanProgress>? progress, CancellationToken cancellationToken)
         {
-            var beatmapsByMd5 = realm.All<BeatmapInfo>()
-                .Where(b => b.BeatmapSet == null || !b.BeatmapSet.DeletePending)
-                .AsEnumerable()
-                .GroupBy(b => b.MD5Hash, StringComparer.Ordinal)
-                .ToDictionary(g => g.Key, g => g.First(), StringComparer.Ordinal);
-
             int collectionIndex = 0;
             var collections = realm.All<BeatmapCollection>().AsEnumerable().ToList();
 
@@ -107,26 +101,18 @@ namespace osu.Game.EzRealmSync.Realm
             {
                 cancellationToken.ThrowIfCancellationRequested();
                 collectionIndex++;
-                progress?.Report(new ScanProgress
+
+                int count = collection.BeatmapMD5Hashes.Count;
+                report(progress, collectionIndex, collections.Count, collection.Name);
+
+                items.Add(new RealmExportItem
                 {
-                    Progress = (double)collectionIndex / Math.Max(1, collections.Count),
-                    Message = collection.Name,
+                    Id = collection.ID,
+                    Title = collection.Name,
+                    Artist = string.Empty,
+                    CollectionName = collection.Name,
+                    BeatmapCount = count,
                 });
-
-                foreach (string md5 in collection.BeatmapMD5Hashes)
-                {
-                    if (!beatmapsByMd5.TryGetValue(md5, out var beatmap))
-                        continue;
-
-                    items.Add(new RealmExportItem
-                    {
-                        Id = Guid.NewGuid(),
-                        Title = beatmap.Metadata.Title,
-                        Artist = beatmap.Metadata.Artist,
-                        CollectionName = collection.Name,
-                        RelativePath = RealmFilePathHelper.GetStoragePath(beatmap.Hash),
-                    });
-                }
             }
         }
 
@@ -143,18 +129,19 @@ namespace osu.Game.EzRealmSync.Realm
                 if (replay == null)
                     continue;
 
-                string sourcePath = RealmFilePathHelper.GetStoragePath(replay.File.Hash);
-                string destName = $"{score.GetDisplayString().GetValidFilename()} ({score.Date.LocalDateTime:yyyy-MM-dd_HH-mm}).osr";
+                var entry = RealmExportExecutor.CreateScoreEntry(score, groupScoresByPlayer: true);
+                string player = score.RealmUser.Username;
 
-                report(progress, ++index, scores.Count, destName);
+                report(progress, ++index, scores.Count, score.GetDisplayString());
 
                 items.Add(new RealmExportItem
                 {
                     Id = score.ID,
                     Title = score.GetDisplayString(),
                     Artist = score.BeatmapInfo?.Metadata.Artist ?? score.BeatmapHash,
-                    RelativePath = sourcePath,
-                    DestinationRelativePath = Path.Combine("replays", destName),
+                    PlayerName = player,
+                    RelativePath = entry.SourceRelative,
+                    DestinationRelativePath = entry.DestinationRelative,
                 });
             }
         }

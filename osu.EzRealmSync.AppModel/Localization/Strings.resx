@@ -139,6 +139,9 @@
   <data name="ExportKindBeatmap" xml:space="preserve"><value>Beatmaps</value></data>
   <data name="ExportKindCollection" xml:space="preserve"><value>Collections</value></data>
   <data name="ExportKindScore" xml:space="preserve"><value>Scores (.osr)</value></data>
+  <data name="ExportGroupScoresByPlayer" xml:space="preserve"><value>Group .osr by player name</value></data>
+  <data name="ColBeatmapCount" xml:space="preserve"><value>Beatmaps</value></data>
+  <data name="ColExportPlayer" xml:space="preserve"><value>Player</value></data>
   <data name="ExportLoadList" xml:space="preserve"><value>Load list</value></data>
   <data name="ExportRun" xml:space="preserve"><value>Export</value></data>
   <data name="ExportDirectory" xml:space="preserve"><value>Output folder</value></data>

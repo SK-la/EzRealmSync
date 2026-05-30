@@ -1,5 +1,7 @@
 #if HAS_EZ_OSU_GAME
+using osu.Game.Database;
 using osu.Game.EzRealmSync.Models;
+using osu.Game.Scoring;
 
 namespace osu.Game.EzRealmSync.Realm
 {
@@ -175,8 +177,8 @@ namespace osu.Game.EzRealmSync.Realm
             IProgress<ScanProgress>? progress,
             CancellationToken cancellationToken)
         {
-            if (!exportCatalogs.TryGetValue((request.RealmId, request.Kind), out var catalog))
-                catalog = loadCatalogCore(request.RealmId, request.Kind, progress, cancellationToken);
+            if (!registry.TryGet(request.RealmId, out var file))
+                throw new InvalidOperationException($"未找到 Realm 文件：{request.RealmId}");
 
             string folderName = string.IsNullOrWhiteSpace(request.FolderName)
                 ? defaultExportFolderName(request.Kind)
@@ -188,45 +190,63 @@ namespace osu.Game.EzRealmSync.Realm
             var idSet = request.ItemIds.ToHashSet();
             int exported = 0;
             int skipped = 0;
-            int index = 0;
 
-            foreach (var item in catalog.Items)
+            if (request.Kind is ExportDataKind.Collection or ExportDataKind.Score)
             {
-                cancellationToken.ThrowIfCancellationRequested();
+                using var access = RealmSchemaProbe.Open(file.FilePath, file.SchemaVersion);
+                var entries = request.Kind == ExportDataKind.Collection
+                    ? RealmExportExecutor.ResolveFiles(access, request.Kind, idSet, request.GroupScoresByPlayer)
+                    : resolveScoreEntries(access, idSet, request.GroupScoresByPlayer);
 
-                if (!idSet.Contains(item.Id))
-                    continue;
+                int index = 0;
 
-                index++;
-                progress?.Report(new ScanProgress
+                foreach (var entry in entries)
                 {
-                    Progress = (double)index / Math.Max(1, idSet.Count),
-                    Message = item.Title,
-                });
+                    cancellationToken.ThrowIfCancellationRequested();
+                    index++;
+                    progress?.Report(new ScanProgress
+                    {
+                        Progress = (double)index / Math.Max(1, entries.Count),
+                        Message = entry.DestinationRelative,
+                    });
 
-                string destRelative = string.IsNullOrWhiteSpace(item.DestinationRelativePath)
-                    ? item.RelativePath
-                    : item.DestinationRelativePath;
-
-                string targetDir = request.Kind == ExportDataKind.Collection && !string.IsNullOrEmpty(item.CollectionName)
-                    ? Path.Combine(outputRoot, sanitizePathSegment(item.CollectionName))
-                    : outputRoot;
-
-                string destPath = Path.Combine(targetDir, destRelative);
-                string? destDir = Path.GetDirectoryName(destPath);
-                if (!string.IsNullOrEmpty(destDir))
-                    Directory.CreateDirectory(destDir);
-
-                string sourcePath = Path.Combine(request.FilesDirectory, item.RelativePath);
-
-                if (File.Exists(sourcePath))
-                {
-                    File.Copy(sourcePath, destPath, overwrite: true);
-                    exported++;
+                    if (tryCopyEntry(entry, request.FilesDirectory, outputRoot, request.Kind))
+                        exported++;
+                    else
+                        skipped++;
                 }
-                else
+            }
+            else
+            {
+                if (!exportCatalogs.TryGetValue((request.RealmId, request.Kind), out var catalog))
+                    catalog = loadCatalogCore(request.RealmId, request.Kind, progress, cancellationToken);
+
+                int index = 0;
+
+                foreach (var item in catalog.Items)
                 {
-                    skipped++;
+                    cancellationToken.ThrowIfCancellationRequested();
+
+                    if (!idSet.Contains(item.Id))
+                        continue;
+
+                    index++;
+                    progress?.Report(new ScanProgress
+                    {
+                        Progress = (double)index / Math.Max(1, idSet.Count),
+                        Message = item.Title,
+                    });
+
+                    var entry = new RealmExportFileEntry
+                    {
+                        SourceRelative = item.RelativePath,
+                        DestinationRelative = string.IsNullOrWhiteSpace(item.DestinationRelativePath) ? item.RelativePath : item.DestinationRelativePath,
+                    };
+
+                    if (tryCopyEntry(entry, request.FilesDirectory, outputRoot, request.Kind))
+                        exported++;
+                    else
+                        skipped++;
                 }
             }
 
@@ -240,19 +260,52 @@ namespace osu.Game.EzRealmSync.Realm
             };
         }
 
+        private static List<RealmExportFileEntry> resolveScoreEntries(RealmAccess access, HashSet<Guid> idSet, bool groupScoresByPlayer)
+        {
+            var entries = new List<RealmExportFileEntry>();
+
+            access.Run(realm =>
+            {
+                foreach (var score in realm.All<ScoreInfo>().Where(s => !s.DeletePending && idSet.Contains(s.ID)))
+                {
+                    try
+                    {
+                        entries.Add(RealmExportExecutor.CreateScoreEntry(score, groupScoresByPlayer));
+                    }
+                    catch (InvalidOperationException)
+                    {
+                        // 无 .osr 引用则跳过
+                    }
+                }
+            });
+
+            return entries;
+        }
+
+        private static bool tryCopyEntry(RealmExportFileEntry entry, string filesDirectory, string outputRoot, ExportDataKind kind)
+        {
+            string targetDir = kind == ExportDataKind.Collection && !string.IsNullOrEmpty(entry.CollectionFolder)
+                ? Path.Combine(outputRoot, entry.CollectionFolder!)
+                : outputRoot;
+
+            string destPath = Path.Combine(targetDir, entry.DestinationRelative);
+            string? destDir = Path.GetDirectoryName(destPath);
+            if (!string.IsNullOrEmpty(destDir))
+                Directory.CreateDirectory(destDir);
+
+            string sourcePath = Path.Combine(filesDirectory, entry.SourceRelative);
+            if (!File.Exists(sourcePath))
+                return false;
+
+            File.Copy(sourcePath, destPath, overwrite: true);
+            return true;
+        }
+
         private static string defaultExportFolderName(ExportDataKind kind) => kind switch
         {
             ExportDataKind.Score => $"replays-{DateTime.Now:yyyyMMdd_HHmmss}",
             _ => $"songs-{DateTime.Now:yyyyMMdd_HHmmss}",
         };
-
-        private static string sanitizePathSegment(string name)
-        {
-            foreach (char c in Path.GetInvalidFileNameChars())
-                name = name.Replace(c, '_');
-
-            return name.Trim();
-        }
     }
 }
 #endif

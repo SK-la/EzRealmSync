@@ -29,7 +29,7 @@
 | 类型 | 删除 | 导出 |
 |------|------|------|
 | 谱面集 | `DeletePending = true`（与游戏一致） | 复制所属难度在 `files/` 中的实体 |
-| 成绩 | `DeletePending = true` | 从 `files/` 复制 `.osr` 到 `replays/` 子目录（与游戏导出命名一致） |
+| 成绩 | `DeletePending = true` | 右键单个/批量导出 `.osr`；可选 `replays/玩家名/` 子目录 |
 | 收藏夹 | 从 Realm 移除记录 | 按收藏夹内 MD5 复制对应谱面文件 |
 | 其它类 | 仅浏览，无写操作 | — |
 

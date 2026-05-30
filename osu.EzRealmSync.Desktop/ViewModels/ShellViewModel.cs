@@ -73,6 +73,7 @@ namespace osu.EzRealmSync.Desktop.ViewModels
             bindPresenter(presenter.IllegalCharacterReplacement, nameof(IllegalCharacterReplacement));
             bindPresenter(presenter.ExportDirectory, nameof(ExportDirectory));
             bindPresenter(presenter.ExportFolderName, nameof(ExportFolderName));
+            bindPresenter(presenter.ExportGroupScoresByPlayer, nameof(ExportGroupScoresByPlayer));
             bindPresenter(presenter.ConfirmBeforeDelete, nameof(ConfirmBeforeDelete));
 
             presenter.RealmFilesChanged += () => Application.Current.Dispatcher.Invoke(onRealmFilesChanged);
@@ -281,6 +282,12 @@ namespace osu.EzRealmSync.Desktop.ViewModels
         {
             get => Presenter.ExportFolderName.Value;
             set => Presenter.ExportFolderName.Value = value;
+        }
+
+        public bool ExportGroupScoresByPlayer
+        {
+            get => Presenter.ExportGroupScoresByPlayer.Value;
+            set => Presenter.ExportGroupScoresByPlayer.Value = value;
         }
 
         public ICommand RefreshRealmFilesCommand { get; }

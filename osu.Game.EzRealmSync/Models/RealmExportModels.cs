@@ -23,6 +23,12 @@ namespace osu.Game.EzRealmSync.Models
         public string? DestinationRelativePath { get; init; }
 
         public string? CollectionName { get; init; }
+
+        /// <summary>收藏夹内谱面数量（仅 <see cref="ExportDataKind.Collection"/> 列表项）。</summary>
+        public int BeatmapCount { get; init; }
+
+        /// <summary>成绩玩家名（仅成绩项）。</summary>
+        public string? PlayerName { get; init; }
     }
 
     public sealed class RealmExportCatalog
@@ -46,6 +52,9 @@ namespace osu.Game.EzRealmSync.Models
         public string? FolderName { get; init; }
 
         public required string FilesDirectory { get; init; }
+
+        /// <summary>批量导出成绩时按玩家名分子目录（<c>replays/玩家/</c>）。</summary>
+        public bool GroupScoresByPlayer { get; init; } = true;
     }
 
     public sealed class RealmExportResult

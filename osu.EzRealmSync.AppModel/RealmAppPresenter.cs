@@ -84,6 +84,7 @@ namespace osu.EzRealmSync.AppModel
             ExportRealmId.BindValueChanged(_ => persistSettings());
             ExportDirectory.BindValueChanged(_ => persistSettings());
             ExportFolderName.BindValueChanged(_ => persistSettings());
+            ExportGroupScoresByPlayer.BindValueChanged(_ => persistSettings());
             IllegalCharacterReplacement.BindValueChanged(_ => persistSettings());
             ConfirmBeforeDelete.BindValueChanged(_ => persistSettings());
         }
@@ -135,6 +136,8 @@ namespace osu.EzRealmSync.AppModel
         public Bindable<string> ExportDirectory { get; } = new Bindable<string>(string.Empty);
 
         public Bindable<string> ExportFolderName { get; } = new Bindable<string>(string.Empty);
+
+        public BindableBool ExportGroupScoresByPlayer { get; } = new BindableBool(true);
 
         public Bindable<EntityKind> SelectedDataGroup { get; } = new Bindable<EntityKind>(EntityKind.BeatmapSet);
 
@@ -814,6 +817,7 @@ namespace osu.EzRealmSync.AppModel
                     objectClass,
                     rows.Select(r => r.Id).ToList(),
                     ExportDirectory.Value,
+                    groupScoresByPlayer: ExportGroupScoresByPlayer.Value,
                     progress: progress).ConfigureAwait(false);
 
                 runOnUi(() => StatusMessage.Value = Loc.Format("StatusExportComplete", result.ExportedCount, result.OutputRoot));
@@ -939,7 +943,6 @@ namespace osu.EzRealmSync.AppModel
                 row.IsSelected = !row.IsSelected;
         }
 
-
         public async Task ScanFixIssuesAsync()
         {
             var file = getRealmFile(FixRealmId.Value);
@@ -1064,6 +1067,12 @@ namespace osu.EzRealmSync.AppModel
             ExportItemsChanged?.Invoke();
         }
 
+        public void ClearExportItems()
+        {
+            ExportItems.Clear();
+            ExportItemsChanged?.Invoke();
+        }
+
         public void ToggleFixSelectAll()
         {
             if (FixIssues.Count == 0)
@@ -1120,6 +1129,7 @@ namespace osu.EzRealmSync.AppModel
                         OutputDirectory = ExportDirectory.Value,
                         FolderName = string.IsNullOrWhiteSpace(ExportFolderName.Value) ? null : ExportFolderName.Value.Trim(),
                         FilesDirectory = filesDirectory,
+                        GroupScoresByPlayer = ExportGroupScoresByPlayer.Value,
                     },
                     progress).ConfigureAwait(false);
 
@@ -1298,6 +1308,8 @@ namespace osu.EzRealmSync.AppModel
             if (!string.IsNullOrWhiteSpace(settings.ExportFolderName))
                 ExportFolderName.Value = settings.ExportFolderName;
 
+            ExportGroupScoresByPlayer.Value = settings.ExportGroupScoresByPlayer;
+
             IllegalCharacterReplacement.Value = string.IsNullOrWhiteSpace(settings.IllegalCharacterReplacement)
                 ? "_"
                 : settings.IllegalCharacterReplacement;
@@ -1395,6 +1407,7 @@ namespace osu.EzRealmSync.AppModel
                 BackupDirectory = BackupDirectory.Value,
                 ExportDirectory = ExportDirectory.Value,
                 ExportFolderName = ExportFolderName.Value,
+                ExportGroupScoresByPlayer = ExportGroupScoresByPlayer.Value,
                 IllegalCharacterReplacement = IllegalCharacterReplacement.Value,
                 ConfirmBeforeDelete = ConfirmBeforeDelete.Value,
                 UiTestMode = UiTestMode.Value,

@@ -4,6 +4,10 @@ namespace osu.EzRealmSync.Desktop.Helpers
 {
     internal static class CheckableDataGridHelper
     {
+        private static int suppressSelectionSyncDepth;
+
+        public static void SuppressNextSelectionSync() => suppressSelectionSyncDepth++;
+
         public static void Configure<T>(
             DataGrid grid,
             Func<IEnumerable<T>> getAllItems,
@@ -25,15 +29,15 @@ namespace osu.EzRealmSync.Desktop.Helpers
 
             DataGridContextMenuHelper.AttachExclusive(grid, menu =>
             {
-                DataGridContextMenuHelper.AddItem(menu, "check", Loc.Get("CtxCheck"), (_, _) => setItemsChecked(GetContextTargets<T>(grid), true));
+                DataGridContextMenuHelper.AddItem(menu, "check", Loc.Get("CtxCheck"), (_, _) => setItemsChecked(GetContextTargets(grid, getAllItems), true));
 
-                DataGridContextMenuHelper.AddItem(menu, "uncheck", Loc.Get("CtxUncheck"), (_, _) => setItemsChecked(GetContextTargets<T>(grid), false));
+                DataGridContextMenuHelper.AddItem(menu, "uncheck", Loc.Get("CtxUncheck"), (_, _) => setItemsChecked(GetContextTargets(grid, getAllItems), false));
 
                 DataGridContextMenuHelper.AddItem(menu, "invert", Loc.Get("CtxInvertCheck"), (_, _) => invertAllChecks());
 
                 DataGridContextMenuHelper.AddItem(menu, "delete", Loc.Get("CtxDelete"), async (_, _) =>
                 {
-                    var targets = GetContextTargets<T>(grid);
+                    var targets = GetContextTargets(grid, getAllItems);
                     if (targets.Count > 0)
                         await deleteSelectionAsync(targets);
                 });
@@ -47,14 +51,25 @@ namespace osu.EzRealmSync.Desktop.Helpers
             Action<IReadOnlyList<T>, bool> setItemsChecked)
             where T : class
         {
+            if (suppressSelectionSyncDepth > 0)
+            {
+                suppressSelectionSyncDepth--;
+                return;
+            }
+
             bool rangeOrMultiModifier = Keyboard.Modifiers.HasFlag(ModifierKeys.Control)
                                         || Keyboard.Modifiers.HasFlag(ModifierKeys.Shift);
 
-            if (!rangeOrMultiModifier && grid.SelectedItems.Count == 1 && grid.SelectedItem is T single)
+            if (!rangeOrMultiModifier)
             {
-                setItemsChecked(getAllItems().ToList(), false);
-                setItemsChecked(new[] { single }, true);
-                return;
+                var selected = grid.SelectedItems.OfType<T>().ToList();
+
+                if (selected.Count > 0)
+                {
+                    setItemsChecked(getAllItems().ToList(), false);
+                    setItemsChecked(selected, true);
+                    return;
+                }
             }
 
             var added = e.AddedItems.OfType<T>().ToList();
@@ -67,8 +82,18 @@ namespace osu.EzRealmSync.Desktop.Helpers
                 setItemsChecked(removed, false);
         }
 
-        public static List<T> GetContextTargets<T>(DataGrid grid) where T : class
+        public static List<T> GetContextTargets<T>(DataGrid grid, Func<IEnumerable<T>>? getAllItems = null) where T : class
         {
+            if (getAllItems != null)
+            {
+                var checkedItems = getAllItems()
+                                   .Where(item => item != null && getIsSelected(item))
+                                   .ToList();
+
+                if (checkedItems.Count > 0)
+                    return checkedItems;
+            }
+
             var result = new List<T>();
 
             foreach (var item in grid.SelectedItems)
@@ -81,6 +106,12 @@ namespace osu.EzRealmSync.Desktop.Helpers
                 result.Add(current);
 
             return result;
+        }
+
+        private static bool getIsSelected<T>(T item) where T : class
+        {
+            var prop = item.GetType().GetProperty(DataGridCheckColumnHelper.IS_SELECTED_PROPERTY_NAME);
+            return prop?.PropertyType == typeof(bool) && prop.GetValue(item) is true;
         }
     }
 }

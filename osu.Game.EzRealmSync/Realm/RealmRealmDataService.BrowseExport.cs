@@ -2,7 +2,6 @@
 using osu.Game.Beatmaps;
 using osu.Game.Collections;
 using osu.Game.EzRealmSync.Models;
-using osu.Game.Extensions;
 using osu.Game.Scoring;
 using RealmInstance = Realms.Realm;
 
@@ -17,9 +16,10 @@ namespace osu.Game.EzRealmSync.Realm
             IReadOnlyList<Guid> entityIds,
             string outputDirectory,
             string? folderName = null,
+            bool groupScoresByPlayer = true,
             IProgress<ScanProgress>? progress = null,
             CancellationToken cancellationToken = default) =>
-            Task.Run(() => exportBrowseCore(realmId, filesDirectory, objectClass, entityIds, outputDirectory, folderName, progress, cancellationToken), cancellationToken);
+            Task.Run(() => exportBrowseCore(realmId, filesDirectory, objectClass, entityIds, outputDirectory, folderName, groupScoresByPlayer, progress, cancellationToken), cancellationToken);
 
         private RealmExportResult exportBrowseCore(
             string realmId,
@@ -28,6 +28,7 @@ namespace osu.Game.EzRealmSync.Realm
             IReadOnlyList<Guid> entityIds,
             string outputDirectory,
             string? folderName,
+            bool groupScoresByPlayer,
             IProgress<ScanProgress>? progress,
             CancellationToken cancellationToken)
         {
@@ -54,7 +55,7 @@ namespace osu.Game.EzRealmSync.Realm
                 access.Run(realm =>
                 {
                     foreach (var id in entityIds)
-                        collectExportPaths(realm, objectClass, id, relativePaths);
+                        collectExportPaths(realm, objectClass, id, relativePaths, groupScoresByPlayer);
                 });
             }
 
@@ -73,7 +74,7 @@ namespace osu.Game.EzRealmSync.Realm
                     Message = destRelative,
                 });
 
-                string targetDir = string.IsNullOrEmpty(subDir) ? outputRoot : Path.Combine(outputRoot, sanitizePathSegment(subDir));
+                string targetDir = string.IsNullOrEmpty(subDir) ? outputRoot : Path.Combine(outputRoot, RealmExportExecutor.SanitizePathSegment(subDir));
                 string destPath = Path.Combine(targetDir, destRelative);
                 string? destDir = Path.GetDirectoryName(destPath);
                 if (!string.IsNullOrEmpty(destDir))
@@ -106,7 +107,8 @@ namespace osu.Game.EzRealmSync.Realm
             RealmInstance realm,
             RealmObjectClass objectClass,
             Guid id,
-            List<(string sourceRelative, string destRelative, string? subDir)> paths)
+            List<(string sourceRelative, string destRelative, string? subDir)> paths,
+            bool groupScoresByPlayer)
         {
             switch (objectClass)
             {
@@ -136,7 +138,7 @@ namespace osu.Game.EzRealmSync.Realm
 
                 case RealmObjectClass.Score:
                     if (realm.Find<ScoreInfo>(id) is ScoreInfo score)
-                        addScorePath(paths, score);
+                        addScorePath(paths, score, groupScoresByPlayer);
 
                     break;
             }
@@ -151,15 +153,16 @@ namespace osu.Game.EzRealmSync.Realm
             paths.Add((relative, relative, subDir));
         }
 
-        private static void addScorePath(List<(string sourceRelative, string destRelative, string? subDir)> paths, ScoreInfo score)
+        private static void addScorePath(List<(string sourceRelative, string destRelative, string? subDir)> paths, ScoreInfo score, bool groupScoresByPlayer)
         {
-            var replay = score.Files.FirstOrDefault(f => f.Filename.EndsWith(".osr", StringComparison.OrdinalIgnoreCase));
-            if (replay == null)
-                return;
-
-            string source = RealmFilePathHelper.GetStoragePath(replay.File.Hash);
-            string destName = $"{score.GetDisplayString().GetValidFilename()} ({score.Date.LocalDateTime:yyyy-MM-dd_HH-mm}).osr";
-            paths.Add((source, Path.Combine("replays", destName), null));
+            try
+            {
+                var entry = RealmExportExecutor.CreateScoreEntry(score, groupScoresByPlayer);
+                paths.Add((entry.SourceRelative, entry.DestinationRelative, null));
+            }
+            catch (InvalidOperationException)
+            {
+            }
         }
     }
 }

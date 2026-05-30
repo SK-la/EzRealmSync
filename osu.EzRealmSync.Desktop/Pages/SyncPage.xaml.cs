@@ -1,4 +1,3 @@
-using System.Windows.Controls.Primitives;
 using System.Windows.Data;
 using osu.EzRealmSync.AppModel;
 using osu.EzRealmSync.AppModel.Localization;
@@ -111,23 +110,7 @@ namespace osu.EzRealmSync.Desktop.Pages
             if (SyncGrid.Columns.Count > 0)
                 return;
 
-            var checkFactory = new FrameworkElementFactory(typeof(CheckBox));
-            checkFactory.SetBinding(
-                ToggleButton.IsCheckedProperty,
-                new Binding(nameof(DiffRowModel.IsSelected))
-                {
-                    Mode = BindingMode.TwoWay,
-                    UpdateSourceTrigger = UpdateSourceTrigger.PropertyChanged,
-                });
-            checkFactory.SetValue(HorizontalAlignmentProperty, HorizontalAlignment.Center);
-            checkFactory.SetValue(VerticalAlignmentProperty, VerticalAlignment.Center);
-
-            SyncGrid.Columns.Add(new DataGridTemplateColumn
-            {
-                Header = string.Empty,
-                Width = 40,
-                CellTemplate = new DataTemplate { VisualTree = checkFactory },
-            });
+            SyncGrid.Columns.Add(DataGridCheckColumnHelper.CreateColumn());
 
             addTextColumn(Loc.Get("ColKind"), nameof(DiffRowModel.EntityKind), 80);
             addTextColumn(Loc.Get("ColTitle"), nameof(DiffRowModel.Title), new DataGridLength(1, DataGridLengthUnitType.Star));
