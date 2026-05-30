@@ -5,41 +5,30 @@ using osu.Game.EzRealmSync.Models;
 namespace osu.Game.EzRealmSync.Realm
 {
     /// <summary>
-    /// 探测磁盘 Realm 的 Schema 版本并选择正确的 <see cref="RealmAccess"/> 打开方式。
+    /// 根据磁盘 schema 选择 <see cref="RealmAccess"/> 打开方式。探测与打开均不迁移 schema。
     /// </summary>
     public static class RealmSchemaProbe
     {
-        public static int? TryReadSchemaVersion(string realmFilePath)
-        {
-            foreach (bool ez in new[] { true, false })
-            {
-                try
-                {
-                    using var access = ez
-                        ? RealmDiffReader.OpenEzRealm(realmFilePath)
-                        : RealmDiffReader.OpenOfficialRealm(realmFilePath);
+        /// <summary>仅读取文件头 schema，不迁移、不写盘。</summary>
+        public static int? TryReadSchemaVersion(string realmFilePath) => RealmDiskSchemaReader.TryReadSchemaVersion(realmFilePath);
 
-                    int? version = null;
-                    access.Run(realm => version = (int)realm.Config.SchemaVersion);
-                    return version;
-                }
-                catch
-                {
-                    // 尝试另一种访问器
-                }
-            }
-
-            return null;
-        }
-
+        /// <summary>按磁盘版本打开，<b>绝不</b>执行 Realm 迁移。</summary>
         public static RealmAccess Open(string realmFilePath, int? diskSchemaVersion = null)
         {
             int? schema = diskSchemaVersion ?? TryReadSchemaVersion(realmFilePath);
 
-            if (RealmSchemaSafety.RequiresOfficialRealmAccess(schema))
-                return RealmDiffReader.OpenOfficialRealm(realmFilePath);
+            if (schema == null)
+                throw new InvalidOperationException($"无法读取 Realm schema 版本：{realmFilePath}");
 
-            return RealmDiffReader.OpenEzRealm(realmFilePath);
+            RealmSchemaToolPolicy.EnsureCanOpen(schema.Value);
+
+            if (RealmSchemaSafety.RequiresOfficialRealmAccess(schema))
+                return RealmDiffReader.OpenOfficialRealm(realmFilePath, schema.Value);
+
+            if (RealmSchemaSafety.RequiresEzRealmAccess(schema))
+                return RealmDiffReader.OpenEzRealm(realmFilePath, schema.Value);
+
+            throw new InvalidOperationException($"无法识别的 Realm schema 版本 {schema}：{realmFilePath}");
         }
     }
 }

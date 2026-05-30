@@ -1,9 +1,7 @@
 #if HAS_EZ_OSU_GAME
 using osu.Framework.Platform;
-using osu.Game.Beatmaps;
 using osu.Game.Database;
 using osu.Game.EzRealmSync.Models;
-using osu.Game.Scoring;
 using RealmInstance = Realms.Realm;
 
 namespace osu.Game.EzRealmSync.Realm
@@ -40,11 +38,11 @@ namespace osu.Game.EzRealmSync.Realm
             return snapshot ?? new RealmDiffSnapshot();
         }
 
-        public static RealmAccess OpenEzRealm(string realmFilePath) => open(realmFilePath, ez: true);
+        public static RealmAccess OpenEzRealm(string realmFilePath, int pinnedDiskSchemaVersion) => open(realmFilePath, ez: true, pinnedDiskSchemaVersion);
 
-        public static RealmAccess OpenOfficialRealm(string realmFilePath) => open(realmFilePath, ez: false);
+        public static RealmAccess OpenOfficialRealm(string realmFilePath, int pinnedDiskSchemaVersion) => open(realmFilePath, ez: false, pinnedDiskSchemaVersion);
 
-        private static RealmAccess open(string realmFilePath, bool ez)
+        private static RealmAccess open(string realmFilePath, bool ez, int pinnedDiskSchemaVersion)
         {
             string fullPath = Path.GetFullPath(realmFilePath);
             string storageRoot = RealmWorkspacePaths.ResolveStorageRoot(fullPath);
@@ -52,13 +50,13 @@ namespace osu.Game.EzRealmSync.Realm
             var storage = new NativeStorage(storageRoot);
 
             return ez
-                ? new RealmAccess(storage, filename, useDevelopmentVersionedFilenames: false)
-                : new OfficialRealmAccess(storage, filename);
+                ? RealmAccess.OpenWithoutMigration(storage, filename, pinnedDiskSchemaVersion)
+                : OfficialRealmAccess.OpenWithoutMigration(storage, filename, pinnedDiskSchemaVersion);
         }
 
         private static IEnumerable<RealmDiffEntity> readBeatmapSets(RealmInstance realm)
         {
-            foreach (var set in realm.All<BeatmapSetInfo>().Where(s => !s.DeletePending))
+            foreach (var set in realm.LiveBeatmapSets())
             {
                 var metadata = set.Beatmaps.FirstOrDefault()?.Metadata;
                 yield return new RealmDiffEntity
@@ -75,11 +73,8 @@ namespace osu.Game.EzRealmSync.Realm
 
         private static IEnumerable<RealmDiffEntity> readBeatmaps(RealmInstance realm)
         {
-            foreach (var beatmap in realm.All<BeatmapInfo>())
+            foreach (var beatmap in realm.LiveBeatmaps())
             {
-                if (beatmap.BeatmapSet?.DeletePending == true)
-                    continue;
-
                 yield return new RealmDiffEntity
                 {
                     Id = beatmap.ID,
@@ -95,7 +90,7 @@ namespace osu.Game.EzRealmSync.Realm
 
         private static IEnumerable<RealmDiffEntity> readScores(RealmInstance realm)
         {
-            foreach (var score in realm.All<ScoreInfo>().Where(s => !s.DeletePending))
+            foreach (var score in realm.LiveScores())
             {
                 yield return new RealmDiffEntity
                 {

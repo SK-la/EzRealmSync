@@ -17,10 +17,10 @@ namespace osu.Game.EzRealmSync.Realm
 
             access.Run(realm =>
             {
-                foreach (var beatmap in realm.All<BeatmapInfo>().Where(b => b.BeatmapSet == null || !b.BeatmapSet.DeletePending))
+                foreach (var beatmap in realm.LiveBeatmaps())
                     scanMetadata(beatmap.Metadata, beatmap.ID, EntityKind.Beatmap, issues, options.IllegalCharacters, replacement);
 
-                foreach (var score in realm.All<ScoreInfo>().Where(s => !s.DeletePending))
+                foreach (var score in realm.LiveScores())
                     scanScore(score, issues, options.IllegalCharacters, replacement);
             });
         }

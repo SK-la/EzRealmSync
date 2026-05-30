@@ -30,7 +30,7 @@ namespace osu.Game.EzRealmSync.Models
 
         public string OfficialSchemaDisplay => OfficialSchemaVersion?.ToString() ?? "—";
 
-        public string EzSchemaDisplay => EzRealmSchemaVersion?.ToString() ?? "—";
+        public string EzSchemaDisplay => EzRealmSchemaVersion is > 0 ? EzRealmSchemaVersion.ToString()! : "—";
 
         public string SchemaDisplay => SchemaVersion?.ToString() ?? "—";
     }

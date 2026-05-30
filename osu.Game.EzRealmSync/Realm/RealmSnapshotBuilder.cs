@@ -1,12 +1,9 @@
 #if HAS_EZ_OSU_GAME
-using osu.Game.Beatmaps;
 using osu.Game.Collections;
 using osu.Game.Database;
 using osu.Game.EzRealmSync.Models;
 using osu.Game.Models;
 using osu.Game.Rulesets;
-using osu.Game.Scoring;
-using osu.Game.Skinning;
 using RealmInstance = Realms.Realm;
 
 namespace osu.Game.EzRealmSync.Realm
@@ -58,7 +55,7 @@ namespace osu.Game.EzRealmSync.Realm
                 col("OnlineID", "Online ID", "int"),
                 col("DateAdded", "Date added", "date"),
                 col("Status", "Status", "enum")),
-            Rows = realm.All<BeatmapSetInfo>().Where(s => !s.DeletePending).AsEnumerable().Select(s => row(s.ID, new Dictionary<string, string>
+            Rows = realm.LiveBeatmapSets().Select(s => row(s.ID, new Dictionary<string, string>
             {
                 ["Hash"] = s.Hash,
                 ["OnlineID"] = s.OnlineID.ToString(),
@@ -75,16 +72,13 @@ namespace osu.Game.EzRealmSync.Realm
                 col("StarRating", "Stars", "double"),
                 col("Ruleset", "Ruleset", "object"),
                 col("BeatmapSet", "BeatmapSet", "object")),
-            Rows = realm.All<BeatmapInfo>()
-                        .Where(b => b.BeatmapSet == null || !b.BeatmapSet.DeletePending)
-                        .AsEnumerable()
-                        .Select(b => row(b.ID, new Dictionary<string, string>
-                        {
-                            ["Hash"] = b.Hash,
-                            ["StarRating"] = b.StarRating.ToString("F2"),
-                            ["Ruleset"] = b.Ruleset?.ShortName ?? string.Empty,
-                            ["BeatmapSet"] = b.BeatmapSet?.Hash ?? string.Empty,
-                        })).ToList(),
+            Rows = realm.LiveBeatmaps().Select(b => row(b.ID, new Dictionary<string, string>
+            {
+                ["Hash"] = b.Hash,
+                ["StarRating"] = b.StarRating.ToString("F2"),
+                ["Ruleset"] = b.Ruleset?.ShortName ?? string.Empty,
+                ["BeatmapSet"] = b.BeatmapSet?.Hash ?? string.Empty,
+            })).ToList(),
         };
 
         private static RealmClassGroup readMetadata(RealmInstance realm)
@@ -92,7 +86,7 @@ namespace osu.Game.EzRealmSync.Realm
             var seen = new HashSet<string>(StringComparer.Ordinal);
             var rows = new List<RealmBrowseRow>();
 
-            foreach (var beatmap in realm.All<BeatmapInfo>().Where(b => b.BeatmapSet == null || !b.BeatmapSet.DeletePending))
+            foreach (var beatmap in realm.LiveBeatmaps())
             {
                 var metadata = beatmap.Metadata;
                 string key = $"{metadata.Title}\0{metadata.Artist}";
@@ -130,7 +124,7 @@ namespace osu.Game.EzRealmSync.Realm
                 col("Accuracy", "Accuracy", "double"),
                 col("Ruleset", "Ruleset", "object"),
                 col("Beatmap", "Beatmap", "object")),
-            Rows = realm.All<ScoreInfo>().Where(s => !s.DeletePending).AsEnumerable().Select(s => row(s.ID, new Dictionary<string, string>
+            Rows = realm.LiveScores().Select(s => row(s.ID, new Dictionary<string, string>
             {
                 ["Date"] = s.Date.ToString("g"),
                 ["TotalScore"] = s.TotalScore.ToString("N0"),
@@ -193,7 +187,7 @@ namespace osu.Game.EzRealmSync.Realm
             Columns = columns(
                 col("Name", "Name", "string"),
                 col("Creator", "Creator", "string")),
-            Rows = realm.All<SkinInfo>().Where(s => !s.DeletePending).AsEnumerable().Select(s => row(s.ID, new Dictionary<string, string>
+            Rows = realm.LiveSkins().Select(s => row(s.ID, new Dictionary<string, string>
             {
                 ["Name"] = s.Name,
                 ["Creator"] = s.Creator,

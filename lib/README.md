@@ -49,6 +49,14 @@ UI（按钮、列表、对话框）**不要**引用本目录；界面继续用 F
 
 无 `lib/osu.Game.dll` 时：仍可编译；非 `--ui-test` 模式使用 `StubRealmEzRealmSyncService`（提示未接 Realm）。
 
+## 与迁移的关系
+
+- **EzRealmSync 不会**把库从 51 升到 51006，也不会跑 Ez/官方 migration。
+- 打开时锁定**磁盘上已有**的 schema 版本（`RealmAccess.OpenWithoutMigration` / `OfficialRealmAccess.OpenWithoutMigration`）。
+- 若库比本工具**更旧**（例如官方 50）：请先用 osu!/Ez2Lazer 打开一次完成升级，再用本工具。
+- 若库比本工具**更新**：请更新 EzRealmSync 与 `lib/`。
+- 探测 schema 仅用 Realm 动态只读打开，**不**经过游戏的 `RealmAccess` 构造逻辑。
+
 ## 与 NuGet 的关系
 
 - **不**使用 nuget.org 的 `ppy.osu.Game`（无 Ez Realm 扩展）。

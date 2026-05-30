@@ -13,6 +13,10 @@ namespace osu.Game.EzRealmSync.Models
 
         public RealmDiskSchemaKind TargetKind { get; init; }
 
+        public int? SourceSchemaVersion { get; init; }
+
+        public int? TargetSchemaVersion { get; init; }
+
         /// <summary>仅当写入 ppy 裸 schema 目标且源为 Ez 扩展库时剥离 Ez 列。</summary>
         public bool StripEzFieldsForTarget =>
             SourceKind == RealmDiskSchemaKind.EzExtended && TargetKind == RealmDiskSchemaKind.PpyClient;
@@ -55,6 +59,8 @@ namespace osu.Game.EzRealmSync.Models
                 TargetRealmFilePath = Path.GetFullPath(endpointB.FilePath),
                 SourceKind = kindA,
                 TargetKind = kindB,
+                SourceSchemaVersion = endpointA.SchemaVersion,
+                TargetSchemaVersion = endpointB.SchemaVersion,
                 LegacyDirection = legacyDirection,
             };
 
