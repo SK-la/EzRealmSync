@@ -2,6 +2,8 @@
 using osu.Game.Beatmaps;
 using osu.Game.Collections;
 using osu.Game.EzRealmSync.Models;
+using osu.Game.Extensions;
+using osu.Game.Scoring;
 using RealmInstance = Realms.Realm;
 
 namespace osu.Game.EzRealmSync.Realm
@@ -45,7 +47,7 @@ namespace osu.Game.EzRealmSync.Realm
             string outputRoot = Path.Combine(outputDirectory, folder);
             Directory.CreateDirectory(outputRoot);
 
-            var relativePaths = new List<(string relative, string? subDir)>();
+            var relativePaths = new List<(string sourceRelative, string destRelative, string? subDir)>();
 
             using (var access = RealmSchemaProbe.Open(file.FilePath, file.SchemaVersion))
             {
@@ -60,7 +62,7 @@ namespace osu.Game.EzRealmSync.Realm
             int skipped = 0;
             int index = 0;
 
-            foreach (var (relative, subDir) in relativePaths.Distinct())
+            foreach (var (sourceRelative, destRelative, subDir) in relativePaths.Distinct())
             {
                 cancellationToken.ThrowIfCancellationRequested();
                 index++;
@@ -68,16 +70,16 @@ namespace osu.Game.EzRealmSync.Realm
                 progress?.Report(new ScanProgress
                 {
                     Progress = (double)index / Math.Max(1, relativePaths.Count),
-                    Message = relative,
+                    Message = destRelative,
                 });
 
                 string targetDir = string.IsNullOrEmpty(subDir) ? outputRoot : Path.Combine(outputRoot, sanitizePathSegment(subDir));
-                string destPath = Path.Combine(targetDir, relative);
+                string destPath = Path.Combine(targetDir, destRelative);
                 string? destDir = Path.GetDirectoryName(destPath);
                 if (!string.IsNullOrEmpty(destDir))
                     Directory.CreateDirectory(destDir);
 
-                string sourcePath = Path.Combine(filesDirectory, relative);
+                string sourcePath = Path.Combine(filesDirectory, sourceRelative);
 
                 if (File.Exists(sourcePath))
                 {
@@ -104,7 +106,7 @@ namespace osu.Game.EzRealmSync.Realm
             RealmInstance realm,
             RealmObjectClass objectClass,
             Guid id,
-            List<(string relative, string? subDir)> paths)
+            List<(string sourceRelative, string destRelative, string? subDir)> paths)
         {
             switch (objectClass)
             {
@@ -131,15 +133,33 @@ namespace osu.Game.EzRealmSync.Realm
                     }
 
                     break;
+
+                case RealmObjectClass.Score:
+                    if (realm.Find<ScoreInfo>(id) is ScoreInfo score)
+                        addScorePath(paths, score);
+
+                    break;
             }
         }
 
-        private static void addBeatmapPath(List<(string relative, string? subDir)> paths, string beatmapHash, string? subDir)
+        private static void addBeatmapPath(List<(string sourceRelative, string destRelative, string? subDir)> paths, string beatmapHash, string? subDir)
         {
             if (string.IsNullOrWhiteSpace(beatmapHash))
                 return;
 
-            paths.Add((RealmFilePathHelper.GetStoragePath(beatmapHash), subDir));
+            string relative = RealmFilePathHelper.GetStoragePath(beatmapHash);
+            paths.Add((relative, relative, subDir));
+        }
+
+        private static void addScorePath(List<(string sourceRelative, string destRelative, string? subDir)> paths, ScoreInfo score)
+        {
+            var replay = score.Files.FirstOrDefault(f => f.Filename.EndsWith(".osr", StringComparison.OrdinalIgnoreCase));
+            if (replay == null)
+                return;
+
+            string source = RealmFilePathHelper.GetStoragePath(replay.File.Hash);
+            string destName = $"{score.GetDisplayString().GetValidFilename()} ({score.Date.LocalDateTime:yyyy-MM-dd_HH-mm}).osr";
+            paths.Add((source, Path.Combine("replays", destName), null));
         }
     }
 }

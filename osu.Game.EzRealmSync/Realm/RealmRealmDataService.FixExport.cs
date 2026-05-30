@@ -155,96 +155,14 @@ namespace osu.Game.EzRealmSync.Realm
             if (exportCatalogs.TryGetValue(key, out var cached))
                 return cached;
 
-            var snapshot = loadCore(realmId, progress, cancellationToken);
-            var items = new List<RealmExportItem>();
+            if (!registry.TryGet(realmId, out var file))
+                throw new InvalidOperationException($"未找到 Realm 文件：{realmId}");
 
-            switch (kind)
-            {
-                case ExportDataKind.BeatmapSet:
-                    addBeatmapSetExportItems(snapshot, items);
-                    break;
-
-                case ExportDataKind.Beatmap:
-                    addBeatmapExportItems(snapshot, items);
-                    break;
-
-                case ExportDataKind.Collection:
-                    addCollectionExportItems(snapshot, items);
-                    break;
-            }
-
-            var catalog = new RealmExportCatalog { Kind = kind, Items = items };
+            progress?.Report(new ScanProgress { Progress = 0, Message = "正在打开 Realm…" });
+            using var access = RealmSchemaProbe.Open(file.FilePath, file.SchemaVersion);
+            var catalog = RealmExportCatalogBuilder.Build(access, kind, progress, cancellationToken);
             exportCatalogs[key] = catalog;
             return catalog;
-        }
-
-        private static void addBeatmapSetExportItems(RealmSnapshot snapshot, List<RealmExportItem> items)
-        {
-            var beatmapRows = snapshot.Classes.FirstOrDefault(c => c.Class == RealmObjectClass.Beatmap)?.Rows ?? new List<RealmBrowseRow>();
-
-            foreach (var setRow in snapshot.Classes.FirstOrDefault(c => c.Class == RealmObjectClass.BeatmapSet)?.Rows ?? new List<RealmBrowseRow>())
-            {
-                if (!setRow.Cells.TryGetValue("Hash", out string? setHash) || string.IsNullOrWhiteSpace(setHash))
-                    continue;
-
-                var firstBeatmap = beatmapRows.FirstOrDefault(b => b.Cells.TryGetValue("BeatmapSet", out string? bs) && string.Equals(bs, setHash, StringComparison.OrdinalIgnoreCase));
-
-                string relative = firstBeatmap != null
-                    ? buildBeatmapRelativePath(firstBeatmap, setHash)
-                    : setHash;
-
-                items.Add(new RealmExportItem
-                {
-                    Id = setRow.Id,
-                    Title = setHash,
-                    Artist = string.Empty,
-                    RelativePath = relative,
-                });
-            }
-        }
-
-        private static void addBeatmapExportItems(RealmSnapshot snapshot, List<RealmExportItem> items)
-        {
-            foreach (var row in snapshot.Classes.FirstOrDefault(c => c.Class == RealmObjectClass.Beatmap)?.Rows ?? new List<RealmBrowseRow>())
-            {
-                string setHash = row.Cells.TryGetValue("BeatmapSet", out string? bs) ? bs : "unknown";
-                items.Add(new RealmExportItem
-                {
-                    Id = row.Id,
-                    Title = row.Cells.TryGetValue("Hash", out string? h) ? h : row.Id.ToString("N"),
-                    Artist = string.Empty,
-                    RelativePath = buildBeatmapRelativePath(row, setHash),
-                });
-            }
-        }
-
-        private static void addCollectionExportItems(RealmSnapshot snapshot, List<RealmExportItem> items)
-        {
-            var beatmapRows = snapshot.Classes.FirstOrDefault(c => c.Class == RealmObjectClass.Beatmap)?.Rows ?? new List<RealmBrowseRow>();
-
-            foreach (var collection in snapshot.Classes.FirstOrDefault(c => c.Class == RealmObjectClass.BeatmapCollection)?.Rows ?? new List<RealmBrowseRow>())
-            {
-                string name = collection.Cells.TryGetValue("Name", out string? n) ? n : "Collection";
-
-                foreach (var beatmap in beatmapRows.Take(8))
-                {
-                    string setHash = beatmap.Cells.TryGetValue("BeatmapSet", out string? bs) ? bs : "unknown";
-                    items.Add(new RealmExportItem
-                    {
-                        Id = Guid.NewGuid(),
-                        Title = beatmap.Cells.TryGetValue("Hash", out string? h) ? h : beatmap.Id.ToString("N"),
-                        Artist = string.Empty,
-                        CollectionName = name,
-                        RelativePath = buildBeatmapRelativePath(beatmap, setHash),
-                    });
-                }
-            }
-        }
-
-        private static string buildBeatmapRelativePath(RealmBrowseRow beatmapRow, string _)
-        {
-            string beatmapHash = beatmapRow.Cells.TryGetValue("Hash", out string? h) ? h : beatmapRow.Id.ToString("N");
-            return RealmFilePathHelper.GetStoragePath(beatmapHash);
         }
 
         public Task<RealmExportResult> ExportAsync(
@@ -261,7 +179,7 @@ namespace osu.Game.EzRealmSync.Realm
                 catalog = loadCatalogCore(request.RealmId, request.Kind, progress, cancellationToken);
 
             string folderName = string.IsNullOrWhiteSpace(request.FolderName)
-                ? $"songs-{DateTime.Now:yyyyMMdd_HHmmss}"
+                ? defaultExportFolderName(request.Kind)
                 : request.FolderName.Trim();
 
             string outputRoot = Path.Combine(request.OutputDirectory, folderName);
@@ -286,11 +204,15 @@ namespace osu.Game.EzRealmSync.Realm
                     Message = item.Title,
                 });
 
+                string destRelative = string.IsNullOrWhiteSpace(item.DestinationRelativePath)
+                    ? item.RelativePath
+                    : item.DestinationRelativePath;
+
                 string targetDir = request.Kind == ExportDataKind.Collection && !string.IsNullOrEmpty(item.CollectionName)
                     ? Path.Combine(outputRoot, sanitizePathSegment(item.CollectionName))
                     : outputRoot;
 
-                string destPath = Path.Combine(targetDir, item.RelativePath);
+                string destPath = Path.Combine(targetDir, destRelative);
                 string? destDir = Path.GetDirectoryName(destPath);
                 if (!string.IsNullOrEmpty(destDir))
                     Directory.CreateDirectory(destDir);
@@ -317,6 +239,12 @@ namespace osu.Game.EzRealmSync.Realm
                 SkippedCount = skipped,
             };
         }
+
+        private static string defaultExportFolderName(ExportDataKind kind) => kind switch
+        {
+            ExportDataKind.Score => $"replays-{DateTime.Now:yyyyMMdd_HHmmss}",
+            _ => $"songs-{DateTime.Now:yyyyMMdd_HHmmss}",
+        };
 
         private static string sanitizePathSegment(string name)
         {

@@ -840,6 +840,7 @@ namespace osu.EzRealmSync.AppModel
         {
             RealmObjectClass.BeatmapSet => true,
             RealmObjectClass.BeatmapCollection => true,
+            RealmObjectClass.Score => true,
             _ => false,
         };
 
@@ -1563,6 +1564,7 @@ namespace osu.EzRealmSync.AppModel
             ExportDataKind.BeatmapSet => Loc.Get("ExportKindBeatmapSet"),
             ExportDataKind.Beatmap => Loc.Get("ExportKindBeatmap"),
             ExportDataKind.Collection => Loc.Get("ExportKindCollection"),
+            ExportDataKind.Score => Loc.Get("ExportKindScore"),
             _ => kind.ToString(),
         };
 

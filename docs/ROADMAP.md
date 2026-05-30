@@ -8,7 +8,7 @@
 |--------|------|------|
 | **M1** Phase 1 UI | **基本完成** | 独立仓库 WPF Desktop（五 Tab），`--ui-test` Mock |
 | **M2** Phase 2 数据 | **进行中** | P2.1–P2.5a 已交付；P2.5b 手工验收待做 |
-| **M3** Phase 3 | 未开始 | Collections / Zombie / `.osr` |
+| **M3** Phase 3 | 部分完成 | 收藏夹同步/导出、`.osr` 导出已交付；僵尸文件扫描等仍待完善 |
 
 ### Phase 1 已交付（Desktop）
 
@@ -28,6 +28,8 @@
 - [x] **P2.4c** 单目录扫描（Ez 根目录 `*.realm` + 共享 `files/`）；`RealmServiceSession` 共享注册表；真实修复/导出
 - [x] **P2.5a** `RealmProcessGuard`；`RealmIllegalCharacterFixer` 写回；`RealmOrphanFileScanner` 僵尸文件
 - [ ] **P2.5b** 手工验收：关游戏 → 导入 → 同步写入 → 修复/导出（需 `lib/osu.Game.dll`）
+- [x] **P3.1** 导出 Tab：收藏夹按 `BeatmapMD5Hashes` 构建目录；成绩 `.osr`（`ExportDataKind.Score`）
+- [x] **P3.2** 数据 Tab：成绩右键导出 `.osr`
 
 ## 仓库结构
 

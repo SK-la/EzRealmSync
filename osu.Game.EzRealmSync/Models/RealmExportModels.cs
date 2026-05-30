@@ -5,6 +5,7 @@ namespace osu.Game.EzRealmSync.Models
         BeatmapSet,
         Beatmap,
         Collection,
+        Score,
     }
 
     public sealed class RealmExportItem
@@ -15,8 +16,11 @@ namespace osu.Game.EzRealmSync.Models
 
         public string Artist { get; init; } = string.Empty;
 
-        /// <summary>谱包内相对路径（如 <c>Artist - Title/song.osu</c>）。</summary>
+        /// <summary>files/ 内源文件相对路径（hash 分片路径）。</summary>
         public string RelativePath { get; init; } = string.Empty;
+
+        /// <summary>输出目录内相对路径；为空时与 <see cref="RelativePath"/> 相同。</summary>
+        public string? DestinationRelativePath { get; init; }
 
         public string? CollectionName { get; init; }
     }
@@ -38,7 +42,7 @@ namespace osu.Game.EzRealmSync.Models
 
         public required string OutputDirectory { get; init; }
 
-        /// <summary>为空时使用 <c>songs-yyyyMMdd_HHmmss</c>。</summary>
+        /// <summary>为空时按种类使用 <c>songs-</c> 或 <c>replays-</c> 加时间戳。</summary>
         public string? FolderName { get; init; }
 
         public required string FilesDirectory { get; init; }

@@ -25,6 +25,7 @@ namespace osu.Game.EzRealmSync.Realm
         {
             RealmObjectClass.BeatmapSet => true,
             RealmObjectClass.BeatmapCollection => true,
+            RealmObjectClass.Score => true,
             _ => false,
         };
 

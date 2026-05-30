@@ -36,10 +36,10 @@
   <data name="DirectionAToB" xml:space="preserve"><value>A → B</value></data>
   <data name="DirectionBToA" xml:space="preserve"><value>B → A</value></data>
   <data name="EntityFilter" xml:space="preserve"><value>Data type</value></data>
-  <data name="CollectionsPhase2" xml:space="preserve"><value>Collections (Phase 2)</value></data>
+  <data name="CollectionsPhase2" xml:space="preserve"><value>Collections</value></data>
   <data name="SelectAll" xml:space="preserve"><value>Select all</value></data>
   <data name="DeselectAll" xml:space="preserve"><value>Deselect all</value></data>
-  <data name="ExportOsrPhase2" xml:space="preserve"><value>Export .osr (Phase 2)</value></data>
+  <data name="ExportOsrPhase2" xml:space="preserve"><value>Export .osr</value></data>
   <data name="DeleteFromSource" xml:space="preserve"><value>Delete from {0}</value></data>
   <data name="AddToTarget" xml:space="preserve"><value>Add to {0}</value></data>
   <data name="SelectionCount" xml:space="preserve"><value>{0} selected</value></data>
@@ -94,7 +94,7 @@
   <data name="StatusBrowseEntitiesDeleted" xml:space="preserve"><value>Deleted {0} record(s) from Realm (schema unchanged).</value></data>
   <data name="ErrorBrowseClassNotMutable" xml:space="preserve"><value>This class is browse-only. Delete is available for beatmap sets, scores, and collections.</value></data>
   <data name="ErrorBrowseDeleteNone" xml:space="preserve"><value>No records were deleted.</value></data>
-  <data name="ErrorBrowseExportNotSupported" xml:space="preserve"><value>File export is only supported for beatmap sets and collections.</value></data>
+  <data name="ErrorBrowseExportNotSupported" xml:space="preserve"><value>File export is only supported for beatmap sets, collections, and scores.</value></data>
   <data name="ColTitle" xml:space="preserve"><value>Title</value></data>
   <data name="ColArtist" xml:space="preserve"><value>Artist</value></data>
   <data name="ColHash" xml:space="preserve"><value>Hash</value></data>
@@ -138,11 +138,12 @@
   <data name="ExportKindBeatmapSet" xml:space="preserve"><value>Beatmap sets</value></data>
   <data name="ExportKindBeatmap" xml:space="preserve"><value>Beatmaps</value></data>
   <data name="ExportKindCollection" xml:space="preserve"><value>Collections</value></data>
+  <data name="ExportKindScore" xml:space="preserve"><value>Scores (.osr)</value></data>
   <data name="ExportLoadList" xml:space="preserve"><value>Load list</value></data>
   <data name="ExportRun" xml:space="preserve"><value>Export</value></data>
   <data name="ExportDirectory" xml:space="preserve"><value>Output folder</value></data>
   <data name="ExportFolderName" xml:space="preserve"><value>Subfolder name (optional)</value></data>
-  <data name="ExportFolderNameHint" xml:space="preserve"><value>Leave empty for songs-yyyyMMdd_HHmmss</value></data>
+  <data name="ExportFolderNameHint" xml:space="preserve"><value>Leave empty for songs- or replays- plus timestamp</value></data>
   <data name="ColExportCollection" xml:space="preserve"><value>Collection</value></data>
   <data name="ColExportPath" xml:space="preserve"><value>Path</value></data>
   <data name="StatusExportCatalogLoaded" xml:space="preserve"><value>{0} item(s) ready to export</value></data>

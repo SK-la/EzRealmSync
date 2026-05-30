@@ -21,7 +21,7 @@ namespace osu.EzRealmSync.AppModel
 
         public string Artist => Item.Artist;
 
-        public string RelativePath => Item.RelativePath;
+        public string RelativePath => string.IsNullOrWhiteSpace(Item.DestinationRelativePath) ? Item.RelativePath : Item.DestinationRelativePath;
 
         public string CollectionName => Item.CollectionName ?? string.Empty;
 

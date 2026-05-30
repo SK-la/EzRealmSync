@@ -184,11 +184,11 @@ namespace osu.Game.EzRealmSync.Mock
                     break;
 
                 case ExportDataKind.Collection:
-                    for (int c = 0; c < 3; c++)
+                    foreach (var collectionRow in snapshot.Groups.First(g => g.EntityKind == EntityKind.BeatmapCollection).Rows)
                     {
-                        string collection = $"Collection {c + 1}";
+                        string collection = collectionRow.Title;
 
-                        foreach (var row in snapshot.Groups.First(g => g.EntityKind == EntityKind.Beatmap).Rows.Take(4))
+                        foreach (var row in snapshot.Groups.First(g => g.EntityKind == EntityKind.Beatmap).Rows)
                         {
                             items.Add(new RealmExportItem
                             {
@@ -199,6 +199,22 @@ namespace osu.Game.EzRealmSync.Mock
                                 RelativePath = $"{row.Artist} - {row.Title}/{row.Ruleset}.osu",
                             });
                         }
+                    }
+
+                    break;
+
+                case ExportDataKind.Score:
+                    foreach (var row in snapshot.Groups.First(g => g.EntityKind == EntityKind.Score).Rows)
+                    {
+                        string destName = $"{row.Title} ({row.Date?.LocalDateTime ?? DateTime.Now:yyyy-MM-dd_HH-mm}).osr";
+                        items.Add(new RealmExportItem
+                        {
+                            Id = row.Id,
+                            Title = row.Title,
+                            Artist = row.Artist,
+                            RelativePath = $"0/0/{row.Hash}",
+                            DestinationRelativePath = Path.Combine("replays", destName),
+                        });
                     }
 
                     break;
@@ -218,7 +234,9 @@ namespace osu.Game.EzRealmSync.Mock
                 catalog = await LoadCatalogAsync(request.RealmId, request.Kind, progress, cancellationToken).ConfigureAwait(false);
 
             string folderName = string.IsNullOrWhiteSpace(request.FolderName)
-                ? $"songs-{DateTime.Now:yyyyMMdd_HHmmss}"
+                ? request.Kind == ExportDataKind.Score
+                    ? $"replays-{DateTime.Now:yyyyMMdd_HHmmss}"
+                    : $"songs-{DateTime.Now:yyyyMMdd_HHmmss}"
                 : request.FolderName.Trim();
 
             string outputRoot = Path.Combine(request.OutputDirectory, folderName);
@@ -247,7 +265,11 @@ namespace osu.Game.EzRealmSync.Mock
                     ? Path.Combine(outputRoot, sanitizePathSegment(item.CollectionName))
                     : outputRoot;
 
-                string destPath = Path.Combine(targetDir, item.RelativePath);
+                string destRelative = string.IsNullOrWhiteSpace(item.DestinationRelativePath)
+                    ? item.RelativePath
+                    : item.DestinationRelativePath;
+
+                string destPath = Path.Combine(targetDir, destRelative);
                 string? destDir = Path.GetDirectoryName(destPath);
                 if (!string.IsNullOrEmpty(destDir))
                     Directory.CreateDirectory(destDir);
@@ -285,7 +307,12 @@ namespace osu.Game.EzRealmSync.Mock
                 new RealmExportRequest
                 {
                     RealmId = realmId,
-                    Kind = objectClass == RealmObjectClass.BeatmapCollection ? ExportDataKind.Collection : ExportDataKind.BeatmapSet,
+                    Kind = objectClass switch
+                    {
+                        RealmObjectClass.BeatmapCollection => ExportDataKind.Collection,
+                        RealmObjectClass.Score => ExportDataKind.Score,
+                        _ => ExportDataKind.BeatmapSet,
+                    },
                     FilesDirectory = filesDirectory,
                     OutputDirectory = outputDirectory,
                     FolderName = folderName,

@@ -36,10 +36,10 @@
   <data name="DirectionAToB" xml:space="preserve"><value>A → B</value></data>
   <data name="DirectionBToA" xml:space="preserve"><value>B → A</value></data>
   <data name="EntityFilter" xml:space="preserve"><value>数据类型</value></data>
-  <data name="CollectionsPhase2" xml:space="preserve"><value>收藏夹 (Phase 2)</value></data>
+  <data name="CollectionsPhase2" xml:space="preserve"><value>收藏夹</value></data>
   <data name="SelectAll" xml:space="preserve"><value>全选</value></data>
   <data name="DeselectAll" xml:space="preserve"><value>取消全选</value></data>
-  <data name="ExportOsrPhase2" xml:space="preserve"><value>导出 .osr (Phase 2)</value></data>
+  <data name="ExportOsrPhase2" xml:space="preserve"><value>导出 .osr</value></data>
   <data name="DeleteFromSource" xml:space="preserve"><value>从 {0} 端删除</value></data>
   <data name="AddToTarget" xml:space="preserve"><value>添加到 {0} 端</value></data>
   <data name="SelectionCount" xml:space="preserve"><value>已选 {0} 项</value></data>
@@ -94,7 +94,7 @@
   <data name="StatusBrowseEntitiesDeleted" xml:space="preserve"><value>已从 Realm 删除 {0} 条记录（schema 未变更）。</value></data>
   <data name="ErrorBrowseClassNotMutable" xml:space="preserve"><value>当前类型仅支持浏览；谱面集、成绩、收藏夹可删除。</value></data>
   <data name="ErrorBrowseDeleteNone" xml:space="preserve"><value>未删除任何记录（可能已被删除或 ID 无效）。</value></data>
-  <data name="ErrorBrowseExportNotSupported" xml:space="preserve"><value>当前类型不支持文件导出；谱面集与收藏夹可复制 files/ 实体。</value></data>
+  <data name="ErrorBrowseExportNotSupported" xml:space="preserve"><value>当前类型不支持文件导出；谱面集、收藏夹与成绩可复制 files/ 实体。</value></data>
   <data name="ColTitle" xml:space="preserve"><value>标题</value></data>
   <data name="ColArtist" xml:space="preserve"><value>艺术家</value></data>
   <data name="ColHash" xml:space="preserve"><value>Hash</value></data>
@@ -138,11 +138,12 @@
   <data name="ExportKindBeatmapSet" xml:space="preserve"><value>谱包</value></data>
   <data name="ExportKindBeatmap" xml:space="preserve"><value>谱面</value></data>
   <data name="ExportKindCollection" xml:space="preserve"><value>收藏夹</value></data>
+  <data name="ExportKindScore" xml:space="preserve"><value>成绩 (.osr)</value></data>
   <data name="ExportLoadList" xml:space="preserve"><value>加载列表</value></data>
   <data name="ExportRun" xml:space="preserve"><value>导出</value></data>
   <data name="ExportDirectory" xml:space="preserve"><value>输出目录</value></data>
   <data name="ExportFolderName" xml:space="preserve"><value>子文件夹名（可选）</value></data>
-  <data name="ExportFolderNameHint" xml:space="preserve"><value>留空则使用 songs-日期时间</value></data>
+  <data name="ExportFolderNameHint" xml:space="preserve"><value>留空则使用 songs- 或 replays- 加日期时间</value></data>
   <data name="ColExportCollection" xml:space="preserve"><value>收藏夹</value></data>
   <data name="ColExportPath" xml:space="preserve"><value>路径</value></data>
   <data name="StatusExportCatalogLoaded" xml:space="preserve"><value>已加载 {0} 项可导出</value></data>
