@@ -91,6 +91,8 @@
   <data name="EntityScore" xml:space="preserve"><value>成绩</value></data>
   <data name="EntityBeatmapCollection" xml:space="preserve"><value>收藏夹</value></data>
   <data name="CtxExport" xml:space="preserve"><value>导出文件…</value></data>
+  <data name="CtxRemoveFromExportList" xml:space="preserve"><value>从列表移除</value></data>
+  <data name="StatusExportListItemsRemoved" xml:space="preserve"><value>已从导出列表移除 {0} 项（未改 Realm）。</value></data>
   <data name="StatusBrowseEntitiesDeleted" xml:space="preserve"><value>已从 Realm 删除 {0} 条记录（schema 未变更）。</value></data>
   <data name="ErrorBrowseClassNotMutable" xml:space="preserve"><value>当前类型仅支持浏览；谱面集、成绩、收藏夹可删除。</value></data>
   <data name="ErrorBrowseDeleteNone" xml:space="preserve"><value>未删除任何记录（可能已被删除或 ID 无效）。</value></data>

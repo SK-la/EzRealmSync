@@ -180,7 +180,13 @@ namespace osu.EzRealmSync.Desktop.Pages
                 () => vm.ExportItems,
                 (rows, check) => vm.Presenter.SetExportItemsChecked(rows, check),
                 () => vm.Presenter.InvertExportItemChecks(),
-                rows => vm.Presenter.DeleteExportItemsAsync(rows));
+                rows =>
+                {
+                    vm.Presenter.RemoveExportItemsFromList(rows);
+                    return Task.CompletedTask;
+                },
+                exportSelectionAsync: rows => vm.Presenter.ExportCheckedExportItemsAsync(rows),
+                removeFromListLabel: Loc.Get("CtxRemoveFromExportList"));
         }
 
         private void updateExportGridColumns()

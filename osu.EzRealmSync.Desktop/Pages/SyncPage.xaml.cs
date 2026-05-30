@@ -146,7 +146,7 @@ namespace osu.EzRealmSync.Desktop.Pages
                 (rows, check) => vm.Presenter.SetSyncRowsChecked(rows, check),
                 () => vm.Presenter.InvertSyncRowChecks(),
                 rows => vm.Presenter.DeleteSyncRowsAsync(rows),
-                () => vm.OnSyncSelectionChanged());
+                afterSelectionChanged: () => vm.OnSyncSelectionChanged());
         }
 
         private void refreshRealmCombos()

@@ -67,13 +67,6 @@ namespace osu.EzRealmSync.Components
             }
 
             content.Add(entityFlow);
-            content.Add(new EzText
-            {
-                Text = "收藏夹 (Phase 2)",
-                Colour = EzTheme.TextMuted,
-                Alpha = 0.5f,
-                Margin = new MarginPadding { Top = 8 },
-            }.WithSize(12));
 
             InternalChildren = new Drawable[]
             {

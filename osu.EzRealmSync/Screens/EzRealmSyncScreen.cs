@@ -218,7 +218,7 @@ namespace osu.EzRealmSync.Screens
                                 Anchor = Anchor.CentreLeft,
                                 Origin = Anchor.CentreLeft,
                             }.WithSize(14),
-                            new EzButton { Text = "导出 .osr (Phase 2)", Alpha = 0.4f }.Fill(),
+                            new EzButton { Text = "导出所选", Alpha = 0.4f }.Fill(),
                             new Spacer(),
                             deleteButton = new EzButton
                             {

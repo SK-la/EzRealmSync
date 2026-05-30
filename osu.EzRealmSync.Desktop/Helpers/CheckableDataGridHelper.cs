@@ -14,6 +14,8 @@ namespace osu.EzRealmSync.Desktop.Helpers
             Action<IReadOnlyList<T>, bool> setItemsChecked,
             Action invertAllChecks,
             Func<IReadOnlyList<T>, Task> deleteSelectionAsync,
+            Func<IReadOnlyList<T>, Task>? exportSelectionAsync = null,
+            string? removeFromListLabel = null,
             Action? afterSelectionChanged = null)
             where T : class
         {
@@ -35,12 +37,26 @@ namespace osu.EzRealmSync.Desktop.Helpers
 
                 DataGridContextMenuHelper.AddItem(menu, "invert", Loc.Get("CtxInvertCheck"), (_, _) => invertAllChecks());
 
-                DataGridContextMenuHelper.AddItem(menu, "delete", Loc.Get("CtxDelete"), async (_, _) =>
+                if (exportSelectionAsync != null)
                 {
-                    var targets = GetContextTargets(grid, getAllItems);
-                    if (targets.Count > 0)
-                        await deleteSelectionAsync(targets);
-                });
+                    DataGridContextMenuHelper.AddItem(menu, "export", Loc.Get("CtxExport"), async (_, _) =>
+                    {
+                        var targets = GetContextTargets(grid, getAllItems);
+                        if (targets.Count > 0)
+                            await exportSelectionAsync(targets);
+                    });
+                }
+
+                DataGridContextMenuHelper.AddItem(
+                    menu,
+                    "delete",
+                    removeFromListLabel ?? Loc.Get("CtxDelete"),
+                    async (_, _) =>
+                    {
+                        var targets = GetContextTargets(grid, getAllItems);
+                        if (targets.Count > 0)
+                            await deleteSelectionAsync(targets);
+                    });
             });
         }
 

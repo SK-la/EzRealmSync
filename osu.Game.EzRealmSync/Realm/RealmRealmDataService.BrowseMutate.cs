@@ -34,7 +34,10 @@ namespace osu.Game.EzRealmSync.Realm
             int deleted = RealmBrowseEntityMutator.Delete(access, objectClass, entityIds);
 
             if (deleted > 0)
+            {
                 snapshotCache.Remove(realmId);
+                InvalidateCatalog(realmId);
+            }
 
             return deleted;
         }

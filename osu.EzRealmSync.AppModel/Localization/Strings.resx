@@ -91,6 +91,8 @@
   <data name="EntityScore" xml:space="preserve"><value>Scores</value></data>
   <data name="EntityBeatmapCollection" xml:space="preserve"><value>Collections</value></data>
   <data name="CtxExport" xml:space="preserve"><value>Export files…</value></data>
+  <data name="CtxRemoveFromExportList" xml:space="preserve"><value>Remove from list</value></data>
+  <data name="StatusExportListItemsRemoved" xml:space="preserve"><value>Removed {0} item(s) from the export list (Realm unchanged).</value></data>
   <data name="StatusBrowseEntitiesDeleted" xml:space="preserve"><value>Deleted {0} record(s) from Realm (schema unchanged).</value></data>
   <data name="ErrorBrowseClassNotMutable" xml:space="preserve"><value>This class is browse-only. Delete is available for beatmap sets, scores, and collections.</value></data>
   <data name="ErrorBrowseDeleteNone" xml:space="preserve"><value>No records were deleted.</value></data>

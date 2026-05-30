@@ -113,34 +113,48 @@ namespace osu.Game.EzRealmSync.Realm
             switch (objectClass)
             {
                 case RealmObjectClass.BeatmapSet:
+                {
                     if (realm.Find<BeatmapSetInfo>(id) is BeatmapSetInfo set)
                     {
-                        foreach (var beatmap in set.Beatmaps)
-                            addBeatmapPath(paths, beatmap.Hash, null);
+                        foreach (var bm in set.Beatmaps)
+                            addBeatmapPath(paths, bm.Hash, null);
                     }
 
                     break;
+                }
+
+                case RealmObjectClass.Beatmap:
+                {
+                    if (realm.Find<BeatmapInfo>(id) is BeatmapInfo bm)
+                        addBeatmapPath(paths, bm.Hash, null);
+
+                    break;
+                }
 
                 case RealmObjectClass.BeatmapCollection:
+                {
                     if (realm.Find<BeatmapCollection>(id) is BeatmapCollection collection)
                     {
                         string subDir = collection.Name;
 
                         foreach (string md5 in collection.BeatmapMD5Hashes)
                         {
-                            var beatmap = realm.All<BeatmapInfo>().FirstOrDefault(b => b.MD5Hash == md5);
-                            if (beatmap != null)
-                                addBeatmapPath(paths, beatmap.Hash, subDir);
+                            var bm = realm.All<BeatmapInfo>().FirstOrDefault(b => b.MD5Hash == md5);
+                            if (bm != null)
+                                addBeatmapPath(paths, bm.Hash, subDir);
                         }
                     }
 
                     break;
+                }
 
                 case RealmObjectClass.Score:
+                {
                     if (realm.Find<ScoreInfo>(id) is ScoreInfo score)
                         addScorePath(paths, score, groupScoresByPlayer);
 
                     break;
+                }
             }
         }
 

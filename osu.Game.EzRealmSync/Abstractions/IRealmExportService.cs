@@ -4,6 +4,8 @@ namespace osu.Game.EzRealmSync.Abstractions
 {
     public interface IRealmExportService
     {
+        void InvalidateCatalog(string? realmId = null);
+
         Task<RealmExportCatalog> LoadCatalogAsync(
             string realmId,
             ExportDataKind kind,

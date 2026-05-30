@@ -24,6 +24,7 @@ namespace osu.Game.EzRealmSync.Realm
         public static bool SupportsFileExport(RealmObjectClass objectClass) => objectClass switch
         {
             RealmObjectClass.BeatmapSet => true,
+            RealmObjectClass.Beatmap => true,
             RealmObjectClass.BeatmapCollection => true,
             RealmObjectClass.Score => true,
             _ => false,

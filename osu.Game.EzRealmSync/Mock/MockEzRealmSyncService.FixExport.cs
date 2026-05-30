@@ -138,6 +138,18 @@ namespace osu.Game.EzRealmSync.Mock
             return new RealmFixApplyResult { AppliedCount = applied, SkippedCount = skipped };
         }
 
+        public void InvalidateCatalog(string? realmId = null)
+        {
+            if (realmId == null)
+            {
+                exportCatalogs.Clear();
+                return;
+            }
+
+            foreach (var key in exportCatalogs.Keys.Where(k => k.realmId == realmId).ToList())
+                exportCatalogs.Remove(key);
+        }
+
         public async Task<RealmExportCatalog> LoadCatalogAsync(
             string realmId,
             ExportDataKind kind,
@@ -341,12 +353,13 @@ namespace osu.Game.EzRealmSync.Mock
             new RealmExportRequest
             {
                 RealmId = realmId,
-                Kind = objectClass switch
-                {
-                    RealmObjectClass.BeatmapCollection => ExportDataKind.Collection,
-                    RealmObjectClass.Score => ExportDataKind.Score,
-                    _ => ExportDataKind.BeatmapSet,
-                },
+                    Kind = objectClass switch
+                    {
+                        RealmObjectClass.BeatmapCollection => ExportDataKind.Collection,
+                        RealmObjectClass.Score => ExportDataKind.Score,
+                        RealmObjectClass.Beatmap => ExportDataKind.Beatmap,
+                        _ => ExportDataKind.BeatmapSet,
+                    },
                 FilesDirectory = filesDirectory,
                 OutputDirectory = outputDirectory,
                 FolderName = folderName,

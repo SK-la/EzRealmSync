@@ -22,6 +22,10 @@ namespace osu.Game.EzRealmSync.Realm
             IProgress<ScanProgress>? progress = null,
             CancellationToken cancellationToken = default) => throw new InvalidOperationException(message);
 
+        public void InvalidateCatalog(string? realmId = null)
+        {
+        }
+
         public Task<RealmExportCatalog> LoadCatalogAsync(
             string realmId,
             ExportDataKind kind,

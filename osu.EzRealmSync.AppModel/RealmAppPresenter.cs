@@ -81,7 +81,12 @@ namespace osu.EzRealmSync.AppModel
             SyncRealmIdA.BindValueChanged(_ => persistSettings());
             SyncRealmIdB.BindValueChanged(_ => persistSettings());
             FixRealmId.BindValueChanged(_ => persistSettings());
-            ExportRealmId.BindValueChanged(_ => persistSettings());
+            ExportRealmId.BindValueChanged(_ =>
+            {
+                persistSettings();
+                exportService.InvalidateCatalog(ExportRealmId.Value);
+                runOnUi(ClearExportItems);
+            });
             ExportDirectory.BindValueChanged(_ => persistSettings());
             ExportFolderName.BindValueChanged(_ => persistSettings());
             ExportGroupScoresByPlayer.BindValueChanged(_ => persistSettings());
@@ -757,6 +762,7 @@ namespace osu.EzRealmSync.AppModel
 
                 if (deleted > 0)
                 {
+                    exportService.InvalidateCatalog(file.Id);
                     var progress = createScanProgress();
                     var snapshot = await dataService.LoadRealmSnapshotAsync(file.Id, progress).ConfigureAwait(false);
 
@@ -843,6 +849,7 @@ namespace osu.EzRealmSync.AppModel
         public static bool IsExportableBrowseClass(RealmObjectClass objectClass) => objectClass switch
         {
             RealmObjectClass.BeatmapSet => true,
+            RealmObjectClass.Beatmap => true,
             RealmObjectClass.BeatmapCollection => true,
             RealmObjectClass.Score => true,
             _ => false,
@@ -889,12 +896,9 @@ namespace osu.EzRealmSync.AppModel
             });
         }
 
-        public async Task DeleteExportItemsAsync(IReadOnlyList<RealmExportItemModel> items)
+        public void RemoveExportItemsFromList(IReadOnlyList<RealmExportItemModel> items)
         {
             if (items.Count == 0)
-                return;
-
-            if (!await TryConfirmDeleteAsync(items.Count).ConfigureAwait(false))
                 return;
 
             runOnUi(() =>
@@ -903,8 +907,22 @@ namespace osu.EzRealmSync.AppModel
                     ExportItems.Remove(item);
 
                 ExportItemsChanged?.Invoke();
-                StatusMessage.Value = Loc.Format("StatusBrowseRowsDeleted", items.Count);
+                StatusMessage.Value = Loc.Format("StatusExportListItemsRemoved", items.Count);
             });
+        }
+
+        public async Task ExportCheckedExportItemsAsync(IReadOnlyList<RealmExportItemModel> items)
+        {
+            if (items.Count == 0)
+            {
+                runOnUi(() => StatusMessage.Value = Loc.Get("ErrorNoSelection"));
+                return;
+            }
+
+            foreach (var item in items)
+                item.IsSelected = true;
+
+            await ExportSelectedAsync().ConfigureAwait(false);
         }
 
         public async Task DeleteRealmFileRowsAsync(IReadOnlyList<RealmFileRowModel> rows)
@@ -1071,6 +1089,7 @@ namespace osu.EzRealmSync.AppModel
         {
             ExportItems.Clear();
             ExportItemsChanged?.Invoke();
+            exportService.InvalidateCatalog(ExportRealmId.Value);
         }
 
         public void ToggleFixSelectAll()

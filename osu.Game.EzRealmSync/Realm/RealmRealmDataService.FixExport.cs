@@ -147,6 +147,18 @@ namespace osu.Game.EzRealmSync.Realm
             IProgress<ScanProgress>? progress = null,
             CancellationToken cancellationToken = default) => Task.Run(() => loadCatalogCore(realmId, kind, progress, cancellationToken), cancellationToken);
 
+        public void InvalidateCatalog(string? realmId = null)
+        {
+            if (realmId == null)
+            {
+                exportCatalogs.Clear();
+                return;
+            }
+
+            foreach (var key in exportCatalogs.Keys.Where(k => k.realmId == realmId).ToList())
+                exportCatalogs.Remove(key);
+        }
+
         private RealmExportCatalog loadCatalogCore(
             string realmId,
             ExportDataKind kind,
