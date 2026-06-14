@@ -13,6 +13,13 @@
   </PropertyGroup>
 
   <ItemGroup Condition="'$(UseLocalOsuLibs)' == 'true'">
+    <Reference Include="$(EzRealmSyncLibDir)\osu.Game.dll">
+      <HintPath>$(EzRealmSyncLibDir)\osu.Game.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+  </ItemGroup>
+
+  <ItemGroup Condition="'$(UseLocalOsuLibs)' == 'true'">
     <PackageReference Include="Realm" Version="20.1.0" />
   </ItemGroup>
 

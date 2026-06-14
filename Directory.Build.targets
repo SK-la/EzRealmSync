@@ -5,6 +5,19 @@
     <Warning Text="lib/osu.Game.dll 存在但 UseLocalOsuLibs!=true，真实 Realm 代码未编入。请检查 EzRealmSync.LocalLibs.props。" />
   </Target>
 
+  <!-- 测试项目在 UseLocalOsuLibs 时复制 lib 依赖到输出目录（dotnet test 需能加载 osu.Game） -->
+  <Target Name="CopyEzRealmSyncLibsForTests"
+          AfterTargets="Build"
+          Condition="'$(MSBuildProjectName)' == 'osu.Game.EzRealmSync.Tests' AND '$(UseLocalOsuLibs)' == 'true' AND '@(EzRealmSyncRuntimeLib)' != ''">
+    <Copy SourceFiles="@(EzRealmSyncRuntimeLib)"
+          DestinationFolder="$(OutputPath)"
+          SkipUnchangedFiles="true" />
+    <Copy SourceFiles="@(EzRealmSyncRuntimeNative)"
+          DestinationFiles="@(EzRealmSyncRuntimeNative->'$(OutputPath)runtimes\%(RecursiveDir)%(Filename)%(Extension)')"
+          SkipUnchangedFiles="true"
+          Condition="'@(EzRealmSyncRuntimeNative)' != ''" />
+  </Target>
+
   <!-- 构建 WinExe 时把 lib/*.dll 与引擎程序集复制到输出目录 -->
   <ItemGroup Condition="'$(UseLocalOsuLibs)' == 'true'">
     <EzRealmSyncEngineOutput Include="$(MSBuildThisFileDirectory)osu.Game.EzRealmSync\bin\$(Configuration)\net8.0\osu.Game.EzRealmSync.dll" />

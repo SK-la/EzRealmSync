@@ -21,6 +21,10 @@ namespace osu.Game.EzRealmSync.Models
         public bool StripEzFieldsForTarget =>
             SourceKind == RealmDiskSchemaKind.EzExtended && TargetKind == RealmDiskSchemaKind.PpyClient;
 
+        /// <summary>仅当从 ppy 裸 schema 源写入 Ez 扩展库时，将 Ez 列归一为待回填哨兵。</summary>
+        public bool NormalizeEzFieldsForTarget =>
+            SourceKind == RealmDiskSchemaKind.PpyClient && TargetKind == RealmDiskSchemaKind.EzExtended;
+
         /// <summary>供 Mock / 旧 API 使用的方向枚举。</summary>
         public SyncDirection LegacyDirection { get; init; }
 

@@ -35,7 +35,31 @@ namespace osu.Game.EzRealmSync.Tests
 
             Assert.That(RealmWritePlan.TryFromEndpoints(ez, ppy, out var plan, out _), Is.True);
             Assert.That(plan!.StripEzFieldsForTarget, Is.True);
+            Assert.That(plan.NormalizeEzFieldsForTarget, Is.False);
             Assert.That(plan.LegacyDirection, Is.EqualTo(SyncDirection.EzToOfficial));
+        }
+
+        [Test]
+        public void TryFromEndpoints_normalizes_only_ppy_to_ez()
+        {
+            var ppy = entry(51);
+            var ez = entry(51_006);
+
+            Assert.That(RealmWritePlan.TryFromEndpoints(ppy, ez, out var plan, out _), Is.True);
+            Assert.That(plan!.NormalizeEzFieldsForTarget, Is.True);
+            Assert.That(plan.StripEzFieldsForTarget, Is.False);
+            Assert.That(plan.LegacyDirection, Is.EqualTo(SyncDirection.OfficialToEz));
+        }
+
+        [Test]
+        public void TryFromEndpoints_ez_to_ez_does_not_normalize()
+        {
+            var a = entry(51_006);
+            var b = entry(51_007);
+
+            Assert.That(RealmWritePlan.TryFromEndpoints(a, b, out var plan, out _), Is.True);
+            Assert.That(plan!.NormalizeEzFieldsForTarget, Is.False);
+            Assert.That(plan.StripEzFieldsForTarget, Is.False);
         }
 
         [Test]

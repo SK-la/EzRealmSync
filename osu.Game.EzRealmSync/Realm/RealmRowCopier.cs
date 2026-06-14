@@ -28,6 +28,8 @@ namespace osu.Game.EzRealmSync.Realm
 
             bool stripEzFieldsForOfficial = request.WritePlan?.StripEzFieldsForTarget
                                             ?? request.Direction == SyncDirection.EzToOfficial;
+            bool normalizeEzFieldsForTarget = request.WritePlan?.NormalizeEzFieldsForTarget
+                                              ?? request.Direction == SyncDirection.OfficialToEz;
             int applied = 0;
             int total = request.ItemIds.Count;
 
@@ -47,7 +49,7 @@ namespace osu.Game.EzRealmSync.Realm
                     if (tryDeleteFromSource(id, sourceAccess))
                         applied++;
                 }
-                else if (tryCopyToTarget(id, sourceAccess, targetAccess, stripEzFieldsForOfficial))
+                else if (tryCopyToTarget(id, sourceAccess, targetAccess, stripEzFieldsForOfficial, normalizeEzFieldsForTarget))
                 {
                     applied++;
                 }
@@ -58,7 +60,7 @@ namespace osu.Game.EzRealmSync.Realm
             return new ApplyResult { AppliedCount = applied };
         }
 
-        private static bool tryCopyToTarget(Guid id, RealmAccess sourceAccess, RealmAccess targetAccess, bool stripEzFieldsForOfficial)
+        private static bool tryCopyToTarget(Guid id, RealmAccess sourceAccess, RealmAccess targetAccess, bool stripEzFieldsForOfficial, bool normalizeEzFieldsForTarget)
         {
             bool copied = false;
 
@@ -68,6 +70,8 @@ namespace osu.Game.EzRealmSync.Realm
                 {
                     if (stripEzFieldsForOfficial)
                         prepareBeatmapSetForOfficial(set);
+                    else if (normalizeEzFieldsForTarget)
+                        prepareBeatmapSetForEz(set);
 
                     targetAccess.Write(target => insertBeatmapSet(set, target));
                     copied = true;
@@ -78,6 +82,8 @@ namespace osu.Game.EzRealmSync.Realm
                 {
                     if (stripEzFieldsForOfficial)
                         prepareBeatmapForOfficial(beatmap);
+                    else if (normalizeEzFieldsForTarget)
+                        prepareBeatmapForEz(beatmap);
 
                     targetAccess.Write(target => insertBeatmap(beatmap, target));
                     copied = true;
@@ -180,15 +186,24 @@ namespace osu.Game.EzRealmSync.Realm
         private static void prepareBeatmapSetForOfficial(BeatmapSetInfo detached)
         {
             foreach (var beatmap in detached.Beatmaps)
-            {
                 prepareBeatmapForOfficial(beatmap);
-            }
+        }
+
+        private static void prepareBeatmapSetForEz(BeatmapSetInfo detached)
+        {
+            foreach (var beatmap in detached.Beatmaps)
+                prepareBeatmapForEz(beatmap);
         }
 
         private static void prepareBeatmapForOfficial(BeatmapInfo beatmap)
         {
             OfficialRealmMapper.StripEzOnlyBeatmapFields(beatmap);
             OfficialRealmMapper.StripEzOnlyRulesetFields(beatmap.Ruleset);
+        }
+
+        private static void prepareBeatmapForEz(BeatmapInfo beatmap)
+        {
+            OfficialRealmMapper.NormalizeEzOnlyBeatmapFields(beatmap);
         }
 
         private static void prepareScoreForOfficial(ScoreInfo score)
