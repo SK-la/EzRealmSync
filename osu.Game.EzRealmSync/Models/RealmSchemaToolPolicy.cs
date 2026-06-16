@@ -5,10 +5,11 @@ namespace osu.Game.EzRealmSync.Models
     /// </summary>
     public static class RealmSchemaToolPolicy
     {
-        public const int OfficialUpstreamSchema = 51;
+        /// <summary>当前 lib 中官方上游 schema（与 <see cref="osu.Game.Database.RealmAccess.UpstreamSchemaVersion"/> 对齐）。</summary>
+        public static int OfficialUpstreamSchema => osu.Game.Database.RealmAccess.UpstreamSchemaVersion;
 
-        /// <summary>当前 lib 中 Ez 端编码的最大 schema（official * 1000 + ez，与 osu.Game EzRealmSchemaProfile 对齐）。</summary>
-        public static int MaxSupportedEzFileSchema => OfficialUpstreamSchema * 1000 + 6;
+        /// <summary>当前 lib 中 Ez 端编码的最大 schema（official * 1000 + ez）。</summary>
+        public static int MaxSupportedEzFileSchema => osu.Game.Database.RealmAccess.EzFileSchemaVersion;
 
         public static void EnsureCanOpen(int diskSchemaVersion)
         {
