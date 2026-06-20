@@ -109,15 +109,52 @@ namespace osu.Game.EzRealmSync.Models
 
             string root = Path.GetFullPath(workspacePath.Trim());
             var files = FindRealmFiles(root);
+
+            string? ezSidecar = files
+                .Select(path => (path, version: tryParseClientRealmVersion(Path.GetFileName(path))))
+                .Where(entry => entry.version is >= 1000)
+                .OrderByDescending(entry => entry.version)
+                .Select(entry => entry.path)
+                .FirstOrDefault();
+
+            if (ezSidecar != null)
+                return ezSidecar;
+
             string? client = files.FirstOrDefault(f => Path.GetFileName(f).Equals("client.realm", StringComparison.OrdinalIgnoreCase));
             if (client != null)
                 return client;
+
+            string? legacySidecar = files
+                .Select(path => (path, version: tryParseClientRealmVersion(Path.GetFileName(path))))
+                .Where(entry => entry.version is > 0 and < 1000)
+                .OrderByDescending(entry => entry.version)
+                .Select(entry => entry.path)
+                .FirstOrDefault();
+
+            if (legacySidecar != null)
+                return legacySidecar;
 
             string atRoot = Path.Combine(root, "client.realm");
             if (File.Exists(atRoot))
                 return atRoot;
 
             return Path.Combine(root, "data", "client.realm");
+        }
+
+        private static int? tryParseClientRealmVersion(string fileName)
+        {
+            const string prefix = "client_";
+            const string suffix = ".realm";
+
+            if (!fileName.StartsWith(prefix, StringComparison.OrdinalIgnoreCase)
+                || !fileName.EndsWith(suffix, StringComparison.OrdinalIgnoreCase))
+            {
+                return null;
+            }
+
+            string versionText = fileName.Substring(prefix.Length, fileName.Length - prefix.Length - suffix.Length);
+
+            return int.TryParse(versionText, out int version) ? version : null;
         }
     }
 }

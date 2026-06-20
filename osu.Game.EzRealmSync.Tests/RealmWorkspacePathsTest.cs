@@ -39,6 +39,48 @@ namespace osu.Game.EzRealmSync.Tests
         }
 
         [Test]
+        public void ResolveClientRealmPath_prefers_ez_versioned_sidecar()
+        {
+            string ezRoot = Path.Combine(Path.GetTempPath(), "EzRealmSyncTests", Guid.NewGuid().ToString("N"));
+            Directory.CreateDirectory(ezRoot);
+            Directory.CreateDirectory(Path.Combine(ezRoot, "files"));
+            File.WriteAllText(Path.Combine(ezRoot, "client.realm"), "mock");
+            File.WriteAllText(Path.Combine(ezRoot, "client_51.realm"), "mock51");
+            File.WriteAllText(Path.Combine(ezRoot, "client_51007.realm"), "mock51007");
+
+            try
+            {
+                string fullRoot = Path.GetFullPath(ezRoot);
+                Assert.That(RealmWorkspacePaths.ResolveClientRealmPath(ezRoot), Is.EqualTo(Path.Combine(fullRoot, "client_51007.realm")));
+            }
+            finally
+            {
+                if (Directory.Exists(ezRoot))
+                    Directory.Delete(ezRoot, recursive: true);
+            }
+        }
+
+        [Test]
+        public void ResolveClientRealmPath_falls_back_to_legacy_client_51_when_no_ez_sidecar()
+        {
+            string ezRoot = Path.Combine(Path.GetTempPath(), "EzRealmSyncTests", Guid.NewGuid().ToString("N"));
+            Directory.CreateDirectory(ezRoot);
+            Directory.CreateDirectory(Path.Combine(ezRoot, "files"));
+            File.WriteAllText(Path.Combine(ezRoot, "client_51.realm"), "mock51");
+
+            try
+            {
+                string fullRoot = Path.GetFullPath(ezRoot);
+                Assert.That(RealmWorkspacePaths.ResolveClientRealmPath(ezRoot), Is.EqualTo(Path.Combine(fullRoot, "client_51.realm")));
+            }
+            finally
+            {
+                if (Directory.Exists(ezRoot))
+                    Directory.Delete(ezRoot, recursive: true);
+            }
+        }
+
+        [Test]
         public void FindRealmFiles_finds_root_level_realms_ez_layout()
         {
             string ezRoot = Path.Combine(Path.GetTempPath(), "EzRealmSyncTests", Guid.NewGuid().ToString("N"));
