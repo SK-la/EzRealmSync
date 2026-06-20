@@ -18,6 +18,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="ez2lazer.Framework" Version="2026.528.1-ez2lazer" />
+    <PackageReference Include="ez2lazer.Framework" Version="2026.616.0-ez2lazer" />
+    <PackageReference Include="ez2lazer.Game" Version="2026.605.0-ez2lazer" />
   </ItemGroup>
 </Project>
