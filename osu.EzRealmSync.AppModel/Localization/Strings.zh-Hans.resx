@@ -205,4 +205,6 @@
   <data name="RealmClassRuleset" xml:space="preserve"><value>规则集</value></data>
   <data name="RealmClassScore" xml:space="preserve"><value>成绩</value></data>
   <data name="RealmClassSkin" xml:space="preserve"><value>皮肤</value></data>
+  <data name="FixConfirmSummary" xml:space="preserve"><value>将创建 {0} 个缺失文件占位，删除 {1} 个僵尸文件，修改 {2} 个非法字符。是否继续？</value></data>
+  <data name="FixConfirmTitle" xml:space="preserve"><value>确认修复</value></data>
 </root>

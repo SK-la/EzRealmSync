@@ -1186,6 +1186,18 @@ namespace osu.EzRealmSync.AppModel
             if (file == null || issueIds.Count == 0)
                 return;
 
+            // 确认预览：按问题类型统计
+            var selectedIssues = FixIssues.Where(i => issueIds.Contains(i.Id)).ToList();
+            int missingCount = selectedIssues.Count(i => i.Issue.Kind == RealmFixIssueKind.MissingFile);
+            int orphanCount = selectedIssues.Count(i => i.Issue.Kind == RealmFixIssueKind.OrphanFile);
+            int illegalCount = selectedIssues.Count(i => i.Issue.Kind == RealmFixIssueKind.IllegalCharacter);
+
+            string summary = Loc.Format("FixConfirmSummary",
+                missingCount, orphanCount, illegalCount);
+
+            if (ConfirmAsync != null && !await ConfirmAsync(summary, Loc.Get("FixConfirmTitle"), orphanCount > 0).ConfigureAwait(false))
+                return;
+
             setBusy(true);
 
             try

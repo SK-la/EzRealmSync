@@ -205,4 +205,6 @@
   <data name="RealmClassRuleset" xml:space="preserve"><value>Ruleset</value></data>
   <data name="RealmClassScore" xml:space="preserve"><value>Score</value></data>
   <data name="RealmClassSkin" xml:space="preserve"><value>Skin</value></data>
+  <data name="FixConfirmSummary" xml:space="preserve"><value>Will create {0} placeholder(s) for missing files, delete {1} orphan file(s), and modify {2} illegal character(s). Continue?</value></data>
+  <data name="FixConfirmTitle" xml:space="preserve"><value>Confirm fix</value></data>
 </root>

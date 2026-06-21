@@ -78,9 +78,10 @@ namespace osu.Game.EzRealmSync.Realm
             if (!registry.TryGet(realmId, out var file))
                 throw new InvalidOperationException($"未找到 Realm 文件：{realmId}");
 
-            string? processBlock = RealmProcessGuard.TryGetBlockingProcessMessage();
-            if (processBlock != null)
-                throw new InvalidOperationException(processBlock);
+            // 综合并发检查：重试进程检测 + 排他文件锁
+            string? guardError = Task.Run(() => RealmProcessGuard.ComprehensiveCheckAsync(file.FilePath)).GetAwaiter().GetResult();
+            if (guardError != null)
+                throw new InvalidOperationException(guardError);
 
             var idSet = issueIds.ToHashSet();
             var selected = issues.Where(i => idSet.Contains(i.Id)).ToList();

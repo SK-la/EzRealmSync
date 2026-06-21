@@ -78,11 +78,12 @@ namespace osu.Game.EzRealmSync.Realm
             if (validationError != null)
                 throw new InvalidOperationException(validationError);
 
-            string? processBlock = RealmProcessGuard.TryGetBlockingProcessMessage();
-            if (processBlock != null)
-                throw new InvalidOperationException(processBlock);
-
             var plan = resolvePlan(request.WritePlan, request.Direction, request.Paths);
+
+            // 综合并发检查：重试进程检测 + 排他文件锁
+            string? guardError = Task.Run(() => RealmProcessGuard.ComprehensiveCheckAsync(plan.TargetRealmFilePath)).GetAwaiter().GetResult();
+            if (guardError != null)
+                throw new InvalidOperationException(guardError);
 
             string? backupPath = null;
 
