@@ -1067,7 +1067,56 @@ namespace osu.EzRealmSync.AppModel
             }
             catch (Exception ex)
             {
-                runOnUi(() => StatusMessage.Value = ex.Message);
+                runOnUi(() => StatusMessage.Value = toUserMessage(ex));
+            }
+            finally
+            {
+                setBusy(false);
+            }
+        }
+
+        public async Task UpgradeSelectedFixRealmSchemaAsync()
+        {
+            var file = getRealmFile(FixRealmId.Value);
+            if (file == null)
+                return;
+
+            string backupDir = string.IsNullOrWhiteSpace(BackupDirectory.Value)
+                ? EzRealmSyncDefaults.DefaultBackupDirectory
+                : BackupDirectory.Value;
+
+            if (ConfirmAsync != null)
+            {
+                string message = Loc.Format("FixUpgradeSchemaConfirm", backupDir);
+                if (!await ConfirmAsync(message, Loc.Get("FixUpgradeSchemaTitle"), true).ConfigureAwait(false))
+                    return;
+            }
+
+            setBusy(true);
+
+            try
+            {
+                var progress = createScanProgress();
+                var result = await fixService.UpgradeSchemaToLatestAsync(file.Id, backupDir, progress).ConfigureAwait(false);
+                await RefreshRealmFilesAsync().ConfigureAwait(false);
+
+                runOnUi(() =>
+                {
+                    string fileName = Path.GetFileName(result.RealmFilePath);
+                    StatusMessage.Value = result.AlreadyUpToDate
+                        ? Loc.Format("StatusFixSchemaAlreadyLatest", fileName, result.TargetSchemaVersion, result.BackupPath ?? backupDir)
+                        : Loc.Format(
+                            "StatusFixSchemaUpgraded",
+                            fileName,
+                            result.SourceSchemaVersion,
+                            result.TargetSchemaVersion,
+                            result.BackupPath ?? backupDir);
+                    Progress.Value = 1;
+                });
+            }
+            catch (Exception ex)
+            {
+                runOnUi(() => StatusMessage.Value = toUserMessage(ex));
             }
             finally
             {

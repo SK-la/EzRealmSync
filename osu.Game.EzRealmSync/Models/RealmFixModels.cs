@@ -63,4 +63,17 @@ namespace osu.Game.EzRealmSync.Models
 
         public string? BackupPath { get; init; }
     }
+
+    public sealed class RealmSchemaUpgradeResult
+    {
+        public string RealmFilePath { get; init; } = string.Empty;
+
+        public int SourceSchemaVersion { get; init; }
+
+        public int TargetSchemaVersion { get; init; }
+
+        public string? BackupPath { get; init; }
+
+        public bool AlreadyUpToDate { get; init; }
+    }
 }

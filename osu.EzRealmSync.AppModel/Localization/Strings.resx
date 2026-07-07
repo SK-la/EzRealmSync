@@ -208,11 +208,16 @@
   <data name="FixConfirmSummary" xml:space="preserve"><value>Will create {0} placeholder(s) for missing files, delete {1} orphan file(s), and modify {2} illegal character(s). Continue?</value></data>
   <data name="FixConfirmTitle" xml:space="preserve"><value>Confirm fix</value></data>
   <data name="FixConvertOfficial" xml:space="preserve"><value>Convert to official</value></data>
+  <data name="FixUpgradeSchema" xml:space="preserve"><value>Upgrade to latest</value></data>
+  <data name="FixUpgradeSchemaConfirm" xml:space="preserve"><value>This will migrate the selected Realm in-place to the latest schema supported by this build. A backup will be created first at: {0}. Close the game first. Continue?</value></data>
+  <data name="FixUpgradeSchemaTitle" xml:space="preserve"><value>Upgrade schema</value></data>
   <data name="FixConvertOfficialConfirm" xml:space="preserve"><value>This will convert the selected polluted Realm in-place to official format. A backup will be created first at: {0}. Continue?</value></data>
   <data name="FixConvertOfficialTitle" xml:space="preserve"><value>Convert to official</value></data>
   <data name="StatusFixConvertedOfficial" xml:space="preserve"><value>Converted to official: {0} (backup: {1}, wrote {2} item(s))</value></data>
+  <data name="StatusFixSchemaUpgraded" xml:space="preserve"><value>Schema upgraded: {0} ({1} → {2}, backup: {3})</value></data>
+  <data name="StatusFixSchemaAlreadyLatest" xml:space="preserve"><value>{0} is already at the latest schema supported by this build ({1}). Backup: {2}</value></data>
   <data name="ErrorFileInUse" xml:space="preserve"><value>Write blocked by pre-check (file in use). Close osu!/Ez2Lazer and retry. Detail: {0}</value></data>
-  <data name="ErrorMigrationRequired" xml:space="preserve"><value>This Realm requires migration before it can be opened. Open it once in the matching client (osu!lazer for official, Ez2Lazer for Ez), then retry. Detail: {0}</value></data>
+  <data name="ErrorMigrationRequired" xml:space="preserve"><value>This Realm requires migration before it can be opened. Use Fix → Upgrade to latest; if that fails, update EzRealmSync or check reader packages. Detail: {0}</value></data>
   <data name="ErrorPathConflict" xml:space="preserve"><value>Path conflict: {0}</value></data>
   <data name="ErrorLegacyReaderUnavailable" xml:space="preserve"><value>This version cannot open the legacy schema yet. Install/select a matching reader version and retry. Detail: {0}</value></data>
   <data name="ReaderSettings" xml:space="preserve"><value>Reader packages</value></data>

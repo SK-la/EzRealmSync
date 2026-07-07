@@ -165,6 +165,24 @@ namespace osu.Game.EzRealmSync.Mock
             };
         }
 
+        public async Task<RealmSchemaUpgradeResult> UpgradeSchemaToLatestAsync(
+            string realmId,
+            string? backupDirectory = null,
+            IProgress<ScanProgress>? progress = null,
+            CancellationToken cancellationToken = default)
+        {
+            await ensureLoadedAsync(realmId, progress, cancellationToken).ConfigureAwait(false);
+            await simulateWorkAsync(progress, "正在升级 schema…", cancellationToken).ConfigureAwait(false);
+
+            return new RealmSchemaUpgradeResult
+            {
+                RealmFilePath = Path.Combine(Path.GetTempPath(), "client_mock.realm"),
+                SourceSchemaVersion = 51_003,
+                TargetSchemaVersion = 51_006,
+                BackupPath = Path.Combine(backupDirectory ?? EzRealmSyncDefaults.DefaultBackupDirectory, "mock_backup.realm"),
+            };
+        }
+
         public void InvalidateCatalog(string? realmId = null)
         {
             if (realmId == null)

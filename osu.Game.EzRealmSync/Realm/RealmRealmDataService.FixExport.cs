@@ -75,6 +75,48 @@ namespace osu.Game.EzRealmSync.Realm
             CancellationToken cancellationToken = default) =>
             Task.Run(() => convertToOfficialCore(realmId, outputRealmFilePath, progress, cancellationToken), cancellationToken);
 
+        public Task<RealmSchemaUpgradeResult> UpgradeSchemaToLatestAsync(
+            string realmId,
+            string? backupDirectory = null,
+            IProgress<ScanProgress>? progress = null,
+            CancellationToken cancellationToken = default) =>
+            Task.Run(() => upgradeSchemaCore(realmId, backupDirectory, progress, cancellationToken), cancellationToken);
+
+        private RealmSchemaUpgradeResult upgradeSchemaCore(
+            string realmId,
+            string? backupDirectory,
+            IProgress<ScanProgress>? progress,
+            CancellationToken cancellationToken)
+        {
+            if (!registry.TryGet(realmId, out var file))
+                throw new InvalidOperationException($"未找到 Realm 文件：{realmId}");
+
+            string realmPath = Path.GetFullPath(file.FilePath);
+            string? guardError = Task.Run(() => RealmProcessGuard.ComprehensiveCheckAsync(realmPath)).GetAwaiter().GetResult();
+            if (guardError != null)
+                throw new RealmUserOperationException(RealmUserErrorKind.FileInUse, guardError);
+
+            progress?.Report(new ScanProgress { Progress = 0.05, Message = "正在创建自动备份…" });
+            string backupDir = string.IsNullOrWhiteSpace(backupDirectory)
+                ? EzRealmSyncDefaults.DefaultBackupDirectory
+                : backupDirectory;
+            string backupPath = RealmFileBackup.CreateTimestampedCopy(realmPath, backupDir);
+
+            cancellationToken.ThrowIfCancellationRequested();
+
+            var result = RealmSchemaUpgrader.UpgradeInPlace(realmPath, file.SchemaVersion, progress, cancellationToken);
+            invalidateAfterMutatingRealm(realmId, realmPath);
+
+            return new RealmSchemaUpgradeResult
+            {
+                RealmFilePath = result.RealmFilePath,
+                SourceSchemaVersion = result.SourceSchemaVersion,
+                TargetSchemaVersion = result.TargetSchemaVersion,
+                BackupPath = backupPath,
+                AlreadyUpToDate = result.AlreadyUpToDate,
+            };
+        }
+
         private RealmFixApplyResult applyFixesCore(
             string realmId,
             IReadOnlyList<Guid> issueIds,

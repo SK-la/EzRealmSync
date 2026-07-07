@@ -69,6 +69,7 @@
 
     <WrapPanel Grid.Row="2" Margin="0,0,0,8">
       <ui:Button x:Name="SelectAllButton" Margin="0,0,8,0" Click="SelectAll_OnClick" />
+      <ui:Button x:Name="UpgradeSchemaButton" Margin="0,0,8,0" Click="UpgradeSchema_OnClick" Icon="{ui:SymbolIcon ArrowUp24}" />
       <ui:Button x:Name="ConvertOfficialButton" Margin="0,0,8,0" Click="ConvertOfficial_OnClick" Icon="{ui:SymbolIcon ArrowSync24}" />
     </WrapPanel>
 
