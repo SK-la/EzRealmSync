@@ -622,11 +622,8 @@ namespace osu.EzRealmSync.AppModel
                 if (validation.Warnings.Count > 0)
                     runOnUi(() => StatusMessage.Value = string.Join(Environment.NewLine, validation.Warnings));
 
-                if (!delete)
-                {
-                    string backupPath = await dataService.CreateTimestampedBackupAsync(targetFile.FilePath, BackupDirectory.Value, token).ConfigureAwait(false);
-                    runOnUi(() => StatusMessage.Value = Loc.Format("StatusBackupCreated", backupPath));
-                }
+                string writeTargetPath = delete ? sourceFile.FilePath : targetFile.FilePath;
+                await createWriteBackupAsync(writeTargetPath, token).ConfigureAwait(false);
 
                 var request = new ApplyRequest
                 {
@@ -755,6 +752,8 @@ namespace osu.EzRealmSync.AppModel
 
             try
             {
+                await createWriteBackupAsync(file.FilePath).ConfigureAwait(false);
+
                 int deleted = await dataService.DeleteBrowseEntitiesAsync(
                     file.Id,
                     SelectedRealmClass.Value,
@@ -1248,6 +1247,7 @@ namespace osu.EzRealmSync.AppModel
                     ? "_"
                     : IllegalCharacterReplacement.Value[..1];
 
+                await createWriteBackupAsync(file.FilePath).ConfigureAwait(false);
                 var progress = createScanProgress();
 
                 var result = await fixService.ApplyFixesAsync(
@@ -1276,6 +1276,13 @@ namespace osu.EzRealmSync.AppModel
             {
                 setBusy(false);
             }
+        }
+
+        private async Task<string> createWriteBackupAsync(string realmFilePath, CancellationToken cancellationToken = default)
+        {
+            string backupPath = await dataService.CreateTimestampedBackupAsync(realmFilePath, BackupDirectory.Value, cancellationToken).ConfigureAwait(false);
+            runOnUi(() => StatusMessage.Value = Loc.Format("StatusBackupCreated", backupPath));
+            return backupPath;
         }
 
         private void updateWorkspaceCapabilities()

@@ -20,11 +20,6 @@ namespace osu.Game.EzRealmSync.Models
         public RealmFileEntry Register(string realmFilePath, Func<string, int?>? readSchemaVersion = null)
         {
             string fullPath = Path.GetFullPath(realmFilePath);
-
-            var existing = files.Values.FirstOrDefault(f => string.Equals(f.FilePath, fullPath, StringComparison.OrdinalIgnoreCase));
-            if (existing != null)
-                return existing;
-
             int? schema = readSchemaVersion?.Invoke(fullPath);
             return registerPath(fullPath, schema);
         }
@@ -40,15 +35,25 @@ namespace osu.Game.EzRealmSync.Models
 
             var existing = files.Values.FirstOrDefault(f => string.Equals(f.FilePath, fullPath, StringComparison.OrdinalIgnoreCase));
             if (existing != null)
-                return existing;
+            {
+                var refreshed = createEntry(fullPath, schemaVersion, existing.Id);
+                files[existing.Id] = refreshed;
+                return refreshed;
+            }
 
+            var entry = createEntry(fullPath, schemaVersion);
+            files[entry.Id] = entry;
+            return entry;
+        }
+
+        private static RealmFileEntry createEntry(string fullPath, int? schemaVersion, string? id = null)
+        {
             bool isLocked = !RealmSyncPathHelper.TryValidateRealmFileAccessible(fullPath, out _);
-
             long? size = File.Exists(fullPath) ? new FileInfo(fullPath).Length : null;
 
-            var entry = new RealmFileEntry
+            return new RealmFileEntry
             {
-                Id = Guid.NewGuid().ToString("N"),
+                Id = id ?? Guid.NewGuid().ToString("N"),
                 DisplayName = Path.GetFileName(fullPath),
                 FilePath = fullPath,
                 DataDirectory = RealmWorkspacePaths.ResolveDataDirectory(fullPath),
@@ -56,9 +61,6 @@ namespace osu.Game.EzRealmSync.Models
                 FileSizeBytes = size,
                 IsLocked = isLocked,
             };
-
-            files[entry.Id] = entry;
-            return entry;
         }
     }
 }

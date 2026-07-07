@@ -145,6 +145,7 @@ namespace osu.Game.EzRealmSync.Realm
             applied += orphanDeleted;
 
             fixIssuesByRealm[realmId] = issues.Where(i => !idSet.Contains(i.Id)).ToList();
+            invalidateAfterMutatingRealm(realmId, file.FilePath);
             progress?.Report(new ScanProgress { Progress = 1, Message = $"已处理 {applied} 项" });
 
             return new RealmFixApplyResult { AppliedCount = applied, SkippedCount = skipped };
@@ -164,6 +165,14 @@ namespace osu.Game.EzRealmSync.Realm
 
             string sourcePath = Path.GetFullPath(file.FilePath);
             string sourceName = Path.GetFileName(sourcePath);
+            if (!string.IsNullOrWhiteSpace(outputRealmFilePath)
+                && !string.Equals(Path.GetFullPath(outputRealmFilePath), sourcePath, StringComparison.OrdinalIgnoreCase))
+            {
+                throw new InvalidOperationException("“转回官方版”仅支持原地转换：会先自动备份，再覆盖所选 Realm 文件本身。");
+            }
+            string? guardError = Task.Run(() => RealmProcessGuard.ComprehensiveCheckAsync(sourcePath)).GetAwaiter().GetResult();
+            if (guardError != null)
+                throw new InvalidOperationException(guardError);
 
             progress?.Report(new ScanProgress { Progress = 0.05, Message = "正在创建自动备份…" });
             string backupPath = RealmFileBackup.CreateTimestampedCopy(sourcePath, EzRealmSyncDefaults.DefaultBackupDirectory);
@@ -227,9 +236,7 @@ namespace osu.Game.EzRealmSync.Realm
                 progress?.Report(new ScanProgress { Progress = 0.9, Message = "正在覆盖原文件…" });
                 File.Copy(tempTargetPath, sourcePath, overwrite: true);
 
-                snapshotCache.Remove(realmId);
-                fixIssuesByRealm.Remove(realmId);
-                exportCatalogs.Clear();
+                invalidateAfterMutatingRealm(realmId, sourcePath);
 
                 progress?.Report(new ScanProgress { Progress = 1, Message = "转换完成" });
 

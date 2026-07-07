@@ -41,6 +41,24 @@ namespace osu.Game.EzRealmSync.Tests
         }
 
         [Test]
+        public void Register_same_path_refreshes_schema_and_keeps_id()
+        {
+            Directory.CreateDirectory(Path.Combine(tempRoot, "data"));
+            string realm = Path.Combine(tempRoot, "data", "client.realm");
+            File.WriteAllText(realm, "v1");
+
+            var registry = new RealmFileRegistry();
+            var first = registry.Register(realm, _ => 51_006);
+
+            File.WriteAllText(realm, "v2-with-more-bytes");
+            var second = registry.Register(realm, _ => 51);
+
+            Assert.That(second.Id, Is.EqualTo(first.Id));
+            Assert.That(second.SchemaVersion, Is.EqualTo(51));
+            Assert.That(second.FileSizeBytes, Is.GreaterThan(first.FileSizeBytes));
+        }
+
+        [Test]
         public void MergeDiscovered_finds_realm_under_data_folder()
         {
             string dataDir = Path.Combine(tempRoot, "data");

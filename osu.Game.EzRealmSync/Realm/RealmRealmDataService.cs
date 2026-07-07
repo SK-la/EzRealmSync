@@ -96,6 +96,14 @@ namespace osu.Game.EzRealmSync.Realm
             var diff = RealmDiffEngine.Compare(sourceSnapshot, targetSnapshot, kinds, progress, cancellationToken);
             return RealmSetCompareHelper.ApplyOperation(diff, operation);
         }
+
+        private void invalidateAfterMutatingRealm(string realmId, string realmFilePath)
+        {
+            snapshotCache.Remove(realmId);
+            exportCatalogs.Clear();
+            fixIssuesByRealm.Remove(realmId);
+            registry.Register(realmFilePath, RealmSchemaProbe.TryReadSchemaVersion);
+        }
     }
 }
 #endif
