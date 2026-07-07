@@ -1,7 +1,9 @@
 #if HAS_EZ_OSU_GAME
 using NUnit.Framework;
+using osu.Game.EzRealmSync.Errors;
 using osu.Game.EzRealmSync.Models;
 using osu.Game.EzRealmSync.Realm;
+using osu.Game.EzRealmSync.Tests.TestInfrastructure;
 using Realms;
 using RealmInstance = Realms.Realm;
 
@@ -10,6 +12,9 @@ namespace osu.Game.EzRealmSync.Tests
     [TestFixture]
     public class RealmDiskSchemaReaderIntegrationTest
     {
+        private static IEnumerable<TestCaseData> sample_cases() =>
+            RealmSampleFixture.GetAllSamples().Select(sample => new TestCaseData(sample).SetName($"sample_schema_{sample.Kind}"));
+
         [Test]
         public void TryReadSchemaVersion_reads_version_from_created_realm()
         {
@@ -100,6 +105,44 @@ namespace osu.Game.EzRealmSync.Tests
                 if (File.Exists(path))
                     File.Delete(path);
             }
+        }
+
+        [TestCaseSource(nameof(sample_cases))]
+        public void TryReadSchemaVersion_matches_manifest_kind(RealmSampleInfo sample)
+        {
+            if (!sample.RealmFileExists)
+                Assert.Ignore($"样本未放置 realm 文件：{sample.RealmFilePath}");
+
+            int? schema = RealmSchemaProbe.TryReadSchemaVersion(sample.RealmFilePath);
+            Assert.That(schema, Is.Not.Null, $"schema 读取失败：{sample.RealmFilePath}");
+
+            bool parsed = Enum.TryParse(sample.DiskSchemaKind, ignoreCase: true, out RealmDiskSchemaKind expectedKind);
+            Assert.That(parsed, Is.True, $"manifest expected.diskSchemaKind 非法：{sample.DiskSchemaKind}");
+            Assert.That(RealmSchemaSafety.Classify(schema), Is.EqualTo(expectedKind));
+        }
+
+        [TestCaseSource(nameof(sample_cases))]
+        public void Open_behaviour_matches_manifest_expectation(RealmSampleInfo sample)
+        {
+            if (!sample.RealmFileExists)
+                Assert.Ignore($"样本未放置 realm 文件：{sample.RealmFilePath}");
+
+            if (sample.CanOpenWithoutMigration)
+            {
+                Assert.DoesNotThrow((TestDelegate)(() =>
+                {
+                    using var access = RealmSchemaProbe.Open(sample.RealmFilePath);
+                    access.Run(_ => { });
+                }));
+                return;
+            }
+
+            var ex = Assert.Throws<RealmUserOperationException>((TestDelegate)(() =>
+            {
+                using var access = RealmSchemaProbe.Open(sample.RealmFilePath);
+                access.Run(_ => { });
+            }));
+            Assert.That(ex!.Kind, Is.EqualTo(RealmUserErrorKind.MigrationRequired));
         }
     }
 }
