@@ -9,7 +9,9 @@ namespace osu.EzRealmSync.Desktop.Pages
     public partial class FixPage
     {
         private ShellViewModel? vm;
+        private bool pageBound;
         private bool issuesGridBehaviorConfigured;
+        private bool issuesGridConfigured;
 
         public FixPage()
         {
@@ -20,9 +22,10 @@ namespace osu.EzRealmSync.Desktop.Pages
 
         private void bindIfReady()
         {
-            if (DataContext is not ShellViewModel shell)
+            if (pageBound || DataContext is not ShellViewModel shell)
                 return;
 
+            pageBound = true;
             vm = shell;
             refreshLabels();
             setupGrid();
@@ -84,8 +87,10 @@ namespace osu.EzRealmSync.Desktop.Pages
 
         private void setupGrid()
         {
-            if (IssuesGrid.Columns.Count > 0)
+            if (issuesGridConfigured)
                 return;
+
+            issuesGridConfigured = true;
 
             IssuesGrid.Columns.Add(DataGridCheckColumnHelper.CreateColumn());
             addTextColumn(Loc.Get("ColFixKind"), nameof(RealmFixIssueModel.KindDisplay), 100);

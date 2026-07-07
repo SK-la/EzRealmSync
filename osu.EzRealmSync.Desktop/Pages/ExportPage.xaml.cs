@@ -10,73 +10,80 @@ namespace osu.EzRealmSync.Desktop.Pages
     public partial class ExportPage
     {
         private ShellViewModel? vm;
+        private bool pageBound;
         private bool suppressKindChange;
+        private bool exportGridConfigured;
         private bool exportGridBehaviorConfigured;
         private DataGridTextColumn? colSecondary;
         private DataGridTextColumn? colExtra;
         private DataGridTextColumn? colPath;
 
+        private readonly object bindLock = new();
+
         public ExportPage()
         {
             InitializeComponent();
             Loaded += (_, _) => bindIfReady();
-            DataContextChanged += (_, _) => bindIfReady();
         }
 
         private void bindIfReady()
         {
-            if (DataContext is not ShellViewModel shell)
-                return;
-
-            vm = shell;
-            refreshLabels();
-            setupGrid();
-            configureExportGridBehavior();
-            setupDataKindCombo();
-
-            refreshRealmCombo();
-            ExportDirBox.Text = vm.ExportDirectory;
-            FolderNameBox.Text = vm.ExportFolderName;
-            GroupScoresByPlayerCheck.IsChecked = vm.ExportGroupScoresByPlayer;
-
-            ExportGrid.ItemsSource = vm.ExportItems;
-
-            vm.PropertyChanged += (_, e) =>
+            lock (bindLock)
             {
-                if (e.PropertyName == nameof(ShellViewModel.RealmFiles)
-                    || e.PropertyName == nameof(ShellViewModel.ExportRealmId))
-                    Dispatcher.Invoke(refreshRealmCombo);
+                if (pageBound || DataContext is not ShellViewModel shell)
+                    return;
 
-                if (e.PropertyName == nameof(ShellViewModel.ExportItems))
-                    Dispatcher.Invoke(() => ExportGrid.ItemsSource = vm!.ExportItems);
+                pageBound = true;
+                vm = shell;
+                refreshLabels();
+                setupGrid();
+                configureExportGridBehavior();
+                setupDataKindCombo();
 
-                if (e.PropertyName is nameof(ShellViewModel.ExportDirectory) or nameof(ShellViewModel.ExportFolderName))
+                refreshRealmCombo();
+                ExportDirBox.Text = vm.ExportDirectory;
+                FolderNameBox.Text = vm.ExportFolderName;
+                GroupScoresByPlayerCheck.IsChecked = vm.ExportGroupScoresByPlayer;
+
+                ExportGrid.ItemsSource = vm.ExportItems;
+
+                vm.PropertyChanged += (_, e) =>
                 {
-                    Dispatcher.Invoke(() =>
+                    if (e.PropertyName == nameof(ShellViewModel.RealmFiles)
+                        || e.PropertyName == nameof(ShellViewModel.ExportRealmId))
+                        Dispatcher.Invoke(refreshRealmCombo);
+
+                    if (e.PropertyName == nameof(ShellViewModel.ExportItems))
+                        Dispatcher.Invoke(() => ExportGrid.ItemsSource = vm!.ExportItems);
+
+                    if (e.PropertyName is nameof(ShellViewModel.ExportDirectory) or nameof(ShellViewModel.ExportFolderName))
                     {
-                        ExportDirBox.Text = vm!.ExportDirectory;
-                        FolderNameBox.Text = vm.ExportFolderName;
-                    });
-                }
+                        Dispatcher.Invoke(() =>
+                        {
+                            ExportDirBox.Text = vm!.ExportDirectory;
+                            FolderNameBox.Text = vm.ExportFolderName;
+                        });
+                    }
 
-                if (e.PropertyName == nameof(ShellViewModel.ExportGroupScoresByPlayer))
-                    Dispatcher.Invoke(() => GroupScoresByPlayerCheck.IsChecked = vm!.ExportGroupScoresByPlayer);
+                    if (e.PropertyName == nameof(ShellViewModel.ExportGroupScoresByPlayer))
+                        Dispatcher.Invoke(() => GroupScoresByPlayerCheck.IsChecked = vm!.ExportGroupScoresByPlayer);
 
-                if (e.PropertyName == nameof(ShellViewModel.CanUseFixAndExport))
-                    Dispatcher.Invoke(updateEnabled);
+                    if (e.PropertyName == nameof(ShellViewModel.CanUseFixAndExport))
+                        Dispatcher.Invoke(updateEnabled);
 
-                if (e.PropertyName == nameof(ShellViewModel.ExportDataKind))
-                    Dispatcher.Invoke(updateExportGridColumns);
-            };
+                    if (e.PropertyName == nameof(ShellViewModel.ExportDataKind))
+                        Dispatcher.Invoke(updateExportGridColumns);
+                };
 
-            vm.Presenter.ExportItemsChanged += () => Dispatcher.Invoke(() => ExportGrid.ItemsSource = vm!.ExportItems);
-            vm.Presenter.WorkspaceCapabilitiesChanged += () => Dispatcher.Invoke(updateEnabled);
+                vm.Presenter.ExportItemsChanged += () => Dispatcher.Invoke(() => ExportGrid.ItemsSource = vm!.ExportItems);
+                vm.Presenter.WorkspaceCapabilitiesChanged += () => Dispatcher.Invoke(updateEnabled);
 
-            GroupScoresByPlayerCheck.Checked += (_, _) => setGroupScoresByPlayer(true);
-            GroupScoresByPlayerCheck.Unchecked += (_, _) => setGroupScoresByPlayer(false);
+                GroupScoresByPlayerCheck.Checked += (_, _) => setGroupScoresByPlayer(true);
+                GroupScoresByPlayerCheck.Unchecked += (_, _) => setGroupScoresByPlayer(false);
 
-            updateEnabled();
-            updateExportGridColumns();
+                updateEnabled();
+                updateExportGridColumns();
+            }
         }
 
         private void setGroupScoresByPlayer(bool value)
@@ -140,32 +147,36 @@ namespace osu.EzRealmSync.Desktop.Pages
 
         private void setupGrid()
         {
-            if (ExportGrid.Columns.Count > 0)
+            if (exportGridConfigured || ExportGrid.Columns.Count > 0)
+            {
+                exportGridConfigured = true;
                 return;
+            }
+
+            exportGridConfigured = true;
 
             ExportGrid.Columns.Add(DataGridCheckColumnHelper.CreateColumn());
-
-            colSecondary = addTextColumn(Loc.Get("ColArtist"), nameof(RealmExportItemModel.Artist), 120);
-            colExtra = addTextColumn(Loc.Get("ColExportPlayer"), nameof(RealmExportItemModel.PlayerName), 120);
-            colPath = addTextColumn(Loc.Get("ColExportPath"), nameof(RealmExportItemModel.RelativePath), new DataGridLength(1.5, DataGridLengthUnitType.Star));
-
-            ExportGrid.Columns.Insert(1, addTextColumn(Loc.Get("ColTitle"), nameof(RealmExportItemModel.Title), new DataGridLength(1, DataGridLengthUnitType.Star)));
+            ExportGrid.Columns.Add(createTextColumn(Loc.Get("ColTitle"), nameof(RealmExportItemModel.Title), new DataGridLength(1, DataGridLengthUnitType.Star)));
+            colSecondary = createTextColumn(Loc.Get("ColArtist"), nameof(RealmExportItemModel.Artist), 120);
+            colExtra = createTextColumn(Loc.Get("ColExportPlayer"), nameof(RealmExportItemModel.PlayerName), 120);
+            colPath = createTextColumn(Loc.Get("ColExportPath"), nameof(RealmExportItemModel.RelativePath), new DataGridLength(1.5, DataGridLengthUnitType.Star));
+            ExportGrid.Columns.Add(colSecondary);
+            ExportGrid.Columns.Add(colExtra);
+            ExportGrid.Columns.Add(colPath);
         }
 
-        private DataGridTextColumn addTextColumn(string header, string path, double width) => addTextColumn(header, path, new DataGridLength(width));
+        private DataGridTextColumn createTextColumn(string header, string path, double width) =>
+            createTextColumn(header, path, new DataGridLength(width));
 
-        private DataGridTextColumn addTextColumn(string header, string path, DataGridLength width)
+        private DataGridTextColumn createTextColumn(string header, string path, DataGridLength width)
         {
-            var column = new DataGridTextColumn
+            return new DataGridTextColumn
             {
                 Header = header,
                 Binding = new Binding(path) { Mode = BindingMode.OneWay },
                 Width = width,
                 IsReadOnly = true,
             };
-
-            ExportGrid.Columns.Add(column);
-            return column;
         }
 
         private void configureExportGridBehavior()

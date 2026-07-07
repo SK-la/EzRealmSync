@@ -10,7 +10,9 @@ namespace osu.EzRealmSync.Desktop.Pages
     public partial class ImportPage
     {
         private ShellViewModel? vm;
+        private bool pageBound;
         private bool realmGridConfigured;
+        private bool realmGridSetup;
 
         public ImportPage()
         {
@@ -21,9 +23,10 @@ namespace osu.EzRealmSync.Desktop.Pages
 
         private void bindIfReady()
         {
-            if (DataContext is not ShellViewModel shell)
+            if (pageBound || DataContext is not ShellViewModel shell)
                 return;
 
+            pageBound = true;
             vm = shell;
             refreshLabels();
             setupRealmGrid();
@@ -111,8 +114,10 @@ namespace osu.EzRealmSync.Desktop.Pages
 
         private void setupRealmGrid()
         {
-            if (RealmFilesGrid.Columns.Count > 0)
+            if (realmGridSetup)
                 return;
+
+            realmGridSetup = true;
 
             RealmFilesGrid.Columns.Add(DataGridCheckColumnHelper.CreateColumn());
 

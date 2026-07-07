@@ -12,11 +12,9 @@ namespace osu.Game.EzRealmSync.Realm
     /// <summary>
     /// 只读探测磁盘 schema 版本（动态 Realm 打开，不经过 <see cref="osu.Game.Database.RealmAccess"/>，不迁移）。
     /// </summary>
-    public static class RealmDiskSchemaReader
+    public static partial class RealmDiskSchemaReader
     {
-        private static readonly Regex versioned_filename = new(
-            @"^client_(?<n>\d+)\.realm$",
-            RegexOptions.IgnoreCase | RegexOptions.CultureInvariant | RegexOptions.Compiled);
+        private static readonly Regex versioned_filename = myRegex();
 
         public static int? TryReadSchemaVersion(string realmFilePath) =>
             TryReadSchemaVersion(realmFilePath, out _);
@@ -175,6 +173,9 @@ namespace osu.Game.EzRealmSync.Realm
                 return false;
             }
         }
+
+        [GeneratedRegex(@"^client_(?<n>\d+)\.realm$", RegexOptions.IgnoreCase | RegexOptions.Compiled | RegexOptions.CultureInvariant)]
+        private static partial Regex myRegex();
     }
 }
 #endif

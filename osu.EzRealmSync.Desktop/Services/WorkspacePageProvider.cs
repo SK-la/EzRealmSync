@@ -40,7 +40,7 @@ namespace osu.EzRealmSync.Desktop.Services
                 element.HorizontalAlignment = HorizontalAlignment.Stretch;
                 element.VerticalAlignment = VerticalAlignment.Stretch;
 
-                if (shell != null)
+                if (shell != null && !ReferenceEquals(element.DataContext, shell))
                     element.DataContext = shell;
             }
 
