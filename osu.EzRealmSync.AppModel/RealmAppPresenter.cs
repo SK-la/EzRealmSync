@@ -3,6 +3,7 @@ using osu.EzRealmSync.AppModel.Localization;
 using osu.Framework.Bindables;
 using osu.Game.EzRealmSync;
 using osu.Game.EzRealmSync.Abstractions;
+using osu.Game.EzRealmSync.Errors;
 using osu.Game.EzRealmSync.Mock;
 using osu.Game.EzRealmSync.Models;
 
@@ -230,7 +231,7 @@ namespace osu.EzRealmSync.AppModel
             }
             catch (Exception ex)
             {
-                runOnUi(() => StatusMessage.Value = ex.Message);
+                runOnUi(() => StatusMessage.Value = toUserMessage(ex));
             }
             finally
             {
@@ -351,7 +352,7 @@ namespace osu.EzRealmSync.AppModel
             }
             catch (Exception ex)
             {
-                runOnUi(() => StatusMessage.Value = ex.Message);
+                runOnUi(() => StatusMessage.Value = toUserMessage(ex));
             }
             finally
             {
@@ -400,7 +401,7 @@ namespace osu.EzRealmSync.AppModel
             }
             catch (Exception ex)
             {
-                runOnUi(() => StatusMessage.Value = ex.Message);
+                runOnUi(() => StatusMessage.Value = toUserMessage(ex));
             }
             finally
             {
@@ -431,7 +432,7 @@ namespace osu.EzRealmSync.AppModel
             }
             catch (Exception ex)
             {
-                runOnUi(() => StatusMessage.Value = ex.Message);
+                runOnUi(() => StatusMessage.Value = toUserMessage(ex));
             }
             finally
             {
@@ -1283,6 +1284,23 @@ namespace osu.EzRealmSync.AppModel
             string backupPath = await dataService.CreateTimestampedBackupAsync(realmFilePath, BackupDirectory.Value, cancellationToken).ConfigureAwait(false);
             runOnUi(() => StatusMessage.Value = Loc.Format("StatusBackupCreated", backupPath));
             return backupPath;
+        }
+
+        private string toUserMessage(Exception ex)
+        {
+            RealmUserOperationException? userError = ex as RealmUserOperationException
+                                                   ?? ex.InnerException as RealmUserOperationException;
+
+            if (userError == null)
+                return ex.Message;
+
+            return userError.Kind switch
+            {
+                RealmUserErrorKind.FileInUse => Loc.Format("ErrorFileInUse", userError.Detail),
+                RealmUserErrorKind.MigrationRequired => Loc.Format("ErrorMigrationRequired", userError.Detail),
+                RealmUserErrorKind.PathConflict => Loc.Format("ErrorPathConflict", userError.Detail),
+                _ => userError.Detail,
+            };
         }
 
         private void updateWorkspaceCapabilities()

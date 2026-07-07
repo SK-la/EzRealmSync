@@ -1,6 +1,7 @@
 #if HAS_EZ_OSU_GAME
 using osu.Game.Database;
 using osu.Game.EzRealmSync.Abstractions;
+using osu.Game.EzRealmSync.Errors;
 using osu.Game.EzRealmSync.IO;
 using osu.Game.EzRealmSync.Models;
 
@@ -83,7 +84,7 @@ namespace osu.Game.EzRealmSync.Realm
             // 综合并发检查：重试进程检测 + 排他文件锁
             string? guardError = Task.Run(() => RealmProcessGuard.ComprehensiveCheckAsync(plan.TargetRealmFilePath)).GetAwaiter().GetResult();
             if (guardError != null)
-                throw new InvalidOperationException(guardError);
+                throw new RealmUserOperationException(RealmUserErrorKind.FileInUse, guardError);
 
             string? backupPath = null;
 

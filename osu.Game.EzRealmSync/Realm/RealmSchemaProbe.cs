@@ -1,5 +1,6 @@
 #if HAS_EZ_OSU_GAME
 using osu.Game.Database;
+using osu.Game.EzRealmSync.Errors;
 using osu.Game.EzRealmSync.Models;
 
 namespace osu.Game.EzRealmSync.Realm
@@ -37,7 +38,8 @@ namespace osu.Game.EzRealmSync.Realm
             catch (Exception ex) when (isMigrationRequiredError(ex))
             {
                 string fileName = Path.GetFileName(realmFilePath);
-                throw new InvalidOperationException(
+                throw new RealmUserOperationException(
+                    RealmUserErrorKind.MigrationRequired,
                     $"Realm 文件 {fileName} 需要 schema 迁移才能打开。EzRealmSync 不执行迁移，请先用对应客户端启动一次完成升级（官方库用 osu!lazer，Ez 库用 Ez2Lazer），然后再重试。",
                     ex);
             }

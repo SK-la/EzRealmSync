@@ -211,4 +211,7 @@
   <data name="FixConvertOfficialConfirm" xml:space="preserve"><value>将把所选污染库原地转换为官方格式。操作前会自动创建备份到：{0}。是否继续？</value></data>
   <data name="FixConvertOfficialTitle" xml:space="preserve"><value>转回官方版</value></data>
   <data name="StatusFixConvertedOfficial" xml:space="preserve"><value>已转回官方版：{0}（自动备份：{1}，写入 {2} 条）</value></data>
+  <data name="ErrorFileInUse" xml:space="preserve"><value>写入前检查阻断：文件正在被占用。请先关闭 osu!/Ez2Lazer 后重试。详情：{0}</value></data>
+  <data name="ErrorMigrationRequired" xml:space="preserve"><value>该 Realm 需要先迁移才能打开。请先用对应客户端启动一次完成升级（官方库用 osu!lazer，Ez 库用 Ez2Lazer），再重试。详情：{0}</value></data>
+  <data name="ErrorPathConflict" xml:space="preserve"><value>路径冲突：{0}</value></data>
 </root>

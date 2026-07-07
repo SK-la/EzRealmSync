@@ -1,5 +1,6 @@
 #if HAS_EZ_OSU_GAME
 using osu.Game.Database;
+using osu.Game.EzRealmSync.Errors;
 using osu.Game.EzRealmSync.Models;
 using osu.Game.EzRealmSync.IO;
 using osu.Game.Scoring;
@@ -89,7 +90,7 @@ namespace osu.Game.EzRealmSync.Realm
             // 综合并发检查：重试进程检测 + 排他文件锁
             string? guardError = Task.Run(() => RealmProcessGuard.ComprehensiveCheckAsync(file.FilePath)).GetAwaiter().GetResult();
             if (guardError != null)
-                throw new InvalidOperationException(guardError);
+                throw new RealmUserOperationException(RealmUserErrorKind.FileInUse, guardError);
 
             var idSet = issueIds.ToHashSet();
             var selected = issues.Where(i => idSet.Contains(i.Id)).ToList();
@@ -168,11 +169,13 @@ namespace osu.Game.EzRealmSync.Realm
             if (!string.IsNullOrWhiteSpace(outputRealmFilePath)
                 && !string.Equals(Path.GetFullPath(outputRealmFilePath), sourcePath, StringComparison.OrdinalIgnoreCase))
             {
-                throw new InvalidOperationException("“转回官方版”仅支持原地转换：会先自动备份，再覆盖所选 Realm 文件本身。");
+                throw new RealmUserOperationException(
+                    RealmUserErrorKind.PathConflict,
+                    "“转回官方版”仅支持原地转换：会先自动备份，再覆盖所选 Realm 文件本身。");
             }
             string? guardError = Task.Run(() => RealmProcessGuard.ComprehensiveCheckAsync(sourcePath)).GetAwaiter().GetResult();
             if (guardError != null)
-                throw new InvalidOperationException(guardError);
+                throw new RealmUserOperationException(RealmUserErrorKind.FileInUse, guardError);
 
             progress?.Report(new ScanProgress { Progress = 0.05, Message = "正在创建自动备份…" });
             string backupPath = RealmFileBackup.CreateTimestampedCopy(sourcePath, EzRealmSyncDefaults.DefaultBackupDirectory);
