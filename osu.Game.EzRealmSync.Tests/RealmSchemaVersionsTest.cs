@@ -22,6 +22,22 @@ namespace osu.Game.EzRealmSync.Tests
         }
 
         [Test]
+        public void RealmFileEntry_plain_official_shows_no_ez_column()
+        {
+            var entry = new RealmFileEntry
+            {
+                Id = "a",
+                DisplayName = "client.realm",
+                FilePath = @"C:\osu\data\client.realm",
+                SchemaVersion = 51,
+            };
+
+            Assert.That(entry.OfficialSchemaDisplay, Is.EqualTo("51"));
+            Assert.That(entry.EzSchemaDisplay, Is.EqualTo("—"));
+            Assert.That(entry.DiskSchemaKind, Is.EqualTo(RealmDiskSchemaKind.PpyClient));
+        }
+
+        [Test]
         public void RealmSchemaSafety_distinguishes_official_and_ez()
         {
             Assert.That(RealmSchemaSafety.IsOfficialDiskSchema(51), Is.True);

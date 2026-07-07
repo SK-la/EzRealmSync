@@ -1,6 +1,9 @@
 #if HAS_EZ_OSU_GAME
 using System.Reflection;
 using System.Text.RegularExpressions;
+using osu.Framework.Platform;
+using osu.Game.Database;
+using osu.Game.EzRealmSync.Models;
 using RealmConfiguration = Realms.RealmConfiguration;
 using RealmInstance = Realms.Realm;
 
@@ -73,18 +76,16 @@ namespace osu.Game.EzRealmSync.Realm
                 using var realm = RealmInstance.GetInstance(config);
 
                 // Realm 20：动态只读打开后 Config.SchemaVersion 仍为 0，须从 native handle 读取。
+                // 禁止回退到 Config.SchemaVersion：在 Ez 程序集内打开时它可能反映当前模型版本（如 51006）而非磁盘版本。
                 ulong version = readSchemaVersionFromHandle(realm);
 
                 if (version == 0)
-                    version = realm.Config.SchemaVersion;
-
-                if (version == 0)
                 {
-                    error = "已打开文件但 schema 版本为 0（请确认 lib/runtimes/win-x64/native/realm-wrappers.dll 存在且游戏已关闭）。";
+                    error = "已打开文件但无法从 native handle 读取 schema 版本（请确认 realm-wrappers 完整且游戏已关闭）。";
                     return false;
                 }
 
-                schemaVersion = checked((int)version);
+                schemaVersion = normalizeProbedVersion(fullPath, checked((int)version));
                 return true;
             }
             catch (Exception ex)
@@ -132,6 +133,48 @@ namespace osu.Game.EzRealmSync.Realm
 
         private static bool isRecognisedVersion(int? version) =>
             version is > 0 and (< 1000 or >= 1000);
+
+        /// <summary>
+        /// 裸 <c>client.realm</c> 在官方目录中应为 upstream-only（&lt; 1000）。
+        /// 若动态探测误报 Ez 编码（如 51006），用 OfficialRealmAccess 只读打开校验。
+        /// </summary>
+        private static int normalizeProbedVersion(string fullPath, int probedVersion)
+        {
+            if (!isPlainClientRealm(Path.GetFileName(fullPath)))
+                return probedVersion;
+
+            if (probedVersion < 1000)
+                return probedVersion;
+
+            int upstream = RealmAccess.UpstreamSchemaVersion;
+            if (tryOfficialOpenWithoutMigration(fullPath, upstream))
+                return upstream;
+
+            var (official, _) = RealmSchemaVersions.Decode(probedVersion);
+            if (official > 0 && official != upstream && tryOfficialOpenWithoutMigration(fullPath, official))
+                return official;
+
+            return probedVersion;
+        }
+
+        private static bool isPlainClientRealm(string fileName) =>
+            fileName.Equals("client.realm", StringComparison.OrdinalIgnoreCase);
+
+        private static bool tryOfficialOpenWithoutMigration(string fullPath, int pinnedSchema)
+        {
+            try
+            {
+                string storageRoot = RealmWorkspacePaths.ResolveStorageRoot(fullPath);
+                string filename = Path.GetFileName(fullPath);
+                using var access = OfficialRealmAccess.OpenWithoutMigration(new NativeStorage(storageRoot), filename, pinnedSchema);
+                access.Run(_ => { });
+                return true;
+            }
+            catch
+            {
+                return false;
+            }
+        }
     }
 }
 #endif

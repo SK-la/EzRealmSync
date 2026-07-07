@@ -28,9 +28,18 @@ namespace osu.Game.EzRealmSync.Models
 
         public int? EzRealmSchemaVersion => SchemaVersion.HasValue ? RealmSchemaVersions.Decode(SchemaVersion).ez : null;
 
-        public string OfficialSchemaDisplay => OfficialSchemaVersion?.ToString() ?? "—";
+        public RealmDiskSchemaKind DiskSchemaKind => RealmSchemaSafety.Classify(SchemaVersion);
 
-        public string EzSchemaDisplay => EzRealmSchemaVersion is > 0 ? EzRealmSchemaVersion.ToString()! : "—";
+        public string OfficialSchemaDisplay => SchemaVersion switch
+        {
+            null => "—",
+            _ when DiskSchemaKind == RealmDiskSchemaKind.PpyClient => SchemaVersion.Value.ToString(),
+            _ => OfficialSchemaVersion?.ToString() ?? "—",
+        };
+
+        public string EzSchemaDisplay => DiskSchemaKind == RealmDiskSchemaKind.EzExtended && EzRealmSchemaVersion is > 0
+            ? EzRealmSchemaVersion.ToString()!
+            : "—";
 
         public string SchemaDisplay => SchemaVersion?.ToString() ?? "—";
     }
