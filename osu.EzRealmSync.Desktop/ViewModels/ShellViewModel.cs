@@ -135,13 +135,7 @@ namespace osu.EzRealmSync.Desktop.ViewModels
                 if (LaunchOptions.UiTestMode)
                     return Loc.Get("AppTitleUiTest");
 
-                if (Presenter.BackendKind == EzRealmSyncBackendKind.Real)
-                    return Loc.Get("AppTitle");
-
-                if (EzRealmSyncBackend.IsOsuGameDllOnDisk && !EzRealmSyncBackend.IsRealBackendCompiled)
-                    return Loc.Get("AppTitle") + " [需重新编译]";
-
-                return Loc.Get("AppTitle") + " [缺少 lib]";
+                return Loc.Get("AppTitle");
             }
         }
 

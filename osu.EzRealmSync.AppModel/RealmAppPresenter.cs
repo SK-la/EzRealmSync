@@ -297,9 +297,6 @@ namespace osu.EzRealmSync.AppModel
                 if (RealmWorkspaceDiscovery.FindRealmFilesInSearchDirectory(searchDirectory).Count == 0)
                     return Loc.Format("StatusNoRealmInPath", searchDirectory);
 
-                if (BackendKind == EzRealmSyncBackendKind.Stub)
-                    return resolveBackendStatusMessage();
-
                 return Loc.Format("StatusNoRealmRegistered", searchDirectory);
             }
 
@@ -1478,14 +1475,7 @@ namespace osu.EzRealmSync.AppModel
         {
             if (UiTestMode.Value)
                 return Loc.Get("StatusUiTest");
-
-            if (BackendKind == EzRealmSyncBackendKind.Real)
-                return Loc.Get("StatusReady");
-
-            if (EzRealmSyncBackend.IsOsuGameDllOnDisk && !EzRealmSyncBackend.IsRealBackendCompiled)
-                return Loc.Get("StatusLibNeedsRebuild");
-
-            return Loc.Get("StatusMissingLib");
+            return Loc.Get("StatusReady");
         }
 
         private void persistSettings()

@@ -13,12 +13,7 @@ namespace osu.Game.EzRealmSync
         {
             if (uiTestMode)
                 return new MockEzRealmSyncService(mockOptions ?? new MockEzRealmSyncOptions());
-
-#if HAS_EZ_OSU_GAME
             return new RealmEzRealmSyncService();
-#else
-            return new StubRealmEzRealmSyncService();
-#endif
         }
 
         /// <summary>
@@ -31,17 +26,8 @@ namespace osu.Game.EzRealmSync
                 var mock = new MockEzRealmSyncService(mockOptions ?? new MockEzRealmSyncOptions());
                 return new RealmServiceSession(mock, mock, mock, mock);
             }
-
-#if HAS_EZ_OSU_GAME
             var data = new RealmRealmDataService();
             return new RealmServiceSession(data, data, data, new RealmEzRealmSyncService());
-#else
-            return new RealmServiceSession(
-                new StubRealmDataService(),
-                new StubRealmFixExportService(),
-                new StubRealmFixExportService(),
-                new StubRealmEzRealmSyncService());
-#endif
         }
 
         public static IRealmDataService CreateDataService(bool uiTestMode, MockEzRealmSyncOptions? mockOptions = null) => CreateSession(uiTestMode, mockOptions).Data;
