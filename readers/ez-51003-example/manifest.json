@@ -1,0 +1,7 @@
+{
+  "id": "ez-51003-example",
+  "displayName": "Ez2Lazer 51003（示例，需自行放入 lib）",
+  "profile": "ez",
+  "diskSchemaVersions": [51003],
+  "libPath": "lib"
+}

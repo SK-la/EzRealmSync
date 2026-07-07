@@ -177,6 +177,40 @@ namespace osu.EzRealmSync.Desktop
             ConfirmDeleteSwitch.IsChecked = vm.ConfirmBeforeDelete;
             ConfirmDeleteSwitch.IsEnabled = !vm.IsBusy;
 
+            ReaderSettingsExpander.Header = Loc.Get("ReaderSettings");
+            ReaderSettingsExpander.Visibility = vm.Presenter.UiTestMode.Value ? Visibility.Collapsed : Visibility.Visible;
+            ReaderPackagesPathLabel.Text = Loc.Get("ReaderPackagesDirectory");
+            ReaderPackagesPathText.Text = vm.Presenter.ReaderPackagesPath;
+            ActiveReaderPackageLabel.Text = Loc.Get("ActiveReaderPackage");
+            ReaderRestartHint.Text = Loc.Get("ReaderRestartHint");
+            ActiveReaderPackageCombo.IsEnabled = !vm.IsBusy;
+
+            ActiveReaderPackageCombo.Items.Clear();
+            ActiveReaderPackageCombo.Items.Add(new ComboBoxItem
+            {
+                Content = Loc.Get("ReaderPackageDefault"),
+                Tag = null,
+            });
+
+            foreach (var package in vm.Presenter.InstalledReaderPackages)
+            {
+                string schemaSummary = package.DiskSchemaVersions.Count == 0
+                    ? string.Empty
+                    : string.Join(", ", package.DiskSchemaVersions);
+                string suffix = package.HasValidLib ? string.Empty : Loc.Get("ReaderPackageMissingLib");
+                ActiveReaderPackageCombo.Items.Add(new ComboBoxItem
+                {
+                    Content = $"{package.DisplayName} ({schemaSummary}){suffix}",
+                    Tag = package.Id,
+                });
+            }
+
+            string? activePackageId = vm.Presenter.ActiveReaderPackageId.Value;
+            ActiveReaderPackageCombo.SelectedItem = ActiveReaderPackageCombo.Items
+                .OfType<ComboBoxItem>()
+                .FirstOrDefault(item => (item.Tag as string) == activePackageId)
+                ?? ActiveReaderPackageCombo.Items[0];
+
             bool showMock = vm.Presenter.UiTestMode.Value && vm.Presenter.MockService != null;
             MockSettingsExpander.Visibility = showMock ? Visibility.Visible : Visibility.Collapsed;
 
@@ -245,6 +279,17 @@ namespace osu.EzRealmSync.Desktop
                 return;
 
             vm.ConfirmBeforeDelete = ConfirmDeleteSwitch.IsChecked == true;
+        }
+
+        private void ActiveReaderPackageCombo_OnChanged(object sender, SelectionChangedEventArgs e)
+        {
+            if (vm == null)
+                return;
+
+            if (ActiveReaderPackageCombo.SelectedItem is ComboBoxItem { Tag: string id })
+                vm.Presenter.ActiveReaderPackageId.Value = id;
+            else
+                vm.Presenter.ActiveReaderPackageId.Value = null;
         }
 
         private void DatasetCombo_OnChanged(object sender, SelectionChangedEventArgs e)

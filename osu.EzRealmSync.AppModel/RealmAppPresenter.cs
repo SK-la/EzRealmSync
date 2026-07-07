@@ -6,6 +6,7 @@ using osu.Game.EzRealmSync.Abstractions;
 using osu.Game.EzRealmSync.Errors;
 using osu.Game.EzRealmSync.Mock;
 using osu.Game.EzRealmSync.Models;
+using osu.Game.EzRealmSync.Realm.Readers;
 
 namespace osu.EzRealmSync.AppModel
 {
@@ -30,9 +31,9 @@ namespace osu.EzRealmSync.AppModel
 
         private ScanResult? lastScanResult;
         private CancellationTokenSource? operationCts;
-        private readonly List<DiffRowModel> syncRows = new();
+        private readonly List<DiffRowModel> syncRows = new List<DiffRowModel>();
         private RealmSnapshot? loadedSnapshot;
-        private readonly Dictionary<RealmObjectClass, List<RealmBrowseRow>> browseRowsByClass = new();
+        private readonly Dictionary<RealmObjectClass, List<RealmBrowseRow>> browseRowsByClass = new Dictionary<RealmObjectClass, List<RealmBrowseRow>>();
         private readonly bool loadingSettings;
         private bool suppressBackendModeChange;
 
@@ -93,27 +94,29 @@ namespace osu.EzRealmSync.AppModel
             ExportGroupScoresByPlayer.BindValueChanged(_ => persistSettings());
             IllegalCharacterReplacement.BindValueChanged(_ => persistSettings());
             ConfirmBeforeDelete.BindValueChanged(_ => persistSettings());
+            ActiveReaderPackageId.BindValueChanged(_ => persistSettings());
+            ReaderPackagesDirectory.BindValueChanged(_ => persistSettings());
         }
 
-        public ObservableCollection<RealmFileEntry> RealmFiles { get; } = new();
+        public ObservableCollection<RealmFileEntry> RealmFiles { get; } = new ObservableCollection<RealmFileEntry>();
 
-        public ObservableCollection<RealmFileRowModel> RealmFileRows { get; } = new();
+        public ObservableCollection<RealmFileRowModel> RealmFileRows { get; } = new ObservableCollection<RealmFileRowModel>();
 
-        public ObservableCollection<RealmBrowseRowModel> BrowseRows { get; } = new();
+        public ObservableCollection<RealmBrowseRowModel> BrowseRows { get; } = new ObservableCollection<RealmBrowseRowModel>();
 
-        public ObservableCollection<RealmEntityRowModel> DataRows { get; } = new();
+        public ObservableCollection<RealmEntityRowModel> DataRows { get; } = new ObservableCollection<RealmEntityRowModel>();
 
-        public ObservableCollection<RealmClassListItemModel> DataClasses { get; } = new();
+        public ObservableCollection<RealmClassListItemModel> DataClasses { get; } = new ObservableCollection<RealmClassListItemModel>();
 
-        public ObservableCollection<RealmFixIssueModel> FixIssues { get; } = new();
+        public ObservableCollection<RealmFixIssueModel> FixIssues { get; } = new ObservableCollection<RealmFixIssueModel>();
 
-        public ObservableCollection<RealmExportItemModel> ExportItems { get; } = new();
+        public ObservableCollection<RealmExportItemModel> ExportItems { get; } = new ObservableCollection<RealmExportItemModel>();
 
-        public ObservableCollection<BackupEntryRowModel> BackupEntries { get; } = new();
+        public ObservableCollection<BackupEntryRowModel> BackupEntries { get; } = new ObservableCollection<BackupEntryRowModel>();
 
         public Bindable<string?> SelectedBackupId { get; } = new Bindable<string?>();
 
-        public Bindable<MainWorkspaceTab> CurrentWorkspaceTab { get; } = new Bindable<MainWorkspaceTab>(MainWorkspaceTab.Import);
+        public Bindable<MainWorkspaceTab> CurrentWorkspaceTab { get; } = new Bindable<MainWorkspaceTab>();
 
         public Bindable<string> BackupDirectory { get; } = new Bindable<string>(string.Empty);
 
@@ -133,7 +136,7 @@ namespace osu.EzRealmSync.AppModel
 
         public Bindable<string?> ExportRealmId { get; } = new Bindable<string?>();
 
-        public Bindable<ExportDataKind> SelectedExportKind { get; } = new Bindable<ExportDataKind>(ExportDataKind.BeatmapSet);
+        public Bindable<ExportDataKind> SelectedExportKind { get; } = new Bindable<ExportDataKind>();
 
         public Bindable<string> IllegalCharacterReplacement { get; } = new Bindable<string>("_");
 
@@ -145,18 +148,22 @@ namespace osu.EzRealmSync.AppModel
 
         public BindableBool ExportGroupScoresByPlayer { get; } = new BindableBool(true);
 
-        public Bindable<EntityKind> SelectedDataGroup { get; } = new Bindable<EntityKind>(EntityKind.BeatmapSet);
+        public Bindable<EntityKind> SelectedDataGroup { get; } = new Bindable<EntityKind>();
 
         public Bindable<RealmObjectClass> SelectedRealmClass { get; } = new Bindable<RealmObjectClass>(RealmObjectClass.BeatmapSet);
         public Bindable<RealmSetOperation> SetOperation { get; } = new Bindable<RealmSetOperation>(RealmSetOperation.Difference);
-        public Bindable<RealmSyncAction> SyncAction { get; } = new Bindable<RealmSyncAction>(RealmSyncAction.Add);
+        public Bindable<RealmSyncAction> SyncAction { get; } = new Bindable<RealmSyncAction>();
 
         public BindableBool UiTestMode { get; } = new BindableBool();
 
+        public Bindable<string?> ActiveReaderPackageId { get; } = new Bindable<string?>();
+
+        public Bindable<string> ReaderPackagesDirectory { get; } = new Bindable<string>(string.Empty);
+
         public EzRealmSyncBackendKind BackendKind { get; private set; }
 
-        public Bindable<EntityKindFilter> EntityFilter { get; } = new Bindable<EntityKindFilter>(EntityKindFilter.All);
-        public Bindable<DiffCategory> CurrentCategory { get; } = new Bindable<DiffCategory>(DiffCategory.SourceOnly);
+        public Bindable<EntityKindFilter> EntityFilter { get; } = new Bindable<EntityKindFilter>();
+        public Bindable<DiffCategory> CurrentCategory { get; } = new Bindable<DiffCategory>();
 
         public Bindable<string> StatusMessage { get; } = new Bindable<string>(string.Empty);
         public Bindable<double> Progress { get; } = new Bindable<double>();
@@ -173,6 +180,16 @@ namespace osu.EzRealmSync.AppModel
         public IReadOnlyList<DiffRowModel> SyncRows => syncRows;
 
         public MockEzRealmSyncService? MockService => syncService as MockEzRealmSyncService;
+
+        public IReadOnlyList<RealmReaderPackageInfo> InstalledReaderPackages =>
+            EzRealmSyncBackend.IsRealBackendCompiled
+                ? RealmReaderRegistry.Instance.Packages
+                : Array.Empty<RealmReaderPackageInfo>();
+
+        public string ReaderPackagesPath =>
+            EzRealmSyncBackend.IsRealBackendCompiled
+                ? RealmReaderRegistry.Instance.PackagesDirectory
+                : RealmReaderPaths.ResolvePackagesDirectory(ReaderPackagesDirectory.Value);
 
         public Func<string, string, bool, Task<bool>>? ConfirmAsync { get; set; }
         public Func<string, Task<string?>>? PickFolderAsync { get; set; }
@@ -204,7 +221,7 @@ namespace osu.EzRealmSync.AppModel
 
             await RefreshRealmFilesAsync().ConfigureAwait(false);
 
-            runOnUi(() => updateWorkspaceCapabilities());
+            runOnUi(updateWorkspaceCapabilities);
         }
 
         public async Task RefreshRealmFilesAsync()
@@ -523,7 +540,7 @@ namespace osu.EzRealmSync.AppModel
                 return;
             }
 
-            operationCts?.Cancel();
+            await operationCts?.CancelAsync();
             operationCts = new CancellationTokenSource();
             var token = operationCts.Token;
 
@@ -594,7 +611,7 @@ namespace osu.EzRealmSync.AppModel
             if (!await ConfirmAsync(confirmMessage, Loc.Get("ConfirmTitle"), delete).ConfigureAwait(false))
                 return;
 
-            operationCts?.Cancel();
+            await operationCts?.CancelAsync();
             operationCts = new CancellationTokenSource();
             var token = operationCts.Token;
 
@@ -1286,7 +1303,7 @@ namespace osu.EzRealmSync.AppModel
         private string toUserMessage(Exception ex)
         {
             RealmUserOperationException? userError = ex as RealmUserOperationException
-                                                   ?? ex.InnerException as RealmUserOperationException;
+                                                     ?? ex.InnerException as RealmUserOperationException;
 
             if (userError == null)
                 return ex.Message;
@@ -1332,7 +1349,7 @@ namespace osu.EzRealmSync.AppModel
             }
 
             if (DataClasses.Count > 0
-                && !DataClasses.Any(c => c.Class == SelectedRealmClass.Value))
+                && DataClasses.All(c => c.Class != SelectedRealmClass.Value))
             {
                 SelectedRealmClass.Value = DataClasses[0].Class;
             }
@@ -1411,6 +1428,8 @@ namespace osu.EzRealmSync.AppModel
                 : settings.IllegalCharacterReplacement;
 
             ConfirmBeforeDelete.Value = settings.ConfirmBeforeDelete;
+            ActiveReaderPackageId.Value = settings.ActiveReaderPackageId;
+            ReaderPackagesDirectory.Value = settings.ReaderPackagesDirectory;
         }
 
         private void applyBackendMode(bool uiTest)
@@ -1500,6 +1519,8 @@ namespace osu.EzRealmSync.AppModel
                 IllegalCharacterReplacement = IllegalCharacterReplacement.Value,
                 ConfirmBeforeDelete = ConfirmBeforeDelete.Value,
                 UiTestMode = UiTestMode.Value,
+                ReaderPackagesDirectory = ReaderPackagesDirectory.Value,
+                ActiveReaderPackageId = ActiveReaderPackageId.Value,
             });
         }
 

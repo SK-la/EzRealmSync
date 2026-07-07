@@ -142,6 +142,29 @@
                                   Style="{StaticResource WorkspaceMutedText}" />
                   </StackPanel>
                 </ui:CardExpander>
+                <ui:CardExpander x:Name="ReaderSettingsExpander"
+                                  Margin="0,8,0,0"
+                                  Icon="{ui:SymbolIcon Library24}">
+                  <StackPanel>
+                    <ui:TextBlock x:Name="ReaderPackagesPathLabel"
+                                  TextWrapping="Wrap"
+                                  Opacity="0.75" />
+                    <ui:TextBlock x:Name="ReaderPackagesPathText"
+                                  Margin="0,4,0,8"
+                                  TextWrapping="Wrap"
+                                  Style="{StaticResource WorkspaceMutedText}" />
+                    <ui:TextBlock x:Name="ActiveReaderPackageLabel"
+                                  Opacity="0.75"
+                                  Margin="0,0,0,4" />
+                    <ComboBox x:Name="ActiveReaderPackageCombo"
+                              MinHeight="32"
+                              SelectionChanged="ActiveReaderPackageCombo_OnChanged" />
+                    <ui:TextBlock x:Name="ReaderRestartHint"
+                                  Margin="0,8,0,0"
+                                  TextWrapping="Wrap"
+                                  Style="{StaticResource WorkspaceMutedText}" />
+                  </StackPanel>
+                </ui:CardExpander>
                 <ui:CardExpander x:Name="MockSettingsExpander"
                                   Margin="0,8,0,0"
                                   Visibility="Collapsed"

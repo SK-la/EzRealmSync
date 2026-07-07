@@ -2,6 +2,7 @@ using osu.EzRealmSync.AppModel;
 using osu.EzRealmSync.AppModel.Localization;
 using osu.EzRealmSync.Desktop.ViewModels;
 using osu.Game.EzRealmSync;
+using osu.Game.EzRealmSync.Realm.Readers;
 using osu.Game.EzRealmSync.Runtime;
 
 namespace osu.EzRealmSync.Desktop
@@ -11,7 +12,14 @@ namespace osu.EzRealmSync.Desktop
         [STAThread]
         public static void Main(string[] args)
         {
-            EzRealmSyncRuntimeLibLoader.Install();
+            var settings = AppSettingsStore.Load();
+            var readerPackages = RealmReaderPackageCatalog.Scan(settings.ReaderPackagesDirectory);
+            string? readerLibOverride = RealmReaderPackageCatalog.FindById(readerPackages, settings.ActiveReaderPackageId)?.LibDirectory;
+
+            EzRealmSyncRuntimeLibLoader.Install(readerLibOverride);
+
+            if (EzRealmSyncBackend.IsRealBackendCompiled)
+                RealmReaderRegistry.Instance.Initialize(settings.ReaderPackagesDirectory);
 
             var options = EzRealmSyncLaunchOptions.Parse(args);
             Loc.SetLanguage(AppLanguage.ZhHans);

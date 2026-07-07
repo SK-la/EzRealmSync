@@ -215,4 +215,10 @@
   <data name="ErrorMigrationRequired" xml:space="preserve"><value>该 Realm 需要先迁移才能打开。请先用对应客户端启动一次完成升级（官方库用 osu!lazer，Ez 库用 Ez2Lazer），再重试。详情：{0}</value></data>
   <data name="ErrorPathConflict" xml:space="preserve"><value>路径冲突：{0}</value></data>
   <data name="ErrorLegacyReaderUnavailable" xml:space="preserve"><value>当前版本暂不支持该 legacy schema。请安装并选择对应版本 reader 后重试。详情：{0}</value></data>
+  <data name="ReaderSettings" xml:space="preserve"><value>Reader 包</value></data>
+  <data name="ReaderPackagesDirectory" xml:space="preserve"><value>Reader 包目录</value></data>
+  <data name="ActiveReaderPackage" xml:space="preserve"><value>启动时使用的 reader</value></data>
+  <data name="ReaderPackageDefault" xml:space="preserve"><value>内置 NuGet / 本地 lib（默认）</value></data>
+  <data name="ReaderPackageMissingLib" xml:space="preserve"><value> [缺少 lib]</value></data>
+  <data name="ReaderRestartHint" xml:space="preserve"><value>切换 reader 后需重启应用。同一会话内旧版库会优先尝试 pinned 打开；若失败，请安装匹配 schema 的 reader 包。</value></data>
 </root>

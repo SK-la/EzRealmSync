@@ -215,4 +215,10 @@
   <data name="ErrorMigrationRequired" xml:space="preserve"><value>This Realm requires migration before it can be opened. Open it once in the matching client (osu!lazer for official, Ez2Lazer for Ez), then retry. Detail: {0}</value></data>
   <data name="ErrorPathConflict" xml:space="preserve"><value>Path conflict: {0}</value></data>
   <data name="ErrorLegacyReaderUnavailable" xml:space="preserve"><value>This version cannot open the legacy schema yet. Install/select a matching reader version and retry. Detail: {0}</value></data>
+  <data name="ReaderSettings" xml:space="preserve"><value>Reader packages</value></data>
+  <data name="ReaderPackagesDirectory" xml:space="preserve"><value>Reader packages folder</value></data>
+  <data name="ActiveReaderPackage" xml:space="preserve"><value>Reader used at startup</value></data>
+  <data name="ReaderPackageDefault" xml:space="preserve"><value>Built-in NuGet / local lib (default)</value></data>
+  <data name="ReaderPackageMissingLib" xml:space="preserve"><value> [missing lib]</value></data>
+  <data name="ReaderRestartHint" xml:space="preserve"><value>Restart the app after changing the reader. Legacy files are opened with pinned schema first; if that fails, install a matching reader package.</value></data>
 </root>

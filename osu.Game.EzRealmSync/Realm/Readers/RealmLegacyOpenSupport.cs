@@ -43,7 +43,7 @@ namespace osu.Game.EzRealmSync.Realm.Readers
             }
         }
 
-        internal static RealmUserOperationException createLegacyReaderException(
+        private static RealmUserOperationException createLegacyReaderException(
             string realmFilePath,
             int diskSchemaVersion,
             string profile,
