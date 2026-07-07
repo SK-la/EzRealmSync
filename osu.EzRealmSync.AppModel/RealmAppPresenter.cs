@@ -1296,6 +1296,7 @@ namespace osu.EzRealmSync.AppModel
                 RealmUserErrorKind.FileInUse => Loc.Format("ErrorFileInUse", userError.Detail),
                 RealmUserErrorKind.MigrationRequired => Loc.Format("ErrorMigrationRequired", userError.Detail),
                 RealmUserErrorKind.PathConflict => Loc.Format("ErrorPathConflict", userError.Detail),
+                RealmUserErrorKind.LegacyReaderUnavailable => Loc.Format("ErrorLegacyReaderUnavailable", userError.Detail),
                 _ => userError.Detail,
             };
         }

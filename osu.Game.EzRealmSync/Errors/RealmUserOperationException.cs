@@ -5,6 +5,7 @@ namespace osu.Game.EzRealmSync.Errors
         FileInUse,
         MigrationRequired,
         PathConflict,
+        LegacyReaderUnavailable,
     }
 
     public sealed class RealmUserOperationException : InvalidOperationException

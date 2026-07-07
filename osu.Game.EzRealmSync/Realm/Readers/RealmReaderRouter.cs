@@ -1,5 +1,6 @@
 #if HAS_EZ_OSU_GAME
 using osu.Game.Database;
+using osu.Game.EzRealmSync.Errors;
 using osu.Game.EzRealmSync.Models;
 
 namespace osu.Game.EzRealmSync.Realm.Readers
@@ -99,8 +100,11 @@ namespace osu.Game.EzRealmSync.Realm.Readers
         {
             public RealmReaderRoute SupportedRoute => RealmReaderRoute.OfficialLegacy;
 
-            public RealmAccess Open(string realmFilePath, int pinnedDiskSchemaVersion) =>
-                RealmDiffReader.OpenOfficialRealm(realmFilePath, pinnedDiskSchemaVersion);
+            public RealmAccess Open(string realmFilePath, int pinnedDiskSchemaVersion) => throw createLegacyReaderException(
+                realmFilePath,
+                pinnedDiskSchemaVersion,
+                "official",
+                RealmAccess.UpstreamSchemaVersion);
         }
 
         private sealed class EzCurrentRealmReaderAdapter : IRealmReaderAdapter
@@ -115,9 +119,21 @@ namespace osu.Game.EzRealmSync.Realm.Readers
         {
             public RealmReaderRoute SupportedRoute => RealmReaderRoute.EzLegacy;
 
-            public RealmAccess Open(string realmFilePath, int pinnedDiskSchemaVersion) =>
-                RealmDiffReader.OpenEzRealm(realmFilePath, pinnedDiskSchemaVersion);
+            public RealmAccess Open(string realmFilePath, int pinnedDiskSchemaVersion) => throw createLegacyReaderException(
+                realmFilePath,
+                pinnedDiskSchemaVersion,
+                "ez",
+                RealmAccess.EzFileSchemaVersion);
         }
+
+        private static RealmUserOperationException createLegacyReaderException(
+            string realmFilePath,
+            int diskSchemaVersion,
+            string profile,
+            int currentSupportedVersion)
+            => new(
+                RealmUserErrorKind.LegacyReaderUnavailable,
+                $"检测到 legacy {profile} schema：{diskSchemaVersion}（当前内置支持：{currentSupportedVersion}）。请安装并选择对应版本 reader 后重试。文件：{realmFilePath}");
     }
 }
 #endif

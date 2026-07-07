@@ -214,4 +214,5 @@
   <data name="ErrorFileInUse" xml:space="preserve"><value>Write blocked by pre-check (file in use). Close osu!/Ez2Lazer and retry. Detail: {0}</value></data>
   <data name="ErrorMigrationRequired" xml:space="preserve"><value>This Realm requires migration before it can be opened. Open it once in the matching client (osu!lazer for official, Ez2Lazer for Ez), then retry. Detail: {0}</value></data>
   <data name="ErrorPathConflict" xml:space="preserve"><value>Path conflict: {0}</value></data>
+  <data name="ErrorLegacyReaderUnavailable" xml:space="preserve"><value>This version cannot open the legacy schema yet. Install/select a matching reader version and retry. Detail: {0}</value></data>
 </root>

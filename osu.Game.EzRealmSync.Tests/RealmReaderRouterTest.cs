@@ -1,6 +1,7 @@
 #if HAS_EZ_OSU_GAME
 using NUnit.Framework;
 using osu.Game.Database;
+using osu.Game.EzRealmSync.Errors;
 using osu.Game.EzRealmSync.Realm.Readers;
 
 namespace osu.Game.EzRealmSync.Tests
@@ -52,6 +53,24 @@ namespace osu.Game.EzRealmSync.Tests
             var ezEx = Assert.Throws<InvalidOperationException>((Action)(() =>
                 router.OpenByDiskSchemaVersion(ezLegacy, "ez.realm")));
             Assert.That(ezEx!.Message, Does.Contain("route:EzLegacy"));
+        }
+
+        [Test]
+        public void OpenByDiskSchemaVersion_default_legacy_adapters_require_external_reader()
+        {
+            int officialLegacy = Math.Max(1, RealmAccess.UpstreamSchemaVersion - 1);
+            int ezLegacy = Math.Max(1000, RealmAccess.EzFileSchemaVersion - 1);
+            var router = new RealmReaderRouter();
+
+            var officialEx = Assert.Throws<RealmUserOperationException>((Action)(() =>
+                router.OpenByDiskSchemaVersion(officialLegacy, "official.realm")));
+            Assert.That(officialEx!.Kind, Is.EqualTo(RealmUserErrorKind.LegacyReaderUnavailable));
+            Assert.That(officialEx.Detail, Does.Contain("legacy official schema"));
+
+            var ezEx = Assert.Throws<RealmUserOperationException>((Action)(() =>
+                router.OpenByDiskSchemaVersion(ezLegacy, "ez.realm")));
+            Assert.That(ezEx!.Kind, Is.EqualTo(RealmUserErrorKind.LegacyReaderUnavailable));
+            Assert.That(ezEx.Detail, Does.Contain("legacy ez schema"));
         }
     }
 }

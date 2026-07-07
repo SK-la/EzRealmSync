@@ -214,4 +214,5 @@
   <data name="ErrorFileInUse" xml:space="preserve"><value>写入前检查阻断：文件正在被占用。请先关闭 osu!/Ez2Lazer 后重试。详情：{0}</value></data>
   <data name="ErrorMigrationRequired" xml:space="preserve"><value>该 Realm 需要先迁移才能打开。请先用对应客户端启动一次完成升级（官方库用 osu!lazer，Ez 库用 Ez2Lazer），再重试。详情：{0}</value></data>
   <data name="ErrorPathConflict" xml:space="preserve"><value>路径冲突：{0}</value></data>
+  <data name="ErrorLegacyReaderUnavailable" xml:space="preserve"><value>当前版本暂不支持该 legacy schema。请安装并选择对应版本 reader 后重试。详情：{0}</value></data>
 </root>
