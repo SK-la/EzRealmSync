@@ -5,7 +5,6 @@ using osu.EzRealmSync.AppModel;
 using osu.EzRealmSync.AppModel.Localization;
 using osu.EzRealmSync.Desktop.Commands;
 using osu.EzRealmSync.Desktop.Services;
-using osu.Game.EzRealmSync;
 using osu.Game.EzRealmSync.Models;
 
 namespace osu.EzRealmSync.Desktop.ViewModels
