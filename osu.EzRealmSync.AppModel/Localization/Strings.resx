@@ -209,7 +209,7 @@
   <data name="FixConfirmTitle" xml:space="preserve"><value>Confirm fix</value></data>
   <data name="FixConvertOfficial" xml:space="preserve"><value>Convert to official</value></data>
   <data name="FixUpgradeSchema" xml:space="preserve"><value>Upgrade to latest</value></data>
-  <data name="FixUpgradeSchemaConfirm" xml:space="preserve"><value>This will migrate the selected Realm in-place to the latest schema supported by this build. A backup will be created first at: {0}. Close the game first. Continue?</value></data>
+  <data name="FixUpgradeSchemaConfirm" xml:space="preserve"><value>This will upgrade the selected Realm to the latest schema supported by this build by copying all data into a new database file (tool-side; not game client migration). A backup will be created first at: {0}. Close the game first. Continue?</value></data>
   <data name="FixUpgradeSchemaTitle" xml:space="preserve"><value>Upgrade schema</value></data>
   <data name="FixConvertOfficialConfirm" xml:space="preserve"><value>This will convert the selected polluted Realm in-place to official format. A backup will be created first at: {0}. Continue?</value></data>
   <data name="FixConvertOfficialTitle" xml:space="preserve"><value>Convert to official</value></data>

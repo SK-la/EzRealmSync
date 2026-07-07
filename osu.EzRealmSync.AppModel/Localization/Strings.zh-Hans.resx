@@ -209,7 +209,7 @@
   <data name="FixConfirmTitle" xml:space="preserve"><value>确认修复</value></data>
   <data name="FixConvertOfficial" xml:space="preserve"><value>转回官方版</value></data>
   <data name="FixUpgradeSchema" xml:space="preserve"><value>升级到最新版</value></data>
-  <data name="FixUpgradeSchemaConfirm" xml:space="preserve"><value>将把所选 Realm 原地迁移到当前工具支持的最新 schema。操作前会自动备份到：{0}。请先关闭游戏。是否继续？</value></data>
+  <data name="FixUpgradeSchemaConfirm" xml:space="preserve"><value>将把所选 Realm 升级到当前工具支持的最新 schema（工具侧复制全部数据到新库后替换，不经过游戏客户端 migration）。操作前会自动备份到：{0}。请先关闭游戏。是否继续？</value></data>
   <data name="FixUpgradeSchemaTitle" xml:space="preserve"><value>升级 schema</value></data>
   <data name="FixConvertOfficialConfirm" xml:space="preserve"><value>将把所选污染库原地转换为官方格式。操作前会自动创建备份到：{0}。是否继续？</value></data>
   <data name="FixConvertOfficialTitle" xml:space="preserve"><value>转回官方版</value></data>

@@ -104,7 +104,7 @@ namespace osu.Game.EzRealmSync.Realm
 
             cancellationToken.ThrowIfCancellationRequested();
 
-            var result = RealmSchemaUpgrader.UpgradeInPlace(realmPath, file.SchemaVersion, progress, cancellationToken);
+            var result = RealmSchemaUpgrader.UpgradeInPlace(realmPath, file.SchemaVersion, progress, cancellationToken, backupPath);
             invalidateAfterMutatingRealm(realmId, realmPath);
 
             return new RealmSchemaUpgradeResult
