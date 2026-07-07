@@ -1,0 +1,27 @@
+name: CI
+
+on:
+  push:
+    branches: [FastCoding, main]
+  pull_request:
+    branches: [FastCoding, main]
+
+jobs:
+  build:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 8.0.x
+
+      - name: Restore
+        run: dotnet restore EzRealmSync.sln
+
+      - name: Build
+        run: dotnet build EzRealmSync.sln -c Release --no-restore -p:UseLocalOsuLibs=false
+
+      - name: Test
+        run: dotnet test EzRealmSync.sln -c Release --no-build -p:UseLocalOsuLibs=false --filter "FullyQualifiedName!~Integration"

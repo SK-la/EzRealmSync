@@ -1,0 +1,76 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - '[0-9]+.[0-9]+.[0-9]+'
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: '发布版本号（x.y.z），仅 workflow_dispatch 时使用'
+        required: false
+        default: ''
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Resolve version
+        id: version
+        shell: pwsh
+        run: |
+          $tag = '${{ github.ref_name }}'
+          if ('${{ github.event_name }}' -eq 'workflow_dispatch') {
+            $manual = '${{ inputs.tag }}'.Trim()
+            if ($manual) { $tag = $manual }
+          }
+          if ($tag -notmatch '^[0-9]+\.[0-9]+\.[0-9]+$') {
+            Write-Error "Tag must be x.y.z, got: $tag"
+            exit 1
+          }
+          "version=$tag" | Out-File -FilePath $env:GITHUB_OUTPUT -Encoding utf8 -Append
+          Write-Output "Release version: $tag"
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 8.0.x
+
+      - name: Build and test
+        run: |
+          dotnet restore EzRealmSync.sln
+          dotnet build EzRealmSync.sln -c Release --no-restore -p:UseLocalOsuLibs=false
+          dotnet test EzRealmSync.sln -c Release --no-build -p:UseLocalOsuLibs=false --filter "FullyQualifiedName!~Integration"
+
+      - name: Publish win-x64
+        run: |
+          dotnet publish osu.EzRealmSync.Desktop/osu.EzRealmSync.Desktop.csproj `
+            -c Release `
+            -r win-x64 `
+            --self-contained true `
+            -p:UseLocalOsuLibs=false `
+            -p:Version=${{ steps.version.outputs.version }} `
+            -o artifacts/publish
+
+      - name: Package zip
+        shell: pwsh
+        run: |
+          $version = '${{ steps.version.outputs.version }}'
+          $zip = "artifacts/EzRealmSync-$version-win-x64.zip"
+          Compress-Archive -Path "artifacts/publish/*" -DestinationPath $zip -Force
+          Write-Output "Created $zip"
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ steps.version.outputs.version }}
+          name: EzRealmSync ${{ steps.version.outputs.version }}
+          generate_release_notes: true
+          files: artifacts/EzRealmSync-${{ steps.version.outputs.version }}-win-x64.zip
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
