@@ -45,7 +45,8 @@ namespace osu.EzRealmSync.Desktop.Pages
                 if (e.PropertyName == nameof(ShellViewModel.FixIssues))
                     Dispatcher.Invoke(() => IssuesGrid.ItemsSource = vm!.FixIssues);
 
-                if (e.PropertyName == nameof(ShellViewModel.CanUseFixAndExport))
+                if (e.PropertyName == nameof(ShellViewModel.CanUseFixAndExport)
+                    || e.PropertyName == nameof(ShellViewModel.IsBusy))
                     Dispatcher.Invoke(updateEnabled);
             };
 

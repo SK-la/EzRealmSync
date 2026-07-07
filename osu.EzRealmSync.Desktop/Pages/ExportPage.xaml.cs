@@ -68,7 +68,8 @@ namespace osu.EzRealmSync.Desktop.Pages
                     if (e.PropertyName == nameof(ShellViewModel.ExportGroupScoresByPlayer))
                         Dispatcher.Invoke(() => GroupScoresByPlayerCheck.IsChecked = vm!.ExportGroupScoresByPlayer);
 
-                    if (e.PropertyName == nameof(ShellViewModel.CanUseFixAndExport))
+                    if (e.PropertyName == nameof(ShellViewModel.CanUseFixAndExport)
+                        || e.PropertyName == nameof(ShellViewModel.IsBusy))
                         Dispatcher.Invoke(updateEnabled);
 
                     if (e.PropertyName == nameof(ShellViewModel.ExportDataKind))

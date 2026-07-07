@@ -224,9 +224,10 @@ namespace osu.EzRealmSync.AppModel
             runOnUi(updateWorkspaceCapabilities);
         }
 
-        public async Task RefreshRealmFilesAsync()
+        public async Task RefreshRealmFilesAsync(bool affectBusy = true)
         {
-            setBusy(true);
+            if (affectBusy)
+                setBusy(true);
 
             try
             {
@@ -252,7 +253,8 @@ namespace osu.EzRealmSync.AppModel
             }
             finally
             {
-                setBusy(false);
+                if (affectBusy)
+                    setBusy(false);
             }
         }
 
@@ -540,9 +542,8 @@ namespace osu.EzRealmSync.AppModel
                 return;
             }
 
-            await operationCts?.CancelAsync();
-            operationCts = new CancellationTokenSource();
-            var token = operationCts.Token;
+            await resetOperationCancellationAsync();
+            var token = operationCts!.Token;
 
             setBusy(true);
             runOnUi(() => StatusMessage.Value = Loc.Get("StatusComputingSet"));
@@ -576,7 +577,7 @@ namespace osu.EzRealmSync.AppModel
             }
             catch (Exception ex)
             {
-                runOnUi(() => StatusMessage.Value = ex.Message);
+                runOnUi(() => StatusMessage.Value = toUserMessage(ex));
             }
             finally
             {
@@ -611,9 +612,8 @@ namespace osu.EzRealmSync.AppModel
             if (!await ConfirmAsync(confirmMessage, Loc.Get("ConfirmTitle"), delete).ConfigureAwait(false))
                 return;
 
-            await operationCts?.CancelAsync();
-            operationCts = new CancellationTokenSource();
-            var token = operationCts.Token;
+            await resetOperationCancellationAsync();
+            var token = operationCts!.Token;
 
             setBusy(true);
 
@@ -1053,7 +1053,7 @@ namespace osu.EzRealmSync.AppModel
             {
                 var progress = createScanProgress();
                 var result = await fixService.ConvertToOfficialRealmAsync(file.Id, progress: progress).ConfigureAwait(false);
-                await RefreshRealmFilesAsync().ConfigureAwait(false);
+                await RefreshRealmFilesAsync(affectBusy: false).ConfigureAwait(false);
 
                 runOnUi(() =>
                 {
@@ -1098,7 +1098,7 @@ namespace osu.EzRealmSync.AppModel
             {
                 var progress = createScanProgress();
                 var result = await fixService.UpgradeSchemaToLatestAsync(file.Id, backupDir, progress).ConfigureAwait(false);
-                await RefreshRealmFilesAsync().ConfigureAwait(false);
+                await RefreshRealmFilesAsync(affectBusy: false).ConfigureAwait(false);
 
                 runOnUi(() =>
                 {
@@ -1667,6 +1667,17 @@ namespace osu.EzRealmSync.AppModel
             IsBusy.Value = busy;
             updateCanApply();
         });
+
+        private async Task resetOperationCancellationAsync()
+        {
+            if (operationCts != null)
+            {
+                await operationCts.CancelAsync().ConfigureAwait(false);
+                operationCts.Dispose();
+            }
+
+            operationCts = new CancellationTokenSource();
+        }
 
         private void runOnUi(Action action)
         {
