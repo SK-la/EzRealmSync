@@ -1,0 +1,10 @@
+{
+  "id": "official-sample",
+  "kind": "official",
+  "description": "官方 client.realm 样本",
+  "realmFile": "client.realm",
+  "expected": {
+    "diskSchemaKind": "PpyClient",
+    "canOpenWithoutMigration": true
+  }
+}

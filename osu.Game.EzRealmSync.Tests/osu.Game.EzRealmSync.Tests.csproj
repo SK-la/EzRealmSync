@@ -35,4 +35,10 @@
       <AdditionalProperties>UseLocalOsuLibs=$(UseLocalOsuLibs)</AdditionalProperties>
     </ProjectReference>
   </ItemGroup>
+
+  <ItemGroup>
+    <None Include="TestResources\**\*">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+  </ItemGroup>
 </Project>

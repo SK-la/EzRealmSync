@@ -13,3 +13,6 @@ lib/runtimes/
 
 # 本地复制的 Noto 字体（见 scripts/copy-cjk-fonts.ps1）
 osu.EzRealmSync/Assets/Fonts/Noto/
+
+# Realm 样本仅用于本地测试，不提交到仓库
+*.realm

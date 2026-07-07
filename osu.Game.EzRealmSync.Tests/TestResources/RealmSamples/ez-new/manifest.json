@@ -1,0 +1,10 @@
+{
+  "id": "ez-new-sample",
+  "kind": "ez-new",
+  "description": "Ez 新版样本",
+  "realmFile": "client.realm",
+  "expected": {
+    "diskSchemaKind": "EzExtended",
+    "canOpenWithoutMigration": true
+  }
+}
