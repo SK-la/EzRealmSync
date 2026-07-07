@@ -127,21 +127,28 @@ namespace osu.Game.EzRealmSync.Tests
             if (!sample.RealmFileExists)
                 Assert.Ignore($"样本未放置 realm 文件：{sample.RealmFilePath}");
 
+            bool parsed = Enum.TryParse(sample.DiskSchemaKind, ignoreCase: true, out RealmDiskSchemaKind expectedKind);
+            Assert.That(parsed, Is.True, $"manifest expected.diskSchemaKind 非法：{sample.DiskSchemaKind}");
+
             if (sample.CanOpenWithoutMigration)
             {
-                Assert.DoesNotThrow((TestDelegate)(() =>
+                Assert.DoesNotThrow(() =>
                 {
                     using var access = RealmSchemaProbe.Open(sample.RealmFilePath);
+                    if (expectedKind == RealmDiskSchemaKind.PpyClient)
+                        Assert.That(access.GetType().Name, Is.EqualTo("OfficialRealmAccess"));
+                    else if (expectedKind == RealmDiskSchemaKind.EzExtended)
+                        Assert.That(access.GetType().Name, Is.Not.EqualTo("OfficialRealmAccess"));
                     access.Run(_ => { });
-                }));
+                });
                 return;
             }
 
-            var ex = Assert.Throws<RealmUserOperationException>((TestDelegate)(() =>
+            var ex = Assert.Throws<RealmUserOperationException>(() =>
             {
                 using var access = RealmSchemaProbe.Open(sample.RealmFilePath);
                 access.Run(_ => { });
-            }));
+            });
             Assert.That(ex!.Kind, Is.EqualTo(RealmUserErrorKind.MigrationRequired));
         }
     }
