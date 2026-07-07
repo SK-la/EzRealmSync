@@ -15,13 +15,15 @@ namespace osu.Game.EzRealmSync.Runtime
 
         public static string? RuntimeLibDirectory => runtimeLibDirectory;
 
-        public static void Install()
+        public static void Install(string? runtimeLibDirectoryOverride = null)
         {
             if (installed)
                 return;
 
             installed = true;
-            runtimeLibDirectory = EzRealmSyncBackend.ResolveRuntimeLibDirectory();
+            runtimeLibDirectory = !string.IsNullOrWhiteSpace(runtimeLibDirectoryOverride) && Directory.Exists(runtimeLibDirectoryOverride)
+                ? Path.GetFullPath(runtimeLibDirectoryOverride)
+                : EzRealmSyncBackend.ResolveRuntimeLibDirectory();
 
             if (runtimeLibDirectory == null)
                 return;

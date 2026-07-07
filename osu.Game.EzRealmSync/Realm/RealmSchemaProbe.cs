@@ -11,8 +11,6 @@ namespace osu.Game.EzRealmSync.Realm
     /// </summary>
     public static class RealmSchemaProbe
     {
-        private static readonly RealmReaderRouter reader_router = new RealmReaderRouter();
-
         /// <summary>仅读取文件头 schema，不迁移、不写盘。</summary>
         public static int? TryReadSchemaVersion(string realmFilePath) => RealmDiskSchemaReader.TryReadSchemaVersion(realmFilePath);
 
@@ -32,9 +30,13 @@ namespace osu.Game.EzRealmSync.Realm
 
             try
             {
-                return reader_router.OpenByDiskSchemaVersion(schema.Value, realmFilePath);
+                return RealmReaderRegistry.Instance.Router.OpenByDiskSchemaVersion(schema.Value, realmFilePath);
             }
-            catch (Exception ex) when (isMigrationRequiredError(ex))
+            catch (RealmUserOperationException)
+            {
+                throw;
+            }
+            catch (Exception ex) when (RealmOpenErrorClassifier.IsMigrationRequired(ex))
             {
                 string fileName = Path.GetFileName(realmFilePath);
                 throw new RealmUserOperationException(
@@ -42,14 +44,6 @@ namespace osu.Game.EzRealmSync.Realm
                     $"Realm 文件 {fileName} 需要 schema 迁移才能打开。EzRealmSync 不执行迁移，请先用对应客户端启动一次完成升级（官方库用 osu!lazer，Ez 库用 Ez2Lazer），然后再重试。",
                     ex);
             }
-
-            throw new InvalidOperationException($"无法识别的 Realm schema 版本 {schema}：{realmFilePath}");
-        }
-
-        private static bool isMigrationRequiredError(Exception ex)
-        {
-            string message = ex.InnerException?.Message ?? ex.Message;
-            return message.Contains("Migration is required", StringComparison.OrdinalIgnoreCase);
         }
     }
 }

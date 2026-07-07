@@ -60,8 +60,8 @@ namespace osu.Game.EzRealmSync.Realm
             progress?.Report(new ScanProgress { Progress = 0, Message = "正在打开源库（A）…" });
             cancellationToken.ThrowIfCancellationRequested();
 
-            using var sourceAccess = openForPlanEndpoint(plan.SourceKind, plan.SourceRealmFilePath, plan.SourceSchemaVersion);
-            using var targetAccess = openForPlanEndpoint(plan.TargetKind, plan.TargetRealmFilePath, plan.TargetSchemaVersion);
+            using var sourceAccess = openForPlanEndpoint(plan.SourceRealmFilePath, plan.SourceSchemaVersion);
+            using var targetAccess = openForPlanEndpoint(plan.TargetRealmFilePath, plan.TargetSchemaVersion);
 
             var sourceSnapshot = RealmDiffReader.Read(sourceAccess, progress, cancellationToken);
             progress?.Report(new ScanProgress { Progress = 0.5, Message = "正在读取目标库（B）…" });
@@ -97,8 +97,8 @@ namespace osu.Game.EzRealmSync.Realm
                 backupPath = RealmFileBackup.CreateTimestampedCopy(plan.TargetRealmFilePath, backupDir);
             }
 
-            using var sourceAccess = openForPlanEndpoint(plan.SourceKind, plan.SourceRealmFilePath, plan.SourceSchemaVersion);
-            using var targetAccess = openForPlanEndpoint(plan.TargetKind, plan.TargetRealmFilePath, plan.TargetSchemaVersion);
+            using var sourceAccess = openForPlanEndpoint(plan.SourceRealmFilePath, plan.SourceSchemaVersion);
+            using var targetAccess = openForPlanEndpoint(plan.TargetRealmFilePath, plan.TargetSchemaVersion);
 
             var result = RealmRowCopier.Apply(request, sourceAccess, targetAccess, progress, cancellationToken);
             return new ApplyResult { AppliedCount = result.AppliedCount, BackupPath = backupPath };
@@ -183,12 +183,12 @@ namespace osu.Game.EzRealmSync.Realm
             };
         }
 
-        private static RealmAccess openForPlanEndpoint(RealmDiskSchemaKind kind, string realmFilePath, int? diskSchemaVersion)
+        private static RealmAccess openForPlanEndpoint(string realmFilePath, int? diskSchemaVersion)
         {
             int schema = diskSchemaVersion ?? RealmSchemaProbe.TryReadSchemaVersion(realmFilePath)
                 ?? throw new InvalidOperationException($"无法读取 Realm schema 版本：{realmFilePath}");
 
-            return RealmAccessOpener.Open(kind, realmFilePath, schema);
+            return RealmAccessOpener.Open(realmFilePath, schema);
         }
 
         public Task<IReadOnlyList<BackupEntry>> ListBackupsAsync(string? backupDirectory = null, CancellationToken cancellationToken = default)

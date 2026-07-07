@@ -1,6 +1,5 @@
 #if HAS_EZ_OSU_GAME
 using osu.Game.Database;
-using osu.Game.EzRealmSync.Errors;
 using osu.Game.EzRealmSync.Models;
 
 namespace osu.Game.EzRealmSync.Realm.Readers
@@ -44,16 +43,8 @@ namespace osu.Game.EzRealmSync.Realm.Readers
             throw new InvalidOperationException($"未配置 Realm reader 路由：{route}（{realmFilePath}）。");
         }
 
-        public RealmAccess OpenBySchemaKind(RealmDiskSchemaKind kind, string realmFilePath, int pinnedDiskSchemaVersion)
-        {
-            RealmReaderRoute route = kind switch
-            {
-                RealmDiskSchemaKind.PpyClient => RealmReaderRoute.OfficialCurrent,
-                RealmDiskSchemaKind.EzExtended => RealmReaderRoute.EzCurrent,
-                _ => RealmReaderRoute.Unknown,
-            };
-            return OpenByRoute(route, realmFilePath, pinnedDiskSchemaVersion);
-        }
+        public RealmAccess OpenBySchemaKind(RealmDiskSchemaKind kind, string realmFilePath, int pinnedDiskSchemaVersion) =>
+            OpenByDiskSchemaVersion(pinnedDiskSchemaVersion, realmFilePath);
 
         public RealmAccess OpenByDiskSchemaVersion(int diskSchemaVersion, string realmFilePath)
         {
@@ -100,11 +91,8 @@ namespace osu.Game.EzRealmSync.Realm.Readers
         {
             public RealmReaderRoute SupportedRoute => RealmReaderRoute.OfficialLegacy;
 
-            public RealmAccess Open(string realmFilePath, int pinnedDiskSchemaVersion) => throw createLegacyReaderException(
-                realmFilePath,
-                pinnedDiskSchemaVersion,
-                "official",
-                RealmAccess.UpstreamSchemaVersion);
+            public RealmAccess Open(string realmFilePath, int pinnedDiskSchemaVersion) =>
+                RealmLegacyOpenSupport.OpenOfficialLegacy(realmFilePath, pinnedDiskSchemaVersion);
         }
 
         private sealed class EzCurrentRealmReaderAdapter : IRealmReaderAdapter
@@ -119,21 +107,9 @@ namespace osu.Game.EzRealmSync.Realm.Readers
         {
             public RealmReaderRoute SupportedRoute => RealmReaderRoute.EzLegacy;
 
-            public RealmAccess Open(string realmFilePath, int pinnedDiskSchemaVersion) => throw createLegacyReaderException(
-                realmFilePath,
-                pinnedDiskSchemaVersion,
-                "ez",
-                RealmAccess.EzFileSchemaVersion);
+            public RealmAccess Open(string realmFilePath, int pinnedDiskSchemaVersion) =>
+                RealmLegacyOpenSupport.OpenEzLegacy(realmFilePath, pinnedDiskSchemaVersion);
         }
-
-        private static RealmUserOperationException createLegacyReaderException(
-            string realmFilePath,
-            int diskSchemaVersion,
-            string profile,
-            int currentSupportedVersion)
-            => new(
-                RealmUserErrorKind.LegacyReaderUnavailable,
-                $"检测到 legacy {profile} schema：{diskSchemaVersion}（当前内置支持：{currentSupportedVersion}）。请安装并选择对应版本 reader 后重试。文件：{realmFilePath}");
     }
 }
 #endif
