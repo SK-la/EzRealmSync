@@ -132,7 +132,7 @@ namespace osu.Game.EzRealmSync.Tests
 
             if (sample.CanOpenWithoutMigration)
             {
-                Assert.DoesNotThrow(() =>
+                Assert.DoesNotThrow((Action)(() =>
                 {
                     using var access = RealmSchemaProbe.Open(sample.RealmFilePath);
                     if (expectedKind == RealmDiskSchemaKind.PpyClient)
@@ -140,15 +140,15 @@ namespace osu.Game.EzRealmSync.Tests
                     else if (expectedKind == RealmDiskSchemaKind.EzExtended)
                         Assert.That(access.GetType().Name, Is.Not.EqualTo("OfficialRealmAccess"));
                     access.Run(_ => { });
-                });
+                }));
                 return;
             }
 
-            var ex = Assert.Throws<RealmUserOperationException>(() =>
+            var ex = Assert.Throws<RealmUserOperationException>((Action)(() =>
             {
                 using var access = RealmSchemaProbe.Open(sample.RealmFilePath);
                 access.Run(_ => { });
-            });
+            }));
             Assert.That(ex!.Kind, Is.EqualTo(RealmUserErrorKind.MigrationRequired));
         }
     }

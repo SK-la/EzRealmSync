@@ -9,7 +9,7 @@ namespace osu.Game.EzRealmSync.Tests
         [Test]
         public void Run_does_not_throw_synchronously_when_work_fails()
         {
-            Assert.DoesNotThrow((TestDelegate)(() => SafeAsyncInvoker.Run(() => throw new InvalidOperationException("boom"))));
+            Assert.DoesNotThrow((Action)(() => SafeAsyncInvoker.Run(() => throw new InvalidOperationException("boom"))));
         }
 
         [Test]

@@ -55,7 +55,9 @@ namespace osu.Game.EzRealmSync.Tests
 
             Assert.That(second.Id, Is.EqualTo(first.Id));
             Assert.That(second.SchemaVersion, Is.EqualTo(51));
-            Assert.That(second.FileSizeBytes, Is.GreaterThan(first.FileSizeBytes));
+            Assert.That(first.FileSizeBytes, Is.Not.Null);
+            Assert.That(second.FileSizeBytes, Is.Not.Null);
+            Assert.That(second.FileSizeBytes!.Value, Is.GreaterThan(first.FileSizeBytes!.Value));
         }
 
         [Test]
