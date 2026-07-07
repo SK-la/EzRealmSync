@@ -1,12 +1,11 @@
 #if HAS_EZ_OSU_GAME
 using osu.Game.Database;
-using osu.Game.EzRealmSync.Models;
 
 namespace osu.Game.EzRealmSync.Realm.Readers
 {
-    internal interface IRealmReaderAdapter
+    public interface IRealmReaderAdapter
     {
-        RealmDiskSchemaKind SupportedKind { get; }
+        RealmReaderRoute SupportedRoute { get; }
 
         RealmAccess Open(string realmFilePath, int pinnedDiskSchemaVersion);
     }
