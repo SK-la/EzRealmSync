@@ -2,6 +2,7 @@
 using osu.Game.Database;
 using osu.Game.EzRealmSync.Errors;
 using osu.Game.EzRealmSync.Models;
+using osu.Game.EzRealmSync.Realm.Readers;
 
 namespace osu.Game.EzRealmSync.Realm
 {
@@ -10,6 +11,8 @@ namespace osu.Game.EzRealmSync.Realm
     /// </summary>
     public static class RealmSchemaProbe
     {
+        private static readonly RealmReaderRouter reader_router = new RealmReaderRouter();
+
         /// <summary>仅读取文件头 schema，不迁移、不写盘。</summary>
         public static int? TryReadSchemaVersion(string realmFilePath) => RealmDiskSchemaReader.TryReadSchemaVersion(realmFilePath);
 
@@ -29,11 +32,7 @@ namespace osu.Game.EzRealmSync.Realm
 
             try
             {
-                if (RealmSchemaSafety.RequiresOfficialRealmAccess(schema))
-                    return RealmDiffReader.OpenOfficialRealm(realmFilePath, schema.Value);
-
-                if (RealmSchemaSafety.RequiresEzRealmAccess(schema))
-                    return RealmDiffReader.OpenEzRealm(realmFilePath, schema.Value);
+                return reader_router.OpenByDiskSchemaVersion(schema.Value, realmFilePath);
             }
             catch (Exception ex) when (isMigrationRequiredError(ex))
             {
