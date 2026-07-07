@@ -1,3 +1,4 @@
+using System.Windows.Controls.Primitives;
 using System.Windows.Data;
 
 namespace osu.EzRealmSync.Desktop.Helpers
@@ -11,9 +12,9 @@ namespace osu.EzRealmSync.Desktop.Helpers
 
         public static DataGridTemplateColumn CreateColumn(double width = 40)
         {
-            var checkFactory = new FrameworkElementFactory(typeof(CheckBox));
+            var checkFactory = new FrameworkElementFactory(typeof(ToggleButton));
             checkFactory.SetBinding(
-                CheckBox.IsCheckedProperty,
+                ToggleButton.IsCheckedProperty,
                 new Binding(IS_SELECTED_PROPERTY_NAME)
                 {
                     Mode = BindingMode.OneWay,
