@@ -1,8 +1,8 @@
 ﻿<Project>
-  <Target Name="WarnIfLibPresentButNotLinked"
+  <Target Name="WarnIfLibPresentButIgnored"
           BeforeTargets="CoreCompile"
           Condition="'$(MSBuildProjectName)' == 'osu.Game.EzRealmSync' and Exists('$(EzRealmSyncLibDir)\osu.Game.dll') and '$(UseLocalOsuLibs)' != 'true'">
-    <Warning Text="lib/osu.Game.dll 存在但 UseLocalOsuLibs!=true，真实 Realm 代码未编入。请检查 EzRealmSync.LocalLibs.props。" />
+    <Message Importance="high" Text="lib/osu.Game.dll 存在但已忽略（默认 NuGet）。本地覆盖请 -p:UseLocalOsuLibs=true" />
   </Target>
 
   <!-- 测试项目在 UseLocalOsuLibs 时复制 lib 依赖到输出目录（dotnet test 需能加载 osu.Game） -->
@@ -25,7 +25,7 @@
 
   <Target Name="CopyEzRealmSyncLibsToOutput"
           AfterTargets="Build"
-          Condition="'$(OutputType)' == 'WinExe' AND ('@(EzRealmSyncRuntimeLib)' != '' OR '@(EzRealmSyncEngineOutput)' != '')">
+          Condition="'$(OutputType)' == 'WinExe' AND '$(UseLocalOsuLibs)' == 'true' AND ('@(EzRealmSyncRuntimeLib)' != '' OR '@(EzRealmSyncEngineOutput)' != '')">
     <MakeDir Directories="$(OutputPath)lib" />
     <ItemGroup>
       <_EzCopyToLib Include="@(EzRealmSyncRuntimeLib)" />
@@ -73,7 +73,7 @@
 
   <Target Name="CopyEzRealmSyncLibsToPublish"
           AfterTargets="Publish"
-          Condition="'$(OutputType)' == 'WinExe'">
+          Condition="'$(OutputType)' == 'WinExe' AND '$(UseLocalOsuLibs)' == 'true'">
     <MakeDir Directories="$(PublishDir)lib" />
     <Copy SourceFiles="@(EzRealmSyncRuntimeLib)"
           DestinationFolder="$(PublishDir)lib"

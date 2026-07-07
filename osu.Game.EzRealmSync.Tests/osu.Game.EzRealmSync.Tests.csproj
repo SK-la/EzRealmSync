@@ -8,19 +8,17 @@
     <IsPackable>false</IsPackable>
   </PropertyGroup>
 
-  <PropertyGroup Condition="'$(UseLocalOsuLibs)' == 'true'">
-    <DefineConstants>$(DefineConstants);HAS_EZ_OSU_GAME</DefineConstants>
-  </PropertyGroup>
-
   <ItemGroup Condition="'$(UseLocalOsuLibs)' == 'true'">
     <Reference Include="$(EzRealmSyncLibDir)\osu.Game.dll">
       <HintPath>$(EzRealmSyncLibDir)\osu.Game.dll</HintPath>
       <Private>false</Private>
     </Reference>
+    <PackageReference Include="Realm" Version="$(RealmPackageVersion)" />
   </ItemGroup>
 
-  <ItemGroup Condition="'$(UseLocalOsuLibs)' == 'true'">
-    <PackageReference Include="Realm" Version="20.1.0" />
+  <ItemGroup Condition="'$(UseLocalOsuLibs)' != 'true'">
+    <PackageReference Include="ez2lazer.Game" Version="$(Ez2LazerGameVersion)" />
+    <PackageReference Include="Realm" Version="$(RealmPackageVersion)" />
   </ItemGroup>
 
   <ItemGroup>

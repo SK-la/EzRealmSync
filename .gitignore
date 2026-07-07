@@ -2,9 +2,10 @@ bin/
 obj/
 .vs/
 
-# 可选本地 osu 构建产物（见 lib/README.md）
+# 可选本地 osu 构建产物（见 lib/README.md）；NuGet 模式不需要
 lib/*.dll
 lib/**/*.dll
+lib/runtimes/
 
 *.user
 *.suo

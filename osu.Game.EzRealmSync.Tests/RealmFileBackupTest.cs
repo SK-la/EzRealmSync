@@ -54,7 +54,7 @@ namespace osu.Game.EzRealmSync.Tests
 
             RealmFileBackup.CreateTimestampedCopy(source, backupDir, stamp);
 
-            Assert.Throws<IOException>(() => RealmFileBackup.CreateTimestampedCopy(source, backupDir, stamp));
+            Assert.Throws<IOException>((TestDelegate)(() => RealmFileBackup.CreateTimestampedCopy(source, backupDir, stamp)));
             Assert.That(File.ReadAllText(source), Is.EqualTo("original"));
         }
 
@@ -64,7 +64,7 @@ namespace osu.Game.EzRealmSync.Tests
             string backupDir = Path.Combine(tempRoot, "backups");
             string source = Path.Combine(tempRoot, "missing.realm");
 
-            Assert.Throws<FileNotFoundException>(() => RealmFileBackup.CreateTimestampedCopy(source, backupDir));
+            Assert.Throws<FileNotFoundException>((TestDelegate)(() => RealmFileBackup.CreateTimestampedCopy(source, backupDir)));
         }
 
         [Test]
@@ -94,7 +94,7 @@ namespace osu.Game.EzRealmSync.Tests
             string path = Path.Combine(tempRoot, "client.realm");
             File.WriteAllText(path, "x");
 
-            Assert.Throws<InvalidOperationException>(() => RealmFileBackup.RestoreOverTarget(path, path));
+            Assert.Throws<InvalidOperationException>((TestDelegate)(() => RealmFileBackup.RestoreOverTarget(path, path)));
         }
     }
 }

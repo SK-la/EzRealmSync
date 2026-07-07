@@ -6,7 +6,7 @@
 |----|------|------|
 | **UI** | `osu.EzRealmSync.Desktop` | WPF + **WPF-UI**（Fluent 深色），`net8.0-windows` |
 | **状态** | `osu.EzRealmSync.AppModel` | `RealmAppPresenter` + **osu.Framework.Bindables** |
-| **数据** | `osu.Game.EzRealmSync` | `IEzRealmSyncService`、Mock；可选 **`lib/osu.Game.dll`** |
+| **数据** | `osu.Game.EzRealmSync` | `IEzRealmSyncService`、Mock；默认 **`ez2lazer.Game` NuGet** |
 
 UI **不引用** `osu.Game` / `osu.Game.Resources`。中文/英文见 `Strings.resx`（设置中切换）。
 
@@ -22,17 +22,10 @@ dotnet build EzRealmSync.sln
 dotnet run --project osu.EzRealmSync.Desktop
 ```
 
-- **默认**：真实 Realm 后端（需 `lib/osu.Game.dll`，见下方）
+- **默认**：真实 Realm 后端（`ez2lazer.Game` NuGet，版本见 `EzRealmSync.Dependencies.props`）
 - `--ui-test`：Mock 假数据（仅调 UI，不读 `.realm`）
 - `--mock-delay=0`：Mock 模式去掉模拟延迟
-- 同步 lib：`dotnet build -t:SyncEzRealmLibs EzRealmSync.sln`（`dotnet publish ../osu/osu.Game`，复制完整运行时依赖至 `lib/`）
-
-准备 `lib/`（首次）：
-
-```bash
-dotnet build -t:SyncEzRealmLibs EzRealmSync.sln -c Debug
-dotnet build EzRealmSync.sln
-```
+- **本地 lib 覆盖**（并行开发 osu 主仓库时）：`dotnet build -t:SyncEzRealmLibs EzRealmSync.sln` 后加 `-p:UseLocalOsuLibs=true`（见 [lib/README.md](lib/README.md)）
 
 主界面五 Tab：**导入**（osu! 数据目录 + Realm 列表 + 备份）→ **数据**（单库完整浏览；谱面集/成绩/收藏夹可写删与导出）→ **同步**（A/B 跨版本复制谱面集、难度、成绩、收藏夹，**不**改 schema）→ **修复** / **导出**（共用导入目录下 `files/`）。设置持久化至 `%AppData%\EzRealmSync\settings.json`。
 
