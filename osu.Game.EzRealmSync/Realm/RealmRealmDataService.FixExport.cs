@@ -1,6 +1,7 @@
 #if HAS_EZ_OSU_GAME
 using osu.Game.Database;
 using osu.Game.EzRealmSync.Models;
+using osu.Game.EzRealmSync.IO;
 using osu.Game.Scoring;
 
 namespace osu.Game.EzRealmSync.Realm
@@ -65,6 +66,13 @@ namespace osu.Game.EzRealmSync.Realm
             RealmFixApplyOptions options,
             IProgress<ScanProgress>? progress = null,
             CancellationToken cancellationToken = default) => Task.Run(() => applyFixesCore(realmId, issueIds, progress, cancellationToken), cancellationToken);
+
+        public Task<RealmOfficialConversionResult> ConvertToOfficialRealmAsync(
+            string realmId,
+            string? outputRealmFilePath = null,
+            IProgress<ScanProgress>? progress = null,
+            CancellationToken cancellationToken = default) =>
+            Task.Run(() => convertToOfficialCore(realmId, outputRealmFilePath, progress, cancellationToken), cancellationToken);
 
         private RealmFixApplyResult applyFixesCore(
             string realmId,
@@ -140,6 +148,114 @@ namespace osu.Game.EzRealmSync.Realm
             progress?.Report(new ScanProgress { Progress = 1, Message = $"已处理 {applied} 项" });
 
             return new RealmFixApplyResult { AppliedCount = applied, SkippedCount = skipped };
+        }
+
+        private RealmOfficialConversionResult convertToOfficialCore(
+            string realmId,
+            string? outputRealmFilePath,
+            IProgress<ScanProgress>? progress,
+            CancellationToken cancellationToken)
+        {
+            if (!registry.TryGet(realmId, out var file))
+                throw new InvalidOperationException($"未找到 Realm 文件：{realmId}");
+
+            if (RealmSchemaSafety.Classify(file.SchemaVersion) != RealmDiskSchemaKind.EzExtended)
+                throw new InvalidOperationException("所选库不是 Ez 扩展库，无需“转回官方版”。");
+
+            string sourcePath = Path.GetFullPath(file.FilePath);
+            string sourceName = Path.GetFileName(sourcePath);
+
+            progress?.Report(new ScanProgress { Progress = 0.05, Message = "正在创建自动备份…" });
+            string backupPath = RealmFileBackup.CreateTimestampedCopy(sourcePath, EzRealmSyncDefaults.DefaultBackupDirectory);
+
+            string tempRoot = Path.Combine(Path.GetTempPath(), "EzRealmSync", "official-convert", Guid.NewGuid().ToString("N"));
+            string tempTargetPath = Path.Combine(tempRoot, sourceName);
+            Directory.CreateDirectory(tempRoot);
+
+            cancellationToken.ThrowIfCancellationRequested();
+
+            try
+            {
+                progress?.Report(new ScanProgress { Progress = 0.12, Message = "正在创建官方目标库…" });
+                createEmptyOfficialRealm(tempTargetPath);
+
+                progress?.Report(new ScanProgress { Progress = 0.2, Message = "正在读取污染库内容…" });
+                using var sourceAccess = RealmSchemaProbe.Open(sourcePath, file.SchemaVersion);
+                var sourceSnapshot = RealmDiffReader.Read(sourceAccess, progress, cancellationToken);
+                var itemIds = sourceSnapshot.Entities.Select(e => e.Id).Distinct().ToList();
+
+                int targetSchema = RealmSchemaProbe.TryReadSchemaVersion(tempTargetPath) ?? RealmAccess.UpstreamSchemaVersion;
+                var writePlan = new RealmWritePlan
+                {
+                    SourceRealmFilePath = sourcePath,
+                    TargetRealmFilePath = tempTargetPath,
+                    SourceKind = RealmDiskSchemaKind.EzExtended,
+                    TargetKind = RealmDiskSchemaKind.PpyClient,
+                    SourceSchemaVersion = file.SchemaVersion,
+                    TargetSchemaVersion = targetSchema,
+                    LegacyDirection = SyncDirection.EzToOfficial,
+                };
+
+                var request = new ApplyRequest
+                {
+                    WritePlan = writePlan,
+                    Direction = SyncDirection.EzToOfficial,
+                    ItemIds = itemIds,
+                    CreateBackup = false,
+                    DeleteFromSource = false,
+                };
+
+                cancellationToken.ThrowIfCancellationRequested();
+
+                progress?.Report(new ScanProgress { Progress = 0.4, Message = "正在写入官方数据…" });
+                using var targetAccess = RealmDiffReader.OpenOfficialRealm(tempTargetPath, targetSchema);
+                var apply = RealmRowCopier.Apply(
+                    request,
+                    sourceAccess,
+                    targetAccess,
+                    progress == null
+                        ? null
+                        : new Progress<ApplyProgress>(p => progress.Report(new ScanProgress
+                        {
+                            Progress = 0.4 + p.Progress * 0.45,
+                            Message = p.Message,
+                        })),
+                    cancellationToken);
+
+                cancellationToken.ThrowIfCancellationRequested();
+
+                progress?.Report(new ScanProgress { Progress = 0.9, Message = "正在覆盖原文件…" });
+                File.Copy(tempTargetPath, sourcePath, overwrite: true);
+
+                snapshotCache.Remove(realmId);
+                fixIssuesByRealm.Remove(realmId);
+                exportCatalogs.Clear();
+
+                progress?.Report(new ScanProgress { Progress = 1, Message = "转换完成" });
+
+                return new RealmOfficialConversionResult
+                {
+                    TargetRealmFilePath = sourcePath,
+                    AppliedCount = apply.AppliedCount,
+                    BackupPath = backupPath,
+                };
+            }
+            finally
+            {
+                if (Directory.Exists(tempRoot))
+                    Directory.Delete(tempRoot, recursive: true);
+            }
+        }
+
+        private static void createEmptyOfficialRealm(string targetPath)
+        {
+            string root = RealmWorkspacePaths.ResolveStorageRoot(targetPath);
+            string fileName = Path.GetFileName(targetPath);
+
+            Directory.CreateDirectory(root);
+
+            using var access = new OfficialRealmAccess(new osu.Framework.Platform.NativeStorage(root), fileName, allowDestructiveRecoveryOnSchemaMismatch: false);
+            access.Run(_ => { });
         }
 
         public Task<RealmExportCatalog> LoadCatalogAsync(

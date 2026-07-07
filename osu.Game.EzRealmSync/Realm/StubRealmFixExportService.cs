@@ -22,6 +22,12 @@ namespace osu.Game.EzRealmSync.Realm
             IProgress<ScanProgress>? progress = null,
             CancellationToken cancellationToken = default) => throw new InvalidOperationException(message);
 
+        public Task<RealmOfficialConversionResult> ConvertToOfficialRealmAsync(
+            string realmId,
+            string? outputRealmFilePath = null,
+            IProgress<ScanProgress>? progress = null,
+            CancellationToken cancellationToken = default) => throw new InvalidOperationException(message);
+
         public void InvalidateCatalog(string? realmId = null)
         {
         }

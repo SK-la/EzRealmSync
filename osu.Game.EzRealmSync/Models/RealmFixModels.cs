@@ -54,4 +54,13 @@ namespace osu.Game.EzRealmSync.Models
 
         public int SkippedCount { get; init; }
     }
+
+    public sealed class RealmOfficialConversionResult
+    {
+        public string TargetRealmFilePath { get; init; } = string.Empty;
+
+        public int AppliedCount { get; init; }
+
+        public string? BackupPath { get; init; }
+    }
 }

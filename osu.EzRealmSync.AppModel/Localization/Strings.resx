@@ -207,4 +207,8 @@
   <data name="RealmClassSkin" xml:space="preserve"><value>Skin</value></data>
   <data name="FixConfirmSummary" xml:space="preserve"><value>Will create {0} placeholder(s) for missing files, delete {1} orphan file(s), and modify {2} illegal character(s). Continue?</value></data>
   <data name="FixConfirmTitle" xml:space="preserve"><value>Confirm fix</value></data>
+  <data name="FixConvertOfficial" xml:space="preserve"><value>Convert to official</value></data>
+  <data name="FixConvertOfficialConfirm" xml:space="preserve"><value>This will convert the selected polluted Realm in-place to official format. A backup will be created first at: {0}. Continue?</value></data>
+  <data name="FixConvertOfficialTitle" xml:space="preserve"><value>Convert to official</value></data>
+  <data name="StatusFixConvertedOfficial" xml:space="preserve"><value>Converted to official: {0} (backup: {1}, wrote {2} item(s))</value></data>
 </root>

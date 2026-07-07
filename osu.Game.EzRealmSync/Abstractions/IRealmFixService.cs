@@ -18,5 +18,11 @@ namespace osu.Game.EzRealmSync.Abstractions
             RealmFixApplyOptions options,
             IProgress<ScanProgress>? progress = null,
             CancellationToken cancellationToken = default);
+
+        Task<RealmOfficialConversionResult> ConvertToOfficialRealmAsync(
+            string realmId,
+            string? outputRealmFilePath = null,
+            IProgress<ScanProgress>? progress = null,
+            CancellationToken cancellationToken = default);
     }
 }

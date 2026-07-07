@@ -138,6 +138,33 @@ namespace osu.Game.EzRealmSync.Mock
             return new RealmFixApplyResult { AppliedCount = applied, SkippedCount = skipped };
         }
 
+        public async Task<RealmOfficialConversionResult> ConvertToOfficialRealmAsync(
+            string realmId,
+            string? outputRealmFilePath = null,
+            IProgress<ScanProgress>? progress = null,
+            CancellationToken cancellationToken = default)
+        {
+            var snapshot = await ensureLoadedAsync(realmId, progress, cancellationToken).ConfigureAwait(false);
+            await simulateWorkAsync(progress, "正在转换为官方库…", cancellationToken).ConfigureAwait(false);
+
+            string target = string.IsNullOrWhiteSpace(outputRealmFilePath)
+                ? Path.Combine(Path.GetTempPath(), $"client_{Guid.NewGuid():N}.realm")
+                : Path.GetFullPath(outputRealmFilePath.Trim());
+
+            string? dir = Path.GetDirectoryName(target);
+            if (!string.IsNullOrEmpty(dir))
+                Directory.CreateDirectory(dir);
+
+            await File.WriteAllTextAsync(target, $"// mock official realm converted from {snapshot.DisplayName}", cancellationToken).ConfigureAwait(false);
+
+            return new RealmOfficialConversionResult
+            {
+                TargetRealmFilePath = target,
+                AppliedCount = snapshot.Groups.Sum(g => g.Rows.Count),
+                BackupPath = Path.Combine(Path.GetTempPath(), $"client_backup_{Guid.NewGuid():N}.realm"),
+            };
+        }
+
         public void InvalidateCatalog(string? realmId = null)
         {
             if (realmId == null)

@@ -1019,6 +1019,48 @@ namespace osu.EzRealmSync.AppModel
 
         public async Task ApplyAllFixesAsync() => await applyFixesAsync(FixIssues.Select(i => i.Id).ToList()).ConfigureAwait(false);
 
+        public async Task ConvertSelectedFixRealmToOfficialAsync()
+        {
+            var file = getRealmFile(FixRealmId.Value);
+            if (file == null)
+                return;
+
+            if (ConfirmAsync != null)
+            {
+                string backupDir = EzRealmSyncDefaults.DefaultBackupDirectory;
+                string message = Loc.Format("FixConvertOfficialConfirm", backupDir);
+                if (!await ConfirmAsync(message, Loc.Get("FixConvertOfficialTitle"), true).ConfigureAwait(false))
+                    return;
+            }
+
+            setBusy(true);
+
+            try
+            {
+                var progress = createScanProgress();
+                var result = await fixService.ConvertToOfficialRealmAsync(file.Id, progress: progress).ConfigureAwait(false);
+                await RefreshRealmFilesAsync().ConfigureAwait(false);
+
+                runOnUi(() =>
+                {
+                    StatusMessage.Value = Loc.Format(
+                        "StatusFixConvertedOfficial",
+                        Path.GetFileName(result.TargetRealmFilePath),
+                        result.BackupPath ?? EzRealmSyncDefaults.DefaultBackupDirectory,
+                        result.AppliedCount);
+                    Progress.Value = 1;
+                });
+            }
+            catch (Exception ex)
+            {
+                runOnUi(() => StatusMessage.Value = ex.Message);
+            }
+            finally
+            {
+                setBusy(false);
+            }
+        }
+
         public async Task LoadExportCatalogAsync()
         {
             var file = getRealmFile(ExportRealmId.Value);

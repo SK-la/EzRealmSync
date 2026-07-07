@@ -62,6 +62,7 @@ namespace osu.EzRealmSync.Desktop.Pages
             FixSelectedButton.IsEnabled = enabled;
             FixAllButton.IsEnabled = enabled;
             SelectAllButton.IsEnabled = enabled;
+            ConvertOfficialButton.IsEnabled = enabled;
             RealmSelectCombo.IsEnabled = enabled;
             ReplacementBox.IsEnabled = enabled;
         }
@@ -74,6 +75,7 @@ namespace osu.EzRealmSync.Desktop.Pages
             FixSelectedButton.Content = Loc.Get("FixApplySelected");
             FixAllButton.Content = Loc.Get("FixApplyAll");
             SelectAllButton.Content = Loc.Get("SelectAll");
+            ConvertOfficialButton.Content = Loc.Get("FixConvertOfficial");
         }
 
         private void refreshRealmCombo()
@@ -149,5 +151,7 @@ namespace osu.EzRealmSync.Desktop.Pages
         private void FixAll_OnClick(object sender, RoutedEventArgs e) => vm?.ApplyAllFixesCommand.Execute(null);
 
         private void SelectAll_OnClick(object sender, RoutedEventArgs e) => vm?.ToggleFixSelectAllCommand.Execute(null);
+
+        private void ConvertOfficial_OnClick(object sender, RoutedEventArgs e) => vm?.ConvertFixRealmToOfficialCommand.Execute(null);
     }
 }
