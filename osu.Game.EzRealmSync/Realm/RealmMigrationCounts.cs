@@ -2,6 +2,7 @@
 using osu.Game.Database;
 using osu.Game.Models;
 using osu.Game.Rulesets;
+using osu.Game.Skinning;
 
 namespace osu.Game.EzRealmSync.Realm
 {
@@ -27,7 +28,7 @@ namespace osu.Game.EzRealmSync.Realm
                 {
                     RealmFiles = realm.All<RealmFile>().Count(),
                     BeatmapSets = realm.LiveBeatmapSets().Count(),
-                    Skins = realm.LiveSkins().Count(),
+                    Skins = realm.All<SkinInfo>().Count(s => !s.DeletePending),
                     Rulesets = realm.All<RulesetInfo>().Count(),
                     Scores = realm.LiveScores().Count(),
                 };
@@ -38,19 +39,19 @@ namespace osu.Game.EzRealmSync.Realm
 
         public bool IsCatastrophicLossComparedTo(RealmMigrationCounts before)
         {
-            if (before.RealmFiles >= 1_000 && RealmFiles < Math.Max(100, before.RealmFiles / 10))
+            if (before.RealmFiles > 0 && RealmFiles < before.RealmFiles * 0.99)
                 return true;
 
-            if (before.BeatmapSets >= 10 && BeatmapSets < before.BeatmapSets * 0.9)
+            if (before.BeatmapSets > 0 && BeatmapSets < before.BeatmapSets * 0.99)
                 return true;
 
-            if (before.Rulesets >= 4 && Rulesets == 0)
+            if (before.Rulesets > 0 && Rulesets < before.Rulesets * 0.99)
                 return true;
 
-            if (before.Skins >= 1 && Skins == 0)
+            if (before.Skins > 0 && Skins < before.Skins * 0.99)
                 return true;
 
-            if (before.Scores >= 100 && Scores < before.Scores * 0.9)
+            if (before.Scores > 0 && Scores < before.Scores * 0.99)
                 return true;
 
             return false;

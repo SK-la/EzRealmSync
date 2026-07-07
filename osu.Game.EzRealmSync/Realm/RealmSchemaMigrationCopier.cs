@@ -10,222 +10,219 @@ using osu.Game.Rulesets;
 using osu.Game.Rulesets.Mods;
 using osu.Game.Scoring;
 using osu.Game.Skinning;
+using Realms;
 using RealmInstance = Realms.Realm;
 
 namespace osu.Game.EzRealmSync.Realm
 {
     /// <summary>
-    /// 工具侧 schema 升级：在同类型库之间复制全部行数据（Ez→Ez / 官方→官方），不触发游戏 migration 回调。
+    /// 同类型库 schema 升级：把源库全部行原样 detach 后写入目标库。
+    /// Ez 与官方差异仅在少量 Ez 列；同类型升级不做 strip/normalize。
     /// </summary>
     internal static class RealmSchemaMigrationCopier
     {
+        private const int file_hash_batch_size = 8_000;
+
         public static void CopyAll(
             RealmAccess sourceAccess,
             RealmAccess targetAccess,
-            RealmDiskSchemaKind kind,
             IProgress<ScanProgress>? progress = null,
             CancellationToken cancellationToken = default)
         {
-            bool preserveEzFields = kind == RealmDiskSchemaKind.EzExtended;
-
-            sourceAccess.Run(source =>
-            {
-                targetAccess.Write(target =>
-                {
-                    progress?.Report(new ScanProgress { Progress = 0.05, Message = "正在复制文件索引…" });
-                    copyRealmFiles(source, target, cancellationToken);
-
-                    progress?.Report(new ScanProgress { Progress = 0.12, Message = "正在复制规则集…" });
-                    copyRulesets(source, target, preserveEzFields, cancellationToken);
-
-                    progress?.Report(new ScanProgress { Progress = 0.18, Message = "正在复制皮肤…" });
-                    copySkins(source, target, cancellationToken);
-
-                    progress?.Report(new ScanProgress { Progress = 0.28, Message = "正在复制谱面集…" });
-                    copyBeatmapSets(source, target, preserveEzFields, cancellationToken);
-
-                    progress?.Report(new ScanProgress { Progress = 0.62, Message = "正在复制成绩…" });
-                    copyScores(source, target, preserveEzFields, cancellationToken);
-
-                    progress?.Report(new ScanProgress { Progress = 0.78, Message = "正在复制收藏夹…" });
-                    copyCollections(source, target, cancellationToken);
-
-                    progress?.Report(new ScanProgress { Progress = 0.86, Message = "正在复制键位与 Mod 预设…" });
-                    copyKeyBindings(source, target, cancellationToken);
-                    copyModPresets(source, target, cancellationToken);
-                    copyRulesetSettings(source, target, cancellationToken);
-                });
-            });
+            copyRealmFiles(sourceAccess, targetAccess, progress, cancellationToken);
+            copyDetached<RulesetInfo>(sourceAccess, targetAccess, copyRulesets, 0.12, "正在复制规则集…", progress, cancellationToken);
+            copyDetached<SkinInfo>(sourceAccess, targetAccess, copySkins, 0.20, "正在复制皮肤…", progress, cancellationToken);
+            copyDetached<BeatmapSetInfo>(sourceAccess, targetAccess, copyBeatmapSets, 0.30, "正在复制谱面集…", progress, cancellationToken);
+            copyDetached<ScoreInfo>(sourceAccess, targetAccess, copyScores, 0.62, "正在复制成绩…", progress, cancellationToken);
+            copyDetached<BeatmapCollection>(sourceAccess, targetAccess, copyCollections, 0.78, "正在复制收藏夹…", progress, cancellationToken);
+            copyDetached<RealmKeyBinding>(sourceAccess, targetAccess, copyKeyBindings, 0.86, "正在复制键位…", progress, cancellationToken);
+            copyDetached<ModPreset>(sourceAccess, targetAccess, copyModPresets, 0.90, "正在复制 Mod 预设…", progress, cancellationToken);
+            copyDetached<RealmRulesetSetting>(sourceAccess, targetAccess, copyRulesetSettings, 0.94, "正在复制规则集设置…", progress, cancellationToken);
 
             progress?.Report(new ScanProgress { Progress = 1, Message = "数据复制完成" });
         }
 
-        private static void copyRealmFiles(RealmInstance source, RealmInstance target, CancellationToken cancellationToken)
+        private static void copyRealmFiles(
+            RealmAccess sourceAccess,
+            RealmAccess targetAccess,
+            IProgress<ScanProgress>? progress,
+            CancellationToken cancellationToken)
         {
-            foreach (var file in source.All<RealmFile>())
+            var hashes = new List<string>();
+
+            sourceAccess.Run(source =>
+            {
+                foreach (var file in source.All<RealmFile>())
+                    hashes.Add(file.Hash);
+            });
+
+            progress?.Report(new ScanProgress { Progress = 0.08, Message = $"正在复制文件索引（{hashes.Count:N0}）…" });
+
+            for (int offset = 0; offset < hashes.Count; offset += file_hash_batch_size)
             {
                 cancellationToken.ThrowIfCancellationRequested();
+                var batch = hashes.Skip(offset).Take(file_hash_batch_size).ToList();
+                double batchProgress = hashes.Count == 0 ? 1 : (offset + batch.Count) / (double)hashes.Count;
 
-                if (target.Find<RealmFile>(file.Hash) == null)
-                    target.Add(new RealmFile { Hash = file.Hash }, true);
+                targetAccess.Write(target =>
+                {
+                    foreach (string hash in batch)
+                    {
+                        if (target.Find<RealmFile>(hash) == null)
+                            target.Add(new RealmFile { Hash = hash }, true);
+                    }
+                });
+
+                progress?.Report(new ScanProgress
+                {
+                    Progress = 0.08 + batchProgress * 0.04,
+                    Message = $"正在复制文件索引 {Math.Min(offset + batch.Count, hashes.Count):N0}/{hashes.Count:N0}…",
+                });
             }
         }
 
-        private static void copyRulesets(RealmInstance source, RealmInstance target, bool preserveEzFields, CancellationToken cancellationToken)
+        private static void copyDetached<T>(
+            RealmAccess sourceAccess,
+            RealmAccess targetAccess,
+            Action<RealmInstance, List<T>> collect,
+            double progressStart,
+            string message,
+            IProgress<ScanProgress>? progress,
+            CancellationToken cancellationToken)
+            where T : RealmObjectBase
+        {
+            progress?.Report(new ScanProgress { Progress = progressStart, Message = message });
+
+            var items = new List<T>();
+            sourceAccess.Run(source => collect(source, items));
+
+            for (int i = 0; i < items.Count; i++)
+            {
+                cancellationToken.ThrowIfCancellationRequested();
+                T item = items[i];
+
+                targetAccess.Write(target => insertDetached(item, target));
+
+                if (items.Count > 0 && (i + 1) % 250 == 0)
+                {
+                    progress?.Report(new ScanProgress
+                    {
+                        Progress = progressStart + ((i + 1) / (double)items.Count) * 0.08,
+                        Message = $"{message} {i + 1:N0}/{items.Count:N0}",
+                    });
+                }
+            }
+        }
+
+        private static void insertDetached<T>(T item, RealmInstance target) where T : RealmObjectBase
+        {
+            switch (item)
+            {
+                case RulesetInfo ruleset:
+                    if (target.All<RulesetInfo>().Any(r => r.ShortName == ruleset.ShortName))
+                        return;
+
+                    target.Add(ruleset);
+                    break;
+
+                case SkinInfo skin:
+                    if (target.Find<SkinInfo>(skin.ID) != null)
+                        return;
+
+                    linkFiles(target, skin.Files);
+                    target.Add(skin);
+                    break;
+
+                case BeatmapSetInfo set:
+                    if (target.Find<BeatmapSetInfo>(set.ID) != null)
+                        return;
+
+                    insertBeatmapSet(set, target);
+                    break;
+
+                case ScoreInfo score:
+                    if (target.Find<ScoreInfo>(score.ID) != null)
+                        return;
+
+                    insertScore(score, target);
+                    break;
+
+                case BeatmapCollection collection:
+                    if (target.Find<BeatmapCollection>(collection.ID) != null)
+                        return;
+
+                    target.Add(collection);
+                    break;
+
+                case RealmKeyBinding binding:
+                    if (target.All<RealmKeyBinding>().Any(b => b.ID == binding.ID))
+                        return;
+
+                    target.Add(binding);
+                    break;
+
+                case ModPreset preset:
+                    if (target.Find<ModPreset>(preset.ID) != null)
+                        return;
+
+                    target.Add(preset);
+                    break;
+
+                case RealmRulesetSetting setting:
+                    if (target.All<RealmRulesetSetting>().Any(s => s.RulesetName == setting.RulesetName && s.Variant == setting.Variant && s.Key == setting.Key))
+                        return;
+
+                    target.Add(setting);
+                    break;
+            }
+        }
+
+        private static void copyRulesets(RealmInstance source, List<RulesetInfo> items)
         {
             foreach (var ruleset in source.All<RulesetInfo>())
-            {
-                cancellationToken.ThrowIfCancellationRequested();
-
-                if (target.All<RulesetInfo>().Any(r => r.ShortName == ruleset.ShortName))
-                    continue;
-
-                var copy = new RulesetInfo(ruleset.ShortName, ruleset.Name, ruleset.InstantiationInfo, ruleset.OnlineID)
-                {
-                    Available = ruleset.Available,
-                    LastAppliedDifficultyVersion = ruleset.LastAppliedDifficultyVersion,
-                };
-
-                if (preserveEzFields)
-                    copy.LastAppliedXxySrVersion = ruleset.LastAppliedXxySrVersion;
-                else
-                    OfficialRealmMapper.StripEzOnlyRulesetFields(copy);
-
-                target.Add(copy);
-            }
+                items.Add(ruleset.Detach());
         }
 
-        private static void copySkins(RealmInstance source, RealmInstance target, CancellationToken cancellationToken)
+        private static void copySkins(RealmInstance source, List<SkinInfo> items)
         {
-            foreach (var skin in source.LiveSkins())
-            {
-                cancellationToken.ThrowIfCancellationRequested();
-
-                if (target.Find<SkinInfo>(skin.ID) != null)
-                    continue;
-
-                var detached = skin.Detach();
-                linkFiles(target, detached.Files);
-                target.Add(detached);
-            }
+            foreach (var skin in source.All<SkinInfo>().Where(s => !s.DeletePending))
+                items.Add(skin.Detach());
         }
 
-        private static void copyBeatmapSets(RealmInstance source, RealmInstance target, bool preserveEzFields, CancellationToken cancellationToken)
+        private static void copyBeatmapSets(RealmInstance source, List<BeatmapSetInfo> items)
         {
             foreach (var set in source.LiveBeatmapSets())
-            {
-                cancellationToken.ThrowIfCancellationRequested();
-
-                if (target.Find<BeatmapSetInfo>(set.ID) != null)
-                    continue;
-
-                var detached = set.Detach();
-
-                if (preserveEzFields)
-                    prepareBeatmapSetForEz(detached);
-                else
-                    prepareBeatmapSetForOfficial(detached);
-
-                insertBeatmapSet(detached, target);
-            }
+                items.Add(set.Detach());
         }
 
-        private static void copyScores(RealmInstance source, RealmInstance target, bool preserveEzFields, CancellationToken cancellationToken)
+        private static void copyScores(RealmInstance source, List<ScoreInfo> items)
         {
             foreach (var score in source.LiveScores())
-            {
-                cancellationToken.ThrowIfCancellationRequested();
-
-                if (target.Find<ScoreInfo>(score.ID) != null)
-                    continue;
-
-                var detached = score.Detach();
-
-                if (!preserveEzFields)
-                    prepareScoreForOfficial(detached);
-
-                insertScore(detached, target);
-            }
+                items.Add(score.Detach());
         }
 
-        private static void copyCollections(RealmInstance source, RealmInstance target, CancellationToken cancellationToken)
+        private static void copyCollections(RealmInstance source, List<BeatmapCollection> items)
         {
             foreach (var collection in source.All<BeatmapCollection>())
-            {
-                cancellationToken.ThrowIfCancellationRequested();
-
-                if (target.Find<BeatmapCollection>(collection.ID) != null)
-                    continue;
-
-                target.Add(collection.Detach());
-            }
+                items.Add(collection.Detach());
         }
 
-        private static void copyKeyBindings(RealmInstance source, RealmInstance target, CancellationToken cancellationToken)
+        private static void copyKeyBindings(RealmInstance source, List<RealmKeyBinding> items)
         {
             foreach (var binding in source.All<RealmKeyBinding>())
-            {
-                cancellationToken.ThrowIfCancellationRequested();
-
-                if (target.All<RealmKeyBinding>().Any(b => b.ID == binding.ID))
-                    continue;
-
-                target.Add(binding.Detach());
-            }
+                items.Add(binding.Detach());
         }
 
-        private static void copyModPresets(RealmInstance source, RealmInstance target, CancellationToken cancellationToken)
+        private static void copyModPresets(RealmInstance source, List<ModPreset> items)
         {
             foreach (var preset in source.All<ModPreset>().Where(p => !p.DeletePending))
-            {
-                cancellationToken.ThrowIfCancellationRequested();
-
-                if (target.Find<ModPreset>(preset.ID) != null)
-                    continue;
-
-                target.Add(preset.Detach());
-            }
+                items.Add(preset.Detach());
         }
 
-        private static void copyRulesetSettings(RealmInstance source, RealmInstance target, CancellationToken cancellationToken)
+        private static void copyRulesetSettings(RealmInstance source, List<RealmRulesetSetting> items)
         {
             foreach (var setting in source.All<RealmRulesetSetting>())
-            {
-                cancellationToken.ThrowIfCancellationRequested();
-
-                if (target.All<RealmRulesetSetting>().Any(s => s.RulesetName == setting.RulesetName && s.Variant == setting.Variant))
-                    continue;
-
-                target.Add(setting.Detach());
-            }
-        }
-
-        private static void prepareBeatmapSetForOfficial(BeatmapSetInfo detached)
-        {
-            foreach (var beatmap in detached.Beatmaps)
-                prepareBeatmapForOfficial(beatmap);
-        }
-
-        private static void prepareBeatmapSetForEz(BeatmapSetInfo detached)
-        {
-            foreach (var beatmap in detached.Beatmaps)
-                prepareBeatmapForEz(beatmap);
-        }
-
-        private static void prepareBeatmapForOfficial(BeatmapInfo beatmap)
-        {
-            OfficialRealmMapper.StripEzOnlyBeatmapFields(beatmap);
-            OfficialRealmMapper.StripEzOnlyRulesetFields(beatmap.Ruleset);
-        }
-
-        private static void prepareBeatmapForEz(BeatmapInfo beatmap) => OfficialRealmMapper.NormalizeEzOnlyBeatmapFields(beatmap);
-
-        private static void prepareScoreForOfficial(ScoreInfo score)
-        {
-            OfficialRealmMapper.StripEzOnlyScoreFields(score);
-
-            if (score.Ruleset != null)
-                OfficialRealmMapper.StripEzOnlyRulesetFields(score.Ruleset);
+                items.Add(setting.Detach());
         }
 
         private static void insertBeatmapSet(BeatmapSetInfo detached, RealmInstance target)
@@ -266,13 +263,11 @@ namespace osu.Game.EzRealmSync.Realm
         private static RulesetInfo resolveRuleset(RealmInstance target, RulesetInfo source)
         {
             var existing = target.All<RulesetInfo>().FirstOrDefault(r => r.ShortName == source.ShortName);
-
             if (existing != null)
                 return existing;
 
-            var added = new RulesetInfo(source.ShortName, source.Name, source.InstantiationInfo, source.OnlineID);
-            target.Add(added);
-            return added;
+            target.Add(source);
+            return source;
         }
     }
 }

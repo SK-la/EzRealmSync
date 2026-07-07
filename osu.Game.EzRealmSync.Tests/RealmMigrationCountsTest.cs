@@ -20,7 +20,7 @@ namespace osu.Game.EzRealmSync.Tests
         public void IsCatastrophicLoss_allows_minor_file_drift()
         {
             var before = new RealmMigrationCounts { RealmFiles = 1_000, BeatmapSets = 100, Rulesets = 8, Skins = 3 };
-            var after = new RealmMigrationCounts { RealmFiles = 980, BeatmapSets = 100, Rulesets = 8, Skins = 3 };
+            var after = new RealmMigrationCounts { RealmFiles = 995, BeatmapSets = 100, Rulesets = 8, Skins = 3 };
 
             Assert.That(after.IsCatastrophicLossComparedTo(before), Is.False);
         }
