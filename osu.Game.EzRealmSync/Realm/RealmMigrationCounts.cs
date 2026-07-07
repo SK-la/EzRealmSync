@@ -24,11 +24,18 @@ namespace osu.Game.EzRealmSync.Realm
 
             access.Run(realm =>
             {
+                int skinCount = 0;
+                foreach (var skin in realm.All<SkinInfo>())
+                {
+                    if (!skin.DeletePending)
+                        skinCount++;
+                }
+
                 counts = new RealmMigrationCounts
                 {
                     RealmFiles = realm.All<RealmFile>().Count(),
                     BeatmapSets = realm.LiveBeatmapSets().Count(),
-                    Skins = realm.All<SkinInfo>().Count(s => !s.DeletePending),
+                    Skins = skinCount,
                     Rulesets = realm.All<RulesetInfo>().Count(),
                     Scores = realm.LiveScores().Count(),
                 };

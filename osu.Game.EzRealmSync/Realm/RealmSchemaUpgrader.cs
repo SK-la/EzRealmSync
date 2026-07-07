@@ -63,15 +63,20 @@ namespace osu.Game.EzRealmSync.Realm
 
                 var dynamicBefore = RealmDynamicObjectCounter.Capture(fullPath);
 
+                RealmAuxiliaryTablePreserver.Snapshot auxiliary;
                 RealmMigrationCounts beforeCounts;
+
                 using (var sourceAccess = RealmSchemaProbe.Open(fullPath, sourceSchema.Value))
+                {
+                    auxiliary = RealmAuxiliaryTablePreserver.Capture(sourceAccess);
                     beforeCounts = RealmMigrationCounts.Capture(sourceAccess);
+                }
 
                 if (RealmDynamicObjectCounter.TypedReadLooksIncomplete(dynamicBefore, beforeCounts))
                 {
                     throw new RealmUserOperationException(
                         RealmUserErrorKind.LegacyReaderUnavailable,
-                        $"无法完整读取源库（磁盘 {dynamicBefore}，typed {beforeCounts}）。请确认已关闭游戏、安装匹配 legacy reader，或先从完整备份恢复后再升级。");
+                        $"无法完整读取源库（磁盘 {dynamicBefore}，typed {beforeCounts}，文件快照 {auxiliary.FileCount:N0}）。请确认已关闭游戏、安装匹配 legacy reader，或先从完整备份恢复后再升级。");
                 }
 
                 progress?.Report(new ScanProgress { Progress = 0.12, Message = "正在创建目标 schema 库…" });
@@ -80,13 +85,16 @@ namespace osu.Game.EzRealmSync.Realm
                 progress?.Report(new ScanProgress
                 {
                     Progress = 0.15,
-                    Message = $"正在复制 {beforeCounts}…",
+                    Message = $"正在迁移核心数据（保留 {auxiliary.FileCount:N0} 个文件索引）…",
                 });
 
                 using (var sourceAccess = RealmSchemaProbe.Open(fullPath, sourceSchema.Value))
                 using (var targetAccess = openTarget(tempRealmPath, kind, latestSupportedSchema))
                 {
-                    RealmSchemaMigrationCopier.CopyAll(sourceAccess, targetAccess, progress, cancellationToken);
+                    RealmSchemaMigrationCopier.CopyCoreData(sourceAccess, targetAccess, progress, cancellationToken);
+
+                    progress?.Report(new ScanProgress { Progress = 0.96, Message = $"正在写回文件与皮肤列表（{auxiliary}）…" });
+                    RealmAuxiliaryTablePreserver.Restore(targetAccess, auxiliary, filterEzOnlyProtectedSkins: false, cancellationToken);
                 }
 
                 RealmMigrationCounts afterCounts;
@@ -94,13 +102,15 @@ namespace osu.Game.EzRealmSync.Realm
                     afterCounts = RealmMigrationCounts.Capture(targetAccess);
 
                 if (afterCounts.IsCatastrophicLossComparedTo(beforeCounts)
+                    || auxiliary.FileCount > 0 && afterCounts.RealmFiles < auxiliary.FileCount * 0.99
+                    || auxiliary.SkinCount > 0 && afterCounts.Skins < auxiliary.SkinCount * 0.99
                     || dynamicBefore.Files > 0 && afterCounts.RealmFiles < dynamicBefore.Files * 0.99
                     || dynamicBefore.Rulesets > 0 && afterCounts.Rulesets < dynamicBefore.Rulesets
                     || dynamicBefore.Skins > 0 && afterCounts.Skins < dynamicBefore.Skins)
                 {
                     throw new RealmUserOperationException(
                         RealmUserErrorKind.MigrationRequired,
-                        $"迁移后数据量异常（磁盘前 {dynamicBefore}，typed 前 {beforeCounts}，迁移后 {afterCounts}）。已中止替换，请从备份恢复。");
+                        $"迁移后数据量异常（快照 {auxiliary}，磁盘前 {dynamicBefore}，typed 前 {beforeCounts}，迁移后 {afterCounts}）。已中止替换，请从备份恢复。");
                 }
 
                 progress?.Report(new ScanProgress { Progress = 0.97, Message = "正在替换原文件…" });

@@ -9,76 +9,31 @@ using osu.Game.Models;
 using osu.Game.Rulesets;
 using osu.Game.Rulesets.Mods;
 using osu.Game.Scoring;
-using osu.Game.Skinning;
 using Realms;
 using RealmInstance = Realms.Realm;
 
 namespace osu.Game.EzRealmSync.Realm
 {
     /// <summary>
-    /// 同类型库 schema 升级：把源库全部行原样 detach 后写入目标库。
-    /// Ez 与官方差异仅在少量 Ez 列；同类型升级不做 strip/normalize。
+    /// 同类型 schema 升级时复制核心业务表；<see cref="osu.Game.Models.RealmFile"/> / <see cref="SkinInfo"/> 由 <see cref="RealmAuxiliaryTablePreserver"/> 单独写回。
     /// </summary>
     internal static class RealmSchemaMigrationCopier
     {
-        private const int file_hash_batch_size = 8_000;
-
-        public static void CopyAll(
+        public static void CopyCoreData(
             RealmAccess sourceAccess,
             RealmAccess targetAccess,
             IProgress<ScanProgress>? progress = null,
             CancellationToken cancellationToken = default)
         {
-            copyRealmFiles(sourceAccess, targetAccess, progress, cancellationToken);
-            copyDetached<RulesetInfo>(sourceAccess, targetAccess, copyRulesets, 0.12, "正在复制规则集…", progress, cancellationToken);
-            copyDetached<SkinInfo>(sourceAccess, targetAccess, copySkins, 0.20, "正在复制皮肤…", progress, cancellationToken);
-            copyDetached<BeatmapSetInfo>(sourceAccess, targetAccess, copyBeatmapSets, 0.30, "正在复制谱面集…", progress, cancellationToken);
-            copyDetached<ScoreInfo>(sourceAccess, targetAccess, copyScores, 0.62, "正在复制成绩…", progress, cancellationToken);
-            copyDetached<BeatmapCollection>(sourceAccess, targetAccess, copyCollections, 0.78, "正在复制收藏夹…", progress, cancellationToken);
-            copyDetached<RealmKeyBinding>(sourceAccess, targetAccess, copyKeyBindings, 0.86, "正在复制键位…", progress, cancellationToken);
-            copyDetached<ModPreset>(sourceAccess, targetAccess, copyModPresets, 0.90, "正在复制 Mod 预设…", progress, cancellationToken);
-            copyDetached<RealmRulesetSetting>(sourceAccess, targetAccess, copyRulesetSettings, 0.94, "正在复制规则集设置…", progress, cancellationToken);
+            copyDetached<RulesetInfo>(sourceAccess, targetAccess, copyRulesets, 0.15, "正在复制规则集…", progress, cancellationToken);
+            copyDetached<BeatmapSetInfo>(sourceAccess, targetAccess, copyBeatmapSets, 0.25, "正在复制谱面集…", progress, cancellationToken);
+            copyDetached<ScoreInfo>(sourceAccess, targetAccess, copyScores, 0.55, "正在复制成绩…", progress, cancellationToken);
+            copyDetached<BeatmapCollection>(sourceAccess, targetAccess, copyCollections, 0.72, "正在复制收藏夹…", progress, cancellationToken);
+            copyDetached<RealmKeyBinding>(sourceAccess, targetAccess, copyKeyBindings, 0.82, "正在复制键位…", progress, cancellationToken);
+            copyDetached<ModPreset>(sourceAccess, targetAccess, copyModPresets, 0.88, "正在复制 Mod 预设…", progress, cancellationToken);
+            copyDetached<RealmRulesetSetting>(sourceAccess, targetAccess, copyRulesetSettings, 0.92, "正在复制规则集设置…", progress, cancellationToken);
 
-            progress?.Report(new ScanProgress { Progress = 1, Message = "数据复制完成" });
-        }
-
-        private static void copyRealmFiles(
-            RealmAccess sourceAccess,
-            RealmAccess targetAccess,
-            IProgress<ScanProgress>? progress,
-            CancellationToken cancellationToken)
-        {
-            var hashes = new List<string>();
-
-            sourceAccess.Run(source =>
-            {
-                foreach (var file in source.All<RealmFile>())
-                    hashes.Add(file.Hash);
-            });
-
-            progress?.Report(new ScanProgress { Progress = 0.08, Message = $"正在复制文件索引（{hashes.Count:N0}）…" });
-
-            for (int offset = 0; offset < hashes.Count; offset += file_hash_batch_size)
-            {
-                cancellationToken.ThrowIfCancellationRequested();
-                var batch = hashes.Skip(offset).Take(file_hash_batch_size).ToList();
-                double batchProgress = hashes.Count == 0 ? 1 : (offset + batch.Count) / (double)hashes.Count;
-
-                targetAccess.Write(target =>
-                {
-                    foreach (string hash in batch)
-                    {
-                        if (target.Find<RealmFile>(hash) == null)
-                            target.Add(new RealmFile { Hash = hash }, true);
-                    }
-                });
-
-                progress?.Report(new ScanProgress
-                {
-                    Progress = 0.08 + batchProgress * 0.04,
-                    Message = $"正在复制文件索引 {Math.Min(offset + batch.Count, hashes.Count):N0}/{hashes.Count:N0}…",
-                });
-            }
+            progress?.Report(new ScanProgress { Progress = 0.95, Message = "核心数据复制完成" });
         }
 
         private static void copyDetached<T>(
@@ -123,14 +78,6 @@ namespace osu.Game.EzRealmSync.Realm
                         return;
 
                     target.Add(ruleset);
-                    break;
-
-                case SkinInfo skin:
-                    if (target.Find<SkinInfo>(skin.ID) != null)
-                        return;
-
-                    linkFiles(target, skin.Files);
-                    target.Add(skin);
                     break;
 
                 case BeatmapSetInfo set:
@@ -181,12 +128,6 @@ namespace osu.Game.EzRealmSync.Realm
         {
             foreach (var ruleset in source.All<RulesetInfo>())
                 items.Add(ruleset.Detach());
-        }
-
-        private static void copySkins(RealmInstance source, List<SkinInfo> items)
-        {
-            foreach (var skin in source.All<SkinInfo>().Where(s => !s.DeletePending))
-                items.Add(skin.Detach());
         }
 
         private static void copyBeatmapSets(RealmInstance source, List<BeatmapSetInfo> items)

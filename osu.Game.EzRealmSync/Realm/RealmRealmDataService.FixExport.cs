@@ -233,6 +233,10 @@ namespace osu.Game.EzRealmSync.Realm
                 progress?.Report(new ScanProgress { Progress = 0.12, Message = "正在创建官方目标库…" });
                 createEmptyOfficialRealm(tempTargetPath);
 
+                RealmAuxiliaryTablePreserver.Snapshot auxiliary;
+                using (var captureAccess = RealmSchemaProbe.Open(sourcePath, file.SchemaVersion))
+                    auxiliary = RealmAuxiliaryTablePreserver.Capture(captureAccess);
+
                 progress?.Report(new ScanProgress { Progress = 0.2, Message = "正在读取污染库内容…" });
                 using var sourceAccess = RealmSchemaProbe.Open(sourcePath, file.SchemaVersion);
                 var sourceSnapshot = RealmDiffReader.Read(sourceAccess, progress, cancellationToken);
@@ -277,6 +281,10 @@ namespace osu.Game.EzRealmSync.Realm
                     cancellationToken);
 
                 cancellationToken.ThrowIfCancellationRequested();
+
+                progress?.Report(new ScanProgress { Progress = 0.88, Message = $"正在写回文件与皮肤列表（{auxiliary.FileCount:N0} 文件）…" });
+                using (var restoreAccess = RealmDiffReader.OpenOfficialRealm(tempTargetPath, targetSchema))
+                    RealmAuxiliaryTablePreserver.Restore(restoreAccess, auxiliary, filterEzOnlyProtectedSkins: true, cancellationToken);
 
                 progress?.Report(new ScanProgress { Progress = 0.9, Message = "正在覆盖原文件…" });
                 File.Copy(tempTargetPath, sourcePath, overwrite: true);
