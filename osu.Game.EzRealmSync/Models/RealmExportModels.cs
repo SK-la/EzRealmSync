@@ -6,6 +6,7 @@ namespace osu.Game.EzRealmSync.Models
         Beatmap,
         Collection,
         Score,
+        CollectionDb,
     }
 
     public sealed class RealmExportItem
@@ -24,7 +25,7 @@ namespace osu.Game.EzRealmSync.Models
 
         public string? CollectionName { get; init; }
 
-        /// <summary>收藏夹内谱面数量（仅 <see cref="ExportDataKind.Collection"/> 列表项）。</summary>
+        /// <summary>收藏夹内谱面数量（仅收藏夹谱面 / 合集列表项）。</summary>
         public int BeatmapCount { get; init; }
 
         /// <summary>成绩玩家名（仅成绩项）。</summary>

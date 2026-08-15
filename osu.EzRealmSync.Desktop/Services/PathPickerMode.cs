@@ -4,5 +4,6 @@ namespace osu.EzRealmSync.Desktop.Services
     {
         Folder,
         RealmPath,
+        CollectionDb,
     }
 }

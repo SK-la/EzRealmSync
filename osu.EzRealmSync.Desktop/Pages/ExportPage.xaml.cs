@@ -69,7 +69,8 @@ namespace osu.EzRealmSync.Desktop.Pages
                         Dispatcher.Invoke(() => GroupScoresByPlayerCheck.IsChecked = vm!.ExportGroupScoresByPlayer);
 
                     if (e.PropertyName == nameof(ShellViewModel.CanUseFixAndExport)
-                        || e.PropertyName == nameof(ShellViewModel.IsBusy))
+                        || e.PropertyName == nameof(ShellViewModel.IsBusy)
+                        || e.PropertyName == nameof(ShellViewModel.RealmFiles))
                         Dispatcher.Invoke(updateEnabled);
 
                     if (e.PropertyName == nameof(ShellViewModel.ExportDataKind))
@@ -95,12 +96,18 @@ namespace osu.EzRealmSync.Desktop.Pages
 
         private void updateEnabled()
         {
-            bool enabled = vm is { CanUseFixAndExport: true, IsBusy: false };
+            if (vm == null)
+                return;
+
+            bool isCollectionDb = vm.ExportDataKind == ExportDataKind.CollectionDb;
+            bool collectionDbReady = vm.RealmFiles.Count > 0;
+            bool enabled = !vm.IsBusy && (isCollectionDb ? collectionDbReady : vm.CanUseFixAndExport);
             LoadListButton.IsEnabled = enabled;
             ExportButton.IsEnabled = enabled;
+            ImportCollectionDbButton.IsEnabled = !vm.IsBusy && collectionDbReady;
             SelectAllButton.IsEnabled = enabled;
             RealmSelectCombo.IsEnabled = enabled;
-            DataKindCombo.IsEnabled = enabled;
+            DataKindCombo.IsEnabled = !vm.IsBusy && (vm.CanUseFixAndExport || collectionDbReady);
             ExportDirBox.IsEnabled = enabled;
             BrowseExportButton.IsEnabled = enabled;
             FolderNameBox.IsEnabled = enabled;
@@ -109,13 +116,15 @@ namespace osu.EzRealmSync.Desktop.Pages
 
         private void refreshLabels()
         {
-            HintText.Text = Loc.Get("FixRequiresFilesHint");
+            bool isCollectionDb = vm?.ExportDataKind == ExportDataKind.CollectionDb;
+            HintText.Text = Loc.Get(isCollectionDb ? "CollectionDbHint" : "FixRequiresFilesHint");
             ExportDirLabel.Text = Loc.Get("ExportDirectory");
             LoadListButton.Content = Loc.Get("ExportLoadList");
             ExportButton.Content = Loc.Get("ExportRun");
+            ImportCollectionDbButton.Content = Loc.Get("ImportCollectionDb");
             BrowseExportButton.Content = Loc.Get("Browse");
             SelectAllButton.Content = Loc.Get("SelectAll");
-            FolderNameBox.ToolTip = Loc.Get("ExportFolderNameHint");
+            FolderNameBox.ToolTip = Loc.Get(isCollectionDb ? "ExportCollectionDbFolderHint" : "ExportFolderNameHint");
             GroupScoresByPlayerCheck.Content = Loc.Get("ExportGroupScoresByPlayer");
         }
 
@@ -206,13 +215,19 @@ namespace osu.EzRealmSync.Desktop.Pages
             if (colSecondary == null || colExtra == null || colPath == null || vm == null)
                 return;
 
-            bool isCollection = vm.ExportDataKind == ExportDataKind.Collection;
+            bool isCollectionList = vm.ExportDataKind is ExportDataKind.Collection or ExportDataKind.CollectionDb;
+            bool isCollectionDb = vm.ExportDataKind == ExportDataKind.CollectionDb;
             bool isScore = vm.ExportDataKind == ExportDataKind.Score;
 
             GroupScoresByPlayerCheck.Visibility = isScore ? Visibility.Visible : Visibility.Collapsed;
+            ImportCollectionDbButton.Visibility = isCollectionDb ? Visibility.Visible : Visibility.Collapsed;
 
-            colSecondary.Header = isCollection ? Loc.Get("ColBeatmapCount") : Loc.Get("ColArtist");
-            colSecondary.Binding = new Binding(isCollection ? nameof(RealmExportItemModel.BeatmapCountLabel) : nameof(RealmExportItemModel.Artist))
+            HintText.Text = Loc.Get(isCollectionDb ? "CollectionDbHint" : "FixRequiresFilesHint");
+            FolderNameBox.ToolTip = Loc.Get(isCollectionDb ? "ExportCollectionDbFolderHint" : "ExportFolderNameHint");
+            updateEnabled();
+
+            colSecondary.Header = isCollectionList ? Loc.Get("ColBeatmapCount") : Loc.Get("ColArtist");
+            colSecondary.Binding = new Binding(isCollectionList ? nameof(RealmExportItemModel.BeatmapCountLabel) : nameof(RealmExportItemModel.Artist))
             {
                 Mode = BindingMode.OneWay,
             };
@@ -220,7 +235,7 @@ namespace osu.EzRealmSync.Desktop.Pages
             colExtra.Visibility = isScore ? Visibility.Visible : Visibility.Collapsed;
             colExtra.Header = Loc.Get("ColExportPlayer");
 
-            colPath.Visibility = isCollection ? Visibility.Collapsed : Visibility.Visible;
+            colPath.Visibility = isCollectionList ? Visibility.Collapsed : Visibility.Visible;
         }
 
         private void RealmSelectCombo_OnChanged(object sender, SelectionChangedEventArgs e)
@@ -252,6 +267,8 @@ namespace osu.EzRealmSync.Desktop.Pages
         }
 
         private void BrowseExport_OnClick(object sender, RoutedEventArgs e) => vm?.BrowseExportDirectoryCommand.Execute(null);
+
+        private void ImportCollectionDb_OnClick(object sender, RoutedEventArgs e) => vm?.ImportCollectionDbCommand.Execute(null);
 
         private void SelectAll_OnClick(object sender, RoutedEventArgs e) => vm?.ToggleExportSelectAllCommand.Execute(null);
     }

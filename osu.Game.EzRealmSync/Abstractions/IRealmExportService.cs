@@ -17,7 +17,7 @@ namespace osu.Game.EzRealmSync.Abstractions
             IProgress<ScanProgress>? progress = null,
             CancellationToken cancellationToken = default);
 
-        /// <summary>数据 Tab：导出所选谱面集 / 收藏夹对应的 files/ 实体。</summary>
+        /// <summary>数据 Tab：导出所选谱面集 / 收藏夹谱面 / 成绩的 files/ 实体。</summary>
         Task<RealmExportResult> ExportBrowseEntitiesAsync(
             string realmId,
             string filesDirectory,

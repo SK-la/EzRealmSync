@@ -369,6 +369,9 @@ namespace osu.Game.EzRealmSync.Realm
             if (!registry.TryGet(request.RealmId, out var file))
                 throw new InvalidOperationException($"未找到 Realm 文件：{request.RealmId}");
 
+            if (request.Kind == ExportDataKind.CollectionDb)
+                return exportCollectionsDb(file, request, progress, cancellationToken);
+
             string folderName = string.IsNullOrWhiteSpace(request.FolderName)
                 ? defaultExportFolderName(request.Kind)
                 : request.FolderName.Trim();
@@ -384,7 +387,7 @@ namespace osu.Game.EzRealmSync.Realm
             {
                 using var access = RealmSchemaProbe.Open(file.FilePath, file.SchemaVersion);
                 var entries = request.Kind == ExportDataKind.Collection
-                    ? RealmExportExecutor.ResolveFiles(access, request.Kind, idSet, request.GroupScoresByPlayer)
+                    ? RealmExportExecutor.ResolveCollectionFiles(access, idSet)
                     : resolveScoreEntries(access, idSet, request.GroupScoresByPlayer);
 
                 int index = 0;
@@ -399,7 +402,7 @@ namespace osu.Game.EzRealmSync.Realm
                         Message = entry.DestinationRelative,
                     });
 
-                    if (tryCopyEntry(entry, request.FilesDirectory, outputRoot, request.Kind))
+                    if (tryCopyEntry(entry, request.FilesDirectory, outputRoot))
                         exported++;
                     else
                         skipped++;
@@ -432,7 +435,7 @@ namespace osu.Game.EzRealmSync.Realm
                         DestinationRelative = string.IsNullOrWhiteSpace(item.DestinationRelativePath) ? item.RelativePath : item.DestinationRelativePath,
                     };
 
-                    if (tryCopyEntry(entry, request.FilesDirectory, outputRoot, request.Kind))
+                    if (tryCopyEntry(entry, request.FilesDirectory, outputRoot))
                         exported++;
                     else
                         skipped++;
@@ -471,9 +474,9 @@ namespace osu.Game.EzRealmSync.Realm
             return entries;
         }
 
-        private static bool tryCopyEntry(RealmExportFileEntry entry, string filesDirectory, string outputRoot, ExportDataKind kind)
+        private static bool tryCopyEntry(RealmExportFileEntry entry, string filesDirectory, string outputRoot)
         {
-            string targetDir = kind == ExportDataKind.Collection && !string.IsNullOrEmpty(entry.CollectionFolder)
+            string targetDir = !string.IsNullOrEmpty(entry.CollectionFolder)
                 ? Path.Combine(outputRoot, entry.CollectionFolder!)
                 : outputRoot;
 
@@ -490,9 +493,34 @@ namespace osu.Game.EzRealmSync.Realm
             return true;
         }
 
+        private static RealmExportResult exportCollectionsDb(
+            RealmFileEntry file,
+            RealmExportRequest request,
+            IProgress<ScanProgress>? progress,
+            CancellationToken cancellationToken)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            progress?.Report(new ScanProgress { Progress = 0.1, Message = "正在写出 collection.db…" });
+
+            string outputFile = LegacyCollectionDb.ResolveOutputFile(request.OutputDirectory, request.FolderName);
+            int exported;
+            using (var access = RealmSchemaProbe.Open(file.FilePath, file.SchemaVersion))
+                exported = RealmCollectionDbSync.Export(access, request.ItemIds, outputFile);
+
+            progress?.Report(new ScanProgress { Progress = 1, Message = "导出完成" });
+
+            return new RealmExportResult
+            {
+                OutputRoot = outputFile,
+                ExportedCount = exported,
+                SkippedCount = Math.Max(0, request.ItemIds.Count - exported),
+            };
+        }
+
         private static string defaultExportFolderName(ExportDataKind kind) => kind switch
         {
             ExportDataKind.Score => $"replays-{DateTime.Now:yyyyMMdd_HHmmss}",
+            ExportDataKind.CollectionDb => $"collections-{DateTime.Now:yyyyMMdd_HHmmss}",
             _ => $"songs-{DateTime.Now:yyyyMMdd_HHmmss}",
         };
     }

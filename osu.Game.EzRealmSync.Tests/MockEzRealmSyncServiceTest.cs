@@ -78,5 +78,43 @@ namespace osu.Game.EzRealmSync.Tests
             Assert.That(result.IsValid, Is.False);
             Assert.That(result.Errors, Is.Not.Empty);
         }
+
+        [Test]
+        public async Task CollectionDb_export_then_import_merges_by_name()
+        {
+            string root = Path.Combine(Path.GetTempPath(), "EzRealmSyncTests", Guid.NewGuid().ToString("N"));
+            Directory.CreateDirectory(root);
+
+            var service = new MockEzRealmSyncService(new MockEzRealmSyncOptions { SimulatedDelayMilliseconds = 0 });
+            var files = await service.DiscoverRealmFilesAsync(null);
+            string realmId = files[0].Id;
+            var catalog = await service.LoadCatalogAsync(realmId, ExportDataKind.CollectionDb);
+            Assert.That(catalog.Items, Is.Not.Empty);
+
+            var export = await service.ExportAsync(new RealmExportRequest
+            {
+                RealmId = realmId,
+                Kind = ExportDataKind.CollectionDb,
+                ItemIds = catalog.Items.Select(i => i.Id).ToList(),
+                OutputDirectory = root,
+                FolderName = "collections.db",
+                FilesDirectory = root,
+            });
+
+            Assert.That(File.Exists(export.OutputRoot), Is.True);
+            Assert.That(Path.GetFileName(export.OutputRoot), Is.EqualTo("collections.db"));
+
+            var read = osu.Game.EzRealmSync.IO.LegacyCollectionDb.ReadFile(export.OutputRoot);
+            Assert.That(read, Has.Count.EqualTo(catalog.Items.Count));
+            Assert.That(read[0].BeatmapMd5Hashes, Is.Not.Empty);
+
+            var import = await service.ImportCollectionDbAsync(realmId, export.OutputRoot);
+            Assert.That(import.CollectionCount, Is.EqualTo(catalog.Items.Count));
+            Assert.That(import.MergedCount, Is.EqualTo(catalog.Items.Count));
+            Assert.That(import.CreatedCount, Is.EqualTo(0));
+
+            try { Directory.Delete(root, true); }
+            catch { }
+        }
     }
 }

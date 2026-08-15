@@ -8,6 +8,7 @@ namespace osu.Game.EzRealmSync.Mock
     {
         private readonly Dictionary<string, RealmFileEntry> realmFiles = new Dictionary<string, RealmFileEntry>();
         private readonly Dictionary<string, RealmSnapshot> loadedSnapshots = new Dictionary<string, RealmSnapshot>();
+        private readonly Dictionary<(string realmId, Guid id), List<string>> mockCollectionHashes = new();
 
         public Task<IReadOnlyList<RealmFileEntry>> DiscoverRealmFilesAsync(string? searchDirectory, CancellationToken cancellationToken = default)
         {
@@ -343,5 +344,130 @@ namespace osu.Game.EzRealmSync.Mock
 
             return Task.FromResult(removed);
         }
+
+        public async Task<RealmCollectionDbImportResult> ImportCollectionDbAsync(
+            string realmId,
+            string collectionDbPath,
+            IProgress<ScanProgress>? progress = null,
+            CancellationToken cancellationToken = default)
+        {
+            var snapshot = await ensureLoadedAsync(realmId, progress, cancellationToken).ConfigureAwait(false);
+            var incoming = LegacyCollectionDb.ReadFile(collectionDbPath);
+
+            var collectionGroup = snapshot.Classes.FirstOrDefault(c => c.Class == RealmObjectClass.BeatmapCollection);
+            var rows = collectionGroup?.Rows.ToList() ?? new List<RealmBrowseRow>();
+            var columns = collectionGroup?.Columns ?? new[]
+            {
+                new RealmColumnDefinition { PropertyKey = "Name", Header = "Name", TypeHint = "string" },
+                new RealmColumnDefinition { PropertyKey = "BeatmapHashes", Header = "Beatmaps", TypeHint = "list" },
+            };
+
+            int created = 0;
+            int merged = 0;
+            int addedHashes = 0;
+
+            foreach (var entry in incoming)
+            {
+                var existing = rows.FirstOrDefault(r =>
+                    r.Cells.TryGetValue("Name", out string? name) && name == entry.Name);
+
+                if (existing == null)
+                {
+                    var id = Guid.NewGuid();
+                    mockCollectionHashes[(realmId, id)] = entry.BeatmapMd5Hashes.ToList();
+                    rows.Add(new RealmBrowseRow
+                    {
+                        Id = id,
+                        Cells = new Dictionary<string, string>
+                        {
+                            ["Name"] = entry.Name,
+                            ["BeatmapHashes"] = entry.BeatmapMd5Hashes.Count.ToString(),
+                        },
+                    });
+                    created++;
+                    addedHashes += entry.BeatmapMd5Hashes.Count;
+                    continue;
+                }
+
+                var hashes = getOrCreateMockHashes(realmId, existing.Id, parseCount(existing));
+                int added = 0;
+
+                foreach (string hash in entry.BeatmapMd5Hashes)
+                {
+                    if (hashes.Contains(hash, StringComparer.OrdinalIgnoreCase))
+                        continue;
+
+                    hashes.Add(hash);
+                    added++;
+                }
+
+                mockCollectionHashes[(realmId, existing.Id)] = hashes;
+                int index = rows.IndexOf(existing);
+                rows[index] = new RealmBrowseRow
+                {
+                    Id = existing.Id,
+                    Cells = new Dictionary<string, string>
+                    {
+                        ["Name"] = entry.Name,
+                        ["BeatmapHashes"] = hashes.Count.ToString(),
+                    },
+                };
+                merged++;
+                addedHashes += added;
+            }
+
+            var newClasses = snapshot.Classes
+                                     .Where(c => c.Class != RealmObjectClass.BeatmapCollection)
+                                     .ToList();
+            newClasses.Add(new RealmClassGroup
+            {
+                Class = RealmObjectClass.BeatmapCollection,
+                Columns = columns,
+                Rows = rows,
+            });
+
+            loadedSnapshots[realmId] = new RealmSnapshot
+            {
+                RealmId = snapshot.RealmId,
+                DisplayName = snapshot.DisplayName,
+                Classes = newClasses,
+                Groups = RealmSnapshotGrouper.DeriveGroups(newClasses),
+            };
+            InvalidateCatalog(realmId);
+
+            await simulateWorkAsync(progress, "导入完成", cancellationToken).ConfigureAwait(false);
+
+            return new RealmCollectionDbImportResult
+            {
+                CollectionCount = incoming.Count,
+                CreatedCount = created,
+                MergedCount = merged,
+                AddedHashCount = addedHashes,
+            };
+        }
+
+        internal List<string> GetOrCreateMockCollectionHashes(string realmId, Guid id, int count) =>
+            getOrCreateMockHashes(realmId, id, count);
+
+        private List<string> getOrCreateMockHashes(string realmId, Guid id, int count)
+        {
+            var key = (realmId, id);
+            if (mockCollectionHashes.TryGetValue(key, out var existing))
+                return existing;
+
+            var hashes = new List<string>(Math.Max(0, count));
+            string prefix = id.ToString("N")[..24];
+
+            for (int i = 0; i < count; i++)
+                hashes.Add(prefix + i.ToString("x8"));
+
+            mockCollectionHashes[key] = hashes;
+            return hashes;
+        }
+
+        private static int parseCount(RealmBrowseRow row) =>
+            row.Cells.TryGetValue("BeatmapHashes", out string? text) && int.TryParse(text, out int count)
+                ? count
+                : 0;
     }
 }

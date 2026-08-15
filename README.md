@@ -27,7 +27,7 @@ dotnet run --project osu.EzRealmSync.Desktop
 - `--mock-delay=0`：Mock 模式去掉模拟延迟
 - **本地 lib 覆盖**（并行开发 osu 主仓库时）：`dotnet build -t:SyncEzRealmLibs EzRealmSync.sln` 后加 `-p:UseLocalOsuLibs=true`（见 [lib/README.md](lib/README.md)）
 
-主界面五 Tab：**导入**（osu! 数据目录 + Realm 列表 + 备份）→ **数据**（单库完整浏览；谱面集/成绩/收藏夹可写删与导出）→ **同步**（A/B 跨版本复制谱面集、难度、成绩、收藏夹，**不**改 schema）→ **修复** / **导出**（共用导入目录下 `files/`）。设置持久化至 `%AppData%\EzRealmSync\settings.json`。
+主界面五 Tab：**导入**（osu! 数据目录 + Realm 列表 + 备份）→ **数据**（单库完整浏览；谱面集/成绩/收藏夹可写删与导出）→ **同步**（A/B 跨版本复制谱面集、难度、成绩、收藏夹，**不**改 schema）→ **修复** / **导出**（谱面与成绩共用导入目录下 `files/`；合集名单另用 osu!stable `collection.db`）。设置持久化至 `%AppData%\EzRealmSync\settings.json`。
 
 数据安全与三类操作说明：[docs/DATA-OPERATIONS.zh.md](docs/DATA-OPERATIONS.zh.md)
 

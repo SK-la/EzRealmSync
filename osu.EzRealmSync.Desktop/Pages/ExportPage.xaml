@@ -91,6 +91,11 @@
 
     <WrapPanel Grid.Row="2" Margin="0,0,0,8">
       <ui:Button x:Name="SelectAllButton" Margin="0,0,8,0" Click="SelectAll_OnClick" />
+      <ui:Button x:Name="ImportCollectionDbButton"
+                 Margin="0,0,8,0"
+                 Click="ImportCollectionDb_OnClick"
+                 Visibility="Collapsed"
+                 Icon="{ui:SymbolIcon ArrowImport24}" />
       <CheckBox x:Name="GroupScoresByPlayerCheck"
                 Margin="8,0,0,0"
                 VerticalAlignment="Center"

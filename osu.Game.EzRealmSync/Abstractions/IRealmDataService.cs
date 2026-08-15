@@ -26,5 +26,12 @@ namespace osu.Game.EzRealmSync.Abstractions
             RealmObjectClass objectClass,
             IReadOnlyList<Guid> entityIds,
             CancellationToken cancellationToken = default);
+
+        /// <summary>从 osu!stable <c>collection.db</c> / <c>collections.db</c> 按名称合并收藏夹到目标库。</summary>
+        Task<RealmCollectionDbImportResult> ImportCollectionDbAsync(
+            string realmId,
+            string collectionDbPath,
+            IProgress<ScanProgress>? progress = null,
+            CancellationToken cancellationToken = default);
     }
 }

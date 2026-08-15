@@ -194,6 +194,7 @@ namespace osu.EzRealmSync.AppModel
         public Func<string, string, bool, Task<bool>>? ConfirmAsync { get; set; }
         public Func<string, Task<string?>>? PickFolderAsync { get; set; }
         public Func<string, Task<string?>>? PickRealmPathAsync { get; set; }
+        public Func<string, Task<string?>>? PickCollectionDbAsync { get; set; }
 
         /// <summary>由 Desktop 注入，将集合/绑定更新封送到 UI 线程。</summary>
         public Action<Action>? MarshalToUi { get; set; }
@@ -852,6 +853,44 @@ namespace osu.EzRealmSync.AppModel
             }
         }
 
+        public async Task ExportBrowseCollectionDbAsync(IReadOnlyList<RealmBrowseRowModel> rows)
+        {
+            if (rows.Count == 0)
+                return;
+
+            var file = getRealmFile(DataRealmId.Value);
+            if (file == null)
+                return;
+
+            setBusy(true);
+
+            try
+            {
+                var progress = createScanProgress();
+                var result = await exportService.ExportAsync(
+                    new RealmExportRequest
+                    {
+                        RealmId = file.Id,
+                        Kind = ExportDataKind.CollectionDb,
+                        ItemIds = rows.Select(r => r.Id).ToList(),
+                        OutputDirectory = ExportDirectory.Value,
+                        FolderName = string.IsNullOrWhiteSpace(ExportFolderName.Value) ? null : ExportFolderName.Value.Trim(),
+                        FilesDirectory = string.Empty,
+                    },
+                    progress).ConfigureAwait(false);
+
+                runOnUi(() => StatusMessage.Value = Loc.Format("StatusExportComplete", result.ExportedCount, result.OutputRoot));
+            }
+            catch (Exception ex)
+            {
+                runOnUi(() => StatusMessage.Value = ex.Message);
+            }
+            finally
+            {
+                setBusy(false);
+            }
+        }
+
         public static bool IsMutableBrowseClass(RealmObjectClass objectClass) => objectClass switch
         {
             RealmObjectClass.BeatmapSet => true,
@@ -1229,13 +1268,16 @@ namespace osu.EzRealmSync.AppModel
                 return;
             }
 
-            if (!tryGetSharedFilesDirectory(out string filesDirectory) && !launchOptions.UiTestMode)
+            string filesDirectory = string.Empty;
+            bool needsFiles = SelectedExportKind.Value != ExportDataKind.CollectionDb;
+
+            if (needsFiles && !tryGetSharedFilesDirectory(out filesDirectory) && !launchOptions.UiTestMode)
             {
                 runOnUi(() => StatusMessage.Value = Loc.Get("StatusFilesFolderRequired"));
                 return;
             }
 
-            if (UiTestMode.Value && !tryGetSharedFilesDirectory(out filesDirectory))
+            if (needsFiles && UiTestMode.Value && !tryGetSharedFilesDirectory(out filesDirectory))
                 filesDirectory = Path.Combine(SearchDirectory.Value, "files");
 
             setBusy(true);
@@ -1281,6 +1323,64 @@ namespace osu.EzRealmSync.AppModel
             string? picked = await PickFolderAsync(ExportDirectory.Value).ConfigureAwait(false);
             if (!string.IsNullOrEmpty(picked))
                 runOnUi(() => ExportDirectory.Value = picked);
+        }
+
+        public async Task ImportCollectionDbAsync(string? realmId = null)
+        {
+            string? targetId = realmId ?? ExportRealmId.Value;
+            var file = getRealmFile(targetId);
+            if (file == null)
+            {
+                runOnUi(() => StatusMessage.Value = Loc.Get("ErrorPickRealmForCollectionDb"));
+                return;
+            }
+
+            if (PickCollectionDbAsync == null)
+                return;
+
+            string? picked = await PickCollectionDbAsync(ExportDirectory.Value).ConfigureAwait(false);
+            if (string.IsNullOrEmpty(picked))
+                return;
+
+            setBusy(true);
+
+            try
+            {
+                await createWriteBackupAsync(file.FilePath).ConfigureAwait(false);
+                var progress = createScanProgress();
+                var result = await dataService.ImportCollectionDbAsync(file.Id, picked, progress).ConfigureAwait(false);
+
+                exportService.InvalidateCatalog(file.Id);
+
+                if (string.Equals(file.Id, DataRealmId.Value, StringComparison.Ordinal))
+                {
+                    var snapshot = await dataService.LoadRealmSnapshotAsync(file.Id, progress).ConfigureAwait(false);
+                    runOnUi(() =>
+                    {
+                        loadedSnapshot = snapshot;
+                        refreshDataBrowse();
+                        updateLoadedSnapshotSummary();
+                    });
+                }
+
+                runOnUi(() =>
+                {
+                    StatusMessage.Value = Loc.Format(
+                        "StatusCollectionDbImported",
+                        result.CreatedCount,
+                        result.MergedCount,
+                        result.AddedHashCount);
+                    Progress.Value = 1;
+                });
+            }
+            catch (Exception ex)
+            {
+                runOnUi(() => StatusMessage.Value = ex.Message);
+            }
+            finally
+            {
+                setBusy(false);
+            }
         }
 
         public void OnLanguageChanged() => LabelsChanged?.Invoke();
@@ -1747,6 +1847,7 @@ namespace osu.EzRealmSync.AppModel
             ExportDataKind.BeatmapSet => Loc.Get("ExportKindBeatmapSet"),
             ExportDataKind.Beatmap => Loc.Get("ExportKindBeatmap"),
             ExportDataKind.Collection => Loc.Get("ExportKindCollection"),
+            ExportDataKind.CollectionDb => Loc.Get("ExportKindCollectionDb"),
             ExportDataKind.Score => Loc.Get("ExportKindScore"),
             _ => kind.ToString(),
         };

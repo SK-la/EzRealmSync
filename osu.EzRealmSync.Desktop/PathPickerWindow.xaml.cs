@@ -177,7 +177,12 @@ namespace osu.EzRealmSync.Desktop
                 if (mode == PathPickerMode.RealmPath)
                 {
                     foreach (string file in Directory.GetFiles(currentPath, "*.realm").OrderBy(f => f, StringComparer.OrdinalIgnoreCase))
-                        entries.Add(FileSystemEntry.RealmFile(file));
+                        entries.Add(FileSystemEntry.SelectableFile(file, Loc.Get("PathPickerTypeRealm")));
+                }
+                else if (mode == PathPickerMode.CollectionDb)
+                {
+                    foreach (string file in Directory.GetFiles(currentPath, "*.db").OrderBy(f => f, StringComparer.OrdinalIgnoreCase))
+                        entries.Add(FileSystemEntry.SelectableFile(file, Loc.Get("PathPickerTypeCollectionDb")));
                 }
             }
             catch
@@ -222,6 +227,8 @@ namespace osu.EzRealmSync.Desktop
             {
                 if (mode == PathPickerMode.RealmPath && text.EndsWith(".realm", StringComparison.OrdinalIgnoreCase))
                     commitSelection(text);
+                else if (mode == PathPickerMode.CollectionDb && text.EndsWith(".db", StringComparison.OrdinalIgnoreCase))
+                    commitSelection(text);
                 else
                     navigateTo(Path.GetDirectoryName(text) ?? text);
             }
@@ -238,7 +245,7 @@ namespace osu.EzRealmSync.Desktop
                 return;
             }
 
-            if (mode == PathPickerMode.RealmPath && entry.IsRealmFile)
+            if (mode is PathPickerMode.RealmPath or PathPickerMode.CollectionDb && entry.IsSelectableFile)
                 commitSelection(entry.FullPath);
         }
 
@@ -291,7 +298,7 @@ namespace osu.EzRealmSync.Desktop
 
         private void SelectButton_OnClick(object sender, RoutedEventArgs e)
         {
-            if (EntryList.SelectedItem is FileSystemEntry { IsRealmFile: true } file)
+            if (EntryList.SelectedItem is FileSystemEntry { IsSelectableFile: true } file)
             {
                 commitSelection(file.FullPath);
                 return;
@@ -317,22 +324,24 @@ namespace osu.EzRealmSync.Desktop
 
         private sealed class FileSystemEntry
         {
-            private FileSystemEntry(string name, string fullPath, bool isDirectory, bool isRealmFile, bool isParent)
+            private FileSystemEntry(string name, string fullPath, bool isDirectory, bool isSelectableFile, bool isParent, string? fileTypeLabel)
             {
                 Name = name;
                 FullPath = fullPath;
                 IsDirectory = isDirectory;
-                IsRealmFile = isRealmFile;
+                IsSelectableFile = isSelectableFile;
                 IsParent = isParent;
+                FileTypeLabel = fileTypeLabel;
             }
 
             public string Name { get; }
             public string FullPath { get; }
             public bool IsDirectory { get; }
-            public bool IsRealmFile { get; }
+            public bool IsSelectableFile { get; }
             public bool IsParent { get; }
+            private string? FileTypeLabel { get; }
 
-            public string TypeLabel => IsParent ? ".." : IsDirectory ? Loc.Get("PathPickerTypeFolder") : Loc.Get("PathPickerTypeRealm");
+            public string TypeLabel => IsParent ? ".." : IsDirectory ? Loc.Get("PathPickerTypeFolder") : FileTypeLabel ?? Loc.Get("PathPickerTypeRealm");
 
             public string ModifiedLabel
             {
@@ -371,11 +380,12 @@ namespace osu.EzRealmSync.Desktop
                 }
             }
 
-            public static FileSystemEntry Parent(string fullPath) => new FileSystemEntry("..", fullPath, true, false, true);
+            public static FileSystemEntry Parent(string fullPath) => new FileSystemEntry("..", fullPath, true, false, true, null);
 
-            public static FileSystemEntry FromDirectory(string fullPath) => new FileSystemEntry(Path.GetFileName(fullPath), fullPath, true, false, false);
+            public static FileSystemEntry FromDirectory(string fullPath) => new FileSystemEntry(Path.GetFileName(fullPath), fullPath, true, false, false, null);
 
-            public static FileSystemEntry RealmFile(string fullPath) => new FileSystemEntry(Path.GetFileName(fullPath), fullPath, false, true, false);
+            public static FileSystemEntry SelectableFile(string fullPath, string typeLabel) =>
+                new FileSystemEntry(Path.GetFileName(fullPath), fullPath, false, true, false, typeLabel);
         }
     }
 }

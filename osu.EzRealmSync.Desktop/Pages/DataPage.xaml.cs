@@ -94,6 +94,18 @@ namespace osu.EzRealmSync.Desktop.Pages
                         await vm.Presenter.ExportBrowseRowsAsync(targets);
                 });
 
+                var exportCollectionDbItem = DataGridContextMenuHelper.AddItem(menu, "export-collection-db", Loc.Get("CtxExportCollectionDb"), async (_, _) =>
+                {
+                    var targets = CheckableDataGridHelper.GetContextTargets(DataGrid, () => vm.BrowseRows);
+                    if (targets.Count > 0)
+                        await vm.Presenter.ExportBrowseCollectionDbAsync(targets);
+                });
+
+                var importCollectionItem = DataGridContextMenuHelper.AddItem(menu, "import-collection-db", Loc.Get("CtxImportCollectionDb"), async (_, _) =>
+                {
+                    await vm.Presenter.ImportCollectionDbAsync(vm.DataRealmId);
+                });
+
                 var deleteItem = DataGridContextMenuHelper.AddItem(menu, "delete", Loc.Get("CtxDelete"), async (_, _) =>
                 {
                     var targets = CheckableDataGridHelper.GetContextTargets(DataGrid, () => vm.BrowseRows);
@@ -104,7 +116,13 @@ namespace osu.EzRealmSync.Desktop.Pages
                 menu.Opened += (_, _) =>
                 {
                     var cls = vm.SelectedRealmClass;
+                    bool isCollection = cls == RealmObjectClass.BeatmapCollection;
+                    exportItem.Header = Loc.Get("CtxExport");
                     exportItem.IsEnabled = RealmAppPresenter.IsExportableBrowseClass(cls);
+                    exportCollectionDbItem.Visibility = isCollection ? Visibility.Visible : Visibility.Collapsed;
+                    exportCollectionDbItem.IsEnabled = isCollection && !vm.IsBusy;
+                    importCollectionItem.Visibility = isCollection ? Visibility.Visible : Visibility.Collapsed;
+                    importCollectionItem.IsEnabled = isCollection && !vm.IsBusy;
                     deleteItem.IsEnabled = RealmAppPresenter.IsMutableBrowseClass(cls);
                 };
             });

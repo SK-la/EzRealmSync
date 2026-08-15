@@ -15,6 +15,7 @@
   <data name="FolderPickerCancel" xml:space="preserve"><value>Cancel</value></data>
   <data name="FolderPickerSelect" xml:space="preserve"><value>Select folder</value></data>
   <data name="PathPickerTitleRealm" xml:space="preserve"><value>Select Realm file or folder</value></data>
+  <data name="PathPickerTitleCollectionDb" xml:space="preserve"><value>Select collection.db</value></data>
   <data name="PathPickerRefresh" xml:space="preserve"><value>Refresh</value></data>
   <data name="PathPickerGo" xml:space="preserve"><value>Go</value></data>
   <data name="PathPickerPlaces" xml:space="preserve"><value>Places</value></data>
@@ -29,6 +30,7 @@
   <data name="PathPickerColSize" xml:space="preserve"><value>Size</value></data>
   <data name="PathPickerTypeFolder" xml:space="preserve"><value>Folder</value></data>
   <data name="PathPickerTypeRealm" xml:space="preserve"><value>Realm file</value></data>
+  <data name="PathPickerTypeCollectionDb" xml:space="preserve"><value>collection.db</value></data>
   <data name="Yes" xml:space="preserve"><value>Yes</value></data>
   <data name="No" xml:space="preserve"><value>No</value></data>
   <data name="ScanDiff" xml:space="preserve"><value>Scan diff</value></data>
@@ -91,12 +93,14 @@
   <data name="EntityScore" xml:space="preserve"><value>Scores</value></data>
   <data name="EntityBeatmapCollection" xml:space="preserve"><value>Collections</value></data>
   <data name="CtxExport" xml:space="preserve"><value>Export files…</value></data>
+  <data name="CtxExportCollectionDb" xml:space="preserve"><value>Export collection.db…</value></data>
+  <data name="CtxImportCollectionDb" xml:space="preserve"><value>Import collection.db…</value></data>
   <data name="CtxRemoveFromExportList" xml:space="preserve"><value>Remove from list</value></data>
   <data name="StatusExportListItemsRemoved" xml:space="preserve"><value>Removed {0} item(s) from the export list (Realm unchanged).</value></data>
   <data name="StatusBrowseEntitiesDeleted" xml:space="preserve"><value>Deleted {0} record(s) from Realm (schema unchanged).</value></data>
   <data name="ErrorBrowseClassNotMutable" xml:space="preserve"><value>This class is browse-only. Delete is available for beatmap sets, scores, and collections.</value></data>
   <data name="ErrorBrowseDeleteNone" xml:space="preserve"><value>No records were deleted.</value></data>
-  <data name="ErrorBrowseExportNotSupported" xml:space="preserve"><value>File export is only supported for beatmap sets, collections, and scores.</value></data>
+  <data name="ErrorBrowseExportNotSupported" xml:space="preserve"><value>File export is only supported for beatmap sets, collections, and scores. Collection lists use collection.db separately.</value></data>
   <data name="ColTitle" xml:space="preserve"><value>Title</value></data>
   <data name="ColArtist" xml:space="preserve"><value>Artist</value></data>
   <data name="ColHash" xml:space="preserve"><value>Hash</value></data>
@@ -139,7 +143,8 @@
   <data name="ExportDataType" xml:space="preserve"><value>Data type</value></data>
   <data name="ExportKindBeatmapSet" xml:space="preserve"><value>Beatmap sets</value></data>
   <data name="ExportKindBeatmap" xml:space="preserve"><value>Beatmaps</value></data>
-  <data name="ExportKindCollection" xml:space="preserve"><value>Collections</value></data>
+  <data name="ExportKindCollection" xml:space="preserve"><value>Collection songs</value></data>
+  <data name="ExportKindCollectionDb" xml:space="preserve"><value>Collections (collection.db)</value></data>
   <data name="ExportKindScore" xml:space="preserve"><value>Scores (.osr)</value></data>
   <data name="ExportGroupScoresByPlayer" xml:space="preserve"><value>Group .osr by player name</value></data>
   <data name="ColBeatmapCount" xml:space="preserve"><value>Beatmaps</value></data>
@@ -149,6 +154,11 @@
   <data name="ExportDirectory" xml:space="preserve"><value>Output folder</value></data>
   <data name="ExportFolderName" xml:space="preserve"><value>Subfolder name (optional)</value></data>
   <data name="ExportFolderNameHint" xml:space="preserve"><value>Leave empty for songs- or replays- plus timestamp</value></data>
+  <data name="ExportCollectionDbFolderHint" xml:space="preserve"><value>Leave empty for collections- plus timestamp, writing collection.db. You may also type collection.db / collections.db as the file name.</value></data>
+  <data name="ImportCollectionDb" xml:space="preserve"><value>Import collection.db</value></data>
+  <data name="CollectionDbHint" xml:space="preserve"><value>Collection lists use osu!stable collection.db (also accepts collections.db): names and beatmap MD5 hashes only, no song files. Same-name collections merge hashes. Close the game before importing. To copy beatmap files, use “Collection songs”.</value></data>
+  <data name="ErrorPickRealmForCollectionDb" xml:space="preserve"><value>Select a Realm file first.</value></data>
+  <data name="StatusCollectionDbImported" xml:space="preserve"><value>Imported collections: {0} created, {1} merged, {2} hash(es) added.</value></data>
   <data name="ColExportCollection" xml:space="preserve"><value>Collection</value></data>
   <data name="ColExportPath" xml:space="preserve"><value>Path</value></data>
   <data name="StatusExportCatalogLoaded" xml:space="preserve"><value>{0} item(s) ready to export</value></data>

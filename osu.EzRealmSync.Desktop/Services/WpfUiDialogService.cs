@@ -8,6 +8,8 @@ namespace osu.EzRealmSync.Desktop.Services
 
         public static Task<string?> PickRealmPathAsync(Window owner, string? initialPath) => showPickerAsync(owner, PathPickerMode.RealmPath, initialPath, Loc.Get("PathPickerTitleRealm"));
 
+        public static Task<string?> PickCollectionDbAsync(Window owner, string? initialPath) => showPickerAsync(owner, PathPickerMode.CollectionDb, initialPath, Loc.Get("PathPickerTitleCollectionDb"));
+
         private static Task<string?> showPickerAsync(Window owner, PathPickerMode mode, string? initialPath, string title)
         {
             return Application.Current.Dispatcher.InvokeAsync(() =>

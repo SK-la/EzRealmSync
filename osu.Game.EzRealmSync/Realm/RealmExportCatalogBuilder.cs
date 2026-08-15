@@ -31,6 +31,7 @@ namespace osu.Game.EzRealmSync.Realm
                         break;
 
                     case ExportDataKind.Collection:
+                    case ExportDataKind.CollectionDb:
                         addCollections(realm, items, progress, cancellationToken);
                         break;
 

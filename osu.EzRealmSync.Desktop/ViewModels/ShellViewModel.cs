@@ -28,6 +28,12 @@ namespace osu.EzRealmSync.Desktop.ViewModels
                 return WpfUiDialogService.PickRealmPathAsync(owner, path);
             };
 
+            presenter.PickCollectionDbAsync = path =>
+            {
+                var owner = Application.Current.MainWindow ?? throw new InvalidOperationException();
+                return WpfUiDialogService.PickCollectionDbAsync(owner, path);
+            };
+
             presenter.ConfirmAsync = (message, title, dangerous) =>
             {
                 var owner = Application.Current.MainWindow ?? throw new InvalidOperationException();
@@ -100,8 +106,9 @@ namespace osu.EzRealmSync.Desktop.ViewModels
             ConvertFixRealmToOfficialCommand = createAsyncCommand(() => presenter.ConvertSelectedFixRealmToOfficialAsync(), () => !IsBusy && CanUseFixAndExport);
             UpgradeFixRealmSchemaCommand = createAsyncCommand(() => presenter.UpgradeSelectedFixRealmSchemaAsync(), () => !IsBusy && CanUseFixAndExport);
             ToggleFixSelectAllCommand = new RelayCommand(presenter.ToggleFixSelectAll);
-            LoadExportCatalogCommand = createAsyncCommand(() => presenter.LoadExportCatalogAsync(), () => !IsBusy && CanUseFixAndExport);
-            ExportSelectedCommand = createAsyncCommand(() => presenter.ExportSelectedAsync(), () => !IsBusy && CanUseFixAndExport);
+            LoadExportCatalogCommand = createAsyncCommand(() => presenter.LoadExportCatalogAsync(), () => !IsBusy);
+            ExportSelectedCommand = createAsyncCommand(() => presenter.ExportSelectedAsync(), () => !IsBusy);
+            ImportCollectionDbCommand = createAsyncCommand(() => presenter.ImportCollectionDbAsync(), () => !IsBusy);
             ToggleExportSelectAllCommand = new RelayCommand(presenter.ToggleExportSelectAll);
             BrowseExportDirectoryCommand = createAsyncCommand(presenter.BrowseExportDirectoryAsync);
 
@@ -304,6 +311,7 @@ namespace osu.EzRealmSync.Desktop.ViewModels
         public ICommand ToggleFixSelectAllCommand { get; }
         public ICommand LoadExportCatalogCommand { get; }
         public ICommand ExportSelectedCommand { get; }
+        public ICommand ImportCollectionDbCommand { get; }
         public ICommand ToggleExportSelectAllCommand { get; }
         public ICommand BrowseExportDirectoryCommand { get; }
 

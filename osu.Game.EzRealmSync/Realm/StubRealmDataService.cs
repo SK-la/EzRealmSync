@@ -34,5 +34,12 @@ namespace osu.Game.EzRealmSync.Realm
             IReadOnlyList<Guid> entityIds,
             CancellationToken cancellationToken = default) =>
             throw new InvalidOperationException("未检测到 lib/osu.Game.dll。请使用 --ui-test，或将官方 osu.Game 放入 lib/。");
+
+        public Task<RealmCollectionDbImportResult> ImportCollectionDbAsync(
+            string realmId,
+            string collectionDbPath,
+            IProgress<ScanProgress>? progress = null,
+            CancellationToken cancellationToken = default) =>
+            throw new InvalidOperationException("未检测到 lib/osu.Game.dll。请使用 --ui-test，或将官方 osu.Game 放入 lib/。");
     }
 }
