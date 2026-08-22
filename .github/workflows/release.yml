@@ -15,7 +15,31 @@ permissions:
   contents: write
 
 jobs:
+  # 发布硬门禁：单元测试必须全部通过，否则不会进入 release job。
+  unit-tests:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 8.0.x
+
+      - name: Restore
+        run: dotnet restore EzRealmSync.sln
+
+      - name: Build
+        run: dotnet build EzRealmSync.sln -c Release --no-restore -p:UseLocalOsuLibs=false
+
+      - name: Test (unit)
+        run: >
+          dotnet test EzRealmSync.sln -c Release --no-build
+          -p:UseLocalOsuLibs=false
+          --filter "FullyQualifiedName!~Integration"
+
   release:
+    needs: unit-tests
     runs-on: windows-latest
     steps:
       - uses: actions/checkout@v4
@@ -41,21 +65,15 @@ jobs:
         with:
           dotnet-version: 8.0.x
 
-      - name: Build and test
-        run: |
-          dotnet restore EzRealmSync.sln
-          dotnet build EzRealmSync.sln -c Release --no-restore -p:UseLocalOsuLibs=false
-          dotnet test EzRealmSync.sln -c Release --no-build -p:UseLocalOsuLibs=false --filter "FullyQualifiedName!~Integration"
-
       - name: Publish win-x64
-        run: |
-          dotnet publish osu.EzRealmSync.Desktop/osu.EzRealmSync.Desktop.csproj `
-            -c Release `
-            -r win-x64 `
-            --self-contained true `
-            -p:UseLocalOsuLibs=false `
-            -p:Version=${{ steps.version.outputs.version }} `
-            -o artifacts/publish
+        run: >
+          dotnet publish osu.EzRealmSync.Desktop/osu.EzRealmSync.Desktop.csproj
+          -c Release
+          -r win-x64
+          --self-contained true
+          -p:UseLocalOsuLibs=false
+          -p:Version=${{ steps.version.outputs.version }}
+          -o artifacts/publish
 
       - name: Package zip
         shell: pwsh
