@@ -1,0 +1,22 @@
+# Dependabot 同一 ecosystem+directory+target-branch 只能有一条配置。
+# 仅两种 PR：ez2lazer（Framework+Game 同 PR）与 other-nuget（其余同 PR），互不混入。
+# 自动合并：ez2lazer CI 通过即合；other-nuget 仅周五合（见 dependabot-auto-merge.yml）。
+version: 2
+updates:
+  - package-ecosystem: "nuget"
+    directory: "/"
+    target-branch: "FastCoding"
+    schedule:
+      interval: "daily"
+    open-pull-requests-limit: 10
+    groups:
+      ez2lazer:
+        patterns:
+          - "ez2lazer.Framework"
+          - "ez2lazer.Game"
+      other-nuget:
+        patterns:
+          - "*"
+        exclude-patterns:
+          - "ez2lazer.Framework"
+          - "ez2lazer.Game"

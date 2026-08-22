@@ -36,4 +36,4 @@ dotnet build EzRealmSync.sln -p:UseLocalOsuLibs=true
 
 - EzRealmSync **不会**把库从 51 升到 Ez 版本，也不会跑 migration。
 - 打开时锁定磁盘已有 schema（`OpenWithoutMigration`）。
-- 若库比工具**更新**：请升级 EzRealmSync / 更新 `ez2lazer.Game` NuGet 版本。
+- 若库比工具**更新**：等 CI 自动升 `Directory.Packages.props` 中的 `ez2lazer.Game`，或手动改该文件后验证。

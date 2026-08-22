@@ -22,7 +22,8 @@ dotnet build EzRealmSync.sln
 dotnet run --project osu.EzRealmSync.Desktop
 ```
 
-- **默认**：真实 Realm 后端（`ez2lazer.Game` NuGet，版本见 `EzRealmSync.Dependencies.props`）
+- **默认**：真实 Realm 后端（`ez2lazer.Game` NuGet，版本见 `Directory.Packages.props`）
+  - Dependabot：每日检查；`ez2lazer`（Framework/Game）CI 通过即合；`other-nuget`（其余）仅周五自动合
 - `--ui-test`：Mock 假数据（仅调 UI，不读 `.realm`）
 - `--mock-delay=0`：Mock 模式去掉模拟延迟
 - **本地 lib 覆盖**（并行开发 osu 主仓库时）：`dotnet build -t:SyncEzRealmLibs EzRealmSync.sln` 后加 `-p:UseLocalOsuLibs=true`（见 [lib/README.md](lib/README.md)）

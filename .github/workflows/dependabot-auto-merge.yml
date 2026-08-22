@@ -1,0 +1,74 @@
+name: Dependabot auto-merge
+
+# Dependabot 开 PR → CI → 成功后 squash。
+# 仅两种模式：ez2lazer 组（随时合）/ other-nuget 组（仅周五 UTC 合）。
+on:
+  workflow_run:
+    workflows: ["CI"]
+    types: [completed]
+
+permissions:
+  contents: write
+  pull-requests: write
+  actions: read
+
+jobs:
+  merge:
+    runs-on: ubuntu-latest
+    if: >
+      github.event.workflow_run.conclusion == 'success' &&
+      github.event.workflow_run.event == 'pull_request' &&
+      github.event.workflow_run.actor.login == 'dependabot[bot]'
+    steps:
+      - name: Squash-merge eligible Dependabot PR
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          HEAD_SHA: ${{ github.event.workflow_run.head_sha }}
+          REPO: ${{ github.repository }}
+        run: |
+          set -euo pipefail
+          prs=$(gh api "repos/${REPO}/commits/${HEAD_SHA}/pulls" \
+            -H "Accept: application/vnd.github.groot-preview+json")
+          number=$(echo "$prs" | jq -r '.[0].number // empty')
+          if [[ -z "$number" ]]; then
+            echo "No open PR for $HEAD_SHA"
+            exit 0
+          fi
+
+          meta=$(gh pr view "$number" --repo "$REPO" --json title,labels)
+          title=$(echo "$meta" | jq -r '.title')
+          labels=$(echo "$meta" | jq -r '[.labels[].name] | join(",")')
+          haystack="$title $labels"
+          echo "PR #$number: $title labels=$labels"
+
+          # Dependabot 组 PR 标题形如 "Bump the ez2lazer group ..." / "Bump the other-nuget group ..."
+          is_ez2lazer=0
+          if echo "$haystack" | grep -qiE '(^|[[:space:]])ez2lazer([[:space:]]|group|$)|ez2lazer\.(Framework|Game)'; then
+            is_ez2lazer=1
+          fi
+
+          is_other_group=0
+          if echo "$haystack" | grep -qiE 'other-nuget'; then
+            is_other_group=1
+          fi
+
+          weekday=$(date -u +%u) # 1=Mon ... 5=Fri ... 7=Sun
+
+          if [[ "$is_ez2lazer" -eq 1 && "$is_other_group" -eq 1 ]]; then
+            echo "Mixed ez2lazer + other-nuget signals — refuse auto-merge"
+            exit 0
+          fi
+
+          if [[ "$is_ez2lazer" -eq 1 ]]; then
+            echo "ez2lazer group — merge now"
+          elif [[ "$is_other_group" -eq 1 && "$weekday" -eq 5 ]]; then
+            echo "other-nuget group on Friday — merge now"
+          elif [[ "$is_other_group" -eq 1 ]]; then
+            echo "other-nuget group: skip until Friday UTC (today=$weekday)"
+            exit 0
+          else
+            echo "Not an ez2lazer/other-nuget group PR — skip"
+            exit 0
+          fi
+
+          gh pr merge "$number" --repo "$REPO" --squash --delete-branch

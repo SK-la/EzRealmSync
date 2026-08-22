@@ -1,8 +1,0 @@
-<!-- EzRealmSync：ez2lazer NuGet 版本仅在此维护（与 osu 仓库 Ez2Lazer.Dependencies.props 对齐）。 -->
-<Project>
-  <PropertyGroup Label="Ez2Lazer">
-    <Ez2LazerFrameworkVersion>2026.703.1-ez2lazer</Ez2LazerFrameworkVersion>
-    <Ez2LazerGameVersion>2026.704.0-ez2lazer</Ez2LazerGameVersion>
-    <RealmPackageVersion>20.1.0</RealmPackageVersion>
-  </PropertyGroup>
-</Project>

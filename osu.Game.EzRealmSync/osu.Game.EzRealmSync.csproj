@@ -7,12 +7,12 @@
   </PropertyGroup>
 
   <ItemGroup Condition="'$(UseLocalOsuLibs)' != 'true'">
-    <PackageReference Include="ez2lazer.Framework" Version="$(Ez2LazerFrameworkVersion)" />
-    <PackageReference Include="ez2lazer.Game" Version="$(Ez2LazerGameVersion)" />
-    <PackageReference Include="Realm" Version="$(RealmPackageVersion)" />
+    <PackageReference Include="ez2lazer.Framework" />
+    <PackageReference Include="ez2lazer.Game" />
+    <PackageReference Include="Realm" />
   </ItemGroup>
 
   <ItemGroup Condition="'$(UseLocalOsuLibs)' == 'true'">
-    <PackageReference Include="Realm" Version="$(RealmPackageVersion)" />
+    <PackageReference Include="Realm" />
   </ItemGroup>
 </Project>

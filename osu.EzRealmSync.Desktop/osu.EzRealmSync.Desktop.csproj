@@ -17,13 +17,13 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="ez2lazer.Framework" Version="$(Ez2LazerFrameworkVersion)" />
-    <PackageReference Include="ez2lazer.Game" Version="$(Ez2LazerGameVersion)" />
-    <PackageReference Include="WPF-UI" Version="4.3.0" />
-    <PackageReference Include="WPF-UI.Abstractions" Version="4.3.0" />
-    <PackageReference Include="WPF-UI.DependencyInjection" Version="4.3.0" />
-    <PackageReference Include="WPF-UI.Markdown" Version="4.0.2" />
-    <PackageReference Include="WPF-UI.Tray" Version="4.3.0" />
-    <PackageReference Include="WPF-UI.Violeta" Version="4.3.0.1" />
+    <PackageReference Include="ez2lazer.Framework" />
+    <PackageReference Include="ez2lazer.Game" />
+    <PackageReference Include="WPF-UI" />
+    <PackageReference Include="WPF-UI.Abstractions" />
+    <PackageReference Include="WPF-UI.DependencyInjection" />
+    <PackageReference Include="WPF-UI.Markdown" />
+    <PackageReference Include="WPF-UI.Tray" />
+    <PackageReference Include="WPF-UI.Violeta" />
   </ItemGroup>
 </Project>

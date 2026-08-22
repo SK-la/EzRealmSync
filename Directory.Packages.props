@@ -1,0 +1,27 @@
+<!--
+  中央包版本（CPM）。Dependabot 每日检查，仅两种 PR：
+  - ez2lazer：Framework/Game，CI 通过即合
+  - other-nuget：其余包同 PR，仅周五自动合
+-->
+<Project>
+  <PropertyGroup>
+    <ManagePackageVersionsCentrally>true</ManagePackageVersionsCentrally>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageVersion Include="ez2lazer.Framework" Version="2026.703.1-ez2lazer" />
+    <PackageVersion Include="ez2lazer.Game" Version="2026.704.0-ez2lazer" />
+    <PackageVersion Include="Realm" Version="20.1.0" />
+
+    <PackageVersion Include="WPF-UI" Version="4.3.0" />
+    <PackageVersion Include="WPF-UI.Abstractions" Version="4.3.0" />
+    <PackageVersion Include="WPF-UI.DependencyInjection" Version="4.3.0" />
+    <PackageVersion Include="WPF-UI.Markdown" Version="4.0.2" />
+    <PackageVersion Include="WPF-UI.Tray" Version="4.3.0" />
+    <PackageVersion Include="WPF-UI.Violeta" Version="4.3.0.1" />
+
+    <PackageVersion Include="Microsoft.NET.Test.Sdk" Version="18.7.0" />
+    <PackageVersion Include="NUnit" Version="4.6.1" />
+    <PackageVersion Include="NUnit3TestAdapter" Version="6.2.0" />
+  </ItemGroup>
+</Project>
