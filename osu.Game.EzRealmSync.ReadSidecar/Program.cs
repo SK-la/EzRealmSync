@@ -1,4 +1,5 @@
 using System.Text.Json;
+using osu.Game.EzRealmSync;
 using osu.Game.EzRealmSync.Contracts;
 using osu.Game.EzRealmSync.Realm;
 using osu.Game.EzRealmSync.Runtime;
@@ -15,6 +16,8 @@ internal static class Program
 
     public static int Main(string[] args)
     {
+        installHostRuntimeLibs();
+
         if (args.Length < 2 || string.IsNullOrWhiteSpace(args[0]) || string.IsNullOrWhiteSpace(args[1]))
         {
             Console.Error.WriteLine("Usage: EzRealmSync.ReadSidecar <read|apply-export> <job.json> [result.json]");
@@ -43,36 +46,43 @@ internal static class Program
         }
     }
 
+    private static void installHostRuntimeLibs()
+    {
+        string? hostLib = EzRealmSyncBackend.ResolveRuntimeLibDirectory();
+        if (hostLib != null)
+            EzRealmSyncRuntimeLibLoader.Install(hostLib);
+    }
+
     private static int runRead(string jobPath, string resultPath)
     {
         var job = JsonSerializer.Deserialize<RealmReadJob>(File.ReadAllText(jobPath), jsonOptions)
                   ?? throw new InvalidOperationException("job.json 为空或格式无效。");
 
-        installReaderLib(job.ReaderLibDirectory);
+        prependReaderLib(job.ReaderLibDirectory);
 
         var result = ReadSidecarEngine.ReadDiffSnapshot(job);
         File.WriteAllText(resultPath, JsonSerializer.Serialize(result, jsonOptions));
         return result.Success ? 0 : 1;
     }
 
-    private static int runApplyExport(string jobPath, string resultPath)
+        private static int runApplyExport(string jobPath, string resultPath)
     {
         var job = JsonSerializer.Deserialize<RealmApplyExportJob>(File.ReadAllText(jobPath), jsonOptions)
                   ?? throw new InvalidOperationException("job.json 为空或格式无效。");
 
-        installReaderLib(job.ReaderLibDirectory);
+        prependReaderLib(job.ReaderLibDirectory);
 
         var result = ReadSidecarEngine.ExportApplyBundle(job);
         File.WriteAllText(resultPath, JsonSerializer.Serialize(result, jsonOptions));
         return result.Success ? 0 : 1;
     }
 
-    private static void installReaderLib(string readerLibDirectory)
+    private static void prependReaderLib(string readerLibDirectory)
     {
         if (string.IsNullOrWhiteSpace(readerLibDirectory) || !Directory.Exists(readerLibDirectory))
             throw new InvalidOperationException($"reader lib 目录无效：{readerLibDirectory}");
 
-        EzRealmSyncRuntimeLibLoader.Install(Path.GetFullPath(readerLibDirectory));
+        EzRealmSyncRuntimeLibLoader.PrependProbeDirectory(Path.GetFullPath(readerLibDirectory));
     }
 
     private static int? writeFailure(string resultPath, string message)

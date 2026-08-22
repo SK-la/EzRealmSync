@@ -1,5 +1,6 @@
 #if HAS_EZ_OSU_GAME
 using NUnit.Framework;
+using osu.Game.Database;
 using osu.Game.EzRealmSync.Errors;
 using osu.Game.EzRealmSync.Realm;
 using osu.Game.EzRealmSync.Realm.Readers;
@@ -42,7 +43,22 @@ namespace osu.Game.EzRealmSync.Tests
             }));
 
             Assert.That(ex!.Kind, Is.EqualTo(RealmUserErrorKind.MigrationRequired));
-            Assert.That(ex.Message, Does.Contain("Sidecar"));
+            Assert.That(ex.Message, Does.Contain("写操作"));
+        }
+
+        [Test]
+        public void TryOpenInProcessForRead_returns_false_without_throw_when_legacy_open_fails()
+        {
+            var sample = RealmSampleFixture.GetSample("ez-old");
+            if (!sample.RealmFileExists)
+                Assert.Ignore($"样本未放置 realm 文件：{sample.RealmFilePath}");
+
+            int schema = RealmAccessGateway.ProbeSchema(sample.RealmFilePath) ?? throw new InvalidOperationException("schema 读取失败");
+
+            Assert.That(
+                RealmAccessGateway.TryOpenInProcessForRead(sample.RealmFilePath, schema, out RealmAccess? access),
+                Is.False);
+            Assert.That(access, Is.Null);
         }
 
         [Test]

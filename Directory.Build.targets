@@ -60,16 +60,20 @@
       <_ReadSidecarCopy Include="$(ReadSidecarOutputDir)\EzRealmSync.ReadSidecar.dll" Condition="Exists('$(ReadSidecarOutputDir)\EzRealmSync.ReadSidecar.dll')" />
       <_ReadSidecarCopy Include="$(ReadSidecarOutputDir)\EzRealmSync.ReadSidecar.deps.json" Condition="Exists('$(ReadSidecarOutputDir)\EzRealmSync.ReadSidecar.deps.json')" />
       <_ReadSidecarCopy Include="$(ReadSidecarOutputDir)\EzRealmSync.ReadSidecar.runtimeconfig.json" Condition="Exists('$(ReadSidecarOutputDir)\EzRealmSync.ReadSidecar.runtimeconfig.json')" />
-      <_ReadSidecarCopy Include="$(ReadSidecarOutputDir)\osu.Game.EzRealmSync.dll" Condition="Exists('$(ReadSidecarOutputDir)\osu.Game.EzRealmSync.dll')" />
-      <_ReadSidecarCopy Include="$(ReadSidecarOutputDir)\osu.Game.EzRealmSync.Contracts.dll" Condition="Exists('$(ReadSidecarOutputDir)\osu.Game.EzRealmSync.Contracts.dll')" />
-      <_ReadSidecarCopy Include="$(ReadSidecarOutputDir)\Realm.dll" Condition="Exists('$(ReadSidecarOutputDir)\Realm.dll')" />
+      <_ReadSidecarManaged Include="$(ReadSidecarOutputDir)\*.dll"
+                          Exclude="$(ReadSidecarOutputDir)\*Game.Resources*.dll;$(ReadSidecarOutputDir)\*Resources.dll"
+                          Condition="Exists('$(ReadSidecarOutputDir)')" />
       <_ReadSidecarRuntime Include="$(ReadSidecarOutputDir)\runtimes\**\*.*" Condition="Exists('$(ReadSidecarOutputDir)\runtimes')" />
     </ItemGroup>
-    <MakeDir Directories="$(OutputPath)read-sidecar" Condition="@(_ReadSidecarCopy->Count()) != 0" />
+    <MakeDir Directories="$(OutputPath)read-sidecar" Condition="@(_ReadSidecarCopy->Count()) != 0 OR '@(_ReadSidecarManaged)' != ''" />
     <Copy SourceFiles="@(_ReadSidecarCopy)"
           DestinationFolder="$(OutputPath)read-sidecar"
           SkipUnchangedFiles="true"
           Condition="@(_ReadSidecarCopy->Count()) != 0" />
+    <Copy SourceFiles="@(_ReadSidecarManaged)"
+          DestinationFolder="$(OutputPath)read-sidecar"
+          SkipUnchangedFiles="true"
+          Condition="'@(_ReadSidecarManaged)' != ''" />
     <Copy SourceFiles="@(_ReadSidecarRuntime)"
           DestinationFiles="@(_ReadSidecarRuntime->'$(OutputPath)read-sidecar\runtimes\%(RecursiveDir)%(Filename)%(Extension)')"
           SkipUnchangedFiles="true"
@@ -85,16 +89,20 @@
       <_ReadSidecarCopy Include="$(ReadSidecarOutputDir)\EzRealmSync.ReadSidecar.dll" Condition="Exists('$(ReadSidecarOutputDir)\EzRealmSync.ReadSidecar.dll')" />
       <_ReadSidecarCopy Include="$(ReadSidecarOutputDir)\EzRealmSync.ReadSidecar.deps.json" Condition="Exists('$(ReadSidecarOutputDir)\EzRealmSync.ReadSidecar.deps.json')" />
       <_ReadSidecarCopy Include="$(ReadSidecarOutputDir)\EzRealmSync.ReadSidecar.runtimeconfig.json" Condition="Exists('$(ReadSidecarOutputDir)\EzRealmSync.ReadSidecar.runtimeconfig.json')" />
-      <_ReadSidecarCopy Include="$(ReadSidecarOutputDir)\osu.Game.EzRealmSync.dll" Condition="Exists('$(ReadSidecarOutputDir)\osu.Game.EzRealmSync.dll')" />
-      <_ReadSidecarCopy Include="$(ReadSidecarOutputDir)\osu.Game.EzRealmSync.Contracts.dll" Condition="Exists('$(ReadSidecarOutputDir)\osu.Game.EzRealmSync.Contracts.dll')" />
-      <_ReadSidecarCopy Include="$(ReadSidecarOutputDir)\Realm.dll" Condition="Exists('$(ReadSidecarOutputDir)\Realm.dll')" />
+      <_ReadSidecarManaged Include="$(ReadSidecarOutputDir)\*.dll"
+                          Exclude="$(ReadSidecarOutputDir)\*Game.Resources*.dll;$(ReadSidecarOutputDir)\*Resources.dll"
+                          Condition="Exists('$(ReadSidecarOutputDir)')" />
       <_ReadSidecarRuntime Include="$(ReadSidecarOutputDir)\runtimes\**\*.*" Condition="Exists('$(ReadSidecarOutputDir)\runtimes')" />
     </ItemGroup>
-    <MakeDir Directories="$(OutputPath)read-sidecar" Condition="@(_ReadSidecarCopy->Count()) != 0" />
+    <MakeDir Directories="$(OutputPath)read-sidecar" Condition="@(_ReadSidecarCopy->Count()) != 0 OR '@(_ReadSidecarManaged)' != ''" />
     <Copy SourceFiles="@(_ReadSidecarCopy)"
           DestinationFolder="$(OutputPath)read-sidecar"
           SkipUnchangedFiles="true"
           Condition="@(_ReadSidecarCopy->Count()) != 0" />
+    <Copy SourceFiles="@(_ReadSidecarManaged)"
+          DestinationFolder="$(OutputPath)read-sidecar"
+          SkipUnchangedFiles="true"
+          Condition="'@(_ReadSidecarManaged)' != ''" />
     <Copy SourceFiles="@(_ReadSidecarRuntime)"
           DestinationFiles="@(_ReadSidecarRuntime->'$(OutputPath)read-sidecar\runtimes\%(RecursiveDir)%(Filename)%(Extension)')"
           SkipUnchangedFiles="true"

@@ -25,6 +25,8 @@ namespace osu.Game.EzRealmSync
 
         public static void Info(string message) => write("INFO", message);
 
+        public static void Debug(string message) => write("DEBUG", message);
+
         public static void Warn(string message) => write("WARN", message);
 
         public static void Error(string message) => write("ERROR", message);

@@ -24,6 +24,14 @@ namespace osu.Game.EzRealmSync.Realm
             if (tryReadInProcess(realmFilePath, pinnedDiskSchemaVersion, progress, cancellationToken, out RealmDiffSnapshot snapshot))
                 return filterKinds(snapshot, entityKinds);
 
+            if (RealmSchemaToolPolicy.IsAtLatestSupported(pinnedDiskSchemaVersion))
+            {
+                throw new InvalidOperationException(
+                    $"无法用 bundled lib 读取当前 schema {pinnedDiskSchemaVersion} 的 Diff 快照：{realmFilePath}");
+            }
+
+            EzRealmSyncLog.Info(
+                $"ReadDiffSnapshot via Sidecar schema={pinnedDiskSchemaVersion} file={realmFilePath}");
             return filterKinds(readViaSidecar(realmFilePath, pinnedDiskSchemaVersion, entityKinds, cancellationToken), entityKinds);
         }
 
@@ -38,7 +46,7 @@ namespace osu.Game.EzRealmSync.Realm
         }
 
         public static bool RequiresSidecarForRead(string realmFilePath, int pinnedDiskSchemaVersion) =>
-            !tryOpenInProcess(realmFilePath, pinnedDiskSchemaVersion, out _);
+            RealmAccessOpenCore.RequiresSidecar(pinnedDiskSchemaVersion);
 
         public static RealmSyncApplyBundle ExportApplyBundleViaSidecar(
             string realmFilePath,
@@ -81,8 +89,17 @@ namespace osu.Game.EzRealmSync.Realm
             return true;
         }
 
-        private static bool tryOpenInProcess(string realmFilePath, int pinnedDiskSchemaVersion, out RealmAccess access) =>
-            RealmAccessGateway.TryOpenInProcessForRead(realmFilePath, pinnedDiskSchemaVersion, out access);
+        private static bool tryOpenInProcess(string realmFilePath, int pinnedDiskSchemaVersion, out RealmAccess access)
+        {
+            if (RealmAccessGateway.TryOpenInProcessForRead(realmFilePath, pinnedDiskSchemaVersion, out RealmAccess? opened) && opened != null)
+            {
+                access = opened;
+                return true;
+            }
+
+            access = null!;
+            return false;
+        }
 
         private static RealmDiffSnapshot readViaSidecar(
             string realmFilePath,

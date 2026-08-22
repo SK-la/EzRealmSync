@@ -10,20 +10,20 @@ namespace osu.Game.EzRealmSync.Runtime
     /// </summary>
     public static class EzRealmSyncRuntimeLibLoader
     {
-        private static bool installed;
+        private static bool handlersRegistered;
         private static string? runtimeLibDirectory;
+        private static readonly List<string> prependProbeDirectories = new List<string>();
 
         public static string? RuntimeLibDirectory => runtimeLibDirectory;
 
         public static void Install(string? runtimeLibDirectoryOverride = null)
         {
-            if (installed)
-                return;
+            if (!string.IsNullOrWhiteSpace(runtimeLibDirectoryOverride) && Directory.Exists(runtimeLibDirectoryOverride))
+                runtimeLibDirectory = Path.GetFullPath(runtimeLibDirectoryOverride);
+            else if (runtimeLibDirectory == null)
+                runtimeLibDirectory = EzRealmSyncBackend.ResolveRuntimeLibDirectory();
 
-            installed = true;
-            runtimeLibDirectory = !string.IsNullOrWhiteSpace(runtimeLibDirectoryOverride) && Directory.Exists(runtimeLibDirectoryOverride)
-                ? Path.GetFullPath(runtimeLibDirectoryOverride)
-                : EzRealmSyncBackend.ResolveRuntimeLibDirectory();
+            ensureHandlersRegistered();
 
             if (runtimeLibDirectory == null)
                 return;
@@ -32,9 +32,17 @@ namespace osu.Game.EzRealmSync.Runtime
                 tryLoadManaged(name);
 
             verifyRealmNativeLibraryPresent();
+        }
 
-            AssemblyLoadContext.Default.Resolving += onResolving;
-            AssemblyLoadContext.Default.ResolvingUnmanagedDll += onResolvingUnmanagedDll;
+        /// <summary>将目录置于 probe 链最前（reader Sidecar job 内 reader lib 优先于主 lib）。</summary>
+        public static void PrependProbeDirectory(string directory)
+        {
+            if (string.IsNullOrWhiteSpace(directory) || !Directory.Exists(directory))
+                return;
+
+            string full = Path.GetFullPath(directory);
+            prependProbeDirectories.RemoveAll(d => string.Equals(d, full, StringComparison.OrdinalIgnoreCase));
+            prependProbeDirectories.Insert(0, full);
         }
 
         private static readonly string[] preloadOrder =
@@ -43,6 +51,16 @@ namespace osu.Game.EzRealmSync.Runtime
             "osu.Game",
             "Realm",
         };
+
+        private static void ensureHandlersRegistered()
+        {
+            if (handlersRegistered)
+                return;
+
+            handlersRegistered = true;
+            AssemblyLoadContext.Default.Resolving += onResolving;
+            AssemblyLoadContext.Default.ResolvingUnmanagedDll += onResolvingUnmanagedDll;
+        }
 
         private static Assembly? onResolving(AssemblyLoadContext context, AssemblyName assemblyName)
         {
@@ -89,10 +107,17 @@ namespace osu.Game.EzRealmSync.Runtime
 
         private static IEnumerable<string> probeManagedDirectories()
         {
+            foreach (string directory in prependProbeDirectories)
+                yield return directory;
+
             if (runtimeLibDirectory != null)
                 yield return runtimeLibDirectory;
 
             yield return AppContext.BaseDirectory;
+
+            string parentLib = Path.GetFullPath(Path.Combine(AppContext.BaseDirectory, "..", "lib"));
+            if (Directory.Exists(parentLib))
+                yield return parentLib;
         }
 
         private static string? resolveNativeLibraryPath(string libraryName)
@@ -115,6 +140,12 @@ namespace osu.Game.EzRealmSync.Runtime
         {
             string rid = resolveRuntimeIdentifier();
 
+            foreach (string directory in prependProbeDirectories)
+            {
+                yield return Path.Combine(directory, "runtimes", rid, "native");
+                yield return directory;
+            }
+
             if (runtimeLibDirectory != null)
             {
                 yield return Path.Combine(runtimeLibDirectory, "runtimes", rid, "native");
@@ -123,6 +154,13 @@ namespace osu.Game.EzRealmSync.Runtime
 
             yield return Path.Combine(AppContext.BaseDirectory, "runtimes", rid, "native");
             yield return AppContext.BaseDirectory;
+
+            string parentLib = Path.GetFullPath(Path.Combine(AppContext.BaseDirectory, "..", "lib"));
+            if (Directory.Exists(parentLib))
+            {
+                yield return Path.Combine(parentLib, "runtimes", rid, "native");
+                yield return parentLib;
+            }
         }
 
         private static void verifyRealmNativeLibraryPresent()

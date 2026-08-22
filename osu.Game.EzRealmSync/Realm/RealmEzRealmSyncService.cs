@@ -85,13 +85,15 @@ namespace osu.Game.EzRealmSync.Realm
             progress?.Report(new ScanProgress { Progress = 0, Message = "正在读取源库…" });
             cancellationToken.ThrowIfCancellationRequested();
 
-            int sourceSchema = RealmAccessGateway.ResolveSchemaVersion(sourceFile.FilePath, sourceFile.SchemaVersion);
+            int sourceSchema = RealmAccessGateway.ProbeSchema(sourceFile.FilePath)
+                ?? throw new InvalidOperationException($"无法读取 Realm schema 版本：{sourceFile.FilePath}");
             var sourceSnapshot = RealmAccessGateway.ReadDiffSnapshot(sourceFile.FilePath, sourceSchema, kinds, progress, cancellationToken);
 
             progress?.Report(new ScanProgress { Progress = 0.5, Message = "正在读取目标库…" });
             cancellationToken.ThrowIfCancellationRequested();
 
-            int targetSchema = RealmAccessGateway.ResolveSchemaVersion(targetFile.FilePath, targetFile.SchemaVersion);
+            int targetSchema = RealmAccessGateway.ProbeSchema(targetFile.FilePath)
+                ?? throw new InvalidOperationException($"无法读取 Realm schema 版本：{targetFile.FilePath}");
             var targetSnapshot = RealmAccessGateway.ReadDiffSnapshot(targetFile.FilePath, targetSchema, kinds, progress, cancellationToken);
 
             var diff = RealmDiffEngine.Compare(sourceSnapshot, targetSnapshot, kinds, progress, cancellationToken);

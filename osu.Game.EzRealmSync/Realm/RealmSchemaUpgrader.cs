@@ -152,7 +152,7 @@ namespace osu.Game.EzRealmSync.Realm
 
         private static bool canOpenWithoutMigration(string realmFilePath, int diskSchemaVersion)
         {
-            if (!RealmAccessGateway.TryOpenInProcessForRead(realmFilePath, diskSchemaVersion, out RealmAccess access))
+            if (!RealmAccessGateway.TryOpenInProcessForRead(realmFilePath, diskSchemaVersion, out RealmAccess? access) || access == null)
                 return false;
 
             access.Dispose();

@@ -8,7 +8,7 @@ using osu.Game.EzRealmSync.Realm.Readers;
 namespace osu.Game.EzRealmSync.Realm
 {
     /// <summary>
-    /// 统一 Realm 访问策略：按操作意图（探测 / 只读 Diff / 写回 / 修复 migration）分流，避免各 Tab 自行选择 opener。
+    /// 统一 Realm 访问策略：按操作意图（探测 / 只读 / 写回 / 修复 migration）分流。
     /// </summary>
     public static class RealmAccessGateway
     {
@@ -20,7 +20,7 @@ namespace osu.Game.EzRealmSync.Realm
             diskSchemaVersion ?? ProbeSchema(realmFilePath)
             ?? throw new InvalidOperationException($"无法读取 Realm schema 版本：{realmFilePath}");
 
-        /// <summary>只读 Diff 快照：主 lib 进程内优先，失败时 ReadSidecar + readers 包。</summary>
+        /// <summary>只读 Diff 快照：主 lib 进程内优先，legacy 时 ReadSidecar + readers 包。</summary>
         public static RealmDiffSnapshot ReadDiffSnapshot(
             string realmFilePath,
             int pinnedDiskSchemaVersion,
@@ -48,8 +48,12 @@ namespace osu.Game.EzRealmSync.Realm
             return RealmDiffSnapshotProvider.ExportApplyBundleViaSidecar(realmFilePath, pinnedDiskSchemaVersion, itemIds, cancellationToken);
         }
 
-        /// <summary>需要 live <see cref="RealmAccess"/> 写回；仅主 lib，legacy schema 失败时不走 Sidecar。</summary>
-        public static RealmAccess OpenForMutation(string realmFilePath, int? diskSchemaVersion = null)
+        /// <summary>写回 / 删改 / 导入；legacy schema 失败时不走 Sidecar。</summary>
+        public static RealmAccess OpenForMutation(string realmFilePath, int? diskSchemaVersion = null) =>
+            OpenForWrite(realmFilePath, diskSchemaVersion);
+
+        /// <summary>写回 / 删改 / 导入；legacy schema 失败时不走 Sidecar。</summary>
+        public static RealmAccess OpenForWrite(string realmFilePath, int? diskSchemaVersion = null)
         {
             try
             {
@@ -65,27 +69,11 @@ namespace osu.Game.EzRealmSync.Realm
         public static RealmAccess OpenForMigration(string realmFilePath, int? diskSchemaVersion = null) =>
             openWithoutMigration(realmFilePath, diskSchemaVersion);
 
-        /// <summary>供 <see cref="RealmDiffSnapshotProvider"/> 判断能否进程内只读打开（不抛 MigrationRequired）。</summary>
-        public static bool TryOpenInProcessForRead(string realmFilePath, int pinnedDiskSchemaVersion, out RealmAccess access)
+        /// <summary>进程内只读打开 current schema；legacy 返回 false。</summary>
+        public static bool TryOpenInProcessForRead(string realmFilePath, int pinnedDiskSchemaVersion, out RealmAccess? access)
         {
-            access = null!;
-
-            try
-            {
-                access = RealmReaderRegistry.Instance.Router.OpenByDiskSchemaVersion(pinnedDiskSchemaVersion, realmFilePath);
-                access.Run(_ => { });
-                return true;
-            }
-            catch (RealmUserOperationException ex) when (ex.Kind is RealmUserErrorKind.LegacyReaderUnavailable or RealmUserErrorKind.MigrationRequired)
-            {
-                access.Dispose();
-                return false;
-            }
-            catch (Exception)
-            {
-                access.Dispose();
-                return false;
-            }
+            RefreshReaders();
+            return RealmAccessOpenCore.TryOpenCurrentInProcess(realmFilePath, pinnedDiskSchemaVersion, out access);
         }
 
         public static void RefreshReaders() => RealmReaderRegistry.Instance.Refresh();
@@ -105,7 +93,7 @@ namespace osu.Game.EzRealmSync.Realm
 
             return new RealmUserOperationException(
                 RealmUserErrorKind.MigrationRequired,
-                $"写操作需要 lib 最新 schema 才能打开该库（只读 Diff 比对会自动使用 readers Sidecar）。{ex.Detail}",
+                $"写操作需要 lib 最新 schema 才能打开该库。请在「修复」页点击「升级到 lib 最新」。{ex.Detail}",
                 ex);
         }
     }

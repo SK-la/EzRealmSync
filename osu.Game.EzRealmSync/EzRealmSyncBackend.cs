@@ -44,6 +44,10 @@ namespace osu.Game.EzRealmSync
             if (File.Exists(Path.Combine(AppContext.BaseDirectory, "osu.Game.dll")))
                 return AppContext.BaseDirectory;
 
+            string hostLib = Path.GetFullPath(Path.Combine(AppContext.BaseDirectory, "..", "lib"));
+            if (File.Exists(Path.Combine(hostLib, "osu.Game.dll")))
+                return hostLib;
+
             return findDevLibDirectory();
         }
 
