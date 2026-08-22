@@ -1,8 +1,7 @@
 using osu.Game.EzRealmSync.Contracts;
 using osu.Game.EzRealmSync.Models;
-using osu.Game.EzRealmSync.Realm;
 
-namespace osu.Game.EzRealmSync
+namespace osu.Game.EzRealmSync.Realm
 {
     public static class RealmDiffEntityMapping
     {

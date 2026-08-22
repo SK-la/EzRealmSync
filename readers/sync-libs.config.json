@@ -1,0 +1,44 @@
+{
+  "$comment": "运行 scripts/Sync-ReaderLibs.ps1。type=nuget 时从 NuGet 还原 ez2lazer.Game / ppy.osu.Game 及传递依赖，无需下载客户端 zip。",
+  "defaults": {
+    "realmVersion": "20.1.0"
+  },
+  "packages": [
+    {
+      "readerDir": "51007",
+      "comment": "Ez schema 51007。NuGet 无 717 tag，704 为同期可用版本，可按需改 gameVersion。",
+      "source": {
+        "type": "nuget",
+        "gameId": "ez2lazer.Game",
+        "gameVersion": "2026.704.0-ez2lazer"
+      }
+    },
+    {
+      "readerDir": "52007",
+      "comment": "Ez schema 52007，与 Directory.Packages.props 中 ez2lazer.Game 对齐。",
+      "source": {
+        "type": "nuget",
+        "gameId": "ez2lazer.Game",
+        "gameVersion": "2026.822.0-ez2lazer"
+      }
+    },
+    {
+      "readerDir": "52",
+      "comment": "官方 upstream schema 52。",
+      "source": {
+        "type": "nuget",
+        "gameId": "ppy.osu.Game",
+        "gameVersion": "2026.730.0"
+      }
+    },
+    {
+      "readerDir": "51",
+      "comment": "官方 upstream schema 51（schema 52 之前）。",
+      "source": {
+        "type": "nuget",
+        "gameId": "ppy.osu.Game",
+        "gameVersion": "2026.621.0"
+      }
+    }
+  ]
+}

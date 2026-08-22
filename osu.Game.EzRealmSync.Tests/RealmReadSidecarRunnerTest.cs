@@ -1,6 +1,5 @@
 using NUnit.Framework;
 using osu.Game.EzRealmSync.Realm;
-using osu.Game.EzRealmSync.Realm.Readers;
 
 namespace osu.Game.EzRealmSync.Tests
 {

@@ -7,6 +7,11 @@ lib/*.dll
 lib/**/*.dll
 lib/runtimes/
 
+# reader 包 lib（由 scripts/Sync-ReaderLibs.ps1 填充）
+readers/*/lib/*.dll
+readers/*/lib/**/*.dll
+readers/*/lib/runtimes/
+
 *.user
 *.suo
 *.DotSettings.user

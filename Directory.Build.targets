@@ -224,6 +224,13 @@
           Condition="Exists('$(MSBuildThisFileDirectory)lib\README.md')" />
   </Target>
 
+  <!-- dotnet build -t:SyncReaderLibs EzRealmSync.sln -->
+  <Target Name="SyncReaderLibs"
+          Condition="'$(MSBuildProjectName)' == 'osu.EzRealmSync.Desktop'">
+    <Exec Command="pwsh -NoProfile -ExecutionPolicy Bypass -File &quot;$(MSBuildThisFileDirectory)scripts\Sync-ReaderLibs.ps1&quot;"
+          IgnoreExitCode="false" />
+  </Target>
+
   <!-- dotnet build -t:SyncEzRealmLibs EzRealmSync.sln -->
   <PropertyGroup>
     <EzOsuGameProject>$(MSBuildThisFileDirectory)..\osu\osu.Game\osu.Game.csproj</EzOsuGameProject>

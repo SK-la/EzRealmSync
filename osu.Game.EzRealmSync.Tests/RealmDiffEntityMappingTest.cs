@@ -1,6 +1,5 @@
 #if HAS_EZ_OSU_GAME
 using NUnit.Framework;
-using osu.Game.EzRealmSync;
 using osu.Game.EzRealmSync.Models;
 using osu.Game.EzRealmSync.Realm;
 

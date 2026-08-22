@@ -61,6 +61,34 @@ readers/
 
 ## 获取 lib 文件
 
+**推荐（NuGet 一键同步）：**
+
+```powershell
+pwsh scripts/Sync-ReaderLibs.ps1
+# 或
+dotnet build -t:SyncReaderLibs EzRealmSync.sln
+# 只同步一个 reader：
+pwsh scripts/Sync-ReaderLibs.ps1 -ReaderDir 51007
+```
+
+映射见 [`sync-libs.config.json`](sync-libs.config.json)：`readerDir` ↔ NuGet 包版本（`ez2lazer.Game` / `ppy.osu.Game`）。脚本通过临时 `dotnet publish` 还原**完整传递依赖**到 `lib/`，无需下载客户端 zip。
+
+config 示例：
+
+```json
+{
+  "source": {
+    "type": "nuget",
+    "gameId": "ez2lazer.Game",
+    "gameVersion": "2026.704.0-ez2lazer"
+  }
+}
+```
+
+可选：`frameworkId` / `frameworkVersion`（默认由 game 包传递依赖解析）、`realmVersion`（默认 20.1.0）。还支持 `local-dir`、`dotnet-publish`（本地 ../osu 构建）。
+
+**手动：**
+
 - 从对应版本 Ez2Lazer / osu!lazer 安装目录复制 `osu.Game.dll` 及依赖到 `lib/`。
 - 开发：`dotnet build -t:SyncEzRealmLibs EzRealmSync.sln -c Debug`，再将 `lib/` 复制到 `readers/{id}/lib/`。
 
