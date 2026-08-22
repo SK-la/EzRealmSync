@@ -34,6 +34,7 @@ dotnet build EzRealmSync.sln -p:UseLocalOsuLibs=true
 
 ## 迁移与 schema
 
-- EzRealmSync **不会**把库从 51 升到 Ez 版本，也不会跑 migration。
-- 打开时锁定磁盘已有 schema（`OpenWithoutMigration`）。
-- 若库比工具**更新**：等 CI 自动升 `Directory.Packages.props` 中的 `ez2lazer.Game`，或手动改该文件后验证。
+- **本阶段仅支持同大版本**（当前上游一线，如官方 `52` / Ez `5200x`），单份内置 `osu.Game`，不另存多版本 DLL。
+- 日常打开：锁定磁盘已有 schema（`OpenWithoutMigration`）。
+- 修复页「升级到最新版」：在备份工作副本上执行可控 migration，升到工具当前 schema。
+- 跨大版本 reader / 同步：未实现。

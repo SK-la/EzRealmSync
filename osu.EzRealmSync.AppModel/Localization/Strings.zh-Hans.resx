@@ -219,7 +219,7 @@
   <data name="FixConfirmTitle" xml:space="preserve"><value>确认修复</value></data>
   <data name="FixConvertOfficial" xml:space="preserve"><value>转回官方版</value></data>
   <data name="FixUpgradeSchema" xml:space="preserve"><value>升级到最新版</value></data>
-  <data name="FixUpgradeSchemaConfirm" xml:space="preserve"><value>将把所选 Realm 升级到当前工具支持的最新 schema（工具侧复制全部数据到新库后替换，不经过游戏客户端 migration）。操作前会自动备份到：{0}。请先关闭游戏。是否继续？</value></data>
+  <data name="FixUpgradeSchemaConfirm" xml:space="preserve"><value>将把所选 Realm 升级到当前工具支持的最新 schema（同大版本内：在备份工作副本上执行可控 migration 后替换原文件）。操作前会自动备份到：{0}。请先关闭游戏。是否继续？</value></data>
   <data name="FixUpgradeSchemaTitle" xml:space="preserve"><value>升级 schema</value></data>
   <data name="FixConvertOfficialConfirm" xml:space="preserve"><value>将把所选污染库原地转换为官方格式。操作前会自动创建备份到：{0}。是否继续？</value></data>
   <data name="FixConvertOfficialTitle" xml:space="preserve"><value>转回官方版</value></data>
@@ -227,13 +227,16 @@
   <data name="StatusFixSchemaUpgraded" xml:space="preserve"><value>已升级 schema：{0}（{1} → {2}，备份：{3}）</value></data>
   <data name="StatusFixSchemaAlreadyLatest" xml:space="preserve"><value>{0} 已是当前工具支持的最新 schema（{1}）。备份：{2}</value></data>
   <data name="ErrorFileInUse" xml:space="preserve"><value>写入前检查阻断：文件正在被占用。请先关闭 osu!/Ez2Lazer 后重试。详情：{0}</value></data>
-  <data name="ErrorMigrationRequired" xml:space="preserve"><value>该 Realm 需要先迁移才能打开。请在「修复」页点击「升级到最新版」；若仍失败，请更新 EzRealmSync 或检查 reader 包。详情：{0}</value></data>
+  <data name="ErrorMigrationRequired" xml:space="preserve"><value>该 Realm 需要先升到本工具当前 schema 才能打开。请在「修复」页点击「升级到最新版」，或对 Ez 库使用「转回官方版」（会自动先升级）。详情：{0}</value></data>
   <data name="ErrorPathConflict" xml:space="preserve"><value>路径冲突：{0}</value></data>
-  <data name="ErrorLegacyReaderUnavailable" xml:space="preserve"><value>当前版本暂不支持该 legacy schema。请安装并选择对应版本 reader 后重试。详情：{0}</value></data>
+  <data name="ErrorLegacyReaderUnavailable" xml:space="preserve"><value>当前仅支持同大版本 schema，无法打开该库。请先用对应客户端升到本工具最低支持版本，或更新工具。详情：{0}</value></data>
+  <data name="ErrorSchemaTooLow" xml:space="preserve"><value>该 Realm schema 低于本工具最低支持（同大版本）。请用对应版本客户端升到下限以上后再试。详情：{0}</value></data>
+  <data name="ErrorSchemaTooHigh" xml:space="preserve"><value>该 Realm schema 高于本工具内置 lib。请更新 EzRealmSync。详情：{0}</value></data>
+  <data name="ErrorSchemaModelMismatch" xml:space="preserve"><value>磁盘 schema 版本号已是最新，但对象模型不匹配，升级无法修复。请对齐工具与客户端的 osu.Game，或从完整备份恢复。详情：{0}</value></data>
   <data name="ReaderSettings" xml:space="preserve"><value>Reader 包</value></data>
   <data name="ReaderPackagesDirectory" xml:space="preserve"><value>Reader 包目录</value></data>
   <data name="ActiveReaderPackage" xml:space="preserve"><value>启动时使用的 reader</value></data>
   <data name="ReaderPackageDefault" xml:space="preserve"><value>内置 NuGet / 本地 lib（默认）</value></data>
   <data name="ReaderPackageMissingLib" xml:space="preserve"><value> [缺少 lib]</value></data>
-  <data name="ReaderRestartHint" xml:space="preserve"><value>切换 reader 后需重启应用。同一会话内旧版库会优先尝试 pinned 打开；若失败，请安装匹配 schema 的 reader 包。</value></data>
+  <data name="ReaderRestartHint" xml:space="preserve"><value>本阶段仅支持同大版本、单份内置 osu.Game；跨版本 reader 包为后续专题。切换 reader 后需重启应用。</value></data>
 </root>

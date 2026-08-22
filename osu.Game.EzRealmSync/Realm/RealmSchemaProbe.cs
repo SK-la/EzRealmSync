@@ -39,9 +39,19 @@ namespace osu.Game.EzRealmSync.Realm
             catch (Exception ex) when (RealmOpenErrorClassifier.IsMigrationRequired(ex))
             {
                 string fileName = Path.GetFileName(realmFilePath);
+                bool atLatest = RealmSchemaToolPolicy.IsAtLatestSupported(schema.Value);
+
+                if (atLatest)
+                {
+                    throw new RealmUserOperationException(
+                        RealmUserErrorKind.SchemaModelMismatch,
+                        $"Realm 文件 {fileName} 磁盘 schema 已是本工具最新（{schema}），但对象模型不匹配，无法打开。请更新 EzRealmSync 使其与写出该库的客户端一致，或从完整备份恢复。",
+                        ex);
+                }
+
                 throw new RealmUserOperationException(
                     RealmUserErrorKind.MigrationRequired,
-                    $"Realm 文件 {fileName} 需要 schema 迁移才能打开。请在「修复」页点击「升级到最新版」，或先用对应客户端启动一次完成升级后再重试。",
+                    $"Realm 文件 {fileName}（schema {schema}）需要先升到本工具当前版本（{RealmSchemaToolPolicy.LatestSupportedForKind(RealmSchemaSafety.Classify(schema.Value))}）才能打开。请在「修复」页点击「升级到最新版」，或使用「转回官方版」（会自动先升级）。",
                     ex);
             }
         }

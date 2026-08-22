@@ -9,8 +9,8 @@ namespace osu.Game.EzRealmSync.Realm
 {
     public sealed partial class RealmRealmDataService
     {
-        private readonly Dictionary<string, List<RealmFixIssue>> fixIssuesByRealm = new();
-        private readonly Dictionary<(string realmId, ExportDataKind kind), RealmExportCatalog> exportCatalogs = new();
+        private readonly Dictionary<string, List<RealmFixIssue>> fixIssuesByRealm = new Dictionary<string, List<RealmFixIssue>>();
+        private readonly Dictionary<(string realmId, ExportDataKind kind), RealmExportCatalog> exportCatalogs = new Dictionary<(string realmId, ExportDataKind kind), RealmExportCatalog>();
 
         public Task<IReadOnlyList<RealmFixIssue>> ScanIssuesAsync(
             string realmId,
@@ -92,7 +92,7 @@ namespace osu.Game.EzRealmSync.Realm
                 throw new InvalidOperationException($"未找到 Realm 文件：{realmId}");
 
             string realmPath = Path.GetFullPath(file.FilePath);
-            string? guardError = Task.Run(() => RealmProcessGuard.ComprehensiveCheckAsync(realmPath)).GetAwaiter().GetResult();
+            string? guardError = Task.Run(() => RealmProcessGuard.ComprehensiveCheckAsync(realmPath), cancellationToken).GetAwaiter().GetResult();
             if (guardError != null)
                 throw new RealmUserOperationException(RealmUserErrorKind.FileInUse, guardError);
 
@@ -130,7 +130,7 @@ namespace osu.Game.EzRealmSync.Realm
                 throw new InvalidOperationException($"未找到 Realm 文件：{realmId}");
 
             // 综合并发检查：重试进程检测 + 排他文件锁
-            string? guardError = Task.Run(() => RealmProcessGuard.ComprehensiveCheckAsync(file.FilePath)).GetAwaiter().GetResult();
+            string? guardError = Task.Run(() => RealmProcessGuard.ComprehensiveCheckAsync(file.FilePath), cancellationToken).GetAwaiter().GetResult();
             if (guardError != null)
                 throw new RealmUserOperationException(RealmUserErrorKind.FileInUse, guardError);
 
@@ -215,12 +215,22 @@ namespace osu.Game.EzRealmSync.Realm
                     RealmUserErrorKind.PathConflict,
                     "“转回官方版”仅支持原地转换：会先自动备份，再覆盖所选 Realm 文件本身。");
             }
-            string? guardError = Task.Run(() => RealmProcessGuard.ComprehensiveCheckAsync(sourcePath)).GetAwaiter().GetResult();
+            string? guardError = Task.Run(() => RealmProcessGuard.ComprehensiveCheckAsync(sourcePath), cancellationToken).GetAwaiter().GetResult();
             if (guardError != null)
                 throw new RealmUserOperationException(RealmUserErrorKind.FileInUse, guardError);
 
             progress?.Report(new ScanProgress { Progress = 0.05, Message = "正在创建自动备份…" });
             string backupPath = RealmFileBackup.CreateTimestampedCopy(sourcePath, EzRealmSyncDefaults.DefaultBackupDirectory);
+
+            int sourceSchema = file.SchemaVersion
+                               ?? throw new InvalidOperationException($"无法读取所选库的 schema 版本：{sourcePath}");
+            if (needsSchemaUpgradeBeforeOfficialConvert(sourcePath, sourceSchema))
+            {
+                progress?.Report(new ScanProgress { Progress = 0.08, Message = "转回官方前先升级到当前 schema…" });
+                var upgrade = RealmSchemaUpgrader.UpgradeInPlace(sourcePath, sourceSchema, progress, cancellationToken, backupPath);
+                sourceSchema = upgrade.TargetSchemaVersion;
+                invalidateAfterMutatingRealm(realmId, sourcePath);
+            }
 
             string tempRoot = Path.Combine(Path.GetTempPath(), "EzRealmSync", "official-convert", Guid.NewGuid().ToString("N"));
             string tempTargetPath = Path.Combine(tempRoot, sourceName);
@@ -234,22 +244,22 @@ namespace osu.Game.EzRealmSync.Realm
                 createEmptyOfficialRealm(tempTargetPath);
 
                 RealmAuxiliaryTablePreserver.Snapshot auxiliary;
-                using (var captureAccess = RealmSchemaProbe.Open(sourcePath, file.SchemaVersion))
+                using (var captureAccess = RealmSchemaProbe.Open(sourcePath, sourceSchema))
                     auxiliary = RealmAuxiliaryTablePreserver.Capture(captureAccess);
 
                 progress?.Report(new ScanProgress { Progress = 0.2, Message = "正在读取污染库内容…" });
-                using var sourceAccess = RealmSchemaProbe.Open(sourcePath, file.SchemaVersion);
+                using var sourceAccess = RealmSchemaProbe.Open(sourcePath, sourceSchema);
                 var sourceSnapshot = RealmDiffReader.Read(sourceAccess, progress, cancellationToken);
                 var itemIds = sourceSnapshot.Entities.Select(e => e.Id).Distinct().ToList();
 
-                int targetSchema = RealmSchemaProbe.TryReadSchemaVersion(tempTargetPath) ?? RealmAccess.UpstreamSchemaVersion;
+                int targetSchema = RealmSchemaProbe.TryReadSchemaVersion(tempTargetPath) ?? RealmAccess.UPSTREAM_SCHEMA_VERSION;
                 var writePlan = new RealmWritePlan
                 {
                     SourceRealmFilePath = sourcePath,
                     TargetRealmFilePath = tempTargetPath,
                     SourceKind = RealmDiskSchemaKind.EzExtended,
                     TargetKind = RealmDiskSchemaKind.PpyClient,
-                    SourceSchemaVersion = file.SchemaVersion,
+                    SourceSchemaVersion = sourceSchema,
                     TargetSchemaVersion = targetSchema,
                     LegacyDirection = SyncDirection.EzToOfficial,
                 };
@@ -314,8 +324,27 @@ namespace osu.Game.EzRealmSync.Realm
 
             Directory.CreateDirectory(root);
 
-            using var access = new OfficialRealmAccess(new osu.Framework.Platform.NativeStorage(root), fileName, allowDestructiveRecoveryOnSchemaMismatch: false);
+            using var access = new OfficialRealmAccess(new Framework.Platform.NativeStorage(root), fileName, allowDestructiveRecoveryOnSchemaMismatch: false);
             access.Run(_ => { });
+        }
+
+        /// <summary>转官方前：未到当前 Ez schema，或当前模型无法 pinned 打开时，先升级。</summary>
+        private static bool needsSchemaUpgradeBeforeOfficialConvert(string realmFilePath, int diskSchemaVersion)
+        {
+            if (diskSchemaVersion != RealmSchemaToolPolicy.MaxSupportedEzFileSchema)
+                return true;
+
+            try
+            {
+                using var access = RealmSchemaProbe.Open(realmFilePath, diskSchemaVersion);
+                access.Run(_ => { });
+                return false;
+            }
+            catch (RealmUserOperationException ex) when (ex.Kind is RealmUserErrorKind.MigrationRequired or RealmUserErrorKind.SchemaModelMismatch)
+            {
+                // 已是最新却模型不匹配时，UpgradeInPlace 会抛 SchemaModelMismatch，不应假装可转
+                return ex.Kind == RealmUserErrorKind.MigrationRequired;
+            }
         }
 
         public Task<RealmExportCatalog> LoadCatalogAsync(

@@ -144,7 +144,7 @@ namespace osu.Game.EzRealmSync.Realm
             if (probedVersion < 1000)
                 return probedVersion;
 
-            int upstream = RealmAccess.UpstreamSchemaVersion;
+            int upstream = RealmAccess.UPSTREAM_SCHEMA_VERSION;
             if (tryOfficialOpenWithoutMigration(fullPath, upstream))
                 return upstream;
 

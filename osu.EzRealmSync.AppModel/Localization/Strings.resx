@@ -219,7 +219,7 @@
   <data name="FixConfirmTitle" xml:space="preserve"><value>Confirm fix</value></data>
   <data name="FixConvertOfficial" xml:space="preserve"><value>Convert to official</value></data>
   <data name="FixUpgradeSchema" xml:space="preserve"><value>Upgrade to latest</value></data>
-  <data name="FixUpgradeSchemaConfirm" xml:space="preserve"><value>This will upgrade the selected Realm to the latest schema supported by this build by copying all data into a new database file (tool-side; not game client migration). A backup will be created first at: {0}. Close the game first. Continue?</value></data>
+  <data name="FixUpgradeSchemaConfirm" xml:space="preserve"><value>This will upgrade the selected Realm to the latest schema supported by this build (same major: controllable migration on a backed-up working copy, then replace the original). A backup will be created first at: {0}. Close the game first. Continue?</value></data>
   <data name="FixUpgradeSchemaTitle" xml:space="preserve"><value>Upgrade schema</value></data>
   <data name="FixConvertOfficialConfirm" xml:space="preserve"><value>This will convert the selected polluted Realm in-place to official format. A backup will be created first at: {0}. Continue?</value></data>
   <data name="FixConvertOfficialTitle" xml:space="preserve"><value>Convert to official</value></data>
@@ -227,13 +227,16 @@
   <data name="StatusFixSchemaUpgraded" xml:space="preserve"><value>Schema upgraded: {0} ({1} → {2}, backup: {3})</value></data>
   <data name="StatusFixSchemaAlreadyLatest" xml:space="preserve"><value>{0} is already at the latest schema supported by this build ({1}). Backup: {2}</value></data>
   <data name="ErrorFileInUse" xml:space="preserve"><value>Write blocked by pre-check (file in use). Close osu!/Ez2Lazer and retry. Detail: {0}</value></data>
-  <data name="ErrorMigrationRequired" xml:space="preserve"><value>This Realm requires migration before it can be opened. Use Fix → Upgrade to latest; if that fails, update EzRealmSync or check reader packages. Detail: {0}</value></data>
+  <data name="ErrorMigrationRequired" xml:space="preserve"><value>This Realm must be upgraded to the tool's current schema before it can be opened. Use Fix → Upgrade to latest, or Convert to official on an Ez Realm (auto-upgrades first). Detail: {0}</value></data>
   <data name="ErrorPathConflict" xml:space="preserve"><value>Path conflict: {0}</value></data>
-  <data name="ErrorLegacyReaderUnavailable" xml:space="preserve"><value>This version cannot open the legacy schema yet. Install/select a matching reader version and retry. Detail: {0}</value></data>
+  <data name="ErrorLegacyReaderUnavailable" xml:space="preserve"><value>Only same-major schemas are supported. Upgrade the Realm with a matching client to the tool minimum, or update the tool. Detail: {0}</value></data>
+  <data name="ErrorSchemaTooLow" xml:space="preserve"><value>This Realm schema is below the tool's minimum (same major only). Upgrade it with a matching client first. Detail: {0}</value></data>
+  <data name="ErrorSchemaTooHigh" xml:space="preserve"><value>This Realm schema is newer than the tool's built-in lib. Update EzRealmSync. Detail: {0}</value></data>
+  <data name="ErrorSchemaModelMismatch" xml:space="preserve"><value>Disk schema version is already latest, but the object model does not match; upgrade cannot fix this. Align the tool with the client osu.Game, or restore from a full backup. Detail: {0}</value></data>
   <data name="ReaderSettings" xml:space="preserve"><value>Reader packages</value></data>
   <data name="ReaderPackagesDirectory" xml:space="preserve"><value>Reader packages folder</value></data>
   <data name="ActiveReaderPackage" xml:space="preserve"><value>Reader used at startup</value></data>
   <data name="ReaderPackageDefault" xml:space="preserve"><value>Built-in NuGet / local lib (default)</value></data>
   <data name="ReaderPackageMissingLib" xml:space="preserve"><value> [missing lib]</value></data>
-  <data name="ReaderRestartHint" xml:space="preserve"><value>Restart the app after changing the reader. Legacy files are opened with pinned schema first; if that fails, install a matching reader package.</value></data>
+  <data name="ReaderRestartHint" xml:space="preserve"><value>This build supports same-major schemas with a single built-in osu.Game only; cross-version reader packages are deferred. Restart after changing the reader.</value></data>
 </root>

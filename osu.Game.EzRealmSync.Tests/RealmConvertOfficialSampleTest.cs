@@ -20,8 +20,8 @@ namespace osu.Game.EzRealmSync.Tests
 
             string differentOutput = Path.Combine(writable.TempDirectory, "different.realm");
 
-            Func<Task> action = () => dataService.ConvertToOfficialRealmAsync(entry.Id, differentOutput);
-            var ex = Assert.ThrowsAsync<RealmUserOperationException>(action);
+            Task Action() => dataService.ConvertToOfficialRealmAsync(entry.Id, differentOutput);
+            var ex = Assert.ThrowsAsync<RealmUserOperationException>(Action);
             Assert.That(ex!.Kind, Is.EqualTo(RealmUserErrorKind.PathConflict));
         }
 
@@ -33,10 +33,10 @@ namespace osu.Game.EzRealmSync.Tests
             var dataService = new RealmRealmDataService();
             var entry = await dataService.RegisterRealmFileAsync(writable.RealmFilePath);
 
-            using var lockStream = new FileStream(writable.RealmFilePath, FileMode.Open, FileAccess.ReadWrite, FileShare.None);
+            await using var lockStream = new FileStream(writable.RealmFilePath, FileMode.Open, FileAccess.ReadWrite, FileShare.None);
 
-            Func<Task> action = () => dataService.ConvertToOfficialRealmAsync(entry.Id);
-            var ex = Assert.ThrowsAsync<RealmUserOperationException>(action);
+            Task Action() => dataService.ConvertToOfficialRealmAsync(entry.Id);
+            var ex = Assert.ThrowsAsync<RealmUserOperationException>(Action);
             Assert.That(ex!.Kind, Is.EqualTo(RealmUserErrorKind.FileInUse));
         }
 
@@ -73,9 +73,14 @@ namespace osu.Game.EzRealmSync.Tests
                     }
                 }
             }
-            catch (RealmUserOperationException ex) when (ex.Kind == RealmUserErrorKind.MigrationRequired)
+            catch (RealmUserOperationException ex) when (ex.Kind is RealmUserErrorKind.MigrationRequired
+                                                         or RealmUserErrorKind.SchemaTooLow
+                                                         or RealmUserErrorKind.SchemaModelMismatch)
             {
-                Assert.That(ex.Kind, Is.EqualTo(RealmUserErrorKind.MigrationRequired));
+                Assert.That(ex.Kind, Is.AnyOf(
+                    RealmUserErrorKind.MigrationRequired,
+                    RealmUserErrorKind.SchemaTooLow,
+                    RealmUserErrorKind.SchemaModelMismatch));
             }
         }
 
@@ -89,7 +94,7 @@ namespace osu.Game.EzRealmSync.Tests
             if (sample == null)
                 Assert.Ignore("未放置可用 Ez 样本（manifest expected.diskSchemaKind=EzExtended 且 realm 文件存在）。");
 
-            return sample!;
+            return sample;
         }
     }
 }

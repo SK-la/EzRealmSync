@@ -1463,6 +1463,9 @@ namespace osu.EzRealmSync.AppModel
                 RealmUserErrorKind.MigrationRequired => Loc.Format("ErrorMigrationRequired", userError.Detail),
                 RealmUserErrorKind.PathConflict => Loc.Format("ErrorPathConflict", userError.Detail),
                 RealmUserErrorKind.LegacyReaderUnavailable => Loc.Format("ErrorLegacyReaderUnavailable", userError.Detail),
+                RealmUserErrorKind.SchemaTooLow => Loc.Format("ErrorSchemaTooLow", userError.Detail),
+                RealmUserErrorKind.SchemaTooHigh => Loc.Format("ErrorSchemaTooHigh", userError.Detail),
+                RealmUserErrorKind.SchemaModelMismatch => Loc.Format("ErrorSchemaModelMismatch", userError.Detail),
                 _ => userError.Detail,
             };
         }
