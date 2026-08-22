@@ -1,4 +1,6 @@
+using osu.Game.Database;
 using osu.Game.EzRealmSync.Models;
+using osu.Game.Models;
 
 namespace osu.Game.EzRealmSync.Realm
 {
@@ -9,14 +11,14 @@ namespace osu.Game.EzRealmSync.Realm
     {
 #if HAS_EZ_OSU_GAME
         public static void ScanMissingReferencedFiles(
-            osu.Game.Database.RealmAccess access,
+            RealmAccess access,
             string filesDirectory,
             List<RealmFixIssue> issues,
             CancellationToken cancellationToken)
         {
             access.Run(realm =>
             {
-                foreach (var file in realm.All<osu.Game.Models.RealmFile>())
+                foreach (var file in realm.All<RealmFile>())
                 {
                     cancellationToken.ThrowIfCancellationRequested();
 
@@ -41,7 +43,7 @@ namespace osu.Game.EzRealmSync.Realm
         }
 
         public static void ScanOrphansOnDisk(
-            osu.Game.Database.RealmAccess access,
+            RealmAccess access,
             string filesDirectory,
             List<RealmFixIssue> issues,
             CancellationToken cancellationToken,
@@ -51,7 +53,7 @@ namespace osu.Game.EzRealmSync.Realm
 
             access.Run(realm =>
             {
-                foreach (var file in realm.All<osu.Game.Models.RealmFile>())
+                foreach (var file in realm.All<RealmFile>())
                     referencedHashes.Add(file.Hash);
             });
 

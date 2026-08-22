@@ -65,23 +65,39 @@ jobs:
         with:
           dotnet-version: 8.0.x
 
+      - name: Restore
+        run: dotnet restore EzRealmSync.sln
+
       - name: Publish win-x64
         run: >
           dotnet publish osu.EzRealmSync.Desktop/osu.EzRealmSync.Desktop.csproj
           -c Release
           -r win-x64
-          --self-contained true
+          --self-contained false
           -p:UseLocalOsuLibs=false
           -p:Version=${{ steps.version.outputs.version }}
           -o artifacts/publish
+
+      - name: Smoke publish output
+        shell: pwsh
+        run: ./scripts/smoke-publish.ps1 artifacts/publish
+
+      - name: Test (integration)
+        run: >
+          dotnet test EzRealmSync.sln -c Release
+          -p:UseLocalOsuLibs=false
+          --filter "FullyQualifiedName~Integration"
 
       - name: Package zip
         shell: pwsh
         run: |
           $version = '${{ steps.version.outputs.version }}'
+          $publishDir = 'artifacts/publish'
           $zip = "artifacts/EzRealmSync-$version-win-x64.zip"
-          Compress-Archive -Path "artifacts/publish/*" -DestinationPath $zip -Force
-          Write-Output "Created $zip"
+          $sizeMb = [math]::Round(((Get-ChildItem $publishDir -Recurse -File | Measure-Object Length -Sum).Sum / 1MB), 2)
+          Compress-Archive -Path "$publishDir/*" -DestinationPath $zip -Force
+          $zipMb = [math]::Round((Get-Item $zip).Length / 1MB, 2)
+          Write-Output "Publish folder: ${sizeMb} MB; zip: ${zipMb} MB ($zip)"
 
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2

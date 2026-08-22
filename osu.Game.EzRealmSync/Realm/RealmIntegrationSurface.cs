@@ -12,10 +12,10 @@ namespace osu.Game.EzRealmSync.Realm
     internal static class RealmIntegrationSurface
     {
         // Ez 端：完整 schema（含 EZ_REALM_SCHEMA_VERSION）
-        private static readonly System.Type ez_access = typeof(RealmAccess);
+        private static readonly Type ez_access = typeof(RealmAccess);
 
         // 官方端：仅上游 schema 51
-        private static readonly System.Type official_access = typeof(OfficialRealmAccess);
+        private static readonly Type official_access = typeof(OfficialRealmAccess);
     }
 }
 

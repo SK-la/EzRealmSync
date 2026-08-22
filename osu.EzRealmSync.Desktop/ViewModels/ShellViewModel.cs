@@ -5,6 +5,7 @@ using osu.EzRealmSync.AppModel;
 using osu.EzRealmSync.AppModel.Localization;
 using osu.EzRealmSync.Desktop.Commands;
 using osu.EzRealmSync.Desktop.Services;
+using osu.Framework.Bindables;
 using osu.Game.EzRealmSync.Models;
 
 namespace osu.EzRealmSync.Desktop.ViewModels
@@ -368,11 +369,11 @@ namespace osu.EzRealmSync.Desktop.ViewModels
 
         private void refreshRealmComboSources() => OnPropertyChanged(nameof(RealmFiles));
 
-        private void bindPresenter<T>(Framework.Bindables.Bindable<T> bindable, string name) => bindable.BindValueChanged(_ => Application.Current.Dispatcher.Invoke(() => OnPropertyChanged(name)));
+        private void bindPresenter<T>(Bindable<T> bindable, string name) => bindable.BindValueChanged(_ => Application.Current.Dispatcher.Invoke(() => OnPropertyChanged(name)));
 
-        private void bindPresenter(Framework.Bindables.BindableBool bindable, string name) => bindable.BindValueChanged(_ => Application.Current.Dispatcher.Invoke(() => OnPropertyChanged(name)));
+        private void bindPresenter(BindableBool bindable, string name) => bindable.BindValueChanged(_ => Application.Current.Dispatcher.Invoke(() => OnPropertyChanged(name)));
 
-        private void bindPresenter(Framework.Bindables.BindableInt bindable, string name) => bindable.BindValueChanged(_ => Application.Current.Dispatcher.Invoke(() => OnPropertyChanged(name)));
+        private void bindPresenter(BindableInt bindable, string name) => bindable.BindValueChanged(_ => Application.Current.Dispatcher.Invoke(() => OnPropertyChanged(name)));
 
         public event PropertyChangedEventHandler? PropertyChanged;
 

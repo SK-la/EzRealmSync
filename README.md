@@ -14,7 +14,7 @@ UI **不引用** `osu.Game` / `osu.Game.Resources`。中文/英文见 `Strings.r
 
 ## 构建与运行
 
-需要 **.NET 8 SDK**。使用 **`EzRealmSync.sln`**。
+需要 **.NET 8 SDK**（开发）或 **[.NET 8 Desktop Runtime](https://dotnet.microsoft.com/download/dotnet/8.0)**（仅运行 Release 包）。使用 **`EzRealmSync.sln`**。
 
 ```bash
 cd EzRealmSync
@@ -27,6 +27,10 @@ dotnet run --project osu.EzRealmSync.Desktop
 - `--ui-test`：Mock 假数据（仅调 UI，不读 `.realm`）
 - `--mock-delay=0`：Mock 模式去掉模拟延迟
 - **本地 lib 覆盖**（并行开发 osu 主仓库时）：`dotnet build -t:SyncEzRealmLibs EzRealmSync.sln` 后加 `-p:UseLocalOsuLibs=true`（见 [lib/README.md](lib/README.md)）
+
+## Release 下载
+
+GitHub Release 提供 `EzRealmSync-{版本}-win-x64.zip`（framework-dependent，**不含** .NET 运行时与 `osu.Game.Resources`）。解压后运行 `EzRealmSync.exe`；需已安装 **.NET 8 Desktop Runtime**（Ez2Lazer 用户通常已具备）。发布包会裁剪 `osu.Game` 闭包内渲染/音频/脚本等 EzRealmSync 不使用的传递 DLL，以控制体积。
 
 主界面五 Tab：**导入**（osu! 数据目录 + Realm 列表 + 备份）→ **数据**（单库完整浏览；谱面集/成绩/收藏夹可写删与导出）→ **同步**（A/B 跨版本复制谱面集、难度、成绩、收藏夹，**不**改 schema）→ **修复** / **导出**（谱面与成绩共用导入目录下 `files/`；合集名单另用 osu!stable `collection.db`）。设置持久化至 `%AppData%\EzRealmSync\settings.json`。
 

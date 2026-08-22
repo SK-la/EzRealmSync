@@ -1,6 +1,6 @@
 # lib/ — 本地开发覆盖（可选）
 
-**默认不再依赖本目录。** 发布与 CI 通过 NuGet 包 `ez2lazer.Game` / `ez2lazer.Framework` 拉取 `osu.Game.dll` 及传递依赖，输出在 exe 同目录（非 `lib/` 子文件夹）。
+**默认不再依赖本目录。** 发布与 CI 通过 NuGet 包 `ez2lazer.Game` / `ez2lazer.Framework` 拉取 `osu.Game.dll` 及传递依赖，输出在 exe 同目录（非 `lib/` 子文件夹）。NuGet 发布与本地 lib 模式均**排除** `osu.Game.Resources`，并在 publish 后裁剪渲染/音频等死重 DLL。
 
 仅在以下场景使用 `lib/`：
 

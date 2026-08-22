@@ -124,4 +124,15 @@
     <Warning Text="SyncEzRealmLibs: 未找到 $(EzOsuGameProject)"
              Condition="!Exists('$(EzOsuGameProject)')" />
   </Target>
+
+  <!-- NuGet / 本地 lib 发布：排除 Resources 并裁剪 osu.Game 闭包内渲染/音频等 dead weight DLL -->
+  <Target Name="PruneEzRealmSyncPublish"
+          AfterTargets="CopyEzRealmSyncLibsToPublish;Publish"
+          Condition="'$(OutputType)' == 'WinExe'">
+    <PropertyGroup>
+      <_EzPublishDirNormalized>$([System.IO.Path]::GetFullPath('$(PublishDir)'))</_EzPublishDirNormalized>
+    </PropertyGroup>
+    <Exec Command="pwsh -NoProfile -ExecutionPolicy Bypass -File &quot;$(MSBuildThisFileDirectory)scripts\prune-publish.ps1&quot; &quot;$(_EzPublishDirNormalized)&quot;"
+          IgnoreExitCode="false" />
+  </Target>
 </Project>

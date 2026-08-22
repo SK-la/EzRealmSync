@@ -1,3 +1,4 @@
+using System.Windows.Controls.Primitives;
 using System.Windows.Data;
 using osu.EzRealmSync.AppModel;
 using osu.EzRealmSync.AppModel.Localization;
@@ -54,7 +55,7 @@ namespace osu.EzRealmSync.Desktop.Pages
 
             BackupCombo.ItemsSource = vm.Presenter.BackupEntries;
             BackupCombo.SetBinding(
-                System.Windows.Controls.Primitives.Selector.SelectedValueProperty,
+                Selector.SelectedValueProperty,
                 new Binding(nameof(ShellViewModel.SelectedBackupId))
                 {
                     Source = vm,

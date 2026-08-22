@@ -1,7 +1,9 @@
 using System.Collections.ObjectModel;
 using System.IO;
+using System.Windows.Data;
 using osu.EzRealmSync.AppModel.Localization;
 using osu.EzRealmSync.Desktop.Services;
+using StackPanel = System.Windows.Controls.StackPanel;
 
 namespace osu.EzRealmSync.Desktop
 {
@@ -89,18 +91,18 @@ namespace osu.EzRealmSync.Desktop
         private static DataTemplate createPlaceTemplate()
         {
             var template = new DataTemplate(typeof(PlaceEntry));
-            var panelFactory = new FrameworkElementFactory(typeof(System.Windows.Controls.StackPanel));
-            panelFactory.SetValue(System.Windows.Controls.StackPanel.OrientationProperty, Orientation.Horizontal);
+            var panelFactory = new FrameworkElementFactory(typeof(StackPanel));
+            panelFactory.SetValue(StackPanel.OrientationProperty, Orientation.Horizontal);
             panelFactory.SetValue(MarginProperty, new Thickness(4, 6, 4, 6));
 
             var iconFactory = new FrameworkElementFactory(typeof(SymbolIcon));
-            iconFactory.SetBinding(SymbolIcon.SymbolProperty, new System.Windows.Data.Binding(nameof(PlaceEntry.Icon)));
+            iconFactory.SetBinding(SymbolIcon.SymbolProperty, new Binding(nameof(PlaceEntry.Icon)));
             iconFactory.SetValue(FontSizeProperty, 16.0);
             iconFactory.SetValue(MarginProperty, new Thickness(0, 0, 10, 0));
             iconFactory.SetValue(VerticalAlignmentProperty, VerticalAlignment.Center);
 
             var textFactory = new FrameworkElementFactory(typeof(TextBlock));
-            textFactory.SetBinding(System.Windows.Controls.TextBlock.TextProperty, new System.Windows.Data.Binding(nameof(PlaceEntry.Name)));
+            textFactory.SetBinding(System.Windows.Controls.TextBlock.TextProperty, new Binding(nameof(PlaceEntry.Name)));
             textFactory.SetValue(VerticalAlignmentProperty, VerticalAlignment.Center);
             textFactory.SetValue(System.Windows.Controls.TextBlock.TextTrimmingProperty, TextTrimming.CharacterEllipsis);
 

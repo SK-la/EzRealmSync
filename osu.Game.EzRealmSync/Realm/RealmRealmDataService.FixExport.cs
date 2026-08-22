@@ -1,8 +1,9 @@
 #if HAS_EZ_OSU_GAME
+using osu.Framework.Platform;
 using osu.Game.Database;
 using osu.Game.EzRealmSync.Errors;
-using osu.Game.EzRealmSync.Models;
 using osu.Game.EzRealmSync.IO;
+using osu.Game.EzRealmSync.Models;
 using osu.Game.Scoring;
 
 namespace osu.Game.EzRealmSync.Realm
@@ -324,7 +325,7 @@ namespace osu.Game.EzRealmSync.Realm
 
             Directory.CreateDirectory(root);
 
-            using var access = new OfficialRealmAccess(new Framework.Platform.NativeStorage(root), fileName, allowDestructiveRecoveryOnSchemaMismatch: false);
+            using var access = new OfficialRealmAccess(new NativeStorage(root), fileName, allowDestructiveRecoveryOnSchemaMismatch: false);
             access.Run(_ => { });
         }
 

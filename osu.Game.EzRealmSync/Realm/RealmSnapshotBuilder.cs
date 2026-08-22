@@ -1,4 +1,6 @@
 #if HAS_EZ_OSU_GAME
+using System.Security.Cryptography;
+using System.Text;
 using osu.Game.Collections;
 using osu.Game.Database;
 using osu.Game.EzRealmSync.Models;
@@ -196,7 +198,7 @@ namespace osu.Game.EzRealmSync.Realm
 
         private static Guid GuidFromHash(string key)
         {
-            byte[] bytes = System.Security.Cryptography.MD5.HashData(System.Text.Encoding.UTF8.GetBytes(key));
+            byte[] bytes = MD5.HashData(Encoding.UTF8.GetBytes(key));
             return new Guid(bytes);
         }
 

@@ -1,4 +1,5 @@
 using System.Windows.Controls.Primitives;
+using MenuItem = System.Windows.Controls.MenuItem;
 
 namespace osu.EzRealmSync.Desktop.Helpers
 {
@@ -34,9 +35,9 @@ namespace osu.EzRealmSync.Desktop.Helpers
             };
         }
 
-        public static System.Windows.Controls.MenuItem AddItem(ContextMenu menu, string key, string header, RoutedEventHandler click)
+        public static MenuItem AddItem(ContextMenu menu, string key, string header, RoutedEventHandler click)
         {
-            var item = new System.Windows.Controls.MenuItem
+            var item = new MenuItem
             {
                 Header = header,
                 Tag = tag_prefix + key,

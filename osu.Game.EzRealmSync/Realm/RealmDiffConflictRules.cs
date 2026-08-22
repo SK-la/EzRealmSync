@@ -1,3 +1,5 @@
+using osu.Game.EzRealmSync.Models;
+
 namespace osu.Game.EzRealmSync.Realm
 {
     internal static class RealmDiffConflictRules
@@ -9,10 +11,10 @@ namespace osu.Game.EzRealmSync.Realm
 
             return source.EntityKind switch
             {
-                Models.EntityKind.BeatmapSet => compareBeatmapSet(source, target),
-                Models.EntityKind.Beatmap => compareBeatmap(source, target),
-                Models.EntityKind.Score => compareScore(source, target),
-                Models.EntityKind.BeatmapCollection => compareCollection(source, target),
+                EntityKind.BeatmapSet => compareBeatmapSet(source, target),
+                EntityKind.Beatmap => compareBeatmap(source, target),
+                EntityKind.Score => compareScore(source, target),
+                EntityKind.BeatmapCollection => compareCollection(source, target),
                 _ => null,
             };
         }

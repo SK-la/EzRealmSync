@@ -9,6 +9,7 @@
     <UseWPF>true</UseWPF>
     <StartupObject>osu.EzRealmSync.Desktop.Program</StartupObject>
     <ApplicationManifest>..\app.manifest</ApplicationManifest>
+    <SatelliteResourceLanguages>en</SatelliteResourceLanguages>
   </PropertyGroup>
 
   <ItemGroup>
@@ -19,6 +20,9 @@
   <ItemGroup>
     <PackageReference Include="ez2lazer.Framework" />
     <PackageReference Include="ez2lazer.Game" />
+    <PackageReference Include="ez2lazer.Game.Resources">
+      <ExcludeAssets>all</ExcludeAssets>
+    </PackageReference>
     <PackageReference Include="WPF-UI" />
     <PackageReference Include="WPF-UI.Abstractions" />
     <PackageReference Include="WPF-UI.DependencyInjection" />

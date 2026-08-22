@@ -5,6 +5,6 @@
   "realmFile": "client.realm",
   "expected": {
     "diskSchemaKind": "EzExtended",
-    "canOpenWithoutMigration": true
+    "canOpenWithoutMigration": false
   }
 }

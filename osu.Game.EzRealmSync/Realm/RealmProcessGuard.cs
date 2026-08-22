@@ -1,3 +1,5 @@
+using System.Diagnostics;
+
 namespace osu.Game.EzRealmSync.Realm
 {
     /// <summary>
@@ -14,7 +16,7 @@ namespace osu.Game.EzRealmSync.Realm
             {
                 try
                 {
-                    if (System.Diagnostics.Process.GetProcessesByName(name).Length > 0)
+                    if (Process.GetProcessesByName(name).Length > 0)
                         return true;
                 }
                 catch

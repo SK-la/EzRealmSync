@@ -48,12 +48,12 @@ namespace osu.Game.EzRealmSync.Tests
                 new FakeAdapter(RealmReaderRoute.EzLegacy),
             ]);
 
-            var officialEx = Assert.Throws<InvalidOperationException>(() =>
-                router.OpenByDiskSchemaVersion(officialLegacy, "official.realm"));
+            var officialEx = Assert.Throws<InvalidOperationException>((Action)(() =>
+                router.OpenByDiskSchemaVersion(officialLegacy, "official.realm")));
             Assert.That(officialEx!.Message, Does.Contain("route:OfficialLegacy"));
 
-            var ezEx = Assert.Throws<InvalidOperationException>(() =>
-                router.OpenByDiskSchemaVersion(ezLegacy, "ez.realm"));
+            var ezEx = Assert.Throws<InvalidOperationException>((Action)(() =>
+                router.OpenByDiskSchemaVersion(ezLegacy, "ez.realm")));
             Assert.That(ezEx!.Message, Does.Contain("route:EzLegacy"));
         }
 
@@ -71,12 +71,12 @@ namespace osu.Game.EzRealmSync.Tests
 
             try
             {
-                var officialEx = Assert.Throws<RealmUserOperationException>(() =>
-                    router.OpenByDiskSchemaVersion(officialLegacy, officialPath));
+                var officialEx = Assert.Throws<RealmUserOperationException>((Action)(() =>
+                    router.OpenByDiskSchemaVersion(officialLegacy, officialPath)));
                 Assert.That(officialEx!.Kind, Is.EqualTo(RealmUserErrorKind.LegacyReaderUnavailable));
 
-                var ezEx = Assert.Throws<RealmUserOperationException>(() =>
-                    router.OpenByDiskSchemaVersion(ezLegacy, ezPath));
+                var ezEx = Assert.Throws<RealmUserOperationException>((Action)(() =>
+                    router.OpenByDiskSchemaVersion(ezLegacy, ezPath)));
                 Assert.That(ezEx!.Kind, Is.EqualTo(RealmUserErrorKind.LegacyReaderUnavailable));
             }
             finally
@@ -124,8 +124,8 @@ namespace osu.Game.EzRealmSync.Tests
                 new FakeAdapter(RealmReaderRoute.EzLegacy),
             ]);
 
-            var ex = Assert.Throws<InvalidOperationException>(() =>
-                router.OpenBySchemaKind(RealmDiskSchemaKind.PpyClient, "official.realm", officialLegacy));
+            var ex = Assert.Throws<InvalidOperationException>((Action)(() =>
+                router.OpenBySchemaKind(RealmDiskSchemaKind.PpyClient, "official.realm", officialLegacy)));
             Assert.That(ex!.Message, Does.Contain("route:OfficialLegacy"));
         }
     }

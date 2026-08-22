@@ -10,6 +10,7 @@
   <ItemGroup>
     <PackageVersion Include="ez2lazer.Framework" Version="2026.815.0-ez2lazer" />
     <PackageVersion Include="ez2lazer.Game" Version="2026.822.0-ez2lazer" />
+    <PackageVersion Include="ez2lazer.Game.Resources" Version="2026.815.0-ez2lazer" />
     <PackageVersion Include="Realm" Version="20.1.0" />
     <PackageVersion Include="WPF-UI" Version="4.3.0" />
     <PackageVersion Include="WPF-UI.Abstractions" Version="4.3.0" />

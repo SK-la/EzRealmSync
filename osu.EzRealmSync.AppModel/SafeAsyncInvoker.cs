@@ -1,3 +1,5 @@
+using System.Diagnostics;
+
 namespace osu.EzRealmSync.AppModel
 {
     /// <summary>
@@ -6,7 +8,7 @@ namespace osu.EzRealmSync.AppModel
     public static class SafeAsyncInvoker
     {
         /// <summary>
-        /// 未传入 <paramref name="onError"/> 时使用的全局处理器（由 Shell 在启动时设置）。
+        /// 未传入 onError 时使用的全局处理器（由 Shell 在启动时设置）。
         /// </summary>
         public static Action<Exception>? DefaultExceptionHandler { get; set; }
 
@@ -30,7 +32,7 @@ namespace osu.EzRealmSync.AppModel
                 }
                 catch (Exception handlerEx)
                 {
-                    System.Diagnostics.Trace.TraceError($"SafeAsyncInvoker handler failed: {handlerEx}");
+                    Trace.TraceError($"SafeAsyncInvoker handler failed: {handlerEx}");
                 }
             }
         }

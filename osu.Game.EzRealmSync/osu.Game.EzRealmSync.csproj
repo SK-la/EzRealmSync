@@ -9,6 +9,9 @@
   <ItemGroup Condition="'$(UseLocalOsuLibs)' != 'true'">
     <PackageReference Include="ez2lazer.Framework" />
     <PackageReference Include="ez2lazer.Game" />
+    <PackageReference Include="ez2lazer.Game.Resources">
+      <ExcludeAssets>all</ExcludeAssets>
+    </PackageReference>
     <PackageReference Include="Realm" />
   </ItemGroup>
 

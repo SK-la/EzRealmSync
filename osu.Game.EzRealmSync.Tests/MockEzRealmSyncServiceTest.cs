@@ -1,4 +1,5 @@
 using NUnit.Framework;
+using osu.Game.EzRealmSync.IO;
 using osu.Game.EzRealmSync.Mock;
 using osu.Game.EzRealmSync.Models;
 
@@ -104,7 +105,7 @@ namespace osu.Game.EzRealmSync.Tests
             Assert.That(File.Exists(export.OutputRoot), Is.True);
             Assert.That(Path.GetFileName(export.OutputRoot), Is.EqualTo("collections.db"));
 
-            var read = osu.Game.EzRealmSync.IO.LegacyCollectionDb.ReadFile(export.OutputRoot);
+            var read = LegacyCollectionDb.ReadFile(export.OutputRoot);
             Assert.That(read, Has.Count.EqualTo(catalog.Items.Count));
             Assert.That(read[0].BeatmapMd5Hashes, Is.Not.Empty);
 

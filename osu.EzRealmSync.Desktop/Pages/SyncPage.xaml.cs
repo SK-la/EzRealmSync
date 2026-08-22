@@ -140,7 +140,7 @@ namespace osu.EzRealmSync.Desktop.Pages
 
             syncGridBehaviorConfigured = true;
 
-            CheckableDataGridHelper.Configure<DiffRowModel>(
+            CheckableDataGridHelper.Configure(
                 SyncGrid,
                 () => vm.SyncRows,
                 (rows, check) => vm.Presenter.SetSyncRowsChecked(rows, check),

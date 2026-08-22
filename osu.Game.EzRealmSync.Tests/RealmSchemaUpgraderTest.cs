@@ -75,8 +75,8 @@ namespace osu.Game.EzRealmSync.Tests
             {
                 RealmNativeLifetime.CreateEmptyRealmFile(path, (ulong)below);
 
-                var ex = Assert.Throws<RealmUserOperationException>(() =>
-                    RealmSchemaUpgrader.UpgradeInPlace(path, below));
+                var ex = Assert.Throws<RealmUserOperationException>((Action)(() =>
+                    RealmSchemaUpgrader.UpgradeInPlace(path, below)));
                 Assert.That(ex!.Kind, Is.EqualTo(RealmUserErrorKind.SchemaTooLow));
             }
             finally
