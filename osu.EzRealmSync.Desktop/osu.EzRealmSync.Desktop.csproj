@@ -38,8 +38,19 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Content Include="..\readers\**\*">
+    <Content Include="..\readers\**\*"
+             Exclude="..\readers\**\lib\*.dll;..\readers\**\lib\**\*.dll;..\readers\**\lib\runtimes\**\*.*">
       <Link>readers\%(RecursiveDir)%(Filename)%(Extension)</Link>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
+    </Content>
+    <Content Include="..\scripts\Sync-ReaderLibs.ps1">
+      <Link>scripts\Sync-ReaderLibs.ps1</Link>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
+    </Content>
+    <Content Include="..\scripts\Sync-ReaderLibs.cmd">
+      <Link>scripts\Sync-ReaderLibs.cmd</Link>
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
       <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
     </Content>

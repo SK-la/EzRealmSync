@@ -1,4 +1,5 @@
-# 按 readers/sync-libs.config.json 下载/构建 osu.Game 闭包并写入 readers/{id}/lib/。
+# 按 readers/sync-libs.config.json 从 NuGet 还原 osu.Game 闭包到 readers/{id}/lib/。
+# 在仓库根目录或 Release 解压目录（exe 同目录）运行：pwsh scripts/Sync-ReaderLibs.ps1
 param(
     [string]$ConfigPath,
     [string[]]$ReaderDir,
