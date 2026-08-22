@@ -71,7 +71,7 @@
         <Grid.ColumnDefinitions>
           <ColumnDefinition Width="40" />
           <ColumnDefinition Width="12" />
-          <ColumnDefinition Width="*" />
+          <ColumnDefinition Width="*" MinWidth="0" />
           <ColumnDefinition Width="Auto" />
           <ColumnDefinition Width="16" />
           <ColumnDefinition Width="Auto" />
@@ -82,12 +82,16 @@
                          Height="28"
                          VerticalAlignment="Center"
                          IsIndeterminate="False" />
-        <ui:TextBlock x:Name="StatusText"
-                      Grid.Column="2"
+        <ScrollViewer Grid.Column="2"
                       VerticalAlignment="Center"
-                      LineHeight="20"
-                      TextTrimming="CharacterEllipsis"
-                      Opacity="0.85" />
+                      VerticalScrollBarVisibility="Auto"
+                      HorizontalScrollBarVisibility="Disabled"
+                      MaxHeight="80">
+          <ui:TextBlock x:Name="StatusText"
+                        TextWrapping="Wrap"
+                        LineHeight="20"
+                        Opacity="0.85" />
+        </ScrollViewer>
         <StackPanel Grid.Column="3"
                     Orientation="Horizontal"
                     VerticalAlignment="Center">
@@ -114,9 +118,12 @@
                PlacementTarget="{Binding ElementName=SettingsButton}"
                Placement="Top"
                StaysOpen="False"
-               AllowsTransparency="True"
+               AllowsTransparency="False"
                PopupAnimation="Fade">
-          <ui:Card Padding="12" MinWidth="320" MaxWidth="360">
+          <ui:Card Padding="12"
+                   MinWidth="320"
+                   MaxWidth="360"
+                   Background="{StaticResource EzBrushBgSettingsFlyout}">
             <ScrollViewer MaxHeight="440"
                           VerticalScrollBarVisibility="Auto"
                           HorizontalScrollBarVisibility="Disabled">
@@ -131,7 +138,7 @@
                                      Click="UiTestModeSwitch_OnClick" />
                     <ui:TextBlock x:Name="UiTestHint"
                                   TextWrapping="Wrap"
-                                  Opacity="0.75" />
+                                  Style="{StaticResource WorkspaceMutedText}" />
                     <ui:ToggleSwitch x:Name="ConfirmDeleteSwitch"
                                      Margin="0,12,0,0"
                                      LabelPosition="Right"
@@ -147,14 +154,12 @@
                                   Icon="{ui:SymbolIcon Library24}">
                   <StackPanel>
                     <ui:TextBlock x:Name="ReaderPackagesPathLabel"
-                                  TextWrapping="Wrap"
-                                  Opacity="0.75" />
+                                  TextWrapping="Wrap" />
                     <ui:TextBlock x:Name="ReaderPackagesPathText"
                                   Margin="0,4,0,8"
                                   TextWrapping="Wrap"
                                   Style="{StaticResource WorkspaceMutedText}" />
                     <ui:TextBlock x:Name="ActiveReaderPackageLabel"
-                                  Opacity="0.75"
                                   Margin="0,0,0,4" />
                     <ComboBox x:Name="ActiveReaderPackageCombo"
                               MinHeight="32"
@@ -170,12 +175,12 @@
                                   Visibility="Collapsed"
                                   Icon="{ui:SymbolIcon Beaker24}">
                   <StackPanel>
-                    <ui:TextBlock x:Name="DatasetLabel" Opacity="0.75" Margin="0,0,0,4" />
+                    <ui:TextBlock x:Name="DatasetLabel" Margin="0,0,0,4" />
                     <ComboBox x:Name="DatasetCombo"
                               Margin="0,0,0,12"
                               MinHeight="32"
                               SelectionChanged="DatasetCombo_OnChanged" />
-                    <ui:TextBlock x:Name="ErrorInjectionLabel" Opacity="0.75" Margin="0,0,0,4" />
+                    <ui:TextBlock x:Name="ErrorInjectionLabel" Margin="0,0,0,4" />
                     <ComboBox x:Name="ErrorInjectionCombo"
                               MinHeight="32"
                               SelectionChanged="ErrorInjectionCombo_OnChanged" />

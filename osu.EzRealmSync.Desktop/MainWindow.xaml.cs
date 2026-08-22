@@ -14,6 +14,7 @@ namespace osu.EzRealmSync.Desktop
         private string? lastSnackbarStatus;
         private bool suppressLanguageChange;
         private bool suppressNavChange;
+        private int settingsPopupOpenDropdownCount;
 
         public MainWindow()
         {
@@ -25,6 +26,7 @@ namespace osu.EzRealmSync.Desktop
         private void onLoaded(object sender, RoutedEventArgs e)
         {
             wireContentDialogHitTest();
+            wireSettingsPopupComboBoxes();
             WpfUiServices.Attach(RootContentDialogHost, RootSnackbarPresenter);
 
             if (DataContext is not ShellViewModel shell)
@@ -56,6 +58,27 @@ namespace osu.EzRealmSync.Desktop
                 .FromProperty(ContentProperty, typeof(ContentControl))
                 .AddValueChanged(RootContentDialogHost, (_, _) => syncHitTest());
             syncHitTest();
+        }
+
+        /// <summary>
+        /// ComboBox dropdowns are separate popups; keep the settings flyout open while any is expanded.
+        /// </summary>
+        private void wireSettingsPopupComboBoxes()
+        {
+            foreach (ComboBox combo in new[] { ActiveReaderPackageCombo, DatasetCombo, ErrorInjectionCombo })
+            {
+                combo.DropDownOpened += (_, _) =>
+                {
+                    settingsPopupOpenDropdownCount++;
+                    SettingsPopup.StaysOpen = true;
+                };
+                combo.DropDownClosed += (_, _) =>
+                {
+                    settingsPopupOpenDropdownCount = Math.Max(0, settingsPopupOpenDropdownCount - 1);
+                    if (settingsPopupOpenDropdownCount == 0)
+                        SettingsPopup.StaysOpen = false;
+                };
+            }
         }
 
         private void wireViewModel(ShellViewModel shell)
@@ -255,9 +278,16 @@ namespace osu.EzRealmSync.Desktop
 
         private void SettingsButton_OnClick(object sender, RoutedEventArgs e)
         {
-            SettingsPopup.IsOpen = !SettingsPopup.IsOpen;
             if (SettingsPopup.IsOpen)
-                refreshSettingsFlyout();
+            {
+                SettingsPopup.IsOpen = false;
+                return;
+            }
+
+            settingsPopupOpenDropdownCount = 0;
+            SettingsPopup.StaysOpen = false;
+            SettingsPopup.IsOpen = true;
+            refreshSettingsFlyout();
         }
 
         private void UiTestModeSwitch_OnClick(object sender, RoutedEventArgs e)
@@ -307,6 +337,7 @@ namespace osu.EzRealmSync.Desktop
         private void updateStatus(string message)
         {
             StatusText.Text = message;
+            StatusText.ToolTip = string.IsNullOrWhiteSpace(message) ? null : message;
 
             if (vm == null || vm.IsBusy || string.IsNullOrWhiteSpace(message) || message == lastSnackbarStatus || isTransientStatus(message))
                 return;

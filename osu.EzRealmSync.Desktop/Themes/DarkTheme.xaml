@@ -3,11 +3,13 @@
                     xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml">
 
   <Color x:Key="EzBgCard">#88222233</Color>
+  <Color x:Key="EzBgSettingsFlyout">#F01E1E28</Color>
   <Color x:Key="EzFgPrimary">#E4E4EA</Color>
   <Color x:Key="EzFgMuted">#B4B4BE</Color>
   <Color x:Key="EzBorder">#3A3A4A</Color>
 
   <SolidColorBrush x:Key="EzBrushBgCard" Color="{StaticResource EzBgCard}" />
+  <SolidColorBrush x:Key="EzBrushBgSettingsFlyout" Color="{StaticResource EzBgSettingsFlyout}" />
   <SolidColorBrush x:Key="EzBrushFgPrimary" Color="{StaticResource EzFgPrimary}" />
   <SolidColorBrush x:Key="EzBrushFgMuted" Color="{StaticResource EzFgMuted}" />
   <SolidColorBrush x:Key="EzBrushBorder" Color="{StaticResource EzBorder}" />
