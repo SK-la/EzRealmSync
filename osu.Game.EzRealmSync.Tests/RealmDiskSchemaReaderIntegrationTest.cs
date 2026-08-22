@@ -4,8 +4,6 @@ using osu.Game.EzRealmSync.Errors;
 using osu.Game.EzRealmSync.Models;
 using osu.Game.EzRealmSync.Realm;
 using osu.Game.EzRealmSync.Tests.TestInfrastructure;
-using Realms;
-using RealmInstance = Realms.Realm;
 
 namespace osu.Game.EzRealmSync.Tests
 {
@@ -22,21 +20,13 @@ namespace osu.Game.EzRealmSync.Tests
 
             try
             {
-                var writeConfig = new RealmConfiguration(path) { SchemaVersion = 51_006 };
-                using (RealmInstance.GetInstance(writeConfig))
-                {
-                }
+                RealmNativeLifetime.CreateEmptyRealmFile(path, 51_006);
 
                 Assert.That(RealmSchemaProbe.TryReadSchemaVersion(path), Is.EqualTo(51_006));
             }
             finally
             {
-                if (File.Exists(path))
-                    File.Delete(path);
-
-                string lockPath = path + ".lock";
-                if (File.Exists(lockPath))
-                    File.Delete(lockPath);
+                RealmNativeLifetime.DeleteRealmFiles(path);
             }
         }
 
@@ -47,21 +37,13 @@ namespace osu.Game.EzRealmSync.Tests
 
             try
             {
-                var writeConfig = new RealmConfiguration(path) { SchemaVersion = 51 };
-                using (RealmInstance.GetInstance(writeConfig))
-                {
-                }
+                RealmNativeLifetime.CreateEmptyRealmFile(path, 51);
 
                 Assert.That(RealmSchemaProbe.TryReadSchemaVersion(path), Is.EqualTo(51));
             }
             finally
             {
-                if (File.Exists(path))
-                    File.Delete(path);
-
-                string lockPath = path + ".lock";
-                if (File.Exists(lockPath))
-                    File.Delete(lockPath);
+                RealmNativeLifetime.DeleteRealmFiles(path);
             }
         }
 
@@ -74,10 +56,7 @@ namespace osu.Game.EzRealmSync.Tests
 
             try
             {
-                var writeConfig = new RealmConfiguration(path) { SchemaVersion = 51 };
-                using (RealmInstance.GetInstance(writeConfig))
-                {
-                }
+                RealmNativeLifetime.CreateEmptyRealmFile(path, 51);
 
                 int? schema = RealmSchemaProbe.TryReadSchemaVersion(path);
                 Assert.That(schema, Is.EqualTo(51));
@@ -85,6 +64,7 @@ namespace osu.Game.EzRealmSync.Tests
             }
             finally
             {
+                RealmNativeLifetime.Flush();
                 if (Directory.Exists(dir))
                     Directory.Delete(dir, recursive: true);
             }
@@ -102,8 +82,7 @@ namespace osu.Game.EzRealmSync.Tests
             }
             finally
             {
-                if (File.Exists(path))
-                    File.Delete(path);
+                RealmNativeLifetime.DeleteRealmFiles(path);
             }
         }
 

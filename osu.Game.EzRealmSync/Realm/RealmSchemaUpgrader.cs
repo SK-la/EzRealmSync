@@ -80,6 +80,11 @@ namespace osu.Game.EzRealmSync.Realm
                     migrated.Run(_ => { });
                 }
 
+                // 短命工具打开会跑 cleanupPendingDeletions；刷掉 SharedRealm 最终化，避免测试宿主退出时
+                // realm-core 断言 !realm.is_in_transaction()。
+                GC.Collect();
+                GC.WaitForPendingFinalizers();
+
                 int? upgradedSchema = RealmDiskSchemaReader.TryReadSchemaVersion(workRealmPath);
                 if (upgradedSchema != latestSupportedSchema)
                 {

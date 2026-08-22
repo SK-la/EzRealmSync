@@ -4,8 +4,7 @@ using osu.Game.Database;
 using osu.Game.EzRealmSync.Errors;
 using osu.Game.EzRealmSync.Models;
 using osu.Game.EzRealmSync.Realm.Readers;
-using Realms;
-using RealmInstance = Realms.Realm;
+using osu.Game.EzRealmSync.Tests.TestInfrastructure;
 
 namespace osu.Game.EzRealmSync.Tests
 {
@@ -83,14 +82,7 @@ namespace osu.Game.EzRealmSync.Tests
             finally
             {
                 foreach (string path in new[] { officialPath, ezPath })
-                {
-                    if (File.Exists(path))
-                        File.Delete(path);
-
-                    string lockPath = path + ".lock";
-                    if (File.Exists(lockPath))
-                        File.Delete(lockPath);
-                }
+                    RealmNativeLifetime.DeleteRealmFiles(path);
             }
         }
 
@@ -105,10 +97,7 @@ namespace osu.Game.EzRealmSync.Tests
 
             try
             {
-                var writeConfig = new RealmConfiguration(path) { SchemaVersion = (ulong)ezLegacy };
-                using (RealmInstance.GetInstance(writeConfig))
-                {
-                }
+                RealmNativeLifetime.CreateEmptyRealmFile(path, (ulong)ezLegacy);
 
                 var router = new RealmReaderRouter();
                 Assert.DoesNotThrow((Action)(() =>
@@ -119,12 +108,7 @@ namespace osu.Game.EzRealmSync.Tests
             }
             finally
             {
-                if (File.Exists(path))
-                    File.Delete(path);
-
-                string lockPath = path + ".lock";
-                if (File.Exists(lockPath))
-                    File.Delete(lockPath);
+                RealmNativeLifetime.DeleteRealmFiles(path);
             }
         }
 

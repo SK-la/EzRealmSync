@@ -4,8 +4,7 @@ using osu.Game.Database;
 using osu.Game.EzRealmSync.Errors;
 using osu.Game.EzRealmSync.Models;
 using osu.Game.EzRealmSync.Realm;
-using Realms;
-using RealmInstance = Realms.Realm;
+using osu.Game.EzRealmSync.Tests.TestInfrastructure;
 
 namespace osu.Game.EzRealmSync.Tests
 {
@@ -25,10 +24,7 @@ namespace osu.Game.EzRealmSync.Tests
             try
             {
                 // 用当前 object schema 写入但标较低同大版本号 —— 仅验证 migration 路径能把版本号抬到最新。
-                var writeConfig = new RealmConfiguration(path) { SchemaVersion = (ulong)minEz };
-                using (RealmInstance.GetInstance(writeConfig))
-                {
-                }
+                RealmNativeLifetime.CreateEmptyRealmFile(path, (ulong)minEz);
 
                 var result = RealmSchemaUpgrader.UpgradeInPlace(path, minEz);
 
@@ -41,7 +37,7 @@ namespace osu.Game.EzRealmSync.Tests
             }
             finally
             {
-                deleteRealm(path);
+                RealmNativeLifetime.DeleteRealmFiles(path);
             }
         }
 
@@ -53,10 +49,7 @@ namespace osu.Game.EzRealmSync.Tests
             try
             {
                 int latest = RealmAccess.EzFileSchemaVersion;
-                var writeConfig = new RealmConfiguration(path) { SchemaVersion = (ulong)latest };
-                using (RealmInstance.GetInstance(writeConfig))
-                {
-                }
+                RealmNativeLifetime.CreateEmptyRealmFile(path, (ulong)latest);
 
                 var result = RealmSchemaUpgrader.UpgradeInPlace(path, latest);
 
@@ -65,7 +58,7 @@ namespace osu.Game.EzRealmSync.Tests
             }
             finally
             {
-                deleteRealm(path);
+                RealmNativeLifetime.DeleteRealmFiles(path);
             }
         }
 
@@ -80,28 +73,16 @@ namespace osu.Game.EzRealmSync.Tests
 
             try
             {
-                var writeConfig = new RealmConfiguration(path) { SchemaVersion = (ulong)below };
-                using (RealmInstance.GetInstance(writeConfig))
-                {
-                }
+                RealmNativeLifetime.CreateEmptyRealmFile(path, (ulong)below);
 
-                var ex = Assert.Throws<RealmUserOperationException>(() => RealmSchemaUpgrader.UpgradeInPlace(path, below));
+                var ex = Assert.Throws<RealmUserOperationException>(() =>
+                    RealmSchemaUpgrader.UpgradeInPlace(path, below));
                 Assert.That(ex!.Kind, Is.EqualTo(RealmUserErrorKind.SchemaTooLow));
             }
             finally
             {
-                deleteRealm(path);
+                RealmNativeLifetime.DeleteRealmFiles(path);
             }
-        }
-
-        private static void deleteRealm(string path)
-        {
-            if (File.Exists(path))
-                File.Delete(path);
-
-            string lockPath = path + ".lock";
-            if (File.Exists(lockPath))
-                File.Delete(lockPath);
         }
     }
 }

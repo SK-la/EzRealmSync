@@ -20,8 +20,8 @@ namespace osu.Game.EzRealmSync.Tests
 
             string differentOutput = Path.Combine(writable.TempDirectory, "different.realm");
 
-            Task Action() => dataService.ConvertToOfficialRealmAsync(entry.Id, differentOutput);
-            var ex = Assert.ThrowsAsync<RealmUserOperationException>(Action);
+            var ex = Assert.ThrowsAsync<RealmUserOperationException>(async () =>
+                await dataService.ConvertToOfficialRealmAsync(entry.Id, differentOutput));
             Assert.That(ex!.Kind, Is.EqualTo(RealmUserErrorKind.PathConflict));
         }
 
@@ -35,8 +35,8 @@ namespace osu.Game.EzRealmSync.Tests
 
             await using var lockStream = new FileStream(writable.RealmFilePath, FileMode.Open, FileAccess.ReadWrite, FileShare.None);
 
-            Task Action() => dataService.ConvertToOfficialRealmAsync(entry.Id);
-            var ex = Assert.ThrowsAsync<RealmUserOperationException>(Action);
+            var ex = Assert.ThrowsAsync<RealmUserOperationException>(async () =>
+                await dataService.ConvertToOfficialRealmAsync(entry.Id));
             Assert.That(ex!.Kind, Is.EqualTo(RealmUserErrorKind.FileInUse));
         }
 
