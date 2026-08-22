@@ -5,8 +5,8 @@ namespace osu.Game.EzRealmSync.Mock
 {
     public sealed partial class MockEzRealmSyncService : IEzRealmSyncService
     {
-        private ScanResult currentResult = new();
-        private readonly List<BackupEntry> backups = new();
+        private ScanResult currentResult = new ScanResult();
+        private readonly List<BackupEntry> backups = new List<BackupEntry>();
 
         public MockEzRealmSyncService(MockEzRealmSyncOptions? options = null)
         {

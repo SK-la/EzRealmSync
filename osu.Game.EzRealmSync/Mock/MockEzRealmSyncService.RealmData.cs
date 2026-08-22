@@ -8,7 +8,7 @@ namespace osu.Game.EzRealmSync.Mock
     {
         private readonly Dictionary<string, RealmFileEntry> realmFiles = new Dictionary<string, RealmFileEntry>();
         private readonly Dictionary<string, RealmSnapshot> loadedSnapshots = new Dictionary<string, RealmSnapshot>();
-        private readonly Dictionary<(string realmId, Guid id), List<string>> mockCollectionHashes = new();
+        private readonly Dictionary<(string realmId, Guid id), List<string>> mockCollectionHashes = new Dictionary<(string realmId, Guid id), List<string>>();
 
         public Task<IReadOnlyList<RealmFileEntry>> DiscoverRealmFilesAsync(string? searchDirectory, CancellationToken cancellationToken = default)
         {

@@ -6,7 +6,7 @@ namespace osu.Game.EzRealmSync.Models
 
         public SyncDirection Direction { get; init; }
 
-        public PathConfiguration Paths { get; init; } = new();
+        public PathConfiguration Paths { get; init; } = new PathConfiguration();
 
         public IReadOnlyList<EntityKind> EntityKinds { get; init; } = Array.Empty<EntityKind>();
     }

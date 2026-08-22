@@ -7,7 +7,7 @@ namespace osu.Game.EzRealmSync.Models
     /// </summary>
     public sealed class RealmFileRegistry
     {
-        private readonly Dictionary<string, RealmFileEntry> files = new();
+        private readonly Dictionary<string, RealmFileEntry> files = new Dictionary<string, RealmFileEntry>();
 
         public IReadOnlyList<RealmFileEntry> MergeDiscovered(string? searchDirectory, Func<string, int?>? readSchemaVersion = null)
         {

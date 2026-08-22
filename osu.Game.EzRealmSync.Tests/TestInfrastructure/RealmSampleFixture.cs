@@ -136,7 +136,7 @@ namespace osu.Game.EzRealmSync.Tests.TestInfrastructure
             }
         }
 
-        private static readonly JsonSerializerOptions json_options = new()
+        private static readonly JsonSerializerOptions json_options = new JsonSerializerOptions
         {
             PropertyNameCaseInsensitive = true,
         };

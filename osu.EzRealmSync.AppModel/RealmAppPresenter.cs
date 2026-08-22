@@ -3,6 +3,7 @@ using osu.EzRealmSync.AppModel.Localization;
 using osu.Framework.Bindables;
 using osu.Game.EzRealmSync;
 using osu.Game.EzRealmSync.Abstractions;
+using osu.Game.EzRealmSync.Contracts;
 using osu.Game.EzRealmSync.Errors;
 using osu.Game.EzRealmSync.Mock;
 using osu.Game.EzRealmSync.Models;
@@ -1134,12 +1135,25 @@ namespace osu.EzRealmSync.AppModel
 
                 runOnUi(() =>
                 {
-                    StatusMessage.Value = Loc.Format(
+                    string message = Loc.Format(
                         "StatusFixConvertedOfficial",
                         Path.GetFileName(result.TargetRealmFilePath),
                         result.TargetSchemaVersion,
                         result.BackupPath ?? string.Empty,
                         result.AppliedCount);
+
+                    if (result.FilterStats is { } stats && hasConvertFilterSkips(stats))
+                    {
+                        message += " " + Loc.Format(
+                            "StatusFixConvertedOfficialSkipped",
+                            stats.SkippedScores,
+                            stats.SkippedSkins,
+                            stats.SkippedBeatmapSets,
+                            stats.SkippedRulesets,
+                            stats.PrunedCollectionEntries);
+                    }
+
+                    StatusMessage.Value = message;
                     Progress.Value = 1;
                 });
             }
@@ -1172,6 +1186,13 @@ namespace osu.EzRealmSync.AppModel
                 OfficialConvertTarget.UpgradeToLibUpstream => Loc.Format("FixConvertOfficialLibConfirm", targetOfficial, backupDir),
                 _ => Loc.Format("FixConvertOfficialLibConfirm", targetOfficial, backupDir),
             };
+
+        private static bool hasConvertFilterSkips(OfficialConvertFilterStats stats) =>
+            stats.SkippedScores > 0
+            || stats.SkippedSkins > 0
+            || stats.SkippedBeatmapSets > 0
+            || stats.SkippedRulesets > 0
+            || stats.PrunedCollectionEntries > 0;
 
         private void updateFixConvertPrimaryButtonState()
         {

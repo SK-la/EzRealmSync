@@ -10,7 +10,7 @@ namespace osu.EzRealmSync.AppModel
         /// <summary>命令行是否显式指定了 <c>--ui-test</c> / <c>--no-ui-test</c>（未指定时启动读 settings.json）。</summary>
         public bool HasUiTestModeArgument { get; init; }
 
-        public MockEzRealmSyncOptions MockOptions { get; init; } = new();
+        public MockEzRealmSyncOptions MockOptions { get; init; } = new MockEzRealmSyncOptions();
 
         public static EzRealmSyncLaunchOptions Parse(string[] args)
         {

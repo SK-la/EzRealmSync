@@ -10,9 +10,7 @@ namespace osu.Game.EzRealmSync.IO
     /// </summary>
     public static class RealmBackupCatalog
     {
-        private static readonly Regex timestampedBackupPattern = new(
-            @"^(.+)_\d{8}_\d{6}\.realm$",
-            RegexOptions.IgnoreCase | RegexOptions.CultureInvariant);
+        private static readonly Regex timestampedBackupPattern = new Regex(@"^(.+)_\d{8}_\d{6}\.realm$", RegexOptions.IgnoreCase | RegexOptions.CultureInvariant);
 
         public static string CreateEntryId(string backupFilePath) =>
             Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(Path.GetFullPath(backupFilePath))));

@@ -81,7 +81,7 @@ namespace osu.Game.EzRealmSync.Realm
             };
         }
 
-        private static DiffItem toDiffItem(RealmDiffEntity entity, DiffCategory category, string? conflictSummary = null) => new()
+        private static DiffItem toDiffItem(RealmDiffEntity entity, DiffCategory category, string? conflictSummary = null) => new DiffItem
         {
             Id = entity.Id,
             Category = category,

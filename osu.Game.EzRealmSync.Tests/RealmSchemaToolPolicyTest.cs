@@ -1,6 +1,7 @@
 #if HAS_EZ_OSU_GAME
 using NUnit.Framework;
 using osu.Game.Database;
+using osu.Game.EzRealmSync.Errors;
 using osu.Game.EzRealmSync.Models;
 
 namespace osu.Game.EzRealmSync.Tests
@@ -20,16 +21,16 @@ namespace osu.Game.EzRealmSync.Tests
         public void EnsureCanOpen_rejects_below_min_ez_revision()
         {
             int below = 51 * 1000 + (RealmSchemaRevisionCatalog.MinSupportedEzRevision - 1);
-            var ex = Assert.Throws<Errors.RealmUserOperationException>((Action)(() => RealmSchemaToolPolicy.EnsureCanOpen(below)));
-            Assert.That(ex!.Kind, Is.EqualTo(Errors.RealmUserErrorKind.SchemaTooLow));
+            var ex = Assert.Throws<RealmUserOperationException>((Action)(() => RealmSchemaToolPolicy.EnsureCanOpen(below)));
+            Assert.That(ex!.Kind, Is.EqualTo(RealmUserErrorKind.SchemaTooLow));
         }
 
         [Test]
         public void EnsureCanOpen_rejects_above_max_ez()
         {
             int above = RealmSchemaToolPolicy.MaxSupportedEzFileSchema + 1;
-            var ex = Assert.Throws<Errors.RealmUserOperationException>((Action)(() => RealmSchemaToolPolicy.EnsureCanOpen(above)));
-            Assert.That(ex!.Kind, Is.EqualTo(Errors.RealmUserErrorKind.SchemaTooHigh));
+            var ex = Assert.Throws<RealmUserOperationException>((Action)(() => RealmSchemaToolPolicy.EnsureCanOpen(above)));
+            Assert.That(ex!.Kind, Is.EqualTo(RealmUserErrorKind.SchemaTooHigh));
         }
 
         [Test]

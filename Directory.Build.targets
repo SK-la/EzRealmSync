@@ -19,6 +19,64 @@
   </Target>
 
   <!-- 构建 WinExe 时把 lib/*.dll 与引擎程序集复制到输出目录 -->
+  <PropertyGroup>
+    <OfficialWriteOutputDir>$(MSBuildThisFileDirectory)osu.Game.EzRealmSync.OfficialWrite\bin\$(Configuration)\net8.0</OfficialWriteOutputDir>
+  </PropertyGroup>
+
+  <Target Name="CopyOfficialWriteWorkerToOutput"
+          AfterTargets="Build"
+          DependsOnTargets="ResolveProjectReferences"
+          Condition="'$(OutputType)' == 'WinExe'">
+    <ItemGroup>
+      <_OfficialWriteCopy Include="$(OfficialWriteOutputDir)\EzRealmSync.OfficialWrite.exe" Condition="Exists('$(OfficialWriteOutputDir)\EzRealmSync.OfficialWrite.exe')" />
+      <_OfficialWriteCopy Include="$(OfficialWriteOutputDir)\EzRealmSync.OfficialWrite.dll" Condition="Exists('$(OfficialWriteOutputDir)\EzRealmSync.OfficialWrite.dll')" />
+      <_OfficialWriteCopy Include="$(OfficialWriteOutputDir)\EzRealmSync.OfficialWrite.deps.json" Condition="Exists('$(OfficialWriteOutputDir)\EzRealmSync.OfficialWrite.deps.json')" />
+      <_OfficialWriteCopy Include="$(OfficialWriteOutputDir)\EzRealmSync.OfficialWrite.runtimeconfig.json" Condition="Exists('$(OfficialWriteOutputDir)\EzRealmSync.OfficialWrite.runtimeconfig.json')" />
+      <_OfficialWriteCopy Include="$(OfficialWriteOutputDir)\osu.Game.EzRealmSync.OfficialSchema.dll" Condition="Exists('$(OfficialWriteOutputDir)\osu.Game.EzRealmSync.OfficialSchema.dll')" />
+      <_OfficialWriteCopy Include="$(OfficialWriteOutputDir)\osu.Game.EzRealmSync.Contracts.dll" Condition="Exists('$(OfficialWriteOutputDir)\osu.Game.EzRealmSync.Contracts.dll')" />
+      <_OfficialWriteCopy Include="$(OfficialWriteOutputDir)\Realm.dll" Condition="Exists('$(OfficialWriteOutputDir)\Realm.dll')" />
+      <_OfficialWriteCopy Include="$(OfficialWriteOutputDir)\MongoDB.Bson.dll" Condition="Exists('$(OfficialWriteOutputDir)\MongoDB.Bson.dll')" />
+      <_OfficialWriteCopy Include="$(OfficialWriteOutputDir)\Remotion.Linq.dll" Condition="Exists('$(OfficialWriteOutputDir)\Remotion.Linq.dll')" />
+      <_OfficialWriteRuntime Include="$(OfficialWriteOutputDir)\runtimes\**\*.*" Condition="Exists('$(OfficialWriteOutputDir)\runtimes')" />
+    </ItemGroup>
+    <MakeDir Directories="$(OutputPath)official-write" Condition="@(_OfficialWriteCopy->Count()) != 0" />
+    <Copy SourceFiles="@(_OfficialWriteCopy)"
+          DestinationFolder="$(OutputPath)official-write"
+          SkipUnchangedFiles="true"
+          Condition="@(_OfficialWriteCopy->Count()) != 0" />
+    <Copy SourceFiles="@(_OfficialWriteRuntime)"
+          DestinationFiles="@(_OfficialWriteRuntime->'$(OutputPath)official-write\runtimes\%(RecursiveDir)%(Filename)%(Extension)')"
+          SkipUnchangedFiles="true"
+          Condition="'@(_OfficialWriteRuntime)' != ''" />
+  </Target>
+
+  <Target Name="CopyOfficialWriteWorkerToTestOutput"
+          AfterTargets="Build"
+          DependsOnTargets="ResolveProjectReferences"
+          Condition="'$(MSBuildProjectName)' == 'osu.Game.EzRealmSync.Tests'">
+    <ItemGroup>
+      <_OfficialWriteCopy Include="$(OfficialWriteOutputDir)\EzRealmSync.OfficialWrite.exe" Condition="Exists('$(OfficialWriteOutputDir)\EzRealmSync.OfficialWrite.exe')" />
+      <_OfficialWriteCopy Include="$(OfficialWriteOutputDir)\EzRealmSync.OfficialWrite.dll" Condition="Exists('$(OfficialWriteOutputDir)\EzRealmSync.OfficialWrite.dll')" />
+      <_OfficialWriteCopy Include="$(OfficialWriteOutputDir)\EzRealmSync.OfficialWrite.deps.json" Condition="Exists('$(OfficialWriteOutputDir)\EzRealmSync.OfficialWrite.deps.json')" />
+      <_OfficialWriteCopy Include="$(OfficialWriteOutputDir)\EzRealmSync.OfficialWrite.runtimeconfig.json" Condition="Exists('$(OfficialWriteOutputDir)\EzRealmSync.OfficialWrite.runtimeconfig.json')" />
+      <_OfficialWriteCopy Include="$(OfficialWriteOutputDir)\osu.Game.EzRealmSync.OfficialSchema.dll" Condition="Exists('$(OfficialWriteOutputDir)\osu.Game.EzRealmSync.OfficialSchema.dll')" />
+      <_OfficialWriteCopy Include="$(OfficialWriteOutputDir)\osu.Game.EzRealmSync.Contracts.dll" Condition="Exists('$(OfficialWriteOutputDir)\osu.Game.EzRealmSync.Contracts.dll')" />
+      <_OfficialWriteCopy Include="$(OfficialWriteOutputDir)\Realm.dll" Condition="Exists('$(OfficialWriteOutputDir)\Realm.dll')" />
+      <_OfficialWriteCopy Include="$(OfficialWriteOutputDir)\MongoDB.Bson.dll" Condition="Exists('$(OfficialWriteOutputDir)\MongoDB.Bson.dll')" />
+      <_OfficialWriteCopy Include="$(OfficialWriteOutputDir)\Remotion.Linq.dll" Condition="Exists('$(OfficialWriteOutputDir)\Remotion.Linq.dll')" />
+      <_OfficialWriteRuntime Include="$(OfficialWriteOutputDir)\runtimes\**\*.*" Condition="Exists('$(OfficialWriteOutputDir)\runtimes')" />
+    </ItemGroup>
+    <MakeDir Directories="$(OutputPath)official-write" Condition="@(_OfficialWriteCopy->Count()) != 0" />
+    <Copy SourceFiles="@(_OfficialWriteCopy)"
+          DestinationFolder="$(OutputPath)official-write"
+          SkipUnchangedFiles="true"
+          Condition="@(_OfficialWriteCopy->Count()) != 0" />
+    <Copy SourceFiles="@(_OfficialWriteRuntime)"
+          DestinationFiles="@(_OfficialWriteRuntime->'$(OutputPath)official-write\runtimes\%(RecursiveDir)%(Filename)%(Extension)')"
+          SkipUnchangedFiles="true"
+          Condition="'@(_OfficialWriteRuntime)' != ''" />
+  </Target>
+
   <ItemGroup Condition="'$(UseLocalOsuLibs)' == 'true'">
     <EzRealmSyncEngineOutput Include="$(MSBuildThisFileDirectory)osu.Game.EzRealmSync\bin\$(Configuration)\net8.0\osu.Game.EzRealmSync.dll" />
   </ItemGroup>

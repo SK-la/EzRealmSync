@@ -63,7 +63,7 @@ namespace osu.Game.EzRealmSync.Tests
             Assert.That(result.SourceOnly[0].EntityKind, Is.EqualTo(EntityKind.Beatmap));
         }
 
-        private static RealmDiffEntity entity(Guid id, EntityKind kind, string hash, string title, string ruleset = "") => new()
+        private static RealmDiffEntity entity(Guid id, EntityKind kind, string hash, string title, string ruleset = "") => new RealmDiffEntity
         {
             Id = id,
             EntityKind = kind,

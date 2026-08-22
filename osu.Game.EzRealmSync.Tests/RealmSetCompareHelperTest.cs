@@ -7,11 +7,11 @@ namespace osu.Game.EzRealmSync.Tests
     [TestFixture]
     public class RealmSetCompareHelperTest
     {
-        private static ScanResult sampleDiff() => new()
+        private static ScanResult sampleDiff() => new ScanResult
         {
-            SourceOnly = new List<DiffItem> { new() { Id = Guid.NewGuid(), Category = DiffCategory.SourceOnly, EntityKind = EntityKind.Beatmap } },
-            TargetOnly = new List<DiffItem> { new() { Id = Guid.NewGuid(), Category = DiffCategory.TargetOnly, EntityKind = EntityKind.Score } },
-            Conflicted = new List<DiffItem> { new() { Id = Guid.NewGuid(), Category = DiffCategory.Conflicted, EntityKind = EntityKind.BeatmapSet } },
+            SourceOnly = new List<DiffItem> { new DiffItem { Id = Guid.NewGuid(), Category = DiffCategory.SourceOnly, EntityKind = EntityKind.Beatmap } },
+            TargetOnly = new List<DiffItem> { new DiffItem { Id = Guid.NewGuid(), Category = DiffCategory.TargetOnly, EntityKind = EntityKind.Score } },
+            Conflicted = new List<DiffItem> { new DiffItem { Id = Guid.NewGuid(), Category = DiffCategory.Conflicted, EntityKind = EntityKind.BeatmapSet } },
         };
 
         [Test]

@@ -4,7 +4,7 @@ namespace osu.Game.EzRealmSync.Realm.Readers
 {
     public static class RealmReaderPackageCatalog
     {
-        private static readonly JsonSerializerOptions jsonOptions = new()
+        private static readonly JsonSerializerOptions jsonOptions = new JsonSerializerOptions
         {
             PropertyNameCaseInsensitive = true,
             ReadCommentHandling = JsonCommentHandling.Skip,

@@ -1,3 +1,5 @@
+using osu.Game.EzRealmSync.Contracts;
+
 namespace osu.Game.EzRealmSync.Models
 {
     public enum RealmFixIssueKind
@@ -66,6 +68,8 @@ namespace osu.Game.EzRealmSync.Models
         public int TargetSchemaVersion { get; init; }
 
         public OfficialConvertTarget ConvertTarget { get; init; }
+
+        public OfficialConvertFilterStats? FilterStats { get; init; }
     }
 
     public sealed class RealmSchemaUpgradeResult

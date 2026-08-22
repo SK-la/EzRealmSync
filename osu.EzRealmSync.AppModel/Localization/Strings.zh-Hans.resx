@@ -224,12 +224,13 @@
   <data name="FixUpgradeSchema" xml:space="preserve"><value>升级到 lib 最新</value></data>
   <data name="FixUpgradeSchemaConfirm" xml:space="preserve"><value>将把所选 Realm 升级到 lib schema {0}（在备份工作副本上 migration 后替换原文件）。备份目录：{1}。请先关闭游戏。是否继续？</value></data>
   <data name="FixUpgradeSchemaTitle" xml:space="preserve"><value>升级 schema</value></data>
-  <data name="FixConvertOfficialReadConfirm" xml:space="preserve"><value>将剥 Ez 字段并批量迁移为官方 schema {0}（保持文件头读取的 upstream）。备份目录：{1}。是否继续？</value></data>
-  <data name="FixConvertOfficialLibMinusOneConfirm" xml:space="preserve"><value>将剥 Ez 字段并批量迁移为官方 schema {0}（lib 官方 upstream 减 1）。备份目录：{1}。是否继续？</value></data>
-  <data name="FixConvertOfficialPreserveConfirm" xml:space="preserve"><value>将剥 Ez 字段并批量迁移为官方 schema {0}（保持文件头读取的 upstream）。备份目录：{1}。是否继续？</value></data>
-  <data name="FixConvertOfficialLibConfirm" xml:space="preserve"><value>将剥 Ez 字段并批量迁移为官方 schema {0}（bundled osu.Game 的 lib upstream）。备份目录：{1}。是否继续？</value></data>
+  <data name="FixConvertOfficialReadConfirm" xml:space="preserve"><value>将重建为官方 ppy lazer 可用的 client.realm（镜像 schema {0}，覆盖原文件；非 Ez sidecar）。备份目录：{1}。是否继续？</value></data>
+  <data name="FixConvertOfficialLibMinusOneConfirm" xml:space="preserve"><value>将重建为官方 ppy lazer 可用的 client.realm（镜像 schema {0}，lib upstream 减 1；覆盖原文件）。备份目录：{1}。是否继续？</value></data>
+  <data name="FixConvertOfficialPreserveConfirm" xml:space="preserve"><value>将重建为官方 ppy lazer 可用的 client.realm（镜像 schema {0}，覆盖原文件；非 Ez sidecar）。备份目录：{1}。是否继续？</value></data>
+  <data name="FixConvertOfficialLibConfirm" xml:space="preserve"><value>将重建为官方 ppy lazer 可用的 client.realm（镜像 schema {0}，lib upstream；覆盖原文件）。备份目录：{1}。是否继续？</value></data>
   <data name="FixConvertOfficialTitle" xml:space="preserve"><value>转回官方版</value></data>
-  <data name="StatusFixConvertedOfficial" xml:space="preserve"><value>已转回官方版：{0} → schema {1}（备份：{2}，迁移 {3} 表项）</value></data>
+  <data name="StatusFixConvertedOfficial" xml:space="preserve"><value>已重建为官方 client.realm：{0} → schema {1}（备份：{2}，写入 {3} 表项）</value></data>
+  <data name="StatusFixConvertedOfficialSkipped" xml:space="preserve"><value>已跳过：成绩 {0}、皮肤 {1}、谱面集 {2}、规则集 {3}；收藏夹 prune {4} 项</value></data>
   <data name="StatusFixSchemaUpgraded" xml:space="preserve"><value>已升级 schema：{0}（{1} → lib {2}，备份：{3}）</value></data>
   <data name="StatusFixSchemaAlreadyLatest" xml:space="preserve"><value>{0} 已是 lib 最新 schema（{1}）。备份：{2}</value></data>
   <data name="ErrorConvertOfficialRequiresEz" xml:space="preserve"><value>「转回官方版」仅适用于 Ez 扩展库。</value></data>

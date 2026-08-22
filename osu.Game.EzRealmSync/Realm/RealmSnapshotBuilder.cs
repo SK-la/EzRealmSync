@@ -49,7 +49,7 @@ namespace osu.Game.EzRealmSync.Realm
             return snapshot ?? new RealmSnapshot { RealmId = file.Id, DisplayName = file.DisplayName };
         }
 
-        private static RealmClassGroup readBeatmapSets(RealmInstance realm) => new()
+        private static RealmClassGroup readBeatmapSets(RealmInstance realm) => new RealmClassGroup
         {
             Class = RealmObjectClass.BeatmapSet,
             Columns = columns(
@@ -66,7 +66,7 @@ namespace osu.Game.EzRealmSync.Realm
             })).ToList(),
         };
 
-        private static RealmClassGroup readBeatmaps(RealmInstance realm) => new()
+        private static RealmClassGroup readBeatmaps(RealmInstance realm) => new RealmClassGroup
         {
             Class = RealmObjectClass.Beatmap,
             Columns = columns(
@@ -117,7 +117,7 @@ namespace osu.Game.EzRealmSync.Realm
             };
         }
 
-        private static RealmClassGroup readScores(RealmInstance realm) => new()
+        private static RealmClassGroup readScores(RealmInstance realm) => new RealmClassGroup
         {
             Class = RealmObjectClass.Score,
             Columns = columns(
@@ -136,7 +136,7 @@ namespace osu.Game.EzRealmSync.Realm
             })).ToList(),
         };
 
-        private static RealmClassGroup readCollections(RealmInstance realm) => new()
+        private static RealmClassGroup readCollections(RealmInstance realm) => new RealmClassGroup
         {
             Class = RealmObjectClass.BeatmapCollection,
             Columns = columns(
@@ -149,7 +149,7 @@ namespace osu.Game.EzRealmSync.Realm
             })).ToList(),
         };
 
-        private static RealmClassGroup readFiles(RealmInstance realm) => new()
+        private static RealmClassGroup readFiles(RealmInstance realm) => new RealmClassGroup
         {
             Class = RealmObjectClass.File,
             Columns = columns(
@@ -168,7 +168,7 @@ namespace osu.Game.EzRealmSync.Realm
             }).ToList(),
         };
 
-        private static RealmClassGroup readRulesets(RealmInstance realm) => new()
+        private static RealmClassGroup readRulesets(RealmInstance realm) => new RealmClassGroup
         {
             Class = RealmObjectClass.Ruleset,
             Columns = columns(
@@ -183,7 +183,7 @@ namespace osu.Game.EzRealmSync.Realm
             })).ToList(),
         };
 
-        private static RealmClassGroup readSkins(RealmInstance realm) => new()
+        private static RealmClassGroup readSkins(RealmInstance realm) => new RealmClassGroup
         {
             Class = RealmObjectClass.Skin,
             Columns = columns(
@@ -202,11 +202,11 @@ namespace osu.Game.EzRealmSync.Realm
             return new Guid(bytes);
         }
 
-        private static RealmBrowseRow row(Guid id, Dictionary<string, string> cells) => new() { Id = id, Cells = cells };
+        private static RealmBrowseRow row(Guid id, Dictionary<string, string> cells) => new RealmBrowseRow { Id = id, Cells = cells };
 
         private static IReadOnlyList<RealmColumnDefinition> columns(params RealmColumnDefinition[] defs) => defs;
 
-        private static RealmColumnDefinition col(string key, string title, string typeHint) => new()
+        private static RealmColumnDefinition col(string key, string title, string typeHint) => new RealmColumnDefinition
         {
             PropertyKey = key,
             Header = title,

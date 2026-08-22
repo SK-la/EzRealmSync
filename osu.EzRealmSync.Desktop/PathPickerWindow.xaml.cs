@@ -1,6 +1,7 @@
 using System.Collections.ObjectModel;
 using System.IO;
 using System.Windows.Data;
+using System.Windows.Threading;
 using osu.EzRealmSync.AppModel.Localization;
 using osu.EzRealmSync.Desktop.Services;
 using StackPanel = System.Windows.Controls.StackPanel;
@@ -11,7 +12,7 @@ namespace osu.EzRealmSync.Desktop
     {
         private readonly PathPickerMode mode;
         private string currentPath = string.Empty;
-        private readonly ObservableCollection<PathBreadcrumbSegment> breadcrumbSegments = new();
+        private readonly ObservableCollection<PathBreadcrumbSegment> breadcrumbSegments = new ObservableCollection<PathBreadcrumbSegment>();
 
         public string? SelectedPath { get; private set; }
 
@@ -258,7 +259,7 @@ namespace osu.EzRealmSync.Desktop
 
             string target = segment.FullPath;
             // 须在 BreadcrumbBar 内部 Click 结束后再改 ItemsSource，否则 ContainerFromItem 会拿到 null
-            Dispatcher.BeginInvoke(() => navigateTo(target), System.Windows.Threading.DispatcherPriority.Background);
+            Dispatcher.BeginInvoke(() => navigateTo(target), DispatcherPriority.Background);
         }
 
         private void PlacesList_OnSelectionChanged(object sender, SelectionChangedEventArgs e)

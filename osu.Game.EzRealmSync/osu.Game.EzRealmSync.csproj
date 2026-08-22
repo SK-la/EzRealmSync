@@ -6,6 +6,10 @@
     <CopyLocalLockFileAssemblies Condition="'$(UseLocalOsuLibs)' == 'true'">false</CopyLocalLockFileAssemblies>
   </PropertyGroup>
 
+  <ItemGroup>
+    <ProjectReference Include="..\osu.Game.EzRealmSync.Contracts\osu.Game.EzRealmSync.Contracts.csproj" />
+  </ItemGroup>
+
   <ItemGroup Condition="'$(UseLocalOsuLibs)' != 'true'">
     <PackageReference Include="ez2lazer.Framework" />
     <PackageReference Include="ez2lazer.Game" />

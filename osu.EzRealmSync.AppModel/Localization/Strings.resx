@@ -224,12 +224,13 @@
   <data name="FixUpgradeSchema" xml:space="preserve"><value>Upgrade to lib latest</value></data>
   <data name="FixUpgradeSchemaConfirm" xml:space="preserve"><value>This will upgrade the selected Realm to lib schema {0} (migration on a backed-up working copy, then replace the original). Backup directory: {1}. Close the game first. Continue?</value></data>
   <data name="FixUpgradeSchemaTitle" xml:space="preserve"><value>Upgrade schema</value></data>
-  <data name="FixConvertOfficialReadConfirm" xml:space="preserve"><value>Strip Ez fields and batch-migrate in-place to official schema {0} (keep upstream read from file header). Backup directory: {1}. Continue?</value></data>
-  <data name="FixConvertOfficialLibMinusOneConfirm" xml:space="preserve"><value>Strip Ez fields and batch-migrate in-place to official schema {0} (lib official upstream minus 1). Backup directory: {1}. Continue?</value></data>
-  <data name="FixConvertOfficialPreserveConfirm" xml:space="preserve"><value>Strip Ez fields and batch-migrate in-place to official schema {0} (keep upstream read from file header). Backup directory: {1}. Continue?</value></data>
-  <data name="FixConvertOfficialLibConfirm" xml:space="preserve"><value>Strip Ez fields and batch-migrate in-place to official schema {0} (lib upstream from bundled osu.Game). Backup directory: {1}. Continue?</value></data>
+  <data name="FixConvertOfficialReadConfirm" xml:space="preserve"><value>Rebuild an official ppy lazer client.realm (mirror schema {0}, overwrites this file; not an Ez sidecar). Backup directory: {1}. Continue?</value></data>
+  <data name="FixConvertOfficialLibMinusOneConfirm" xml:space="preserve"><value>Rebuild an official ppy lazer client.realm (mirror schema {0}, lib upstream minus 1; overwrites this file). Backup directory: {1}. Continue?</value></data>
+  <data name="FixConvertOfficialPreserveConfirm" xml:space="preserve"><value>Rebuild an official ppy lazer client.realm (mirror schema {0}, overwrites this file; not an Ez sidecar). Backup directory: {1}. Continue?</value></data>
+  <data name="FixConvertOfficialLibConfirm" xml:space="preserve"><value>Rebuild an official ppy lazer client.realm (mirror schema {0}, lib upstream; overwrites this file). Backup directory: {1}. Continue?</value></data>
   <data name="FixConvertOfficialTitle" xml:space="preserve"><value>Convert to official</value></data>
-  <data name="StatusFixConvertedOfficial" xml:space="preserve"><value>Converted to official: {0} → schema {1} (backup: {2}, migrated {3} table row(s))</value></data>
+  <data name="StatusFixConvertedOfficial" xml:space="preserve"><value>Rebuilt official client.realm: {0} → schema {1} (backup: {2}, wrote {3} table row(s))</value></data>
+  <data name="StatusFixConvertedOfficialSkipped" xml:space="preserve"><value>Skipped: {0} score(s), {1} skin(s), {2} beatmap set(s), {3} ruleset(s); pruned {4} collection entry(ies)</value></data>
   <data name="StatusFixSchemaUpgraded" xml:space="preserve"><value>Upgraded schema: {0} ({1} → lib {2}, backup: {3})</value></data>
   <data name="StatusFixSchemaAlreadyLatest" xml:space="preserve"><value>{0} is already at lib latest schema ({1}). Backup: {2}</value></data>
   <data name="ErrorConvertOfficialRequiresEz" xml:space="preserve"><value>Convert to official is only available for Ez extended Realm files.</value></data>

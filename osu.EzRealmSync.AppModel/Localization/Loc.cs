@@ -6,9 +6,7 @@ namespace osu.EzRealmSync.AppModel.Localization
 {
     public static class Loc
     {
-        private static readonly ResourceManager resources = new(
-            "osu.EzRealmSync.AppModel.Localization.Strings",
-            Assembly.GetExecutingAssembly());
+        private static readonly ResourceManager resources = new ResourceManager("osu.EzRealmSync.AppModel.Localization.Strings", Assembly.GetExecutingAssembly());
 
         public static AppLanguage CurrentLanguage { get; private set; } = AppLanguage.ZhHans;
 

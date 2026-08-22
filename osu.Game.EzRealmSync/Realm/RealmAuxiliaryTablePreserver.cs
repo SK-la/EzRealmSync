@@ -100,14 +100,7 @@ namespace osu.Game.EzRealmSync.Realm
             }
         }
 
-        public static bool IsEzOnlyProtectedSkin(SkinInfo skin) =>
-            skin.ID == ez2_skin_id
-            || skin.ID == ez_style_pro_skin_id
-            || skin.ID == sbi_skin_id;
-
-        private static readonly Guid ez2_skin_id = new("fc372386-381d-4f8e-897a-c1d89ef39f9c");
-        private static readonly Guid ez_style_pro_skin_id = new("1E70839C-C0D8-4DBF-B747-0C08C89D412B");
-        private static readonly Guid sbi_skin_id = new("fc372386-381d-4f8e-897a-c1d89ef39f2c");
+        public static bool IsEzOnlyProtectedSkin(SkinInfo skin) => OfficialConvertSkinFilter.IsEzOnlyProtectedSkin(skin);
 
         private static void linkFiles(RealmInstance realm, IList<RealmNamedFileUsage> files)
         {

@@ -31,11 +31,15 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\osu.Game.EzRealmSync.Contracts\osu.Game.EzRealmSync.Contracts.csproj" />
     <ProjectReference Include="..\osu.Game.EzRealmSync\osu.Game.EzRealmSync.csproj">
       <AdditionalProperties>UseLocalOsuLibs=$(UseLocalOsuLibs)</AdditionalProperties>
     </ProjectReference>
     <ProjectReference Include="..\osu.EzRealmSync.AppModel\osu.EzRealmSync.AppModel.csproj">
       <AdditionalProperties>UseLocalOsuLibs=$(UseLocalOsuLibs)</AdditionalProperties>
+    </ProjectReference>
+    <ProjectReference Include="..\osu.Game.EzRealmSync.OfficialWrite\osu.Game.EzRealmSync.OfficialWrite.csproj">
+      <ReferenceOutputAssembly>false</ReferenceOutputAssembly>
     </ProjectReference>
   </ItemGroup>
 

@@ -107,7 +107,7 @@ namespace osu.Game.EzRealmSync.Mock
             _ => Array.Empty<RealmColumnDefinition>(),
         };
 
-        private static RealmColumnDefinition col(string key, string title, string typeHint) => new()
+        private static RealmColumnDefinition col(string key, string title, string typeHint) => new RealmColumnDefinition
         {
             PropertyKey = key,
             Header = title,

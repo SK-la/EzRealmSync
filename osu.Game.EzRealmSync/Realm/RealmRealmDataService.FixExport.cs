@@ -1,9 +1,10 @@
 #if HAS_EZ_OSU_GAME
-using osu.Framework.Platform;
 using osu.Game.Database;
+using osu.Game.EzRealmSync.Contracts;
 using osu.Game.EzRealmSync.Errors;
 using osu.Game.EzRealmSync.IO;
 using osu.Game.EzRealmSync.Models;
+using osu.Game.Models;
 using osu.Game.Scoring;
 
 namespace osu.Game.EzRealmSync.Realm
@@ -244,35 +245,30 @@ namespace osu.Game.EzRealmSync.Realm
 
             try
             {
-                progress?.Report(new ScanProgress { Progress = 0.12, Message = $"正在创建官方目标库（schema {targetOfficialUpstream}）…" });
-                createEmptyOfficialRealm(tempTargetPath, targetOfficialUpstream);
+                progress?.Report(new ScanProgress { Progress = 0.15, Message = "正在读取 Ez 源库并构建官方 DTO…" });
 
                 using var sourceOpener = RealmOfficialConvertSourceOpener.Open(sourcePath, sourceSchema, backupPath, progress, cancellationToken);
-                var auxiliary = RealmAuxiliaryTablePreserver.Capture(sourceOpener.Access);
+                int sourceFileCount = 0;
+                sourceOpener.Access.Run(r => sourceFileCount = r.All<RealmFile>().Count());
 
-                int targetSchema = RealmSchemaProbe.TryReadSchemaVersion(tempTargetPath) ?? targetOfficialUpstream;
-
-                cancellationToken.ThrowIfCancellationRequested();
-
-                progress?.Report(new ScanProgress { Progress = 0.2, Message = "正在批量迁移核心表到官方库…" });
-                using var targetAccess = RealmDiffReader.OpenOfficialRealm(tempTargetPath, targetSchema);
-                int applied = RealmSchemaMigrationCopier.CopyCoreDataEzToOfficial(
-                    sourceOpener.Access,
-                    targetAccess,
-                    progress == null
-                        ? null
-                        : new Progress<ScanProgress>(p => progress.Report(new ScanProgress
-                        {
-                            Progress = 0.2 + p.Progress * 0.65,
-                            Message = p.Message,
-                        })),
-                    cancellationToken);
+                var job = OfficialConvertJobExporter.Export(sourceOpener.Access, targetOfficialUpstream, tempTargetPath);
 
                 cancellationToken.ThrowIfCancellationRequested();
 
-                progress?.Report(new ScanProgress { Progress = 0.88, Message = $"正在写回文件与皮肤列表（{auxiliary.FileCount:N0} 文件）…" });
-                using (var restoreAccess = RealmDiffReader.OpenOfficialRealm(tempTargetPath, targetSchema))
-                    RealmAuxiliaryTablePreserver.Restore(restoreAccess, auxiliary, filterEzOnlyProtectedSkins: true, cancellationToken);
+                progress?.Report(new ScanProgress { Progress = 0.35, Message = $"正在镜像 Schema 写库（官方 upstream {targetOfficialUpstream}）…" });
+                OfficialConvertResult writeResult = OfficialWriteProcessRunner.Run(job, cancellationToken);
+
+                if (!writeResult.Success)
+                {
+                    throw new RealmUserOperationException(
+                        RealmUserErrorKind.SchemaModelMismatch,
+                        writeResult.ErrorMessage ?? "镜像写库 Worker 失败。");
+                }
+
+                progress?.Report(new ScanProgress { Progress = 0.88, Message = "正在校验官方镜像 schema…" });
+                OfficialMirrorSchemaVerifier.Verify(tempTargetPath, targetOfficialUpstream, sourceFileCount);
+
+                int targetSchema = writeResult.TargetSchemaVersion;
 
                 progress?.Report(new ScanProgress { Progress = 0.9, Message = "正在覆盖原文件…" });
                 File.Copy(tempTargetPath, sourcePath, overwrite: true);
@@ -284,10 +280,11 @@ namespace osu.Game.EzRealmSync.Realm
                 return new RealmOfficialConversionResult
                 {
                     TargetRealmFilePath = sourcePath,
-                    AppliedCount = applied,
+                    AppliedCount = writeResult.AppliedCount,
                     BackupPath = backupPath,
                     TargetSchemaVersion = targetSchema,
                     ConvertTarget = convertTarget,
+                    FilterStats = job.FilterStats,
                 };
             }
             finally
@@ -295,17 +292,6 @@ namespace osu.Game.EzRealmSync.Realm
                 if (Directory.Exists(tempRoot))
                     Directory.Delete(tempRoot, recursive: true);
             }
-        }
-
-        private static void createEmptyOfficialRealm(string targetPath, int targetOfficialUpstream)
-        {
-            string root = RealmWorkspacePaths.ResolveStorageRoot(targetPath);
-            string fileName = Path.GetFileName(targetPath);
-
-            Directory.CreateDirectory(root);
-
-            using var access = OfficialRealmAccess.OpenWithoutMigration(new NativeStorage(root), fileName, targetOfficialUpstream);
-            access.Run(_ => { });
         }
 
         public Task<RealmExportCatalog> LoadCatalogAsync(

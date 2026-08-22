@@ -10,8 +10,8 @@ namespace osu.Game.EzRealmSync.Realm
     /// </summary>
     public sealed partial class RealmRealmDataService : IRealmDataService, IRealmFixService, IRealmExportService
     {
-        private readonly RealmFileRegistry registry = new();
-        private readonly Dictionary<string, RealmSnapshot> snapshotCache = new();
+        private readonly RealmFileRegistry registry = new RealmFileRegistry();
+        private readonly Dictionary<string, RealmSnapshot> snapshotCache = new Dictionary<string, RealmSnapshot>();
 
         public Task<IReadOnlyList<RealmFileEntry>> DiscoverRealmFilesAsync(string? searchDirectory, CancellationToken cancellationToken = default) =>
             Task.Run(() =>

@@ -28,7 +28,7 @@ namespace osu.EzRealmSync.Desktop.Commands
     {
         private readonly Func<Task> execute;
         private readonly Func<bool>? canExecute;
-        private readonly AsyncCommandGate gate = new();
+        private readonly AsyncCommandGate gate = new AsyncCommandGate();
 
         public AsyncRelayCommand(Func<Task> execute, Func<bool>? canExecute = null)
         {

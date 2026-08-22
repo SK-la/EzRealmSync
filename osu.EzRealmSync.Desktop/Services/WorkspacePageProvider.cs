@@ -7,7 +7,7 @@ namespace osu.EzRealmSync.Desktop.Services
 {
     public sealed class WorkspacePageProvider : INavigationViewPageProvider
     {
-        private readonly Dictionary<Type, object> pages = new();
+        private readonly Dictionary<Type, object> pages = new Dictionary<Type, object>();
         private ShellViewModel? shell;
 
         public void Attach(ShellViewModel viewModel)

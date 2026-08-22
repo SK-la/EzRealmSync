@@ -8,8 +8,8 @@ namespace osu.Game.EzRealmSync.Models
 
         public IReadOnlyList<string> Warnings { get; init; } = Array.Empty<string>();
 
-        public static ValidationResult Success(params string[] warnings) => new() { IsValid = true, Warnings = warnings };
+        public static ValidationResult Success(params string[] warnings) => new ValidationResult { IsValid = true, Warnings = warnings };
 
-        public static ValidationResult Failure(params string[] errors) => new() { IsValid = false, Errors = errors };
+        public static ValidationResult Failure(params string[] errors) => new ValidationResult { IsValid = false, Errors = errors };
     }
 }

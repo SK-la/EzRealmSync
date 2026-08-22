@@ -138,7 +138,7 @@ namespace osu.EzRealmSync.Desktop.ViewModels
         public ObservableCollection<RealmFileEntry> RealmFiles => Presenter.RealmFiles;
         public ObservableCollection<RealmEntityRowModel> DataRows => Presenter.DataRows;
         public ObservableCollection<RealmClassListItemModel> DataClasses => Presenter.DataClasses;
-        public ObservableCollection<DiffRowModel> SyncRows { get; } = new();
+        public ObservableCollection<DiffRowModel> SyncRows { get; } = new ObservableCollection<DiffRowModel>();
 
         public ObservableCollection<RealmFixIssueModel> FixIssues => Presenter.FixIssues;
 

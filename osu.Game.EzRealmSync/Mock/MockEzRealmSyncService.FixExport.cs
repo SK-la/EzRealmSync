@@ -6,8 +6,8 @@ namespace osu.Game.EzRealmSync.Mock
 {
     public sealed partial class MockEzRealmSyncService : IRealmFixService, IRealmExportService
     {
-        private readonly Dictionary<string, List<RealmFixIssue>> fixIssuesByRealm = new();
-        private readonly Dictionary<(string realmId, ExportDataKind kind), RealmExportCatalog> exportCatalogs = new();
+        private readonly Dictionary<string, List<RealmFixIssue>> fixIssuesByRealm = new Dictionary<string, List<RealmFixIssue>>();
+        private readonly Dictionary<(string realmId, ExportDataKind kind), RealmExportCatalog> exportCatalogs = new Dictionary<(string realmId, ExportDataKind kind), RealmExportCatalog>();
 
         public async Task<IReadOnlyList<RealmFixIssue>> ScanIssuesAsync(
             string realmId,

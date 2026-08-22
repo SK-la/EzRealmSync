@@ -18,7 +18,7 @@ namespace osu.EzRealmSync.Desktop.Pages
         private DataGridTextColumn? colExtra;
         private DataGridTextColumn? colPath;
 
-        private readonly object bindLock = new();
+        private readonly object bindLock = new object();
 
         public ExportPage()
         {

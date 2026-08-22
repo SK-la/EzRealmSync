@@ -13,14 +13,14 @@ namespace osu.Game.EzRealmSync.Models
 
         public const int MinSupportedEzRevision = 3;
 
-        private static readonly Dictionary<int, RealmSchemaRevisionKind> upstream_kinds = new()
+        private static readonly Dictionary<int, RealmSchemaRevisionKind> upstream_kinds = new Dictionary<int, RealmSchemaRevisionKind>
         {
             [50] = RealmSchemaRevisionKind.AddColumn,
             [51] = RealmSchemaRevisionKind.AddColumn,
             [52] = RealmSchemaRevisionKind.AddColumn,
         };
 
-        private static readonly Dictionary<int, RealmSchemaRevisionKind> ez_kinds = new()
+        private static readonly Dictionary<int, RealmSchemaRevisionKind> ez_kinds = new Dictionary<int, RealmSchemaRevisionKind>
         {
             [1] = RealmSchemaRevisionKind.DataChange,
             [2] = RealmSchemaRevisionKind.AddColumn,
@@ -32,10 +32,10 @@ namespace osu.Game.EzRealmSync.Models
         };
 
         public static RealmSchemaRevisionKind ClassifyOfficialUpstream(int upstream) =>
-            upstream_kinds.TryGetValue(upstream, out var kind) ? kind : RealmSchemaRevisionKind.UpstreamBump;
+            upstream_kinds.GetValueOrDefault(upstream, RealmSchemaRevisionKind.UpstreamBump);
 
         public static RealmSchemaRevisionKind ClassifyEzRevision(int ezRevision) =>
-            ez_kinds.TryGetValue(ezRevision, out var kind) ? kind : RealmSchemaRevisionKind.DataChange;
+            ez_kinds.GetValueOrDefault(ezRevision, RealmSchemaRevisionKind.DataChange);
 
         public static bool IsSupportedOfficialUpstream(int upstream) =>
             upstream >= MinSupportedOfficialUpstream && upstream <= RealmAccess.UpstreamSchemaVersion;

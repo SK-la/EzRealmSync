@@ -3,10 +3,10 @@ namespace osu.Game.EzRealmSync.Realm.Readers
 {
     public sealed class RealmReaderRegistry
     {
-        public static RealmReaderRegistry Instance { get; } = new();
+        public static RealmReaderRegistry Instance { get; } = new RealmReaderRegistry();
 
         private IReadOnlyList<RealmReaderPackageInfo> packages = Array.Empty<RealmReaderPackageInfo>();
-        private RealmReaderRouter router = new();
+        private RealmReaderRouter router = new RealmReaderRouter();
         private bool initialized;
 
         private RealmReaderRegistry()

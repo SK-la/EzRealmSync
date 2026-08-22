@@ -15,7 +15,7 @@ namespace osu.EzRealmSync.AppModel
                 values[column.PropertyKey] = row.Cells.TryGetValue(column.PropertyKey, out string? value) ? value : string.Empty;
         }
 
-        private readonly Dictionary<string, string> values = new();
+        private readonly Dictionary<string, string> values = new Dictionary<string, string>();
 
         public Guid Id { get; }
 
