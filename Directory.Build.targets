@@ -105,8 +105,7 @@
           AfterTargets="Build"
           Condition="'$(OutputType)' == 'WinExe'">
     <ItemGroup>
-      <_ReadersContent Include="$(MSBuildThisFileDirectory)readers\**\*.*"
-                       Exclude="$(MSBuildThisFileDirectory)readers\**\lib\**\*.*" />
+      <_ReadersContent Include="$(MSBuildThisFileDirectory)readers\**\*.*" />
     </ItemGroup>
     <Copy SourceFiles="@(_ReadersContent)"
           DestinationFiles="@(_ReadersContent->'$(OutputPath)readers\%(RecursiveDir)%(Filename)%(Extension)')"
@@ -118,8 +117,7 @@
           AfterTargets="Build"
           Condition="'$(MSBuildProjectName)' == 'osu.Game.EzRealmSync.Tests'">
     <ItemGroup>
-      <_ReadersContent Include="$(MSBuildThisFileDirectory)readers\**\*.*"
-                       Exclude="$(MSBuildThisFileDirectory)readers\**\lib\**\*.*" />
+      <_ReadersContent Include="$(MSBuildThisFileDirectory)readers\**\*.*" />
     </ItemGroup>
     <Copy SourceFiles="@(_ReadersContent)"
           DestinationFiles="@(_ReadersContent->'$(OutputPath)readers\%(RecursiveDir)%(Filename)%(Extension)')"

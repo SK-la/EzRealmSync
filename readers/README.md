@@ -22,6 +22,16 @@ readers/
 
 Release 包预置 `51/`、`52/`、`51007/`、`52007/` 的 **manifest**；`lib/` 默认空。
 
+## 开发本地测试
+
+```powershell
+pwsh scripts/Sync-ReaderLibs.ps1          # 1. 填充仓库 readers/*/lib/（或 -ReaderDir 51007）
+dotnet build EzRealmSync.sln -c Debug       # 2. lib 复制到 bin/.../readers/*/lib/
+dotnet run --project osu.EzRealmSync.Desktop
+```
+
+改完脚本或 config 后需重新 build，才能把新 lib 同步到输出目录。
+
 ## 首次使用（Release 解压后）
 
 主程序自带**最新** `ez2lazer.Game`，可处理当前 schema 的目标库。要从**更旧 schema** 源库同步，在 **exe 同目录**运行：

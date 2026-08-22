@@ -38,11 +38,18 @@
   </ItemGroup>
 
   <ItemGroup>
+    <!-- manifest / config / lib/README：输出与 Release 均带 -->
     <Content Include="..\readers\**\*"
              Exclude="..\readers\**\lib\*.dll;..\readers\**\lib\**\*.dll;..\readers\**\lib\runtimes\**\*.*">
       <Link>readers\%(RecursiveDir)%(Filename)%(Extension)</Link>
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
       <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
+    </Content>
+    <!-- lib DLL：仅本地 bin/ 输出，不打进 Release zip -->
+    <Content Include="..\readers\**\lib\*.dll;..\readers\**\lib\runtimes\**\*.*">
+      <Link>readers\%(RecursiveDir)%(Filename)%(Extension)</Link>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <CopyToPublishDirectory>Never</CopyToPublishDirectory>
     </Content>
     <Content Include="..\scripts\Sync-ReaderLibs.ps1">
       <Link>scripts\Sync-ReaderLibs.ps1</Link>

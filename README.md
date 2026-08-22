@@ -27,6 +27,7 @@ dotnet run --project osu.EzRealmSync.Desktop
 - `--ui-test`：Mock 假数据（仅调 UI，不读 `.realm`）
 - `--mock-delay=0`：Mock 模式去掉模拟延迟
 - **本地 lib 覆盖**（并行开发 osu 主仓库时）：`dotnet build -t:SyncEzRealmLibs EzRealmSync.sln` 后加 `-p:UseLocalOsuLibs=true`（见 [lib/README.md](lib/README.md)）
+- **旧 schema reader（本地测同步）**：先 `pwsh scripts/Sync-ReaderLibs.ps1` 填充 `readers/*/lib/`，再 `dotnet build` / `dotnet run`（lib 会复制到 `bin/.../readers/`，**不**进 Git 与 Release zip）
 
 ## Release 下载
 
