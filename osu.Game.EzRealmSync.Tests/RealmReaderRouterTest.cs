@@ -24,10 +24,10 @@ namespace osu.Game.EzRealmSync.Tests
         {
             var router = new RealmReaderRouter();
 
-            Assert.That(router.ResolveRoute(RealmAccess.UPSTREAM_SCHEMA_VERSION), Is.EqualTo(RealmReaderRoute.OfficialCurrent));
+            Assert.That(router.ResolveRoute(RealmAccess.UpstreamSchemaVersion), Is.EqualTo(RealmReaderRoute.OfficialCurrent));
             Assert.That(router.ResolveRoute(RealmAccess.EzFileSchemaVersion), Is.EqualTo(RealmReaderRoute.EzCurrent));
 
-            int officialLegacy = Math.Max(1, RealmAccess.UPSTREAM_SCHEMA_VERSION - 1);
+            int officialLegacy = Math.Max(1, RealmAccess.UpstreamSchemaVersion - 1);
             Assert.That(router.ResolveRoute(officialLegacy), Is.EqualTo(RealmReaderRoute.OfficialLegacy));
 
             int ezLegacy = Math.Max(1000, RealmAccess.EzFileSchemaVersion - 1);
@@ -37,7 +37,7 @@ namespace osu.Game.EzRealmSync.Tests
         [Test]
         public void OpenByDiskSchemaVersion_uses_legacy_route_adapter()
         {
-            int officialLegacy = Math.Max(1, RealmAccess.UPSTREAM_SCHEMA_VERSION - 1);
+            int officialLegacy = Math.Max(1, RealmAccess.UpstreamSchemaVersion - 1);
             int ezLegacy = Math.Max(1000, RealmAccess.EzFileSchemaVersion - 1);
 
             var router = new RealmReaderRouter(
@@ -60,7 +60,7 @@ namespace osu.Game.EzRealmSync.Tests
         [Test]
         public void OpenByDiskSchemaVersion_legacy_falls_back_to_reader_guidance_when_pinned_open_fails()
         {
-            int officialLegacy = Math.Max(1, RealmAccess.UPSTREAM_SCHEMA_VERSION - 1);
+            int officialLegacy = Math.Max(1, RealmAccess.UpstreamSchemaVersion - 1);
             int ezLegacy = Math.Max(1000, RealmAccess.EzFileSchemaVersion - 1);
             var router = new RealmReaderRouter();
 
@@ -115,7 +115,7 @@ namespace osu.Game.EzRealmSync.Tests
         [Test]
         public void OpenBySchemaKind_uses_same_route_as_disk_version()
         {
-            int officialLegacy = Math.Max(1, RealmAccess.UPSTREAM_SCHEMA_VERSION - 1);
+            int officialLegacy = Math.Max(1, RealmAccess.UpstreamSchemaVersion - 1);
             var router = new RealmReaderRouter(
             [
                 new FakeAdapter(RealmReaderRoute.OfficialCurrent),

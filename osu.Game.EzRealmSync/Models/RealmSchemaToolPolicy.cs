@@ -10,7 +10,7 @@ namespace osu.Game.EzRealmSync.Models
     public static class RealmSchemaToolPolicy
     {
         /// <summary>当前 lib 官方上游 schema。</summary>
-        public static int MaxSupportedOfficialSchema => RealmAccess.UPSTREAM_SCHEMA_VERSION;
+        public static int MaxSupportedOfficialSchema => RealmAccess.UpstreamSchemaVersion;
 
         /// <summary>当前 lib Ez 文件 schema（upstream * 1000 + ez）。</summary>
         public static int MaxSupportedEzFileSchema => RealmAccess.EzFileSchemaVersion;

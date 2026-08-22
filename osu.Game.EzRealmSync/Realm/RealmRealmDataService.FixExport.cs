@@ -252,7 +252,7 @@ namespace osu.Game.EzRealmSync.Realm
                 var sourceSnapshot = RealmDiffReader.Read(sourceAccess, progress, cancellationToken);
                 var itemIds = sourceSnapshot.Entities.Select(e => e.Id).Distinct().ToList();
 
-                int targetSchema = RealmSchemaProbe.TryReadSchemaVersion(tempTargetPath) ?? RealmAccess.UPSTREAM_SCHEMA_VERSION;
+                int targetSchema = RealmSchemaProbe.TryReadSchemaVersion(tempTargetPath) ?? RealmAccess.UpstreamSchemaVersion;
                 var writePlan = new RealmWritePlan
                 {
                     SourceRealmFilePath = sourcePath,

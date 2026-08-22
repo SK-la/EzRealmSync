@@ -12,11 +12,11 @@ namespace osu.Game.EzRealmSync.Tests
         [Test]
         public void Min_and_max_are_same_major()
         {
-            Assert.That(RealmSchemaToolPolicy.MinSupportedOfficialSchema, Is.EqualTo(RealmAccess.UPSTREAM_SCHEMA_VERSION));
-            Assert.That(RealmSchemaToolPolicy.MaxSupportedOfficialSchema, Is.EqualTo(RealmAccess.UPSTREAM_SCHEMA_VERSION));
-            Assert.That(RealmSchemaToolPolicy.MinSupportedEzFileSchema, Is.EqualTo(RealmAccess.UPSTREAM_SCHEMA_VERSION * 1000 + 1));
+            Assert.That(RealmSchemaToolPolicy.MinSupportedOfficialSchema, Is.EqualTo(RealmAccess.UpstreamSchemaVersion));
+            Assert.That(RealmSchemaToolPolicy.MaxSupportedOfficialSchema, Is.EqualTo(RealmAccess.UpstreamSchemaVersion));
+            Assert.That(RealmSchemaToolPolicy.MinSupportedEzFileSchema, Is.EqualTo(RealmAccess.UpstreamSchemaVersion * 1000 + 1));
             Assert.That(RealmSchemaToolPolicy.MaxSupportedEzFileSchema, Is.EqualTo(RealmAccess.EzFileSchemaVersion));
-            Assert.That(RealmSchemaToolPolicy.MaxSupportedEzFileSchema / 1000, Is.EqualTo(RealmAccess.UPSTREAM_SCHEMA_VERSION));
+            Assert.That(RealmSchemaToolPolicy.MaxSupportedEzFileSchema / 1000, Is.EqualTo(RealmAccess.UpstreamSchemaVersion));
         }
 
         [Test]

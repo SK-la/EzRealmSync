@@ -67,7 +67,7 @@ namespace osu.Game.EzRealmSync.Realm.Readers
                 return RealmReaderRoute.Unknown;
 
             if (kind == RealmDiskSchemaKind.PpyClient)
-                return diskSchemaVersion == RealmAccess.UPSTREAM_SCHEMA_VERSION
+                return diskSchemaVersion == RealmAccess.UpstreamSchemaVersion
                     ? RealmReaderRoute.OfficialCurrent
                     : RealmReaderRoute.OfficialLegacy;
 
