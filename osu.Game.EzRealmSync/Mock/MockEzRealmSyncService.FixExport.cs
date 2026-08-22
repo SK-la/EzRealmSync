@@ -141,6 +141,7 @@ namespace osu.Game.EzRealmSync.Mock
 
         public async Task<RealmOfficialConversionResult> ConvertToOfficialRealmAsync(
             string realmId,
+            OfficialConvertTarget convertTarget,
             string? outputRealmFilePath = null,
             IProgress<ScanProgress>? progress = null,
             CancellationToken cancellationToken = default)
@@ -163,6 +164,8 @@ namespace osu.Game.EzRealmSync.Mock
                 TargetRealmFilePath = target,
                 AppliedCount = snapshot.Groups.Sum(g => g.Rows.Count),
                 BackupPath = Path.Combine(Path.GetTempPath(), $"client_backup_{Guid.NewGuid():N}.realm"),
+                TargetSchemaVersion = convertTarget == OfficialConvertTarget.UpgradeToLibUpstream ? 52 : 51,
+                ConvertTarget = convertTarget,
             };
         }
 
@@ -179,7 +182,7 @@ namespace osu.Game.EzRealmSync.Mock
             {
                 RealmFilePath = Path.Combine(Path.GetTempPath(), "client_mock.realm"),
                 SourceSchemaVersion = 51_003,
-                TargetSchemaVersion = 51_006,
+                TargetSchemaVersion = 52_007,
                 BackupPath = Path.Combine(backupDirectory ?? EzRealmSyncDefaults.DefaultBackupDirectory, "mock_backup.realm"),
             };
         }

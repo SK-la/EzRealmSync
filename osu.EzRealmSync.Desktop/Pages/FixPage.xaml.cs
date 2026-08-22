@@ -64,7 +64,8 @@ namespace osu.EzRealmSync.Desktop.Pages
             FixAllButton.IsEnabled = enabled;
             SelectAllButton.IsEnabled = enabled;
             UpgradeSchemaButton.IsEnabled = enabled;
-            ConvertOfficialButton.IsEnabled = enabled;
+            ConvertOfficialPreserveButton.IsEnabled = enabled;
+            ConvertOfficialToLibButton.IsEnabled = enabled;
             RealmSelectCombo.IsEnabled = enabled;
             ReplacementBox.IsEnabled = enabled;
         }
@@ -78,7 +79,8 @@ namespace osu.EzRealmSync.Desktop.Pages
             FixAllButton.Content = Loc.Get("FixApplyAll");
             SelectAllButton.Content = Loc.Get("SelectAll");
             UpgradeSchemaButton.Content = Loc.Get("FixUpgradeSchema");
-            ConvertOfficialButton.Content = Loc.Get("FixConvertOfficial");
+            ConvertOfficialPreserveButton.Content = Loc.Get("FixConvertOfficialPreserve");
+            ConvertOfficialToLibButton.Content = Loc.Get("FixConvertOfficialToLib");
         }
 
         private void refreshRealmCombo()
@@ -155,7 +157,9 @@ namespace osu.EzRealmSync.Desktop.Pages
 
         private void SelectAll_OnClick(object sender, RoutedEventArgs e) => vm?.ToggleFixSelectAllCommand.Execute(null);
 
-        private void ConvertOfficial_OnClick(object sender, RoutedEventArgs e) => vm?.ConvertFixRealmToOfficialCommand.Execute(null);
+        private void ConvertOfficialPreserve_OnClick(object sender, RoutedEventArgs e) => vm?.ConvertFixRealmPreserveCommand.Execute(null);
+
+        private void ConvertOfficialToLib_OnClick(object sender, RoutedEventArgs e) => vm?.ConvertFixRealmToLibCommand.Execute(null);
 
         private void UpgradeSchema_OnClick(object sender, RoutedEventArgs e) => vm?.UpgradeFixRealmSchemaCommand.Execute(null);
     }

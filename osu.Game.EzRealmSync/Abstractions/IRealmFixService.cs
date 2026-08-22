@@ -21,6 +21,7 @@ namespace osu.Game.EzRealmSync.Abstractions
 
         Task<RealmOfficialConversionResult> ConvertToOfficialRealmAsync(
             string realmId,
+            OfficialConvertTarget convertTarget,
             string? outputRealmFilePath = null,
             IProgress<ScanProgress>? progress = null,
             CancellationToken cancellationToken = default);

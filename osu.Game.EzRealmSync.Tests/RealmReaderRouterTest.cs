@@ -89,7 +89,7 @@ namespace osu.Game.EzRealmSync.Tests
         [Test]
         public void OpenByDiskSchemaVersion_legacy_ez_schema_tries_pinned_open()
         {
-            int ezLegacy = Math.Max(RealmSchemaToolPolicy.MinSupportedEzFileSchema, RealmAccess.EzFileSchemaVersion - 1);
+            int ezLegacy = Math.Max(51 * 1000 + RealmSchemaRevisionCatalog.MinSupportedEzRevision, RealmAccess.EzFileSchemaVersion - 1);
             if (ezLegacy >= RealmAccess.EzFileSchemaVersion)
                 Assert.Ignore("无同大版本 legacy Ez 修订可测。");
 

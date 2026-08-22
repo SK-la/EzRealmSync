@@ -62,6 +62,10 @@ namespace osu.Game.EzRealmSync.Models
         public int AppliedCount { get; init; }
 
         public string? BackupPath { get; init; }
+
+        public int TargetSchemaVersion { get; init; }
+
+        public OfficialConvertTarget ConvertTarget { get; init; }
     }
 
     public sealed class RealmSchemaUpgradeResult

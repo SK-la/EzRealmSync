@@ -7,18 +7,27 @@
 | **读取（数据 Tab）** | 完整浏览 `client.realm` 中各类对象（谱面集、难度、成绩、收藏夹、文件等） | **否** — 动态只读探测版本 + `OpenWithoutMigration` + `performSchemaMigration: false` |
 | **同步（同步 Tab）** | 在 A/B 库之间按 GUID 复制 **谱面集、难度、成绩、收藏夹**；跨官方/Ez 版本时剥离 Ez 独有字段 | **否** — 目标库保持原磁盘版本，仅增删改行数据 |
 | **导出 / 删除（数据 Tab 右键）** | 对 **谱面集、成绩、收藏夹** 写回 Realm（软删）或复制 `files/` 实体（谱面、`.osr`）；合集名单另用 osu!stable **`collection.db`** 导入导出 | **否** |
-| **修复 Tab「升级到最新版」** | 同大版本内：在备份工作副本上执行可控游戏 migration，校验后原子替换；禁止降级删库重建 | **是** — 升到工具当前官方 / Ez schema |
-| **修复 Tab「转回官方版」** | 需要时先自动升级到当前 Ez schema，再剥 Ez 字段写入官方空库并原地覆盖 | **是** — 最终变为官方上游 schema |
+| **修复 Tab「升级到 lib 最新」** | 在备份工作副本上 migration 到 bundled lib 的官方 / Ez schema，校验后原子替换 | **是** — 升到 lib 号（`UPSTREAM_SCHEMA_VERSION` / `EzFileSchemaVersion`） |
+| **修复 Tab「转回官方版」** | 剥 Ez 字段写入官方空库并原地覆盖；**保持读取号**或**升到 lib 官方号**二选一 | **是** — 目标为解码 upstream 或 lib 官方 upstream |
 
-游戏内仍用默认 `RealmAccess`（可迁移）；**除修复页显式升级 / 转官方内嵌升级外**，本工具禁止被动升/降 schema。
+游戏内仍用默认 `RealmAccess`（可迁移）；**除修复页显式升级 / 转官方外**，本工具禁止被动升/降 schema。
 
-## 同大版本策略（本阶段）
+## 版本号从哪来
 
-- **只保证同大版本**：官方磁盘版本 = 当前 `UPSTREAM_SCHEMA_VERSION`；Ez = `upstream * 1000 + ez`（如 `52007`）。
-- **单份 `osu.Game`**：不另存、不热加载其他 schema 的 DLL。数据同步双方须落在 `[MinSupported, MaxSupported]`（必要时先「升级到最新版」）。
-- **低于最低支持**：拒绝打开，提示用对应客户端升到下限以上（不提供旧 reader）。
-- **高于工具内置**：拒绝，提示更新 EzRealmSync。
-- **跨大版本**（如 `51xxx` ↔ `52xxx`）与多版本 reader：**未实现**，另开专题。
+| 用途 | 来源 |
+|------|------|
+| 文件当前版本 | 读磁盘文件头 |
+| 读取号（官方 upstream） | `Decode(文件头).official` |
+| lib 官方 / Ez 最新 | bundled `osu.Game.dll` |
+| 最低支持 | 工具常量（官方 ≥50，Ez 修订 ≥3） |
+| 同步风险提示 | 工具内置修订分类表 |
+
+## 支持区间
+
+- **上限**：lib 内置 schema（换工具 / NuGet 即变）。
+- **下限**：官方 upstream ≥50，Ez 修订 ≥3（如 `51006` 可打开；`51002` 拒绝）。
+- **同步**：upstream 不一致时确认框软警告，不阻断；不跑 migration。
+- **跨 upstream**（如 51 ↔ 52 数据复制）：同步 Tab **不改 schema**；跨 upstream 请用修复页升级或转官方。
 
 ## 跨版本同步为何安全（同大版本内）
 
@@ -31,7 +40,7 @@
 1. **探测**：`RealmDiskSchemaReader` — Realm 动态 API 只读读文件头版本，不经 `RealmAccess` 构造。
 2. **打开**：按磁盘版本选择 `OfficialRealmAccess` / `RealmAccess`，并传入 `pinnedDiskSchemaVersion`；`MigrationCallback = null`。
 3. **禁止**：对用户库做被动 `performSchemaMigration: true`（会触发游戏启动维护、pending 清理、失败时删库重建）。
-4. **例外**：修复页「升级到最新版」及「转回官方」内嵌升级 —— 仅在**已备份的工作副本**上 migration，且 `allowDestructiveRecoveryOnSchemaMismatch: false`。
+4. **例外**：修复页「升级到 lib 最新」及「转回官方版」—— 仅在**已备份的工作副本**上 migration（升级）或显式写目标 schema（转官方），且 `allowDestructiveRecoveryOnSchemaMismatch: false`。
 5. **禁止**：用错误访问器打开库触发「schema 降级 → 备份并删库」。
 
 若库已被错误迁移，请从 `client_newer_version.realm` 或导入页备份恢复。

@@ -21,7 +21,7 @@ namespace osu.Game.EzRealmSync.Tests
             string differentOutput = Path.Combine(writable.TempDirectory, "different.realm");
 
             var ex = Assert.ThrowsAsync<RealmUserOperationException>((Func<Task>)(async () =>
-                await dataService.ConvertToOfficialRealmAsync(entry.Id, differentOutput)));
+                await dataService.ConvertToOfficialRealmAsync(entry.Id, OfficialConvertTarget.PreserveReadUpstream, differentOutput)));
             Assert.That(ex!.Kind, Is.EqualTo(RealmUserErrorKind.PathConflict));
         }
 
@@ -36,7 +36,7 @@ namespace osu.Game.EzRealmSync.Tests
             await using var lockStream = new FileStream(writable.RealmFilePath, FileMode.Open, FileAccess.ReadWrite, FileShare.None);
 
             var ex = Assert.ThrowsAsync<RealmUserOperationException>((Func<Task>)(async () =>
-                await dataService.ConvertToOfficialRealmAsync(entry.Id)));
+                await dataService.ConvertToOfficialRealmAsync(entry.Id, OfficialConvertTarget.PreserveReadUpstream)));
             Assert.That(ex!.Kind, Is.EqualTo(RealmUserErrorKind.FileInUse));
         }
 
@@ -50,15 +50,22 @@ namespace osu.Game.EzRealmSync.Tests
 
             try
             {
-                RealmOfficialConversionResult result = await dataService.ConvertToOfficialRealmAsync(before.Id);
+                RealmOfficialConversionResult result = await dataService.ConvertToOfficialRealmAsync(before.Id, OfficialConvertTarget.PreserveReadUpstream);
                 Assert.That(result.BackupPath, Is.Not.Null.And.Not.Empty);
                 Assert.That(File.Exists(result.BackupPath!), Is.True);
+                Assert.That(result.ConvertTarget, Is.EqualTo(OfficialConvertTarget.PreserveReadUpstream));
 
                 try
                 {
                     var after = await dataService.RegisterRealmFileAsync(writable.RealmFilePath);
                     Assert.That(after.Id, Is.EqualTo(before.Id));
                     Assert.That(after.DiskSchemaKind, Is.EqualTo(RealmDiskSchemaKind.PpyClient));
+
+                    if (before.SchemaVersion is int sourceSchema)
+                    {
+                        int expectedOfficial = OfficialConvertPlanner.ResolveTargetOfficialUpstream(sourceSchema, OfficialConvertTarget.PreserveReadUpstream);
+                        Assert.That(after.SchemaVersion, Is.EqualTo(expectedOfficial));
+                    }
                 }
                 finally
                 {

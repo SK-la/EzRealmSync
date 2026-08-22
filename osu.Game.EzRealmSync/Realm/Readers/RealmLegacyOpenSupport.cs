@@ -39,7 +39,7 @@ namespace osu.Game.EzRealmSync.Realm.Readers
                 // 同大版本内旧修订：应走修复页升级，而不是暗示「装 reader 包」
                 throw new RealmUserOperationException(
                     RealmUserErrorKind.MigrationRequired,
-                    $"无法用当前内置模型 pinned 打开 legacy {profile} schema {pinnedDiskSchemaVersion}（内置最新：{currentSupportedVersion}）。请在「修复」页「升级到最新版」，或对 Ez 库使用「转回官方版」（会自动先升级）。文件：{realmFilePath}",
+                    $"无法用当前 lib pinned 打开 legacy {profile} schema {pinnedDiskSchemaVersion}（lib 最新：{currentSupportedVersion}）。请在「修复」页「升级到最新版」，或对 Ez 库使用「转回官方版」。文件：{realmFilePath}",
                     ex);
             }
             catch (Exception ex)
@@ -57,7 +57,7 @@ namespace osu.Game.EzRealmSync.Realm.Readers
         {
             return new RealmUserOperationException(
                 RealmUserErrorKind.LegacyReaderUnavailable,
-                $"无法打开 legacy {profile} schema：{diskSchemaVersion}（内置支持：{currentSupportedVersion}）。本阶段仅支持同大版本，不提供跨版本 reader DLL。请先将库升到 {currentSupportedVersion} 或更新工具。文件：{realmFilePath}",
+                $"无法打开 legacy {profile} schema：{diskSchemaVersion}（lib 支持上限：{currentSupportedVersion}）。请先在「修复」页升级或转官方，或更新工具。文件：{realmFilePath}",
                 innerException);
         }
     }

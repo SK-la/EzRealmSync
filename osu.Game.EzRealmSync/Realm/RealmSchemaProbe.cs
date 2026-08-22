@@ -51,7 +51,7 @@ namespace osu.Game.EzRealmSync.Realm
 
                 throw new RealmUserOperationException(
                     RealmUserErrorKind.MigrationRequired,
-                    $"Realm 文件 {fileName}（schema {schema}）需要先升到本工具当前版本（{RealmSchemaToolPolicy.LatestSupportedForKind(RealmSchemaSafety.Classify(schema.Value))}）才能打开。请在「修复」页点击「升级到最新版」，或使用「转回官方版」（会自动先升级）。",
+                    $"Realm 文件 {fileName}（schema {schema}）需要先升到 lib 最新（{RealmSchemaToolPolicy.LatestSupportedForKind(RealmSchemaSafety.Classify(schema.Value))}）才能打开。请在「修复」页点击「升级到最新版」。",
                     ex);
             }
         }

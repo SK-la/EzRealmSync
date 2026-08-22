@@ -610,6 +610,13 @@ namespace osu.EzRealmSync.AppModel
                 ? Loc.Format("ConfirmDelete", selected.Count, sourceFile.DisplayName)
                 : Loc.Format("ConfirmAdd", selected.Count, targetFile.DisplayName);
 
+            if (sourceFile.SchemaVersion is int schemaA && targetFile.SchemaVersion is int schemaB)
+            {
+                string syncWarning = RealmSchemaTransitionAssessor.DescribeSyncPairWarning(schemaA, schemaB);
+                if (!string.IsNullOrWhiteSpace(syncWarning))
+                    confirmMessage = syncWarning + Environment.NewLine + Environment.NewLine + confirmMessage;
+            }
+
             if (!await ConfirmAsync(confirmMessage, Loc.Get("ConfirmTitle"), delete).ConfigureAwait(false))
                 return;
 
@@ -1072,16 +1079,33 @@ namespace osu.EzRealmSync.AppModel
 
         public async Task ApplyAllFixesAsync() => await applyFixesAsync(FixIssues.Select(i => i.Id).ToList()).ConfigureAwait(false);
 
-        public async Task ConvertSelectedFixRealmToOfficialAsync()
+        public async Task ConvertSelectedFixRealmToOfficialAsync(OfficialConvertTarget convertTarget)
         {
             var file = getRealmFile(FixRealmId.Value);
             if (file == null)
                 return;
 
+            if (file.SchemaVersion == null || RealmSchemaSafety.Classify(file.SchemaVersion) != RealmDiskSchemaKind.EzExtended)
+            {
+                runOnUi(() => StatusMessage.Value = Loc.Get("ErrorConvertOfficialRequiresEz"));
+                return;
+            }
+
+            int readOfficial = OfficialConvertPlanner.ResolveTargetOfficialUpstream(
+                file.SchemaVersion.Value,
+                OfficialConvertTarget.PreserveReadUpstream);
+            int libOfficial = OfficialConvertPlanner.ResolveTargetOfficialUpstream(
+                file.SchemaVersion.Value,
+                OfficialConvertTarget.UpgradeToLibUpstream);
+            int targetOfficial = convertTarget == OfficialConvertTarget.PreserveReadUpstream ? readOfficial : libOfficial;
+
             if (ConfirmAsync != null)
             {
                 string backupDir = EzRealmSyncDefaults.DefaultBackupDirectory;
-                string message = Loc.Format("FixConvertOfficialConfirm", backupDir);
+                string message = convertTarget == OfficialConvertTarget.PreserveReadUpstream
+                    ? Loc.Format("FixConvertOfficialPreserveConfirm", targetOfficial, backupDir)
+                    : Loc.Format("FixConvertOfficialLibConfirm", targetOfficial, backupDir);
+
                 if (!await ConfirmAsync(message, Loc.Get("FixConvertOfficialTitle"), true).ConfigureAwait(false))
                     return;
             }
@@ -1091,7 +1115,7 @@ namespace osu.EzRealmSync.AppModel
             try
             {
                 var progress = createScanProgress();
-                var result = await fixService.ConvertToOfficialRealmAsync(file.Id, progress: progress).ConfigureAwait(false);
+                var result = await fixService.ConvertToOfficialRealmAsync(file.Id, convertTarget, progress: progress).ConfigureAwait(false);
                 await RefreshRealmFilesAsync(affectBusy: false).ConfigureAwait(false);
 
                 runOnUi(() =>
@@ -1099,6 +1123,7 @@ namespace osu.EzRealmSync.AppModel
                     StatusMessage.Value = Loc.Format(
                         "StatusFixConvertedOfficial",
                         Path.GetFileName(result.TargetRealmFilePath),
+                        result.TargetSchemaVersion,
                         result.BackupPath ?? EzRealmSyncDefaults.DefaultBackupDirectory,
                         result.AppliedCount);
                     Progress.Value = 1;
@@ -1124,9 +1149,13 @@ namespace osu.EzRealmSync.AppModel
                 ? EzRealmSyncDefaults.DefaultBackupDirectory
                 : BackupDirectory.Value;
 
+            int libTarget = file.SchemaVersion != null && RealmSchemaSafety.IsOfficialDiskSchema(file.SchemaVersion)
+                ? RealmSchemaToolPolicy.MaxSupportedOfficialSchema
+                : RealmSchemaToolPolicy.MaxSupportedEzFileSchema;
+
             if (ConfirmAsync != null)
             {
-                string message = Loc.Format("FixUpgradeSchemaConfirm", backupDir);
+                string message = Loc.Format("FixUpgradeSchemaConfirm", libTarget, backupDir);
                 if (!await ConfirmAsync(message, Loc.Get("FixUpgradeSchemaTitle"), true).ConfigureAwait(false))
                     return;
             }

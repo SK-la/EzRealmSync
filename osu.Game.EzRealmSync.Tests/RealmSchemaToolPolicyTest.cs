@@ -1,7 +1,6 @@
 #if HAS_EZ_OSU_GAME
 using NUnit.Framework;
 using osu.Game.Database;
-using osu.Game.EzRealmSync.Errors;
 using osu.Game.EzRealmSync.Models;
 
 namespace osu.Game.EzRealmSync.Tests
@@ -10,29 +9,36 @@ namespace osu.Game.EzRealmSync.Tests
     public class RealmSchemaToolPolicyTest
     {
         [Test]
-        public void Min_and_max_are_same_major()
+        public void Min_is_constant_max_is_lib()
         {
-            Assert.That(RealmSchemaToolPolicy.MinSupportedOfficialSchema, Is.EqualTo(RealmAccess.UpstreamSchemaVersion));
+            Assert.That(RealmSchemaToolPolicy.MinSupportedOfficialSchema, Is.EqualTo(RealmSchemaRevisionCatalog.MinSupportedOfficialUpstream));
             Assert.That(RealmSchemaToolPolicy.MaxSupportedOfficialSchema, Is.EqualTo(RealmAccess.UpstreamSchemaVersion));
-            Assert.That(RealmSchemaToolPolicy.MinSupportedEzFileSchema, Is.EqualTo(RealmAccess.UpstreamSchemaVersion * 1000 + 1));
             Assert.That(RealmSchemaToolPolicy.MaxSupportedEzFileSchema, Is.EqualTo(RealmAccess.EzFileSchemaVersion));
-            Assert.That(RealmSchemaToolPolicy.MaxSupportedEzFileSchema / 1000, Is.EqualTo(RealmAccess.UpstreamSchemaVersion));
         }
 
         [Test]
-        public void EnsureCanOpen_rejects_below_min_ez()
+        public void EnsureCanOpen_rejects_below_min_ez_revision()
         {
-            int below = RealmSchemaToolPolicy.MinSupportedEzFileSchema - 1;
-            var ex = Assert.Throws<RealmUserOperationException>((Action)(() => RealmSchemaToolPolicy.EnsureCanOpen(below)));
-            Assert.That(ex!.Kind, Is.EqualTo(RealmUserErrorKind.SchemaTooLow));
+            int below = 51 * 1000 + (RealmSchemaRevisionCatalog.MinSupportedEzRevision - 1);
+            var ex = Assert.Throws<Errors.RealmUserOperationException>((Action)(() => RealmSchemaToolPolicy.EnsureCanOpen(below)));
+            Assert.That(ex!.Kind, Is.EqualTo(Errors.RealmUserErrorKind.SchemaTooLow));
         }
 
         [Test]
         public void EnsureCanOpen_rejects_above_max_ez()
         {
             int above = RealmSchemaToolPolicy.MaxSupportedEzFileSchema + 1;
-            var ex = Assert.Throws<RealmUserOperationException>((Action)(() => RealmSchemaToolPolicy.EnsureCanOpen(above)));
-            Assert.That(ex!.Kind, Is.EqualTo(RealmUserErrorKind.SchemaTooHigh));
+            var ex = Assert.Throws<Errors.RealmUserOperationException>((Action)(() => RealmSchemaToolPolicy.EnsureCanOpen(above)));
+            Assert.That(ex!.Kind, Is.EqualTo(Errors.RealmUserErrorKind.SchemaTooHigh));
+        }
+
+        [Test]
+        public void EnsureCanOpen_accepts_51006_when_lib_is_newer()
+        {
+            if (RealmAccess.UpstreamSchemaVersion <= 51)
+                Assert.Ignore("lib upstream 未高于 51，跳过 51006 用例。");
+
+            Assert.DoesNotThrow((Action)(() => RealmSchemaToolPolicy.EnsureCanOpen(51_006)));
         }
 
         [Test]

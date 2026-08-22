@@ -70,7 +70,8 @@
     <WrapPanel Grid.Row="2" Margin="0,0,0,8">
       <ui:Button x:Name="SelectAllButton" Margin="0,0,8,0" Click="SelectAll_OnClick" />
       <ui:Button x:Name="UpgradeSchemaButton" Margin="0,0,8,0" Click="UpgradeSchema_OnClick" Icon="{ui:SymbolIcon ArrowUp24}" />
-      <ui:Button x:Name="ConvertOfficialButton" Margin="0,0,8,0" Click="ConvertOfficial_OnClick" Icon="{ui:SymbolIcon ArrowSync24}" />
+      <ui:Button x:Name="ConvertOfficialPreserveButton" Margin="0,0,8,0" Click="ConvertOfficialPreserve_OnClick" Icon="{ui:SymbolIcon ArrowSync24}" />
+      <ui:Button x:Name="ConvertOfficialToLibButton" Margin="0,0,8,0" Click="ConvertOfficialToLib_OnClick" Icon="{ui:SymbolIcon ArrowSync24}" />
     </WrapPanel>
 
     <ui:Card Grid.Row="3"

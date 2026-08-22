@@ -71,10 +71,11 @@ namespace osu.Game.EzRealmSync.Realm
 
         public Task<RealmOfficialConversionResult> ConvertToOfficialRealmAsync(
             string realmId,
+            OfficialConvertTarget convertTarget,
             string? outputRealmFilePath = null,
             IProgress<ScanProgress>? progress = null,
             CancellationToken cancellationToken = default) =>
-            Task.Run(() => convertToOfficialCore(realmId, outputRealmFilePath, progress, cancellationToken), cancellationToken);
+            Task.Run(() => convertToOfficialCore(realmId, convertTarget, outputRealmFilePath, progress, cancellationToken), cancellationToken);
 
         public Task<RealmSchemaUpgradeResult> UpgradeSchemaToLatestAsync(
             string realmId,
@@ -197,6 +198,7 @@ namespace osu.Game.EzRealmSync.Realm
 
         private RealmOfficialConversionResult convertToOfficialCore(
             string realmId,
+            OfficialConvertTarget convertTarget,
             string? outputRealmFilePath,
             IProgress<ScanProgress>? progress,
             CancellationToken cancellationToken)
@@ -223,15 +225,11 @@ namespace osu.Game.EzRealmSync.Realm
             progress?.Report(new ScanProgress { Progress = 0.05, Message = "正在创建自动备份…" });
             string backupPath = RealmFileBackup.CreateTimestampedCopy(sourcePath, EzRealmSyncDefaults.DefaultBackupDirectory);
 
-            int sourceSchema = file.SchemaVersion
+            int sourceSchema = RealmDiskSchemaReader.TryReadSchemaVersion(sourcePath)
+                               ?? file.SchemaVersion
                                ?? throw new InvalidOperationException($"无法读取所选库的 schema 版本：{sourcePath}");
-            if (needsSchemaUpgradeBeforeOfficialConvert(sourcePath, sourceSchema))
-            {
-                progress?.Report(new ScanProgress { Progress = 0.08, Message = "转回官方前先升级到当前 schema…" });
-                var upgrade = RealmSchemaUpgrader.UpgradeInPlace(sourcePath, sourceSchema, progress, cancellationToken, backupPath);
-                sourceSchema = upgrade.TargetSchemaVersion;
-                invalidateAfterMutatingRealm(realmId, sourcePath);
-            }
+
+            int targetOfficialUpstream = OfficialConvertPlanner.ResolveTargetOfficialUpstream(sourceSchema, convertTarget);
 
             string tempRoot = EzRealmSyncDataPaths.CreateTempSubdirectory("official-convert");
             string tempTargetPath = Path.Combine(tempRoot, sourceName);
@@ -241,8 +239,8 @@ namespace osu.Game.EzRealmSync.Realm
 
             try
             {
-                progress?.Report(new ScanProgress { Progress = 0.12, Message = "正在创建官方目标库…" });
-                createEmptyOfficialRealm(tempTargetPath);
+                progress?.Report(new ScanProgress { Progress = 0.12, Message = $"正在创建官方目标库（schema {targetOfficialUpstream}）…" });
+                createEmptyOfficialRealm(tempTargetPath, targetOfficialUpstream);
 
                 RealmAuxiliaryTablePreserver.Snapshot auxiliary;
                 using (var captureAccess = RealmSchemaProbe.Open(sourcePath, sourceSchema))
@@ -253,7 +251,7 @@ namespace osu.Game.EzRealmSync.Realm
                 var sourceSnapshot = RealmDiffReader.Read(sourceAccess, progress, cancellationToken);
                 var itemIds = sourceSnapshot.Entities.Select(e => e.Id).Distinct().ToList();
 
-                int targetSchema = RealmSchemaProbe.TryReadSchemaVersion(tempTargetPath) ?? RealmAccess.UpstreamSchemaVersion;
+                int targetSchema = RealmSchemaProbe.TryReadSchemaVersion(tempTargetPath) ?? targetOfficialUpstream;
                 var writePlan = new RealmWritePlan
                 {
                     SourceRealmFilePath = sourcePath,
@@ -309,6 +307,8 @@ namespace osu.Game.EzRealmSync.Realm
                     TargetRealmFilePath = sourcePath,
                     AppliedCount = apply.AppliedCount,
                     BackupPath = backupPath,
+                    TargetSchemaVersion = targetSchema,
+                    ConvertTarget = convertTarget,
                 };
             }
             finally
@@ -318,34 +318,15 @@ namespace osu.Game.EzRealmSync.Realm
             }
         }
 
-        private static void createEmptyOfficialRealm(string targetPath)
+        private static void createEmptyOfficialRealm(string targetPath, int targetOfficialUpstream)
         {
             string root = RealmWorkspacePaths.ResolveStorageRoot(targetPath);
             string fileName = Path.GetFileName(targetPath);
 
             Directory.CreateDirectory(root);
 
-            using var access = new OfficialRealmAccess(new NativeStorage(root), fileName, allowDestructiveRecoveryOnSchemaMismatch: false);
+            using var access = OfficialRealmAccess.OpenWithoutMigration(new NativeStorage(root), fileName, targetOfficialUpstream);
             access.Run(_ => { });
-        }
-
-        /// <summary>转官方前：未到当前 Ez schema，或当前模型无法 pinned 打开时，先升级。</summary>
-        private static bool needsSchemaUpgradeBeforeOfficialConvert(string realmFilePath, int diskSchemaVersion)
-        {
-            if (diskSchemaVersion != RealmSchemaToolPolicy.MaxSupportedEzFileSchema)
-                return true;
-
-            try
-            {
-                using var access = RealmSchemaProbe.Open(realmFilePath, diskSchemaVersion);
-                access.Run(_ => { });
-                return false;
-            }
-            catch (RealmUserOperationException ex) when (ex.Kind is RealmUserErrorKind.MigrationRequired or RealmUserErrorKind.SchemaModelMismatch)
-            {
-                // 已是最新却模型不匹配时，UpgradeInPlace 会抛 SchemaModelMismatch，不应假装可转
-                return ex.Kind == RealmUserErrorKind.MigrationRequired;
-            }
         }
 
         public Task<RealmExportCatalog> LoadCatalogAsync(

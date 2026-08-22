@@ -12,23 +12,23 @@ namespace osu.Game.EzRealmSync.Tests
     public class RealmSchemaUpgraderTest
     {
         [Test]
-        public void UpgradeInPlace_migrates_same_major_ez_revision_to_latest()
+        public void UpgradeInPlace_migrates_supported_ez_revision_to_lib_latest()
         {
-            int minEz = RealmSchemaToolPolicy.MinSupportedEzFileSchema;
+            int sourceEz = 51 * 1000 + RealmSchemaRevisionCatalog.MinSupportedEzRevision;
             int latest = RealmAccess.EzFileSchemaVersion;
-            if (minEz >= latest)
-                Assert.Ignore("当前 Ez 仅一个修订，无法测同大版本内升级。");
+            if (sourceEz >= latest)
+                Assert.Ignore("无可用的较低 Ez 修订用于升级测试。");
 
             string path = Path.Combine(TestContext.CurrentContext.WorkDirectory, $"upgrade_{Guid.NewGuid():N}.realm");
 
             try
             {
                 // 用当前 object schema 写入但标较低同大版本号 —— 仅验证 migration 路径能把版本号抬到最新。
-                RealmNativeLifetime.CreateEmptyRealmFile(path, (ulong)minEz);
+                RealmNativeLifetime.CreateEmptyRealmFile(path, (ulong)sourceEz);
 
-                var result = RealmSchemaUpgrader.UpgradeInPlace(path, minEz);
+                var result = RealmSchemaUpgrader.UpgradeInPlace(path, sourceEz);
 
-                Assert.That(result.SourceSchemaVersion, Is.EqualTo(minEz));
+                Assert.That(result.SourceSchemaVersion, Is.EqualTo(sourceEz));
                 Assert.That(result.TargetSchemaVersion, Is.EqualTo(latest));
                 Assert.That(result.AlreadyUpToDate, Is.False);
 
@@ -65,9 +65,7 @@ namespace osu.Game.EzRealmSync.Tests
         [Test]
         public void UpgradeInPlace_rejects_below_min_supported()
         {
-            int below = RealmSchemaToolPolicy.MinSupportedEzFileSchema - 1;
-            if (below < 1000)
-                Assert.Ignore("无法构造低于最低支持的 Ez schema。");
+            int below = 51 * 1000 + (RealmSchemaRevisionCatalog.MinSupportedEzRevision - 1);
 
             string path = Path.Combine(TestContext.CurrentContext.WorkDirectory, $"too_low_{Guid.NewGuid():N}.realm");
 
