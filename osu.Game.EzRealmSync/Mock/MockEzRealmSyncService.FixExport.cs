@@ -143,6 +143,7 @@ namespace osu.Game.EzRealmSync.Mock
             string realmId,
             OfficialConvertTarget convertTarget,
             string? outputRealmFilePath = null,
+            string? backupDirectory = null,
             IProgress<ScanProgress>? progress = null,
             CancellationToken cancellationToken = default)
         {
@@ -159,12 +160,22 @@ namespace osu.Game.EzRealmSync.Mock
 
             await File.WriteAllTextAsync(target, $"// mock official realm converted from {snapshot.DisplayName}", cancellationToken).ConfigureAwait(false);
 
+            string backupDir = string.IsNullOrWhiteSpace(backupDirectory)
+                ? EzRealmSyncDefaults.DefaultBackupDirectory
+                : backupDirectory;
+            Directory.CreateDirectory(backupDir);
+
             return new RealmOfficialConversionResult
             {
                 TargetRealmFilePath = target,
                 AppliedCount = snapshot.Groups.Sum(g => g.Rows.Count),
-                BackupPath = Path.Combine(Path.GetTempPath(), $"client_backup_{Guid.NewGuid():N}.realm"),
-                TargetSchemaVersion = convertTarget == OfficialConvertTarget.UpgradeToLibUpstream ? 52 : 51,
+                BackupPath = Path.Combine(backupDir, $"client_backup_{Guid.NewGuid():N}.realm"),
+                TargetSchemaVersion = convertTarget switch
+                {
+                    OfficialConvertTarget.UpgradeToLibUpstream => 52,
+                    OfficialConvertTarget.LibMinusOneUpstream => 51,
+                    _ => 51,
+                },
                 ConvertTarget = convertTarget,
             };
         }

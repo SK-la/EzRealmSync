@@ -17,6 +17,18 @@ namespace osu.Game.EzRealmSync.Realm
         public static void StripEzOnlyBeatmapFields(BeatmapInfo beatmap) => resetUnknownEzBeatmapMetadata(beatmap);
 
         /// <summary>
+        /// 写入官方 schema 目标前：谱面集级 Ez Hosting 字段归零为 internal。
+        /// </summary>
+        public static void StripEzOnlyBeatmapSetFields(BeatmapSetInfo set)
+        {
+            set.HostingKind = BeatmapSetHostingKind.Internal;
+            set.ExternalContentRoot = string.Empty;
+
+            foreach (var beatmap in set.Beatmaps)
+                StripEzOnlyBeatmapFields(beatmap);
+        }
+
+        /// <summary>
         /// 从官方 schema 源写入 Ez 目标前：缺列 Detach 可能为 0/false，归一为待回填哨兵。
         /// 写入后由 Ez <see cref="osu.Game.Beatmaps.BeatmapUpdater"/> / BackgroundDataStoreProcessor 增量回填。
         /// </summary>

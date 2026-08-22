@@ -28,6 +28,7 @@ namespace osu.EzRealmSync.Desktop.Pages
             pageBound = true;
             vm = shell;
             refreshLabels();
+            refreshConvertButtons();
             setupGrid();
             configureIssuesGridBehavior();
 
@@ -45,6 +46,10 @@ namespace osu.EzRealmSync.Desktop.Pages
                 if (e.PropertyName == nameof(ShellViewModel.FixIssues))
                     Dispatcher.Invoke(() => IssuesGrid.ItemsSource = vm!.FixIssues);
 
+                if (e.PropertyName == nameof(ShellViewModel.FixConvertPrimaryButtonLabel)
+                    || e.PropertyName == nameof(ShellViewModel.CanUseFixConvertPrimary))
+                    Dispatcher.Invoke(refreshConvertButtons);
+
                 if (e.PropertyName == nameof(ShellViewModel.CanUseFixAndExport)
                     || e.PropertyName == nameof(ShellViewModel.IsBusy))
                     Dispatcher.Invoke(updateEnabled);
@@ -52,6 +57,9 @@ namespace osu.EzRealmSync.Desktop.Pages
 
             vm.Presenter.FixIssuesChanged += () => Dispatcher.Invoke(() => IssuesGrid.ItemsSource = vm!.FixIssues);
             vm.Presenter.WorkspaceCapabilitiesChanged += () => Dispatcher.Invoke(updateEnabled);
+
+            vm.Presenter.FixConvertLabelsChanged += () => Dispatcher.Invoke(refreshConvertButtons);
+            vm.Presenter.LabelsChanged += () => Dispatcher.Invoke(refreshLabels);
 
             updateEnabled();
         }
@@ -64,10 +72,22 @@ namespace osu.EzRealmSync.Desktop.Pages
             FixAllButton.IsEnabled = enabled;
             SelectAllButton.IsEnabled = enabled;
             UpgradeSchemaButton.IsEnabled = enabled;
-            ConvertOfficialPreserveButton.IsEnabled = enabled;
+            ConvertOfficialPreserveButton.IsEnabled = enabled && vm!.CanUseFixConvertPrimary;
             ConvertOfficialToLibButton.IsEnabled = enabled;
             RealmSelectCombo.IsEnabled = enabled;
             ReplacementBox.IsEnabled = enabled;
+        }
+
+        private void refreshConvertButtons()
+        {
+            if (vm == null)
+                return;
+
+            ConvertOfficialPreserveButton.Content = string.IsNullOrWhiteSpace(vm.FixConvertPrimaryButtonLabel)
+                ? Loc.Get("FixConvertOfficialRead")
+                : vm.FixConvertPrimaryButtonLabel;
+            ConvertOfficialToLibButton.Content = Loc.Get("FixConvertOfficialToLib");
+            updateEnabled();
         }
 
         private void refreshLabels()
@@ -79,8 +99,7 @@ namespace osu.EzRealmSync.Desktop.Pages
             FixAllButton.Content = Loc.Get("FixApplyAll");
             SelectAllButton.Content = Loc.Get("SelectAll");
             UpgradeSchemaButton.Content = Loc.Get("FixUpgradeSchema");
-            ConvertOfficialPreserveButton.Content = Loc.Get("FixConvertOfficialPreserve");
-            ConvertOfficialToLibButton.Content = Loc.Get("FixConvertOfficialToLib");
+            refreshConvertButtons();
         }
 
         private void refreshRealmCombo()

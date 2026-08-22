@@ -73,9 +73,10 @@ namespace osu.Game.EzRealmSync.Realm
             string realmId,
             OfficialConvertTarget convertTarget,
             string? outputRealmFilePath = null,
+            string? backupDirectory = null,
             IProgress<ScanProgress>? progress = null,
             CancellationToken cancellationToken = default) =>
-            Task.Run(() => convertToOfficialCore(realmId, convertTarget, outputRealmFilePath, progress, cancellationToken), cancellationToken);
+            Task.Run(() => convertToOfficialCore(realmId, convertTarget, outputRealmFilePath, backupDirectory, progress, cancellationToken), cancellationToken);
 
         public Task<RealmSchemaUpgradeResult> UpgradeSchemaToLatestAsync(
             string realmId,
@@ -200,6 +201,7 @@ namespace osu.Game.EzRealmSync.Realm
             string realmId,
             OfficialConvertTarget convertTarget,
             string? outputRealmFilePath,
+            string? backupDirectory,
             IProgress<ScanProgress>? progress,
             CancellationToken cancellationToken)
         {
@@ -223,7 +225,10 @@ namespace osu.Game.EzRealmSync.Realm
                 throw new RealmUserOperationException(RealmUserErrorKind.FileInUse, guardError);
 
             progress?.Report(new ScanProgress { Progress = 0.05, Message = "正在创建自动备份…" });
-            string backupPath = RealmFileBackup.CreateTimestampedCopy(sourcePath, EzRealmSyncDefaults.DefaultBackupDirectory);
+            string backupDir = string.IsNullOrWhiteSpace(backupDirectory)
+                ? EzRealmSyncDefaults.DefaultBackupDirectory
+                : backupDirectory;
+            string backupPath = RealmFileBackup.CreateTimestampedCopy(sourcePath, backupDir);
 
             int sourceSchema = RealmDiskSchemaReader.TryReadSchemaVersion(sourcePath)
                                ?? file.SchemaVersion
@@ -242,49 +247,23 @@ namespace osu.Game.EzRealmSync.Realm
                 progress?.Report(new ScanProgress { Progress = 0.12, Message = $"正在创建官方目标库（schema {targetOfficialUpstream}）…" });
                 createEmptyOfficialRealm(tempTargetPath, targetOfficialUpstream);
 
-                RealmAuxiliaryTablePreserver.Snapshot auxiliary;
-                using (var captureAccess = RealmSchemaProbe.Open(sourcePath, sourceSchema))
-                    auxiliary = RealmAuxiliaryTablePreserver.Capture(captureAccess);
-
-                progress?.Report(new ScanProgress { Progress = 0.2, Message = "正在读取污染库内容…" });
-                using var sourceAccess = RealmSchemaProbe.Open(sourcePath, sourceSchema);
-                var sourceSnapshot = RealmDiffReader.Read(sourceAccess, progress, cancellationToken);
-                var itemIds = sourceSnapshot.Entities.Select(e => e.Id).Distinct().ToList();
+                using var sourceOpener = RealmOfficialConvertSourceOpener.Open(sourcePath, sourceSchema, backupPath, progress, cancellationToken);
+                var auxiliary = RealmAuxiliaryTablePreserver.Capture(sourceOpener.Access);
 
                 int targetSchema = RealmSchemaProbe.TryReadSchemaVersion(tempTargetPath) ?? targetOfficialUpstream;
-                var writePlan = new RealmWritePlan
-                {
-                    SourceRealmFilePath = sourcePath,
-                    TargetRealmFilePath = tempTargetPath,
-                    SourceKind = RealmDiskSchemaKind.EzExtended,
-                    TargetKind = RealmDiskSchemaKind.PpyClient,
-                    SourceSchemaVersion = sourceSchema,
-                    TargetSchemaVersion = targetSchema,
-                    LegacyDirection = SyncDirection.EzToOfficial,
-                };
-
-                var request = new ApplyRequest
-                {
-                    WritePlan = writePlan,
-                    Direction = SyncDirection.EzToOfficial,
-                    ItemIds = itemIds,
-                    CreateBackup = false,
-                    DeleteFromSource = false,
-                };
 
                 cancellationToken.ThrowIfCancellationRequested();
 
-                progress?.Report(new ScanProgress { Progress = 0.4, Message = "正在写入官方数据…" });
+                progress?.Report(new ScanProgress { Progress = 0.2, Message = "正在批量迁移核心表到官方库…" });
                 using var targetAccess = RealmDiffReader.OpenOfficialRealm(tempTargetPath, targetSchema);
-                var apply = RealmRowCopier.Apply(
-                    request,
-                    sourceAccess,
+                int applied = RealmSchemaMigrationCopier.CopyCoreDataEzToOfficial(
+                    sourceOpener.Access,
                     targetAccess,
                     progress == null
                         ? null
-                        : new Progress<ApplyProgress>(p => progress.Report(new ScanProgress
+                        : new Progress<ScanProgress>(p => progress.Report(new ScanProgress
                         {
-                            Progress = 0.4 + p.Progress * 0.45,
+                            Progress = 0.2 + p.Progress * 0.65,
                             Message = p.Message,
                         })),
                     cancellationToken);
@@ -305,7 +284,7 @@ namespace osu.Game.EzRealmSync.Realm
                 return new RealmOfficialConversionResult
                 {
                     TargetRealmFilePath = sourcePath,
-                    AppliedCount = apply.AppliedCount,
+                    AppliedCount = applied,
                     BackupPath = backupPath,
                     TargetSchemaVersion = targetSchema,
                     ConvertTarget = convertTarget,

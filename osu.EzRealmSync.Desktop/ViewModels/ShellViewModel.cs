@@ -66,6 +66,8 @@ namespace osu.EzRealmSync.Desktop.ViewModels
             bindPresenter(presenter.DataRealmId, nameof(DataRealmId));
             bindPresenter(presenter.SyncRealmIdA, nameof(SyncRealmIdA));
             bindPresenter(presenter.SyncRealmIdB, nameof(SyncRealmIdB));
+            bindPresenter(presenter.FixConvertPrimaryButtonLabel, nameof(FixConvertPrimaryButtonLabel));
+            bindPresenter(presenter.CanUseFixConvertPrimary, nameof(CanUseFixConvertPrimary));
             bindPresenter(presenter.FixRealmId, nameof(FixRealmId));
             bindPresenter(presenter.ExportRealmId, nameof(ExportRealmId));
             bindPresenter(presenter.EntityFilter, nameof(EntityFilter));
@@ -88,6 +90,7 @@ namespace osu.EzRealmSync.Desktop.ViewModels
             presenter.DataClassesChanged += () => Application.Current.Dispatcher.Invoke(onDataClassesChanged);
             presenter.BrowseTableChanged += () => Application.Current.Dispatcher.Invoke(onBrowseTableChanged);
             presenter.LabelsChanged += () => Application.Current.Dispatcher.Invoke(() => OnPropertyChanged(nameof(WindowTitle)));
+            presenter.FixConvertLabelsChanged += () => Application.Current.Dispatcher.Invoke(onFixConvertLabelsChanged);
             Loc.LanguageChanged += () => Application.Current.Dispatcher.Invoke(() => OnPropertyChanged(nameof(WindowTitle)));
 
             RefreshRealmFilesCommand = createAsyncCommand(() => presenter.RefreshRealmFilesAsync(), () => !IsBusy);
@@ -105,8 +108,8 @@ namespace osu.EzRealmSync.Desktop.ViewModels
             ApplyFixSelectedCommand = createAsyncCommand(() => presenter.ApplySelectedFixesAsync(), () => !IsBusy && CanUseFixAndExport);
             ApplyAllFixesCommand = createAsyncCommand(() => presenter.ApplyAllFixesAsync(), () => !IsBusy && CanUseFixAndExport);
             ConvertFixRealmPreserveCommand = createAsyncCommand(
-                () => presenter.ConvertSelectedFixRealmToOfficialAsync(OfficialConvertTarget.PreserveReadUpstream),
-                () => !IsBusy && CanUseFixAndExport);
+                () => presenter.ConvertSelectedFixRealmToOfficialPrimaryAsync(),
+                () => !IsBusy && CanUseFixAndExport && CanUseFixConvertPrimary);
             ConvertFixRealmToLibCommand = createAsyncCommand(
                 () => presenter.ConvertSelectedFixRealmToOfficialAsync(OfficialConvertTarget.UpgradeToLibUpstream),
                 () => !IsBusy && CanUseFixAndExport);
@@ -256,6 +259,10 @@ namespace osu.EzRealmSync.Desktop.ViewModels
 
         public bool CanUseFixAndExport => Presenter.CanUseFixAndExport.Value;
 
+        public bool CanUseFixConvertPrimary => Presenter.CanUseFixConvertPrimary.Value;
+
+        public string FixConvertPrimaryButtonLabel => Presenter.FixConvertPrimaryButtonLabel.Value;
+
         public string? FixRealmId
         {
             get => Presenter.FixRealmId.Value;
@@ -338,11 +345,19 @@ namespace osu.EzRealmSync.Desktop.ViewModels
 
         public async Task RegisterDroppedRealmAsync(string path) => await Presenter.RegisterRealmFileAsync(path).ConfigureAwait(false);
 
+        private void onFixConvertLabelsChanged()
+        {
+            OnPropertyChanged(nameof(FixConvertPrimaryButtonLabel));
+            OnPropertyChanged(nameof(CanUseFixConvertPrimary));
+        }
+
         private void onRealmFilesChanged()
         {
             OnPropertyChanged(nameof(RealmFiles));
             OnPropertyChanged(nameof(RealmFileRows));
             OnPropertyChanged(nameof(CanUseFixAndExport));
+            OnPropertyChanged(nameof(CanUseFixConvertPrimary));
+            OnPropertyChanged(nameof(FixConvertPrimaryButtonLabel));
             refreshRealmComboSources();
         }
 

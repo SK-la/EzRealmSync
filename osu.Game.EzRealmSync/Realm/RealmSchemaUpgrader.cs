@@ -169,6 +169,9 @@ namespace osu.Game.EzRealmSync.Realm
             }
         }
 
+        internal static RealmAccess OpenWithMigrationForTool(string realmFilePath, RealmDiskSchemaKind kind) =>
+            openWithMigrationForTool(realmFilePath, kind);
+
         private static RealmAccess openWithMigrationForTool(string realmFilePath, RealmDiskSchemaKind kind)
         {
             string fullPath = Path.GetFullPath(realmFilePath);

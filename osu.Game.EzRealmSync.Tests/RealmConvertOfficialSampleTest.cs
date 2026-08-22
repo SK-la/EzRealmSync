@@ -50,7 +50,9 @@ namespace osu.Game.EzRealmSync.Tests
 
             try
             {
-                RealmOfficialConversionResult result = await dataService.ConvertToOfficialRealmAsync(before.Id, OfficialConvertTarget.PreserveReadUpstream);
+                RealmOfficialConversionResult result = await dataService.ConvertToOfficialRealmAsync(
+                    before.Id,
+                    OfficialConvertTarget.PreserveReadUpstream);
                 Assert.That(result.BackupPath, Is.Not.Null.And.Not.Empty);
                 Assert.That(File.Exists(result.BackupPath!), Is.True);
                 Assert.That(result.ConvertTarget, Is.EqualTo(OfficialConvertTarget.PreserveReadUpstream));
@@ -88,6 +90,35 @@ namespace osu.Game.EzRealmSync.Tests
                     RealmUserErrorKind.MigrationRequired,
                     RealmUserErrorKind.SchemaTooLow,
                     RealmUserErrorKind.SchemaModelMismatch));
+            }
+        }
+
+        [Test]
+        public async Task ConvertToOfficialRealmAsync_uses_custom_backup_directory()
+        {
+            RealmSampleInfo sample = pick_ez_sample_with_realm_file();
+            using var writable = RealmSampleFixture.CreateWritableCopy(sample);
+            var dataService = new RealmRealmDataService();
+            var entry = await dataService.RegisterRealmFileAsync(writable.RealmFilePath);
+
+            string customBackupDir = Path.Combine(writable.TempDirectory, "custom-backups");
+
+            try
+            {
+                RealmOfficialConversionResult result = await dataService.ConvertToOfficialRealmAsync(
+                    entry.Id,
+                    OfficialConvertTarget.PreserveReadUpstream,
+                    backupDirectory: customBackupDir);
+
+                Assert.That(result.BackupPath, Is.Not.Null.And.Not.Empty);
+                Assert.That(Path.GetDirectoryName(result.BackupPath!), Is.EqualTo(Path.GetFullPath(customBackupDir)));
+                Assert.That(File.Exists(result.BackupPath!), Is.True);
+            }
+            catch (RealmUserOperationException ex) when (ex.Kind is RealmUserErrorKind.MigrationRequired
+                                                         or RealmUserErrorKind.SchemaTooLow
+                                                         or RealmUserErrorKind.SchemaModelMismatch)
+            {
+                Assert.Ignore($"样本无法完成转官方：{ex.Kind}");
             }
         }
 

@@ -23,6 +23,7 @@ namespace osu.Game.EzRealmSync.Abstractions
             string realmId,
             OfficialConvertTarget convertTarget,
             string? outputRealmFilePath = null,
+            string? backupDirectory = null,
             IProgress<ScanProgress>? progress = null,
             CancellationToken cancellationToken = default);
 

@@ -82,7 +82,11 @@ namespace osu.EzRealmSync.AppModel
             DataRealmId.BindValueChanged(_ => persistSettings());
             SyncRealmIdA.BindValueChanged(_ => persistSettings());
             SyncRealmIdB.BindValueChanged(_ => persistSettings());
-            FixRealmId.BindValueChanged(_ => persistSettings());
+            FixRealmId.BindValueChanged(_ =>
+            {
+                persistSettings();
+                updateFixConvertPrimaryButtonState();
+            });
             ExportRealmId.BindValueChanged(_ =>
             {
                 persistSettings();
@@ -133,6 +137,10 @@ namespace osu.EzRealmSync.AppModel
         public Bindable<string?> SyncRealmIdB { get; } = new Bindable<string?>();
 
         public Bindable<string?> FixRealmId { get; } = new Bindable<string?>();
+
+        public Bindable<string> FixConvertPrimaryButtonLabel { get; } = new Bindable<string>(string.Empty);
+
+        public BindableBool CanUseFixConvertPrimary { get; } = new BindableBool(true);
 
         public Bindable<string?> ExportRealmId { get; } = new Bindable<string?>();
 
@@ -206,6 +214,7 @@ namespace osu.EzRealmSync.AppModel
         public event Action? BrowseTableChanged;
         public event Action? DataClassesChanged;
         public event Action? FixIssuesChanged;
+        public event Action? FixConvertLabelsChanged;
         public event Action? ExportItemsChanged;
         public event Action? WorkspaceCapabilitiesChanged;
         public event Action? LabelsChanged;
@@ -1079,6 +1088,9 @@ namespace osu.EzRealmSync.AppModel
 
         public async Task ApplyAllFixesAsync() => await applyFixesAsync(FixIssues.Select(i => i.Id).ToList()).ConfigureAwait(false);
 
+        public async Task ConvertSelectedFixRealmToOfficialPrimaryAsync() =>
+            await ConvertSelectedFixRealmToOfficialAsync(OfficialConvertPlanner.ResolvePrimaryConvertTarget(requireFixEzSchemaVersion())).ConfigureAwait(false);
+
         public async Task ConvertSelectedFixRealmToOfficialAsync(OfficialConvertTarget convertTarget)
         {
             var file = getRealmFile(FixRealmId.Value);
@@ -1091,20 +1103,22 @@ namespace osu.EzRealmSync.AppModel
                 return;
             }
 
-            int readOfficial = OfficialConvertPlanner.ResolveTargetOfficialUpstream(
-                file.SchemaVersion.Value,
-                OfficialConvertTarget.PreserveReadUpstream);
-            int libOfficial = OfficialConvertPlanner.ResolveTargetOfficialUpstream(
-                file.SchemaVersion.Value,
-                OfficialConvertTarget.UpgradeToLibUpstream);
-            int targetOfficial = convertTarget == OfficialConvertTarget.PreserveReadUpstream ? readOfficial : libOfficial;
+            if (convertTarget == OfficialConvertTarget.LibMinusOneUpstream
+                && !OfficialConvertPlanner.CanUseLibMinusOneConvert(file.SchemaVersion.Value))
+            {
+                runOnUi(() => StatusMessage.Value = Loc.Format("ErrorSchemaTooLow", Loc.Get("FixConvertOfficialLibMinusOne")));
+                return;
+            }
+
+            int targetOfficial = OfficialConvertPlanner.ResolveTargetOfficialUpstream(file.SchemaVersion.Value, convertTarget);
+
+            string backupDir = string.IsNullOrWhiteSpace(BackupDirectory.Value)
+                ? EzRealmSyncDefaults.DefaultBackupDirectory
+                : BackupDirectory.Value;
 
             if (ConfirmAsync != null)
             {
-                string backupDir = EzRealmSyncDefaults.DefaultBackupDirectory;
-                string message = convertTarget == OfficialConvertTarget.PreserveReadUpstream
-                    ? Loc.Format("FixConvertOfficialPreserveConfirm", targetOfficial, backupDir)
-                    : Loc.Format("FixConvertOfficialLibConfirm", targetOfficial, backupDir);
+                string message = formatConvertOfficialConfirm(convertTarget, targetOfficial, backupDir);
 
                 if (!await ConfirmAsync(message, Loc.Get("FixConvertOfficialTitle"), true).ConfigureAwait(false))
                     return;
@@ -1115,7 +1129,7 @@ namespace osu.EzRealmSync.AppModel
             try
             {
                 var progress = createScanProgress();
-                var result = await fixService.ConvertToOfficialRealmAsync(file.Id, convertTarget, progress: progress).ConfigureAwait(false);
+                var result = await fixService.ConvertToOfficialRealmAsync(file.Id, convertTarget, backupDirectory: backupDir, progress: progress).ConfigureAwait(false);
                 await RefreshRealmFilesAsync(affectBusy: false).ConfigureAwait(false);
 
                 runOnUi(() =>
@@ -1124,7 +1138,7 @@ namespace osu.EzRealmSync.AppModel
                         "StatusFixConvertedOfficial",
                         Path.GetFileName(result.TargetRealmFilePath),
                         result.TargetSchemaVersion,
-                        result.BackupPath ?? EzRealmSyncDefaults.DefaultBackupDirectory,
+                        result.BackupPath ?? string.Empty,
                         result.AppliedCount);
                     Progress.Value = 1;
                 });
@@ -1137,6 +1151,49 @@ namespace osu.EzRealmSync.AppModel
             {
                 setBusy(false);
             }
+        }
+
+        private int requireFixEzSchemaVersion()
+        {
+            var file = getRealmFile(FixRealmId.Value)
+                       ?? throw new InvalidOperationException("未选择 Ez Realm 文件。");
+
+            if (file.SchemaVersion == null || RealmSchemaSafety.Classify(file.SchemaVersion) != RealmDiskSchemaKind.EzExtended)
+                throw new InvalidOperationException(Loc.Get("ErrorConvertOfficialRequiresEz"));
+
+            return file.SchemaVersion.Value;
+        }
+
+        private static string formatConvertOfficialConfirm(OfficialConvertTarget convertTarget, int targetOfficial, string backupDir) =>
+            convertTarget switch
+            {
+                OfficialConvertTarget.PreserveReadUpstream => Loc.Format("FixConvertOfficialReadConfirm", targetOfficial, backupDir),
+                OfficialConvertTarget.LibMinusOneUpstream => Loc.Format("FixConvertOfficialLibMinusOneConfirm", targetOfficial, backupDir),
+                OfficialConvertTarget.UpgradeToLibUpstream => Loc.Format("FixConvertOfficialLibConfirm", targetOfficial, backupDir),
+                _ => Loc.Format("FixConvertOfficialLibConfirm", targetOfficial, backupDir),
+            };
+
+        private void updateFixConvertPrimaryButtonState()
+        {
+            var file = getRealmFile(FixRealmId.Value);
+
+            if (file?.SchemaVersion == null || RealmSchemaSafety.Classify(file.SchemaVersion) != RealmDiskSchemaKind.EzExtended)
+            {
+                FixConvertPrimaryButtonLabel.Value = Loc.Get("FixConvertOfficialRead");
+                CanUseFixConvertPrimary.Value = false;
+                FixConvertLabelsChanged?.Invoke();
+                return;
+            }
+
+            var primaryTarget = OfficialConvertPlanner.ResolvePrimaryConvertTarget(file.SchemaVersion.Value);
+            FixConvertPrimaryButtonLabel.Value = primaryTarget switch
+            {
+                OfficialConvertTarget.LibMinusOneUpstream => Loc.Get("FixConvertOfficialLibMinusOne"),
+                _ => Loc.Get("FixConvertOfficialRead"),
+            };
+            CanUseFixConvertPrimary.Value = primaryTarget != OfficialConvertTarget.LibMinusOneUpstream
+                                            || OfficialConvertPlanner.CanUseLibMinusOneConvert(file.SchemaVersion.Value);
+            FixConvertLabelsChanged?.Invoke();
         }
 
         public async Task UpgradeSelectedFixRealmSchemaAsync()
@@ -1778,6 +1835,7 @@ namespace osu.EzRealmSync.AppModel
                 SyncRealmIdB.Value = null;
                 FixRealmId.Value = null;
                 ExportRealmId.Value = null;
+                updateFixConvertPrimaryButtonState();
                 return;
             }
 
@@ -1790,6 +1848,7 @@ namespace osu.EzRealmSync.AppModel
             SyncRealmIdB.Value = pickRealmId(SyncRealmIdB.Value, second);
             FixRealmId.Value = pickRealmId(FixRealmId.Value, first);
             ExportRealmId.Value = pickRealmId(ExportRealmId.Value, first);
+            updateFixConvertPrimaryButtonState();
         }
 
         private string pickRealmId(string? current, string fallback) => !string.IsNullOrEmpty(current) && RealmFiles.Any(f => f.Id == current) ? current : fallback;
