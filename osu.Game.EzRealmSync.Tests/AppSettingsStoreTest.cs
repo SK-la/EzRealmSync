@@ -63,18 +63,8 @@ namespace osu.Game.EzRealmSync.Tests
         {
             var loaded = AppSettingsStore.Load(settingsPath);
             Assert.That(loaded.ConfirmBeforeDelete, Is.True);
-            Assert.That(loaded.BackupDirectory, Is.Not.Empty);
-        }
-
-        [Test]
-        public void Load_migrates_legacy_endpoint_a_to_search_directory()
-        {
-            var legacy = new EzRealmSyncAppSettings { EndpointAWorkspace = @"D:\legacy\ez" };
-            AppSettingsStore.Save(legacy, settingsPath);
-
-            var loaded = AppSettingsStore.Load(settingsPath);
-
-            Assert.That(loaded.SearchDirectory, Is.EqualTo(@"D:\legacy\ez"));
+            Assert.That(loaded.BackupDirectory, Is.EqualTo(EzRealmSyncDataPaths.BackupsDirectory));
+            Assert.That(loaded.ExportDirectory, Is.EqualTo(EzRealmSyncDataPaths.ExportsDirectory));
         }
     }
 }

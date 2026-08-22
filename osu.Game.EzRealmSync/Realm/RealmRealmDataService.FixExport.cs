@@ -233,7 +233,7 @@ namespace osu.Game.EzRealmSync.Realm
                 invalidateAfterMutatingRealm(realmId, sourcePath);
             }
 
-            string tempRoot = Path.Combine(Path.GetTempPath(), "EzRealmSync", "official-convert", Guid.NewGuid().ToString("N"));
+            string tempRoot = EzRealmSyncDataPaths.CreateTempSubdirectory("official-convert");
             string tempTargetPath = Path.Combine(tempRoot, sourceName);
             Directory.CreateDirectory(tempRoot);
 

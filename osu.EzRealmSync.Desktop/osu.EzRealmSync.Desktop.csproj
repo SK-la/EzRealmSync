@@ -30,4 +30,12 @@
     <PackageReference Include="WPF-UI.Tray" />
     <PackageReference Include="WPF-UI.Violeta" />
   </ItemGroup>
+
+  <ItemGroup>
+    <Content Include="..\readers\**\*">
+      <Link>readers\%(RecursiveDir)%(Filename)%(Extension)</Link>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
+    </Content>
+  </ItemGroup>
 </Project>

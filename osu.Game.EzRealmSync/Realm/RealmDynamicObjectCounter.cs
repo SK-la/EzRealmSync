@@ -28,7 +28,7 @@ namespace osu.Game.EzRealmSync.Realm
         public static Snapshot Capture(string realmFilePath)
         {
             string fullPath = Path.GetFullPath(realmFilePath);
-            string tempPathLocation = Path.Combine(Path.GetTempPath(), @"lazer");
+            string tempPathLocation = EzRealmSyncDataPaths.RealmPipeDirectory;
             if (!Directory.Exists(tempPathLocation))
                 Directory.CreateDirectory(tempPathLocation);
 

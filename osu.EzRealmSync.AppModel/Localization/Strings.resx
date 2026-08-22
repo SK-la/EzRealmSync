@@ -238,5 +238,5 @@
   <data name="ActiveReaderPackage" xml:space="preserve"><value>Reader used at startup</value></data>
   <data name="ReaderPackageDefault" xml:space="preserve"><value>Built-in NuGet / local lib (default)</value></data>
   <data name="ReaderPackageMissingLib" xml:space="preserve"><value> [missing lib]</value></data>
-  <data name="ReaderRestartHint" xml:space="preserve"><value>This build supports same-major schemas with a single built-in osu.Game only; cross-version reader packages are deferred. Restart after changing the reader.</value></data>
+  <data name="ReaderRestartHint" xml:space="preserve"><value>Place reader packages in the readers folder next to the exe (see path below). Restart after changing the reader.</value></data>
 </root>

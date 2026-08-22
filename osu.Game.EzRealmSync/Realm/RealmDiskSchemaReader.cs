@@ -60,7 +60,7 @@ namespace osu.Game.EzRealmSync.Realm
 
             try
             {
-                string tempPathLocation = Path.Combine(Path.GetTempPath(), @"lazer");
+                string tempPathLocation = EzRealmSyncDataPaths.RealmPipeDirectory;
                 if (!Directory.Exists(tempPathLocation))
                     Directory.CreateDirectory(tempPathLocation);
 

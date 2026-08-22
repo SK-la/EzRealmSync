@@ -54,7 +54,7 @@ namespace osu.Game.EzRealmSync.Realm
 
             string fullPath = Path.GetFullPath(realmFilePath);
             string filename = Path.GetFileName(fullPath);
-            string tempRoot = Path.Combine(Path.GetTempPath(), "EzRealmSync", "schema-upgrade", Guid.NewGuid().ToString("N"));
+            string tempRoot = EzRealmSyncDataPaths.CreateTempSubdirectory("schema-upgrade");
             string workRealmPath = Path.Combine(tempRoot, filename);
 
             Directory.CreateDirectory(tempRoot);

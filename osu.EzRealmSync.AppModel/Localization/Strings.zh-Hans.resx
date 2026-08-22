@@ -238,5 +238,5 @@
   <data name="ActiveReaderPackage" xml:space="preserve"><value>启动时使用的 reader</value></data>
   <data name="ReaderPackageDefault" xml:space="preserve"><value>内置 NuGet / 本地 lib（默认）</value></data>
   <data name="ReaderPackageMissingLib" xml:space="preserve"><value> [缺少 lib]</value></data>
-  <data name="ReaderRestartHint" xml:space="preserve"><value>本阶段仅支持同大版本、单份内置 osu.Game；跨版本 reader 包为后续专题。切换 reader 后需重启应用。</value></data>
+  <data name="ReaderRestartHint" xml:space="preserve"><value>将 reader 包放入 exe 同目录的 readers 文件夹（见下方路径）；切换 reader 后需重启应用。</value></data>
 </root>

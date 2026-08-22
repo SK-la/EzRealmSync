@@ -2,7 +2,8 @@ namespace osu.Game.EzRealmSync
 {
     public static class EzRealmSyncDefaults
     {
-        public static string DefaultBackupDirectory =>
-            Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments), "EzRealmSync", "backups");
+        public static string DefaultBackupDirectory => EzRealmSyncDataPaths.BackupsDirectory;
+
+        public static string DefaultExportDirectory => EzRealmSyncDataPaths.ExportsDirectory;
     }
 }

@@ -4,9 +4,9 @@
 
 ## 目录布局
 
-默认扫描目录：
+默认扫描目录（exe 同目录）：
 
-`%AppData%\EzRealmSync\readers\`
+`readers\`
 
 示例：
 

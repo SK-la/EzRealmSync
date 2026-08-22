@@ -1,5 +1,6 @@
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using osu.Game.EzRealmSync;
 
 namespace osu.EzRealmSync.AppModel
 {
@@ -7,13 +8,6 @@ namespace osu.EzRealmSync.AppModel
     {
         /// <summary>导入页扫描路径：存储根目录下的 <c>*.realm</c>（及可选 <c>data/</c> 子目录）。</summary>
         public string SearchDirectory { get; set; } = string.Empty;
-
-        /// <summary>兼容旧版 settings.json；读取后迁移到 <see cref="SearchDirectory"/>，不再写入。</summary>
-        [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)]
-        public string EndpointAWorkspace { get; set; } = string.Empty;
-
-        [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)]
-        public string EndpointBWorkspace { get; set; } = string.Empty;
 
         public string? ImportSelectedRealmId { get; set; }
 
@@ -43,7 +37,7 @@ namespace osu.EzRealmSync.AppModel
         /// <summary>UI 测试模式（Mock 数据）；可在设置中切换，无需重启。</summary>
         public bool UiTestMode { get; set; }
 
-        /// <summary>可选：覆盖 reader 包扫描目录（默认 %AppData%/EzRealmSync/readers）。</summary>
+        /// <summary>可选：覆盖 reader 包扫描目录（默认 exe/readers）。</summary>
         public string ReaderPackagesDirectory { get; set; } = string.Empty;
 
         /// <summary>启动时使用的 reader 包 ID；留空表示使用内置 NuGet/本地 lib。</summary>
@@ -58,14 +52,9 @@ namespace osu.EzRealmSync.AppModel
             DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull,
         };
 
-        private static string getDefaultSettingsPath() => Path.Combine(
-            Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
-            "EzRealmSync",
-            "settings.json");
-
         public static EzRealmSyncAppSettings Load(string? settingsPath = null)
         {
-            string path = settingsPath ?? getDefaultSettingsPath();
+            string path = settingsPath ?? EzRealmSyncDataPaths.SettingsFile;
 
             try
             {
@@ -74,7 +63,7 @@ namespace osu.EzRealmSync.AppModel
 
                 string json = File.ReadAllText(path);
                 var settings = JsonSerializer.Deserialize<EzRealmSyncAppSettings>(json, json_options) ?? createDefault();
-                migrateLegacyPaths(settings);
+                applyDefaults(settings);
                 return settings;
             }
             catch
@@ -85,7 +74,7 @@ namespace osu.EzRealmSync.AppModel
 
         public static void Save(EzRealmSyncAppSettings settings, string? settingsPath = null)
         {
-            string path = settingsPath ?? getDefaultSettingsPath();
+            string path = settingsPath ?? EzRealmSyncDataPaths.SettingsFile;
             string? dir = Path.GetDirectoryName(path);
 
             if (!string.IsNullOrEmpty(dir))
@@ -95,22 +84,25 @@ namespace osu.EzRealmSync.AppModel
             File.WriteAllText(path, json);
         }
 
-        private static EzRealmSyncAppSettings createDefault() => new EzRealmSyncAppSettings
+        private static EzRealmSyncAppSettings createDefault()
         {
-            BackupDirectory = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments), "EzRealmSync", "backups"),
-            ExportDirectory = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments), "EzRealmSync", "exports"),
-            IllegalCharacterReplacement = "_",
-        };
+            EzRealmSyncDataPaths.EnsureStandardDirectories();
 
-        private static void migrateLegacyPaths(EzRealmSyncAppSettings settings)
-        {
-            if (string.IsNullOrWhiteSpace(settings.SearchDirectory))
+            return new EzRealmSyncAppSettings
             {
-                if (!string.IsNullOrWhiteSpace(settings.EndpointAWorkspace))
-                    settings.SearchDirectory = settings.EndpointAWorkspace;
-                else if (!string.IsNullOrWhiteSpace(settings.EndpointBWorkspace))
-                    settings.SearchDirectory = settings.EndpointBWorkspace;
-            }
+                BackupDirectory = EzRealmSyncDataPaths.BackupsDirectory,
+                ExportDirectory = EzRealmSyncDataPaths.ExportsDirectory,
+                IllegalCharacterReplacement = "_",
+            };
+        }
+
+        private static void applyDefaults(EzRealmSyncAppSettings settings)
+        {
+            if (string.IsNullOrWhiteSpace(settings.BackupDirectory))
+                settings.BackupDirectory = EzRealmSyncDataPaths.BackupsDirectory;
+
+            if (string.IsNullOrWhiteSpace(settings.ExportDirectory))
+                settings.ExportDirectory = EzRealmSyncDataPaths.ExportsDirectory;
         }
     }
 }

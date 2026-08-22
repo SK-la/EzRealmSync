@@ -1563,11 +1563,11 @@ namespace osu.EzRealmSync.AppModel
             ExportRealmId.Value = settings.ExportRealmId;
 
             BackupDirectory.Value = string.IsNullOrWhiteSpace(settings.BackupDirectory)
-                ? Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments), "EzRealmSync", "backups")
+                ? EzRealmSyncDataPaths.BackupsDirectory
                 : settings.BackupDirectory;
 
             ExportDirectory.Value = string.IsNullOrWhiteSpace(settings.ExportDirectory)
-                ? Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments), "EzRealmSync", "exports")
+                ? EzRealmSyncDataPaths.ExportsDirectory
                 : settings.ExportDirectory;
 
             if (!string.IsNullOrWhiteSpace(settings.ExportFolderName))
