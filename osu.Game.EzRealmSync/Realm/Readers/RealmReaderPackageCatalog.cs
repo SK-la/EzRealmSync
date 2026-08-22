@@ -53,8 +53,26 @@ namespace osu.Game.EzRealmSync.Realm.Readers
             return packages.OrderBy(p => p.Id, StringComparer.OrdinalIgnoreCase).ToArray();
         }
 
+        public static IReadOnlyList<string> FindDuplicateSchemaWarnings(IEnumerable<RealmReaderPackageInfo> packages)
+        {
+            var warnings = new List<string>();
+
+            foreach (var group in packages.SelectMany(p => p.DiskSchemaVersions.Select(v => (Version: v, Package: p)))
+                         .GroupBy(x => x.Version)
+                         .Where(g => g.Count() > 1))
+            {
+                string ids = string.Join(", ", group.Select(x => x.Package.Id).OrderBy(id => id, StringComparer.OrdinalIgnoreCase));
+                warnings.Add($"schema {group.Key} 被多个 reader 包声明：{ids}（将使用 {group.OrderBy(x => x.Package.Id, StringComparer.OrdinalIgnoreCase).First().Package.Id}）");
+            }
+
+            return warnings;
+        }
+
         public static RealmReaderPackageInfo? FindForSchema(IEnumerable<RealmReaderPackageInfo> packages, int diskSchemaVersion) =>
-            packages.FirstOrDefault(p => p.Supports(diskSchemaVersion) && p.HasValidLib);
+            packages
+                .Where(p => p.Supports(diskSchemaVersion) && p.HasValidLib)
+                .OrderBy(p => p.Id, StringComparer.OrdinalIgnoreCase)
+                .FirstOrDefault();
 
         public static RealmReaderPackageInfo? FindById(IEnumerable<RealmReaderPackageInfo> packages, string? packageId) =>
             string.IsNullOrWhiteSpace(packageId)

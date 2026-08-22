@@ -1,0 +1,7 @@
+{
+  "id": "official-51",
+  "displayName": "Official upstream 51",
+  "profile": "official",
+  "diskSchemaVersions": [51],
+  "libPath": "lib"
+}

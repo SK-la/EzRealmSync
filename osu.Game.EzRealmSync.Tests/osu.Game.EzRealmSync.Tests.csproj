@@ -41,6 +41,9 @@
     <ProjectReference Include="..\osu.Game.EzRealmSync.OfficialWrite\osu.Game.EzRealmSync.OfficialWrite.csproj">
       <ReferenceOutputAssembly>false</ReferenceOutputAssembly>
     </ProjectReference>
+    <ProjectReference Include="..\osu.Game.EzRealmSync.ReadSidecar\osu.Game.EzRealmSync.ReadSidecar.csproj">
+      <ReferenceOutputAssembly>false</ReferenceOutputAssembly>
+    </ProjectReference>
   </ItemGroup>
 
   <ItemGroup>

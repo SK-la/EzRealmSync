@@ -41,6 +41,8 @@ namespace osu.Game.EzRealmSync.Realm.Readers
             initialized = true;
         }
 
+        public void Refresh() => Initialize(PackagesDirectory);
+
         private void ensureInitialized()
         {
             if (!initialized)

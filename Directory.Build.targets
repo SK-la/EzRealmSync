@@ -21,6 +21,7 @@
   <!-- 构建 WinExe 时把 lib/*.dll 与引擎程序集复制到输出目录 -->
   <PropertyGroup>
     <OfficialWriteOutputDir>$(MSBuildThisFileDirectory)osu.Game.EzRealmSync.OfficialWrite\bin\$(Configuration)\net8.0</OfficialWriteOutputDir>
+    <ReadSidecarOutputDir>$(MSBuildThisFileDirectory)osu.Game.EzRealmSync.ReadSidecar\bin\$(Configuration)\net8.0</ReadSidecarOutputDir>
   </PropertyGroup>
 
   <Target Name="CopyOfficialWriteWorkerToOutput"
@@ -48,6 +49,82 @@
           DestinationFiles="@(_OfficialWriteRuntime->'$(OutputPath)official-write\runtimes\%(RecursiveDir)%(Filename)%(Extension)')"
           SkipUnchangedFiles="true"
           Condition="'@(_OfficialWriteRuntime)' != ''" />
+  </Target>
+
+  <Target Name="CopyReadSidecarWorkerToOutput"
+          AfterTargets="Build"
+          DependsOnTargets="ResolveProjectReferences"
+          Condition="'$(OutputType)' == 'WinExe'">
+    <ItemGroup>
+      <_ReadSidecarCopy Include="$(ReadSidecarOutputDir)\EzRealmSync.ReadSidecar.exe" Condition="Exists('$(ReadSidecarOutputDir)\EzRealmSync.ReadSidecar.exe')" />
+      <_ReadSidecarCopy Include="$(ReadSidecarOutputDir)\EzRealmSync.ReadSidecar.dll" Condition="Exists('$(ReadSidecarOutputDir)\EzRealmSync.ReadSidecar.dll')" />
+      <_ReadSidecarCopy Include="$(ReadSidecarOutputDir)\EzRealmSync.ReadSidecar.deps.json" Condition="Exists('$(ReadSidecarOutputDir)\EzRealmSync.ReadSidecar.deps.json')" />
+      <_ReadSidecarCopy Include="$(ReadSidecarOutputDir)\EzRealmSync.ReadSidecar.runtimeconfig.json" Condition="Exists('$(ReadSidecarOutputDir)\EzRealmSync.ReadSidecar.runtimeconfig.json')" />
+      <_ReadSidecarCopy Include="$(ReadSidecarOutputDir)\osu.Game.EzRealmSync.dll" Condition="Exists('$(ReadSidecarOutputDir)\osu.Game.EzRealmSync.dll')" />
+      <_ReadSidecarCopy Include="$(ReadSidecarOutputDir)\osu.Game.EzRealmSync.Contracts.dll" Condition="Exists('$(ReadSidecarOutputDir)\osu.Game.EzRealmSync.Contracts.dll')" />
+      <_ReadSidecarCopy Include="$(ReadSidecarOutputDir)\Realm.dll" Condition="Exists('$(ReadSidecarOutputDir)\Realm.dll')" />
+      <_ReadSidecarRuntime Include="$(ReadSidecarOutputDir)\runtimes\**\*.*" Condition="Exists('$(ReadSidecarOutputDir)\runtimes')" />
+    </ItemGroup>
+    <MakeDir Directories="$(OutputPath)read-sidecar" Condition="@(_ReadSidecarCopy->Count()) != 0" />
+    <Copy SourceFiles="@(_ReadSidecarCopy)"
+          DestinationFolder="$(OutputPath)read-sidecar"
+          SkipUnchangedFiles="true"
+          Condition="@(_ReadSidecarCopy->Count()) != 0" />
+    <Copy SourceFiles="@(_ReadSidecarRuntime)"
+          DestinationFiles="@(_ReadSidecarRuntime->'$(OutputPath)read-sidecar\runtimes\%(RecursiveDir)%(Filename)%(Extension)')"
+          SkipUnchangedFiles="true"
+          Condition="'@(_ReadSidecarRuntime)' != ''" />
+  </Target>
+
+  <Target Name="CopyReadSidecarWorkerToTestOutput"
+          AfterTargets="Build"
+          DependsOnTargets="ResolveProjectReferences"
+          Condition="'$(MSBuildProjectName)' == 'osu.Game.EzRealmSync.Tests'">
+    <ItemGroup>
+      <_ReadSidecarCopy Include="$(ReadSidecarOutputDir)\EzRealmSync.ReadSidecar.exe" Condition="Exists('$(ReadSidecarOutputDir)\EzRealmSync.ReadSidecar.exe')" />
+      <_ReadSidecarCopy Include="$(ReadSidecarOutputDir)\EzRealmSync.ReadSidecar.dll" Condition="Exists('$(ReadSidecarOutputDir)\EzRealmSync.ReadSidecar.dll')" />
+      <_ReadSidecarCopy Include="$(ReadSidecarOutputDir)\EzRealmSync.ReadSidecar.deps.json" Condition="Exists('$(ReadSidecarOutputDir)\EzRealmSync.ReadSidecar.deps.json')" />
+      <_ReadSidecarCopy Include="$(ReadSidecarOutputDir)\EzRealmSync.ReadSidecar.runtimeconfig.json" Condition="Exists('$(ReadSidecarOutputDir)\EzRealmSync.ReadSidecar.runtimeconfig.json')" />
+      <_ReadSidecarCopy Include="$(ReadSidecarOutputDir)\osu.Game.EzRealmSync.dll" Condition="Exists('$(ReadSidecarOutputDir)\osu.Game.EzRealmSync.dll')" />
+      <_ReadSidecarCopy Include="$(ReadSidecarOutputDir)\osu.Game.EzRealmSync.Contracts.dll" Condition="Exists('$(ReadSidecarOutputDir)\osu.Game.EzRealmSync.Contracts.dll')" />
+      <_ReadSidecarCopy Include="$(ReadSidecarOutputDir)\Realm.dll" Condition="Exists('$(ReadSidecarOutputDir)\Realm.dll')" />
+      <_ReadSidecarRuntime Include="$(ReadSidecarOutputDir)\runtimes\**\*.*" Condition="Exists('$(ReadSidecarOutputDir)\runtimes')" />
+    </ItemGroup>
+    <MakeDir Directories="$(OutputPath)read-sidecar" Condition="@(_ReadSidecarCopy->Count()) != 0" />
+    <Copy SourceFiles="@(_ReadSidecarCopy)"
+          DestinationFolder="$(OutputPath)read-sidecar"
+          SkipUnchangedFiles="true"
+          Condition="@(_ReadSidecarCopy->Count()) != 0" />
+    <Copy SourceFiles="@(_ReadSidecarRuntime)"
+          DestinationFiles="@(_ReadSidecarRuntime->'$(OutputPath)read-sidecar\runtimes\%(RecursiveDir)%(Filename)%(Extension)')"
+          SkipUnchangedFiles="true"
+          Condition="'@(_ReadSidecarRuntime)' != ''" />
+  </Target>
+
+  <Target Name="CopyReadersFolderToOutput"
+          AfterTargets="Build"
+          Condition="'$(OutputType)' == 'WinExe'">
+    <ItemGroup>
+      <_ReadersContent Include="$(MSBuildThisFileDirectory)readers\**\*.*"
+                       Exclude="$(MSBuildThisFileDirectory)readers\**\lib\**\*.*" />
+    </ItemGroup>
+    <Copy SourceFiles="@(_ReadersContent)"
+          DestinationFiles="@(_ReadersContent->'$(OutputPath)readers\%(RecursiveDir)%(Filename)%(Extension)')"
+          SkipUnchangedFiles="true"
+          Condition="'@(_ReadersContent)' != ''" />
+  </Target>
+
+  <Target Name="CopyReadersFolderToTestOutput"
+          AfterTargets="Build"
+          Condition="'$(MSBuildProjectName)' == 'osu.Game.EzRealmSync.Tests'">
+    <ItemGroup>
+      <_ReadersContent Include="$(MSBuildThisFileDirectory)readers\**\*.*"
+                       Exclude="$(MSBuildThisFileDirectory)readers\**\lib\**\*.*" />
+    </ItemGroup>
+    <Copy SourceFiles="@(_ReadersContent)"
+          DestinationFiles="@(_ReadersContent->'$(OutputPath)readers\%(RecursiveDir)%(Filename)%(Extension)')"
+          SkipUnchangedFiles="true"
+          Condition="'@(_ReadersContent)' != ''" />
   </Target>
 
   <Target Name="CopyOfficialWriteWorkerToTestOutput"

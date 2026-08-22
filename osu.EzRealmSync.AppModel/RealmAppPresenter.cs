@@ -1573,6 +1573,7 @@ namespace osu.EzRealmSync.AppModel
                 RealmUserErrorKind.SchemaTooLow => Loc.Format("ErrorSchemaTooLow", userError.Detail),
                 RealmUserErrorKind.SchemaTooHigh => Loc.Format("ErrorSchemaTooHigh", userError.Detail),
                 RealmUserErrorKind.SchemaModelMismatch => Loc.Format("ErrorSchemaModelMismatch", userError.Detail),
+                RealmUserErrorKind.ReaderPackageMissing => Loc.Format("ErrorReaderPackageMissing", userError.Detail),
                 _ => userError.Detail,
             };
         }

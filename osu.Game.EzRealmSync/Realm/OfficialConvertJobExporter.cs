@@ -91,6 +91,57 @@ namespace osu.Game.EzRealmSync.Realm
             return job;
         }
 
+        /// <summary>按 GUID 导出同步 Apply 包（不过滤 Ez 规则集；收藏夹保留全部 MD5）。</summary>
+        public static RealmSyncApplyBundle ExportPartialByIds(RealmAccess sourceAccess, IReadOnlyList<Guid> itemIds)
+        {
+            var idSet = itemIds.ToHashSet();
+            var bundle = new RealmSyncApplyBundle();
+
+            sourceAccess.Run(realm =>
+            {
+                foreach (Guid id in idSet)
+                {
+                    if (realm.Find<BeatmapSetInfo>(id) is BeatmapSetInfo set && !set.DeletePending)
+                    {
+                        bundle.BeatmapSets.Add(mapBeatmapSet(set));
+                        continue;
+                    }
+
+                    if (realm.Find<BeatmapInfo>(id) is BeatmapInfo beatmap && beatmap.BeatmapSet?.DeletePending != true)
+                    {
+                        bundle.Beatmaps.Add(mapBeatmap(beatmap));
+                        continue;
+                    }
+
+                    if (realm.Find<ScoreInfo>(id) is ScoreInfo score && !score.DeletePending)
+                    {
+                        bundle.Scores.Add(mapScore(score));
+                        continue;
+                    }
+
+                    if (realm.Find<BeatmapCollection>(id) is BeatmapCollection collection)
+                        bundle.Collections.Add(mapCollectionForSync(collection));
+                }
+            });
+
+            return bundle;
+        }
+
+        private static OfficialCollectionDto mapCollectionForSync(BeatmapCollection collection)
+        {
+            var dto = new OfficialCollectionDto
+            {
+                ID = collection.ID,
+                Name = collection.Name,
+                LastModified = collection.LastModified,
+            };
+
+            foreach (string md5 in collection.BeatmapMD5Hashes)
+                dto.BeatmapMD5Hashes.Add(md5);
+
+            return dto;
+        }
+
         private static OfficialRulesetDto mapRuleset(RulesetInfo ruleset) =>
             new OfficialRulesetDto
             {

@@ -69,5 +69,33 @@ namespace osu.Game.EzRealmSync.Tests
             Assert.That(match, Is.Not.Null);
             Assert.That(match!.Id, Is.EqualTo("ez-51003"));
         }
+
+        [Test]
+        public void FindForSchema_prefers_lowest_id_on_duplicate_schema()
+        {
+            createPackage("b-51003", 51003);
+            createPackage("a-51003", 51003);
+
+            var packages = RealmReaderPackageCatalog.Scan(root);
+            var match = RealmReaderPackageCatalog.FindForSchema(packages, 51003);
+
+            Assert.That(match!.Id, Is.EqualTo("a-51003"));
+            Assert.That(RealmReaderPackageCatalog.FindDuplicateSchemaWarnings(packages), Has.Count.EqualTo(1));
+        }
+
+        private void createPackage(string id, int schema)
+        {
+            string packageDir = Path.Combine(root, id);
+            string libDir = Path.Combine(packageDir, "lib");
+            Directory.CreateDirectory(libDir);
+            File.WriteAllText(Path.Combine(packageDir, "manifest.json"), $$"""
+                {
+                  "id": "{{id}}",
+                  "profile": "ez",
+                  "diskSchemaVersions": [{{schema}}]
+                }
+                """);
+            File.WriteAllText(Path.Combine(libDir, "osu.Game.dll"), string.Empty);
+        }
     }
 }

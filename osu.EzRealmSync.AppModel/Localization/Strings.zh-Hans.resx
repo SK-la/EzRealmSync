@@ -241,6 +241,7 @@
   <data name="ErrorSchemaTooLow" xml:space="preserve"><value>该 Realm schema 低于本工具最低支持（同大版本）。请用对应版本客户端升到下限以上后再试。详情：{0}</value></data>
   <data name="ErrorSchemaTooHigh" xml:space="preserve"><value>该 Realm schema 高于本工具内置 lib。请更新 EzRealmSync。详情：{0}</value></data>
   <data name="ErrorSchemaModelMismatch" xml:space="preserve"><value>磁盘 schema 版本号已是最新，但对象模型不匹配，升级无法修复。请对齐工具与客户端的 osu.Game，或从完整备份恢复。详情：{0}</value></data>
+  <data name="ErrorReaderPackageMissing" xml:space="preserve"><value>没有匹配该 Realm schema 的 reader 包。请在 readers/ 下添加 manifest.json 与 lib/（参见 readers/README.md）。详情：{0}</value></data>
   <data name="ReaderSettings" xml:space="preserve"><value>Reader 包</value></data>
   <data name="ReaderPackagesDirectory" xml:space="preserve"><value>Reader 包目录</value></data>
   <data name="ActiveReaderPackage" xml:space="preserve"><value>启动时使用的 reader</value></data>

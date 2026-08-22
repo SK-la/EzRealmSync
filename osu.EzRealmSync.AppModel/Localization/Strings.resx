@@ -241,6 +241,7 @@
   <data name="ErrorSchemaTooLow" xml:space="preserve"><value>This Realm schema is below the tool's minimum (same major only). Upgrade it with a matching client first. Detail: {0}</value></data>
   <data name="ErrorSchemaTooHigh" xml:space="preserve"><value>This Realm schema is newer than the tool's built-in lib. Update EzRealmSync. Detail: {0}</value></data>
   <data name="ErrorSchemaModelMismatch" xml:space="preserve"><value>Disk schema version is already latest, but the object model does not match; upgrade cannot fix this. Align the tool with the client osu.Game, or restore from a full backup. Detail: {0}</value></data>
+  <data name="ErrorReaderPackageMissing" xml:space="preserve"><value>No reader package matches this Realm schema. Add a manifest + lib under readers/ (see readers/README.md). Detail: {0}</value></data>
   <data name="ReaderSettings" xml:space="preserve"><value>Reader packages</value></data>
   <data name="ReaderPackagesDirectory" xml:space="preserve"><value>Reader packages folder</value></data>
   <data name="ActiveReaderPackage" xml:space="preserve"><value>Reader used at startup</value></data>

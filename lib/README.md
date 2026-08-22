@@ -34,7 +34,8 @@ dotnet build EzRealmSync.sln -p:UseLocalOsuLibs=true
 
 ## 迁移与 schema
 
-- **本阶段仅支持同大版本**（当前上游一线，如官方 `52` / Ez `5200x`），单份内置 `osu.Game`，不另存多版本 DLL。
+- 主进程 **单份** 最新 `osu.Game`（NuGet 或本地 `lib/`）。
+- 旧 schema 通过 `readers/{id}/lib/` + **ReadSidecar** 子进程读取（manifest 驱动，代码不写死版本列表）。
 - 日常打开：锁定磁盘已有 schema（`OpenWithoutMigration`）。
-- 修复页「升级到最新版」：在备份工作副本上执行可控 migration，升到工具当前 schema。
-- 跨大版本 reader / 同步：未实现。
+- 修复页「升级到最新版」：在备份工作副本上 migration，升到工具当前 schema。
+- 跨 upstream 差集同步：源库可走 sidecar 读，目标库用主 lib 写（不改目标 schema）。

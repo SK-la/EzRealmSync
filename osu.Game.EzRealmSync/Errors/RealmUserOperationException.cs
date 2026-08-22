@@ -12,6 +12,8 @@ namespace osu.Game.EzRealmSync.Errors
         SchemaTooHigh,
         /// <summary>版本号已是最新但对象模型仍无法 pinned 打开（工具/游戏脱节或脏库）。</summary>
         SchemaModelMismatch,
+        /// <summary>磁盘 schema 无匹配 reader 包（readers/ manifest + lib）。</summary>
+        ReaderPackageMissing,
     }
 
     public sealed class RealmUserOperationException : InvalidOperationException

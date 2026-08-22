@@ -4,6 +4,7 @@ using osu.Game.EzRealmSync.Abstractions;
 using osu.Game.EzRealmSync.Errors;
 using osu.Game.EzRealmSync.IO;
 using osu.Game.EzRealmSync.Models;
+using osu.Game.EzRealmSync.Realm.Readers;
 
 namespace osu.Game.EzRealmSync.Realm
 {
@@ -55,19 +56,30 @@ namespace osu.Game.EzRealmSync.Realm
 
         private static ScanResult scanCore(ScanRequest request, IProgress<ScanProgress>? progress, CancellationToken cancellationToken)
         {
+            RealmReaderRegistry.Instance.Refresh();
+
             var plan = resolvePlan(request.WritePlan, request.Direction, request.Paths);
 
             progress?.Report(new ScanProgress { Progress = 0, Message = "正在打开源库（A）…" });
             cancellationToken.ThrowIfCancellationRequested();
 
-            using var sourceAccess = openForPlanEndpoint(plan.SourceRealmFilePath, plan.SourceSchemaVersion);
-            using var targetAccess = openForPlanEndpoint(plan.TargetRealmFilePath, plan.TargetSchemaVersion);
-
-            var sourceSnapshot = RealmDiffReader.Read(sourceAccess, progress, cancellationToken);
+            var sourceSnapshot = readSnapshot(plan.SourceRealmFilePath, plan.SourceSchemaVersion, progress, cancellationToken);
             progress?.Report(new ScanProgress { Progress = 0.5, Message = "正在读取目标库（B）…" });
-            var targetSnapshot = RealmDiffReader.Read(targetAccess, progress, cancellationToken);
+            var targetSnapshot = readSnapshot(plan.TargetRealmFilePath, plan.TargetSchemaVersion, progress, cancellationToken);
 
             return RealmDiffEngine.Compare(sourceSnapshot, targetSnapshot, request.EntityKinds, progress, cancellationToken);
+        }
+
+        private static RealmDiffSnapshot readSnapshot(
+            string realmFilePath,
+            int? diskSchemaVersion,
+            IProgress<ScanProgress>? progress,
+            CancellationToken cancellationToken)
+        {
+            int schema = diskSchemaVersion ?? RealmSchemaProbe.TryReadSchemaVersion(realmFilePath)
+                ?? throw new InvalidOperationException($"无法读取 Realm schema 版本：{realmFilePath}");
+
+            return RealmDiffSnapshotProvider.Read(realmFilePath, schema, entityKinds: null, progress, cancellationToken);
         }
 
         public Task<ApplyResult> ApplyAsync(ApplyRequest request, IProgress<ApplyProgress>? progress = null, CancellationToken cancellationToken = default) =>
@@ -75,6 +87,8 @@ namespace osu.Game.EzRealmSync.Realm
 
         private static ApplyResult applyCore(ApplyRequest request, IProgress<ApplyProgress>? progress, CancellationToken cancellationToken)
         {
+            RealmReaderRegistry.Instance.Refresh();
+
             string? validationError = RealmApplySupport.ValidateApplyRequest(request);
             if (validationError != null)
                 throw new InvalidOperationException(validationError);
@@ -97,10 +111,29 @@ namespace osu.Game.EzRealmSync.Realm
                 backupPath = RealmFileBackup.CreateTimestampedCopy(plan.TargetRealmFilePath, backupDir);
             }
 
-            using var sourceAccess = openForPlanEndpoint(plan.SourceRealmFilePath, plan.SourceSchemaVersion);
             using var targetAccess = openForPlanEndpoint(plan.TargetRealmFilePath, plan.TargetSchemaVersion);
 
-            var result = RealmRowCopier.Apply(request, sourceAccess, targetAccess, progress, cancellationToken);
+            int sourceSchema = plan.SourceSchemaVersion ?? RealmSchemaProbe.TryReadSchemaVersion(plan.SourceRealmFilePath)
+                ?? throw new InvalidOperationException($"无法读取 Realm schema 版本：{plan.SourceRealmFilePath}");
+
+            ApplyResult result;
+
+            if (RealmDiffSnapshotProvider.RequiresSidecarForRead(plan.SourceRealmFilePath, sourceSchema))
+            {
+                var bundle = RealmDiffSnapshotProvider.ExportApplyBundleViaSidecar(
+                    plan.SourceRealmFilePath,
+                    sourceSchema,
+                    request.ItemIds,
+                    cancellationToken);
+
+                result = RealmSyncApplyImporter.Apply(request, bundle, targetAccess, progress, cancellationToken);
+            }
+            else
+            {
+                using var sourceAccess = openForPlanEndpoint(plan.SourceRealmFilePath, plan.SourceSchemaVersion);
+                result = RealmRowCopier.Apply(request, sourceAccess, targetAccess, progress, cancellationToken);
+            }
+
             return new ApplyResult { AppliedCount = result.AppliedCount, BackupPath = backupPath };
         }
 
