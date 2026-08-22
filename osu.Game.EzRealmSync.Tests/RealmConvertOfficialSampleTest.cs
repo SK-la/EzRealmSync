@@ -20,9 +20,15 @@ namespace osu.Game.EzRealmSync.Tests
 
             string differentOutput = Path.Combine(writable.TempDirectory, "different.realm");
 
-            var ex = Assert.ThrowsAsync<RealmUserOperationException>(async () =>
-                await dataService.ConvertToOfficialRealmAsync(entry.Id, OfficialConvertTarget.PreserveReadUpstream, differentOutput));
-            Assert.That(ex!.Kind, Is.EqualTo(RealmUserErrorKind.PathConflict));
+            try
+            {
+                await dataService.ConvertToOfficialRealmAsync(entry.Id, OfficialConvertTarget.PreserveReadUpstream, differentOutput);
+                Assert.Fail("Expected RealmUserOperationException");
+            }
+            catch (RealmUserOperationException ex)
+            {
+                Assert.That(ex.Kind, Is.EqualTo(RealmUserErrorKind.PathConflict));
+            }
         }
 
         [Test]
@@ -35,9 +41,15 @@ namespace osu.Game.EzRealmSync.Tests
 
             await using var lockStream = new FileStream(writable.RealmFilePath, FileMode.Open, FileAccess.ReadWrite, FileShare.None);
 
-            var ex = Assert.ThrowsAsync<RealmUserOperationException>(async () =>
-                await dataService.ConvertToOfficialRealmAsync(entry.Id, OfficialConvertTarget.PreserveReadUpstream));
-            Assert.That(ex!.Kind, Is.EqualTo(RealmUserErrorKind.FileInUse));
+            try
+            {
+                await dataService.ConvertToOfficialRealmAsync(entry.Id, OfficialConvertTarget.PreserveReadUpstream);
+                Assert.Fail("Expected RealmUserOperationException");
+            }
+            catch (RealmUserOperationException ex)
+            {
+                Assert.That(ex.Kind, Is.EqualTo(RealmUserErrorKind.FileInUse));
+            }
         }
 
         [Test]

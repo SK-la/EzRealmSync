@@ -1558,11 +1558,19 @@ namespace osu.EzRealmSync.AppModel
 
         private string toUserMessage(Exception ex)
         {
+            EzRealmSyncLog.Exception(ex, "UI error");
+
             RealmUserOperationException? userError = ex as RealmUserOperationException
                                                      ?? ex.InnerException as RealmUserOperationException;
 
             if (userError == null)
-                return ex.Message;
+            {
+                string message = ExceptionFormatting.SafeFormat(ex);
+                if (string.IsNullOrWhiteSpace(message))
+                    message = ex.GetType().Name;
+
+                return ExceptionFormatting.TruncateForDisplay(message);
+            }
 
             return userError.Kind switch
             {

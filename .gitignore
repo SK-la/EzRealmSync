@@ -12,6 +12,9 @@ readers/*/lib/*.dll
 readers/*/lib/**/*.dll
 readers/*/lib/runtimes/
 
+# 运行时日志（exe/log/）
+log/
+
 *.user
 *.suo
 *.DotSettings.user

@@ -71,8 +71,8 @@ namespace osu.Game.EzRealmSync.Tests
                 if (!RealmAccessGateway.RequiresSidecarForRead(path, 51_007))
                     Assert.Ignore("当前 lib 可进程内打开 51007，无法在无 reader 包时触发 ReaderPackageMissing。");
 
-                var ex = Assert.Throws<RealmUserOperationException>(() =>
-                    RealmAccessGateway.ReadDiffSnapshot(path, 51_007));
+                var ex = Assert.Throws<RealmUserOperationException>((Action)(() =>
+                    RealmAccessGateway.ReadDiffSnapshot(path, 51_007)));
 
                 Assert.That(ex!.Kind, Is.EqualTo(RealmUserErrorKind.ReaderPackageMissing));
             }
@@ -111,7 +111,7 @@ namespace osu.Game.EzRealmSync.Tests
             if (!File.Exists(worker))
                 Assert.Ignore($"ReadSidecar Worker 未复制到测试输出：{worker}");
 
-            Assert.DoesNotThrow(() => RealmAccessGateway.ReadDiffSnapshot(sample.RealmFilePath, schema));
+            Assert.DoesNotThrow((Action)(() => RealmAccessGateway.ReadDiffSnapshot(sample.RealmFilePath, schema)));
         }
 
         [Test]

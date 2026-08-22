@@ -25,39 +25,27 @@ namespace osu.Game.EzRealmSync.Realm
             {
                 File.WriteAllText(jobPath, JsonSerializer.Serialize(job, jsonOptions));
 
-                var psi = createWorkerStartInfo(workerPath, new[] { jobPath, resultPath });
+                var psi = CreateWorkerStartInfo(workerPath, new[] { jobPath, resultPath });
+                EzRealmSyncLog.Info($"Starting OfficialWrite worker: {workerPath}");
 
-                using var process = Process.Start(psi)
-                    ?? throw new InvalidOperationException("无法启动 OfficialWrite Worker。");
-
-                using (cancellationToken.Register(() =>
-                       {
-                           try
-                           {
-                               if (!process.HasExited)
-                                   process.Kill(entireProcessTree: true);
-                           }
-                           catch
-                           {
-                               // 取消路径忽略 kill 失败。
-                           }
-                       }))
-                {
-                    process.WaitForExit();
-                }
+                var runResult = WorkerProcessExecution.Run(psi, cancellationToken);
 
                 if (!File.Exists(resultPath))
                 {
-                    string stderr = process.StandardError.ReadToEnd();
-                    throw new InvalidOperationException(
-                        $"OfficialWrite Worker 未产出结果（exit {process.ExitCode}）：{stderr}".Trim());
+                    string message = WorkerProcessExecution.BuildFailureMessage("OfficialWrite Worker", workerPath, runResult, "未产出 result.json");
+                    EzRealmSyncLog.Error(message);
+                    throw new InvalidOperationException(message);
                 }
 
                 var result = JsonSerializer.Deserialize<OfficialConvertResult>(File.ReadAllText(resultPath), jsonOptions)
                              ?? throw new InvalidOperationException("OfficialWrite Worker 结果 JSON 无效。");
 
                 if (!result.Success)
-                    throw new InvalidOperationException(result.ErrorMessage ?? "OfficialWrite Worker 失败。");
+                {
+                    string message = result.ErrorMessage ?? "OfficialWrite Worker 失败。";
+                    EzRealmSyncLog.Error($"OfficialWrite Worker reported failure (exit {runResult.ExitCode}): {message}");
+                    throw new InvalidOperationException(message);
+                }
 
                 return result;
             }
@@ -80,38 +68,7 @@ namespace osu.Game.EzRealmSync.Realm
         public static string ResolveWorkerExecutablePathForTests() => resolveWorkerExecutablePath();
 
         public static ProcessStartInfo CreateWorkerStartInfo(string workerPath, IReadOnlyList<string> arguments) =>
-            createWorkerStartInfo(workerPath, arguments);
-
-        private static ProcessStartInfo createWorkerStartInfo(string workerPath, IReadOnlyList<string> arguments)
-        {
-            string workerDir = Path.GetDirectoryName(workerPath) ?? AppContext.BaseDirectory;
-            string dllPath = Path.Combine(workerDir, "EzRealmSync.OfficialWrite.dll");
-
-            var psi = new ProcessStartInfo
-            {
-                UseShellExecute = false,
-                CreateNoWindow = true,
-                RedirectStandardOutput = true,
-                RedirectStandardError = true,
-                WorkingDirectory = workerDir,
-            };
-
-            if (File.Exists(dllPath))
-            {
-                psi.FileName = "dotnet";
-                psi.ArgumentList.Add("exec");
-                psi.ArgumentList.Add(dllPath);
-            }
-            else
-            {
-                psi.FileName = workerPath;
-            }
-
-            foreach (string arg in arguments)
-                psi.ArgumentList.Add(arg);
-
-            return psi;
-        }
+            WorkerProcessExecution.CreateWorkerStartInfo(workerPath, arguments);
 
         private static string resolveWorkerExecutablePath()
         {
@@ -119,11 +76,13 @@ namespace osu.Game.EzRealmSync.Realm
 
             foreach (string candidate in new[]
                      {
-                         Path.Combine(baseDir, "official-write", "EzRealmSync.OfficialWrite.dll"),
                          Path.Combine(baseDir, "official-write", "EzRealmSync.OfficialWrite.exe"),
-                         Path.Combine(baseDir, "EzRealmSync.OfficialWrite.dll"),
+                         Path.Combine(baseDir, "official-write", "EzRealmSync.OfficialWrite.dll"),
                          Path.Combine(baseDir, "EzRealmSync.OfficialWrite.exe"),
+                         Path.Combine(baseDir, "EzRealmSync.OfficialWrite.dll"),
+                         Path.Combine(baseDir, "..", "osu.Game.EzRealmSync.OfficialWrite", "bin", "Debug", "net8.0", "EzRealmSync.OfficialWrite.exe"),
                          Path.Combine(baseDir, "..", "osu.Game.EzRealmSync.OfficialWrite", "bin", "Debug", "net8.0", "EzRealmSync.OfficialWrite.dll"),
+                         Path.Combine(baseDir, "..", "..", "osu.Game.EzRealmSync.OfficialWrite", "bin", "Debug", "net8.0", "EzRealmSync.OfficialWrite.exe"),
                          Path.Combine(baseDir, "..", "..", "osu.Game.EzRealmSync.OfficialWrite", "bin", "Debug", "net8.0", "EzRealmSync.OfficialWrite.dll"),
                      })
             {

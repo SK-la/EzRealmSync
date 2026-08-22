@@ -17,6 +17,10 @@ namespace osu.Game.EzRealmSync
 
         public static string TempDirectory => Path.Combine(ApplicationRoot, "temp");
 
+        public static string LogsDirectory => Path.Combine(ApplicationRoot, "log");
+
+        public static string CurrentLogFilePath => Path.Combine(LogsDirectory, $"EzRealmSync_{DateTime.Now:yyyyMMdd}.log");
+
         public static string RealmPipeDirectory => Path.Combine(TempDirectory, "lazer");
 
         public static void EnsureStandardDirectories()
@@ -25,6 +29,7 @@ namespace osu.Game.EzRealmSync
             Directory.CreateDirectory(BackupsDirectory);
             Directory.CreateDirectory(ExportsDirectory);
             Directory.CreateDirectory(TempDirectory);
+            Directory.CreateDirectory(LogsDirectory);
         }
 
         public static string CreateTempSubdirectory(string category)

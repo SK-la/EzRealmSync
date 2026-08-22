@@ -1,4 +1,3 @@
-using System.Diagnostics;
 using System.Text.Json;
 using osu.Game.EzRealmSync.Contracts;
 using osu.Game.EzRealmSync.Realm.Readers;
@@ -35,42 +34,34 @@ namespace osu.Game.EzRealmSync.Realm
             {
                 File.WriteAllText(jobPath, JsonSerializer.Serialize(job, jsonOptions));
 
-                var psi = OfficialWriteProcessRunner.CreateWorkerStartInfo(workerPath, new[] { mode, jobPath, resultPath });
+                var psi = WorkerProcessExecution.CreateWorkerStartInfo(workerPath, new[] { mode, jobPath, resultPath });
+                EzRealmSyncLog.Info($"Starting ReadSidecar worker ({mode}, package={package.Id}, schema={package.DiskSchemaVersions.FirstOrDefault()}): {workerPath}");
 
-                using var process = Process.Start(psi)
-                    ?? throw new InvalidOperationException("无法启动 ReadSidecar Worker。");
-
-                using (cancellationToken.Register(() =>
-                       {
-                           try
-                           {
-                               if (!process.HasExited)
-                                   process.Kill(entireProcessTree: true);
-                           }
-                           catch
-                           {
-                               // 取消路径忽略 kill 失败。
-                           }
-                       }))
-                {
-                    process.WaitForExit();
-                }
+                var runResult = WorkerProcessExecution.Run(psi, cancellationToken);
 
                 if (!File.Exists(resultPath))
                 {
-                    string stderr = process.StandardError.ReadToEnd();
-                    throw new InvalidOperationException(
-                        $"ReadSidecar Worker 未产出结果（exit {process.ExitCode}）：{stderr}".Trim());
+                    string message = WorkerProcessExecution.BuildFailureMessage("ReadSidecar Worker", workerPath, runResult, "未产出 result.json");
+                    EzRealmSyncLog.Error(message);
+                    throw new InvalidOperationException(message);
                 }
 
                 var result = JsonSerializer.Deserialize<T>(File.ReadAllText(resultPath), jsonOptions)
                              ?? throw new InvalidOperationException("ReadSidecar Worker 结果 JSON 无效。");
 
                 if (result is RealmReadResult readResult && !readResult.Success)
-                    throw new InvalidOperationException(readResult.ErrorMessage ?? "ReadSidecar 读取失败。");
+                {
+                    string message = readResult.ErrorMessage ?? "ReadSidecar 读取失败。";
+                    EzRealmSyncLog.Error($"ReadSidecar read failed (exit {runResult.ExitCode}): {message}");
+                    throw new InvalidOperationException(message);
+                }
 
                 if (result is RealmApplyExportResult exportResult && !exportResult.Success)
-                    throw new InvalidOperationException(exportResult.ErrorMessage ?? "ReadSidecar 导出失败。");
+                {
+                    string message = exportResult.ErrorMessage ?? "ReadSidecar 导出失败。";
+                    EzRealmSyncLog.Error($"ReadSidecar apply-export failed (exit {runResult.ExitCode}): {message}");
+                    throw new InvalidOperationException(message);
+                }
 
                 return result;
             }
@@ -96,11 +87,13 @@ namespace osu.Game.EzRealmSync.Realm
 
             foreach (string candidate in new[]
                      {
-                         Path.Combine(baseDir, "read-sidecar", "EzRealmSync.ReadSidecar.dll"),
                          Path.Combine(baseDir, "read-sidecar", "EzRealmSync.ReadSidecar.exe"),
-                         Path.Combine(baseDir, "EzRealmSync.ReadSidecar.dll"),
+                         Path.Combine(baseDir, "read-sidecar", "EzRealmSync.ReadSidecar.dll"),
                          Path.Combine(baseDir, "EzRealmSync.ReadSidecar.exe"),
+                         Path.Combine(baseDir, "EzRealmSync.ReadSidecar.dll"),
+                         Path.Combine(baseDir, "..", "osu.Game.EzRealmSync.ReadSidecar", "bin", "Debug", "net8.0", "EzRealmSync.ReadSidecar.exe"),
                          Path.Combine(baseDir, "..", "osu.Game.EzRealmSync.ReadSidecar", "bin", "Debug", "net8.0", "EzRealmSync.ReadSidecar.dll"),
+                         Path.Combine(baseDir, "..", "..", "osu.Game.EzRealmSync.ReadSidecar", "bin", "Debug", "net8.0", "EzRealmSync.ReadSidecar.exe"),
                          Path.Combine(baseDir, "..", "..", "osu.Game.EzRealmSync.ReadSidecar", "bin", "Debug", "net8.0", "EzRealmSync.ReadSidecar.dll"),
                      })
             {

@@ -202,6 +202,8 @@
   <data name="StatusRealmLoaded" xml:space="preserve"><value>Loaded {0} — {1} row(s) in all groups</value></data>
   <data name="StatusComputingSet" xml:space="preserve"><value>Computing set operation…</value></data>
   <data name="StatusSetComplete" xml:space="preserve"><value>Set result — A only: {0}, B only: {1}, conflicted: {2}</value></data>
+  <data name="StatusClickToCopyHint" xml:space="preserve"><value>Click to copy</value></data>
+  <data name="StatusCopiedToClipboard" xml:space="preserve"><value>Copied to clipboard</value></data>
   <data name="ErrorPickSourceTarget" xml:space="preserve"><value>Select source and target realm files.</value></data>
   <data name="SelectRealmHint" xml:space="preserve"><value>Select a realm file and click Load</value></data>
   <data name="DataClasses" xml:space="preserve"><value>CLASSES</value></data>

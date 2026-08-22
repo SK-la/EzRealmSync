@@ -202,6 +202,8 @@
   <data name="StatusRealmLoaded" xml:space="preserve"><value>已加载 {0}，全部分组共 {1} 行</value></data>
   <data name="StatusComputingSet" xml:space="preserve"><value>正在计算集合…</value></data>
   <data name="StatusSetComplete" xml:space="preserve"><value>集合结果 — 仅 A：{0}，仅 B：{1}，冲突：{2}</value></data>
+  <data name="StatusClickToCopyHint" xml:space="preserve"><value>点击复制</value></data>
+  <data name="StatusCopiedToClipboard" xml:space="preserve"><value>已复制到剪贴板</value></data>
   <data name="ErrorPickSourceTarget" xml:space="preserve"><value>请选择数据源与目标源。</value></data>
   <data name="SelectRealmHint" xml:space="preserve"><value>选择 Realm 文件后点击「完整加载」</value></data>
   <data name="DataClasses" xml:space="preserve"><value>类</value></data>

@@ -82,11 +82,13 @@
                          Height="28"
                          VerticalAlignment="Center"
                          IsIndeterminate="False" />
-        <ScrollViewer Grid.Column="2"
+        <ScrollViewer x:Name="StatusScrollViewer"
+                      Grid.Column="2"
                       VerticalAlignment="Center"
                       VerticalScrollBarVisibility="Auto"
                       HorizontalScrollBarVisibility="Disabled"
-                      MaxHeight="80">
+                      MaxHeight="80"
+                      MouseLeftButtonUp="StatusScrollViewer_OnMouseLeftButtonUp">
           <ui:TextBlock x:Name="StatusText"
                         TextWrapping="Wrap"
                         LineHeight="20"

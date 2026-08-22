@@ -38,7 +38,7 @@ internal static class Program
         }
         catch (Exception ex)
         {
-            writeFailure(resultPath, ex.ToString());
+            writeFailure(resultPath, ExceptionFormatting.SafeFormat(ex));
             return 1;
         }
     }
@@ -77,12 +77,30 @@ internal static class Program
 
     private static int? writeFailure(string resultPath, string message)
     {
-        var failure = new RealmReadResult
+        try
         {
-            Success = false,
-            ErrorMessage = message,
-        };
-        File.WriteAllText(resultPath, JsonSerializer.Serialize(failure, jsonOptions));
+            var failure = new RealmReadResult
+            {
+                Success = false,
+                ErrorMessage = message,
+            };
+            File.WriteAllText(resultPath, JsonSerializer.Serialize(failure, jsonOptions));
+        }
+        catch (Exception ex)
+        {
+            try
+            {
+                Console.Error.WriteLine(ExceptionFormatting.SafeFormat(ex));
+                Console.Error.WriteLine(message);
+            }
+            catch
+            {
+                // 最后兜底：stderr 也不可用时静默。
+            }
+
+            return 1;
+        }
+
         return null;
     }
 }

@@ -3,6 +3,7 @@ using osu.EzRealmSync.AppModel;
 using osu.EzRealmSync.AppModel.Localization;
 using osu.EzRealmSync.Desktop.Services;
 using osu.EzRealmSync.Desktop.ViewModels;
+using osu.Game.EzRealmSync;
 using osu.Game.EzRealmSync.Models;
 
 namespace osu.EzRealmSync.Desktop
@@ -337,13 +338,39 @@ namespace osu.EzRealmSync.Desktop
         private void updateStatus(string message)
         {
             StatusText.Text = message;
-            StatusText.ToolTip = string.IsNullOrWhiteSpace(message) ? null : message;
+
+            if (string.IsNullOrWhiteSpace(message))
+            {
+                StatusText.ToolTip = null;
+                StatusScrollViewer.Cursor = null;
+            }
+            else
+            {
+                StatusText.ToolTip = message + Environment.NewLine + Loc.Get("StatusClickToCopyHint");
+                StatusScrollViewer.Cursor = Cursors.Hand;
+            }
 
             if (vm == null || vm.IsBusy || string.IsNullOrWhiteSpace(message) || message == lastSnackbarStatus || isTransientStatus(message))
                 return;
 
             lastSnackbarStatus = message;
             WpfUiSnackbar.Show(vm.WindowTitle, message, ControlAppearance.Info);
+        }
+
+        private void StatusScrollViewer_OnMouseLeftButtonUp(object sender, MouseButtonEventArgs e)
+        {
+            if (string.IsNullOrWhiteSpace(StatusText.Text))
+                return;
+
+            try
+            {
+                Clipboard.SetText(StatusText.Text);
+                WpfUiSnackbar.Show(vm?.WindowTitle ?? Loc.Get("AppTitle"), Loc.Get("StatusCopiedToClipboard"), ControlAppearance.Success);
+            }
+            catch (Exception ex)
+            {
+                EzRealmSyncLog.Exception(ex, "Clipboard copy failed");
+            }
         }
 
         private static bool isTransientStatus(string message) => message.Contains("扫描", StringComparison.Ordinal) ||

@@ -12,6 +12,8 @@ namespace osu.EzRealmSync.Desktop
         [STAThread]
         public static void Main(string[] args)
         {
+            EzRealmSyncLog.Initialize();
+
             var settings = AppSettingsStore.Load();
             var readerPackages = RealmReaderPackageCatalog.Scan(settings.ReaderPackagesDirectory);
             string? readerLibOverride = RealmReaderPackageCatalog.FindById(readerPackages, settings.ActiveReaderPackageId)?.LibDirectory;
@@ -20,6 +22,8 @@ namespace osu.EzRealmSync.Desktop
 
             if (EzRealmSyncBackend.IsRealBackendCompiled)
                 RealmReaderRegistry.Instance.Initialize(settings.ReaderPackagesDirectory);
+
+            EzRealmSyncLog.Info($"Backend={(EzRealmSyncBackend.IsRealBackendCompiled ? "real" : "stub")}; reader packages={readerPackages.Count}");
 
             var options = EzRealmSyncLaunchOptions.Parse(args);
             Loc.SetLanguage(AppLanguage.ZhHans);

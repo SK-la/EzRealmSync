@@ -33,7 +33,7 @@ namespace osu.Game.EzRealmSync.Realm
                 return new RealmReadResult
                 {
                     Success = false,
-                    ErrorMessage = ex.ToString(),
+                    ErrorMessage = ExceptionFormatting.SafeFormat(ex),
                 };
             }
         }
@@ -63,7 +63,7 @@ namespace osu.Game.EzRealmSync.Realm
                 return new RealmApplyExportResult
                 {
                     Success = false,
-                    ErrorMessage = ex.ToString(),
+                    ErrorMessage = ExceptionFormatting.SafeFormat(ex),
                 };
             }
         }
