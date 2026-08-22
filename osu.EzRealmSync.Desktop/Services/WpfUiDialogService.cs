@@ -15,7 +15,8 @@ namespace osu.EzRealmSync.Desktop.Services
             return Application.Current.Dispatcher.InvokeAsync(() =>
             {
                 var dialog = new PathPickerWindow(mode, initialPath, title) { Owner = owner };
-                return dialog.ShowDialog() == true ? dialog.SelectedPath : null;
+                dialog.ShowDialog();
+                return dialog.IsConfirmed ? dialog.SelectedPath : null;
             }).Task;
         }
 

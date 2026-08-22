@@ -11,14 +11,18 @@ namespace osu.EzRealmSync.Desktop
     {
         private readonly PathPickerMode mode;
         private string currentPath = string.Empty;
+        private readonly ObservableCollection<PathBreadcrumbSegment> breadcrumbSegments = new();
 
         public string? SelectedPath { get; private set; }
+
+        public bool IsConfirmed { get; private set; }
 
         public PathPickerWindow(PathPickerMode mode, string? initialPath, string title)
         {
             this.mode = mode;
             InitializeComponent();
             ApplicationThemeManager.Apply(this);
+            PathBreadcrumb.ItemsSource = breadcrumbSegments;
             Title = title;
             PickerTitleBar.Title = title;
             refreshChrome();
@@ -126,12 +130,11 @@ namespace osu.EzRealmSync.Desktop
 
         private void refreshBreadcrumbs()
         {
-            PathBreadcrumb.Items.Clear();
+            breadcrumbSegments.Clear();
 
             if (string.IsNullOrEmpty(currentPath))
                 return;
 
-            var segments = new List<(string label, string path)>();
             var dir = new DirectoryInfo(currentPath);
 
             while (dir != null)
@@ -139,18 +142,8 @@ namespace osu.EzRealmSync.Desktop
                 string label = string.IsNullOrEmpty(dir.Name)
                     ? dir.FullName.TrimEnd(Path.DirectorySeparatorChar)
                     : dir.Name;
-                segments.Insert(0, (label, dir.FullName));
+                breadcrumbSegments.Insert(0, new PathBreadcrumbSegment(label, dir.FullName));
                 dir = dir.Parent;
-            }
-
-            for (int i = 0; i < segments.Count; i++)
-            {
-                PathBreadcrumb.Items.Add(new BreadcrumbBarItem
-                {
-                    Content = segments[i].label,
-                    Tag = segments[i].path,
-                    IsLast = i == segments.Count - 1,
-                });
             }
         }
 
@@ -209,7 +202,7 @@ namespace osu.EzRealmSync.Desktop
         private void commitSelection(string path)
         {
             SelectedPath = path;
-            DialogResult = true;
+            IsConfirmed = true;
             Close();
         }
 
@@ -251,19 +244,27 @@ namespace osu.EzRealmSync.Desktop
                 commitSelection(entry.FullPath);
         }
 
+        private void PathBreadcrumb_OnItemClicked(BreadcrumbBar sender, BreadcrumbBarItemClickedEventArgs e)
+        {
+            if (e.Item is not PathBreadcrumbSegment segment)
+                return;
+
+            // 当前目录（最后一项）无需跳转
+            if (e.Index >= breadcrumbSegments.Count - 1)
+                return;
+
+            if (!Directory.Exists(segment.FullPath))
+                return;
+
+            string target = segment.FullPath;
+            // 须在 BreadcrumbBar 内部 Click 结束后再改 ItemsSource，否则 ContainerFromItem 会拿到 null
+            Dispatcher.BeginInvoke(() => navigateTo(target), System.Windows.Threading.DispatcherPriority.Background);
+        }
+
         private void PlacesList_OnSelectionChanged(object sender, SelectionChangedEventArgs e)
         {
             if (PlacesList.SelectedItem is PlaceEntry place && Directory.Exists(place.FullPath))
                 navigateTo(place.FullPath);
-        }
-
-        private void PathBreadcrumb_OnItemClicked(object sender, RoutedEventArgs e)
-        {
-            if (e is not BreadcrumbBarItemClickedEventArgs { Item: BreadcrumbBarItem { Tag: string path } })
-                return;
-
-            if (Directory.Exists(path))
-                navigateTo(path);
         }
 
         private void EntryList_OnSelectionChanged(object sender, SelectionChangedEventArgs e) => updateSelectionHint();
@@ -292,7 +293,7 @@ namespace osu.EzRealmSync.Desktop
 
         private void CancelButton_OnClick(object sender, RoutedEventArgs e)
         {
-            DialogResult = false;
+            IsConfirmed = false;
             Close();
         }
 

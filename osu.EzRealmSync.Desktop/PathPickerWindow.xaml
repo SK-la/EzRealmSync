@@ -87,7 +87,14 @@
           <ui:BreadcrumbBar x:Name="PathBreadcrumb"
                             DockPanel.Dock="Top"
                             Margin="8,8,8,4"
-                            ItemClicked="PathBreadcrumb_OnItemClicked" />
+                            ItemClicked="PathBreadcrumb_OnItemClicked">
+            <ui:BreadcrumbBar.ItemTemplate>
+              <DataTemplate>
+                <TextBlock Text="{Binding Name}"
+                           TextTrimming="CharacterEllipsis" />
+              </DataTemplate>
+            </ui:BreadcrumbBar.ItemTemplate>
+          </ui:BreadcrumbBar>
           <ui:ListView x:Name="EntryList"
                        Margin="4,0,4,4"
                        BorderThickness="0"
