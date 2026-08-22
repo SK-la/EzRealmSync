@@ -6,7 +6,13 @@ namespace osu.Game.EzRealmSync.Abstractions
     {
         Task<ValidationResult> ValidatePathsAsync(PathConfiguration paths, CancellationToken cancellationToken = default);
 
-        Task<ScanResult> ScanAsync(ScanRequest request, IProgress<ScanProgress>? progress = null, CancellationToken cancellationToken = default);
+        Task<ScanResult> CompareRealmSetsAsync(
+            RealmSetOperation operation,
+            string sourceRealmId,
+            string targetRealmId,
+            EntityKindFilter entityFilter,
+            IProgress<ScanProgress>? progress = null,
+            CancellationToken cancellationToken = default);
 
         Task<ApplyResult> ApplyAsync(ApplyRequest request, IProgress<ApplyProgress>? progress = null, CancellationToken cancellationToken = default);
 

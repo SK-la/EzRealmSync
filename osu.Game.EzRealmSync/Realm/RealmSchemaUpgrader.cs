@@ -4,7 +4,6 @@ using osu.Game.Database;
 using osu.Game.EzRealmSync.Errors;
 using osu.Game.EzRealmSync.IO;
 using osu.Game.EzRealmSync.Models;
-using osu.Game.EzRealmSync.Realm.Readers;
 
 namespace osu.Game.EzRealmSync.Realm
 {
@@ -101,7 +100,7 @@ namespace osu.Game.EzRealmSync.Realm
                 }
 
                 RealmMigrationCounts afterCounts;
-                using (var access = RealmSchemaProbe.Open(workRealmPath, latestSupportedSchema))
+                using (var access = RealmAccessGateway.OpenForMigration(workRealmPath, latestSupportedSchema))
                     afterCounts = RealmMigrationCounts.Capture(access);
 
                 // 动态计数在 migration 前采集；迁移后 typed 计数不应灾难性低于动态基线
@@ -153,20 +152,11 @@ namespace osu.Game.EzRealmSync.Realm
 
         private static bool canOpenWithoutMigration(string realmFilePath, int diskSchemaVersion)
         {
-            try
-            {
-                using var access = RealmSchemaProbe.Open(realmFilePath, diskSchemaVersion);
-                access.Run(_ => { });
-                return true;
-            }
-            catch (RealmUserOperationException ex) when (ex.Kind is RealmUserErrorKind.MigrationRequired or RealmUserErrorKind.LegacyReaderUnavailable)
-            {
+            if (!RealmAccessGateway.TryOpenInProcessForRead(realmFilePath, diskSchemaVersion, out RealmAccess access))
                 return false;
-            }
-            catch (Exception ex) when (RealmOpenErrorClassifier.IsMigrationRequired(ex))
-            {
-                return false;
-            }
+
+            access.Dispose();
+            return true;
         }
 
         internal static RealmAccess OpenWithMigrationForTool(string realmFilePath, RealmDiskSchemaKind kind) =>

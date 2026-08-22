@@ -31,7 +31,7 @@ namespace osu.Game.EzRealmSync.Realm
 
             cancellationToken.ThrowIfCancellationRequested();
 
-            using var access = RealmSchemaProbe.Open(file.FilePath, file.SchemaVersion);
+            using var access = RealmAccessGateway.OpenForMutation(file.FilePath, file.SchemaVersion);
             int deleted = RealmBrowseEntityMutator.Delete(access, objectClass, entityIds);
 
             if (deleted > 0)
@@ -69,7 +69,7 @@ namespace osu.Game.EzRealmSync.Realm
             var collections = LegacyCollectionDb.ReadFile(collectionDbPath);
             progress?.Report(new ScanProgress { Progress = 0.4, Message = $"正在合并 {collections.Count} 个收藏夹…" });
 
-            using var access = RealmSchemaProbe.Open(file.FilePath, file.SchemaVersion);
+            using var access = RealmAccessGateway.OpenForMutation(file.FilePath, file.SchemaVersion);
             var result = RealmCollectionDbSync.Import(access, collections);
 
             snapshotCache.Remove(realmId);

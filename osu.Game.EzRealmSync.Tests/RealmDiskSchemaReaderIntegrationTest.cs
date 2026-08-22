@@ -113,7 +113,7 @@ namespace osu.Game.EzRealmSync.Tests
             {
                 Assert.DoesNotThrow((Action)(() =>
                 {
-                    using var access = RealmSchemaProbe.Open(sample.RealmFilePath);
+                    using var access = RealmAccessGateway.OpenForMutation(sample.RealmFilePath);
                     if (expectedKind == RealmDiskSchemaKind.PpyClient)
                         Assert.That(access.GetType().Name, Is.EqualTo("OfficialRealmAccess"));
                     else if (expectedKind == RealmDiskSchemaKind.EzExtended)
@@ -125,7 +125,7 @@ namespace osu.Game.EzRealmSync.Tests
 
             var ex = Assert.Throws<RealmUserOperationException>((Action)(() =>
             {
-                using var access = RealmSchemaProbe.Open(sample.RealmFilePath);
+                using var access = RealmAccessGateway.OpenForMutation(sample.RealmFilePath);
                 access.Run(_ => { });
             }));
             Assert.That(ex!.Kind, Is.AnyOf(RealmUserErrorKind.MigrationRequired, RealmUserErrorKind.SchemaTooLow));

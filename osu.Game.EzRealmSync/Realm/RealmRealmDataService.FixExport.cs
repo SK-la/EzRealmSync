@@ -37,7 +37,7 @@ namespace osu.Game.EzRealmSync.Realm
             var issues = new List<RealmFixIssue>();
 
             progress?.Report(new ScanProgress { Progress = 0, Message = "正在打开 Realm…" });
-            using var access = RealmSchemaProbe.Open(file.FilePath, file.SchemaVersion);
+            using var access = RealmAccessGateway.OpenForMutation(file.FilePath, file.SchemaVersion);
 
             if (options.ScanMissingFiles)
             {
@@ -144,7 +144,7 @@ namespace osu.Game.EzRealmSync.Realm
             int skipped = 0;
 
             progress?.Report(new ScanProgress { Progress = 0, Message = "正在写入 Realm…" });
-            using var access = RealmSchemaProbe.Open(file.FilePath, file.SchemaVersion);
+            using var access = RealmAccessGateway.OpenForMutation(file.FilePath, file.SchemaVersion);
 
             var illegalIssues = selected.Where(i => i.Kind == RealmFixIssueKind.IllegalCharacter).ToList();
 
@@ -326,7 +326,7 @@ namespace osu.Game.EzRealmSync.Realm
                 throw new InvalidOperationException($"未找到 Realm 文件：{realmId}");
 
             progress?.Report(new ScanProgress { Progress = 0, Message = "正在打开 Realm…" });
-            using var access = RealmSchemaProbe.Open(file.FilePath, file.SchemaVersion);
+            using var access = RealmAccessGateway.OpenForMutation(file.FilePath, file.SchemaVersion);
             var catalog = RealmExportCatalogBuilder.Build(access, kind, progress, cancellationToken);
             exportCatalogs[key] = catalog;
             return catalog;
@@ -361,7 +361,7 @@ namespace osu.Game.EzRealmSync.Realm
 
             if (request.Kind is ExportDataKind.Collection or ExportDataKind.Score)
             {
-                using var access = RealmSchemaProbe.Open(file.FilePath, file.SchemaVersion);
+                using var access = RealmAccessGateway.OpenForMutation(file.FilePath, file.SchemaVersion);
                 var entries = request.Kind == ExportDataKind.Collection
                     ? RealmExportExecutor.ResolveCollectionFiles(access, idSet)
                     : resolveScoreEntries(access, idSet, request.GroupScoresByPlayer);
@@ -480,7 +480,7 @@ namespace osu.Game.EzRealmSync.Realm
 
             string outputFile = LegacyCollectionDb.ResolveOutputFile(request.OutputDirectory, request.FolderName);
             int exported;
-            using (var access = RealmSchemaProbe.Open(file.FilePath, file.SchemaVersion))
+            using (var access = RealmAccessGateway.OpenForMutation(file.FilePath, file.SchemaVersion))
                 exported = RealmCollectionDbSync.Export(access, request.ItemIds, outputFile);
 
             progress?.Report(new ScanProgress { Progress = 1, Message = "导出完成" });

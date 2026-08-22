@@ -1,5 +1,24 @@
 # 数据操作原则（EzRealmSync）
 
+## RealmAccessGateway（统一访问策略）
+
+所有 Tab / Service **不得**自行选择 `RealmSchemaProbe`、`RealmDiffSnapshotProvider` 或 Sidecar；经 `RealmAccessGateway` 按**操作意图**分流：
+
+| 入口 | 用途 | 打开方式 | Sidecar |
+|------|------|----------|---------|
+| `ProbeSchema` | 读文件头 schema | 磁盘 API，不打开库 | — |
+| `ReadDiffSnapshot` | 同步 A/B 对比、Apply 读源库 | 主 lib 进程内 → 失败则 ReadSidecar + `readers/` | **是**（legacy 时） |
+| `OpenForMutation` | 数据 Tab 浏览/删改、Apply 写目标 | 仅 bundled 主 lib | **否** — legacy 抛 `MigrationRequired` |
+| `OpenForMigration` | 修复页升级 / 转官方 | 主 lib，允许在工作副本 migration | N/A |
+
+**错误语义（框架层）：**
+
+- 只读 Diff + 有 reader 包 → Sidecar 透明成功，UI 无「先升级」提示。
+- 只读 Diff + 无 reader 包 → `ReaderPackageMissing`（指向 `readers/` + `Sync-ReaderLibs.ps1`）。
+- 写回 + legacy schema → `MigrationRequired` / `LegacyReaderUnavailable`，文案明确「写操作需 lib 最新或先升级」，**不**与 Sidecar 读路径混用。
+
+同步 Tab 的 Compare + Apply 均经 `IEzRealmSyncService`，内部统一走 Gateway。
+
 ## 三类能力
 
 | 能力 | 作用 | 是否改磁盘 schema |

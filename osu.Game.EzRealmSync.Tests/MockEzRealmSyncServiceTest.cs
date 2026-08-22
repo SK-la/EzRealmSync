@@ -52,8 +52,13 @@ namespace osu.Game.EzRealmSync.Tests
         [Test]
         public async Task ApplyAsync_with_backup_records_backup_path()
         {
-            var service = new MockEzRealmSyncService(new MockEzRealmSyncOptions { SimulatedDelayMilliseconds = 0 });
-            var scan = await service.ScanAsync(new ScanRequest { Direction = SyncDirection.EzToOfficial, Paths = new PathConfiguration() });
+            var service = new MockEzRealmSyncService(new MockEzRealmSyncOptions { SimulatedDelayMilliseconds = 0, DatasetSize = MockDatasetSize.Medium });
+            var files = await service.DiscoverRealmFilesAsync(null);
+            var scan = await service.CompareRealmSetsAsync(
+                RealmSetOperation.SymmetricDifference,
+                files[0].Id,
+                files[1].Id,
+                EntityKindFilter.All);
             var first = scan.SourceOnly.First();
 
             var apply = await service.ApplyAsync(new ApplyRequest

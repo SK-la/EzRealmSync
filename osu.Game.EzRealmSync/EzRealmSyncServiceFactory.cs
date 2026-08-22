@@ -1,5 +1,6 @@
 using osu.Game.EzRealmSync.Abstractions;
 using osu.Game.EzRealmSync.Mock;
+using osu.Game.EzRealmSync.Models;
 using osu.Game.EzRealmSync.Realm;
 
 namespace osu.Game.EzRealmSync
@@ -13,7 +14,7 @@ namespace osu.Game.EzRealmSync
         {
             if (uiTestMode)
                 return new MockEzRealmSyncService(mockOptions ?? new MockEzRealmSyncOptions());
-            return new RealmEzRealmSyncService();
+            return CreateSession(uiTestMode: false).Sync;
         }
 
         /// <summary>
@@ -26,8 +27,10 @@ namespace osu.Game.EzRealmSync
                 var mock = new MockEzRealmSyncService(mockOptions ?? new MockEzRealmSyncOptions());
                 return new RealmServiceSession(mock, mock, mock, mock);
             }
-            var data = new RealmRealmDataService();
-            return new RealmServiceSession(data, data, data, new RealmEzRealmSyncService());
+
+            var registry = new RealmFileRegistry();
+            var data = new RealmRealmDataService(registry);
+            return new RealmServiceSession(data, data, data, new RealmEzRealmSyncService(registry));
         }
 
         public static IRealmDataService CreateDataService(bool uiTestMode, MockEzRealmSyncOptions? mockOptions = null) => CreateSession(uiTestMode, mockOptions).Data;

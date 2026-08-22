@@ -563,7 +563,7 @@ namespace osu.EzRealmSync.AppModel
             {
                 var progress = createScanProgress();
 
-                var scanResult = await dataService.CompareRealmSetsAsync(
+                var scanResult = await syncService.CompareRealmSetsAsync(
                     SetOperation.Value,
                     SyncRealmIdA.Value,
                     SyncRealmIdB.Value,
@@ -620,7 +620,7 @@ namespace osu.EzRealmSync.AppModel
                 ? Loc.Format("ConfirmDelete", selected.Count, sourceFile.DisplayName)
                 : Loc.Format("ConfirmAdd", selected.Count, targetFile.DisplayName);
 
-            if (sourceFile.SchemaVersion is int schemaA && targetFile.SchemaVersion is int schemaB)
+            if (sourceFile.SchemaVersion is { } schemaA && targetFile.SchemaVersion is { } schemaB)
             {
                 string syncWarning = RealmSchemaTransitionAssessor.DescribeSyncPairWarning(schemaA, schemaB);
                 if (!string.IsNullOrWhiteSpace(syncWarning))

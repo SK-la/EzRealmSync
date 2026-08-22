@@ -33,7 +33,7 @@ namespace osu.Game.EzRealmSync.Realm
         {
             try
             {
-                var direct = RealmSchemaProbe.Open(sourcePath, sourceSchema);
+                var direct = RealmAccessGateway.OpenForMutation(sourcePath, sourceSchema);
                 return new RealmOfficialConvertSourceOpener(direct, sourceSchema, tempRoot: null);
             }
             catch (RealmUserOperationException ex) when (ex.Kind is RealmUserErrorKind.MigrationRequired or RealmUserErrorKind.LegacyReaderUnavailable)
@@ -70,7 +70,7 @@ namespace osu.Game.EzRealmSync.Realm
             GC.WaitForPendingFinalizers();
 
             int latestEz = RealmSchemaToolPolicy.MaxSupportedEzFileSchema;
-            var access = RealmSchemaProbe.Open(workPath, latestEz);
+            var access = RealmAccessGateway.OpenForMigration(workPath, latestEz);
             return new RealmOfficialConvertSourceOpener(access, latestEz, tempRoot);
         }
 

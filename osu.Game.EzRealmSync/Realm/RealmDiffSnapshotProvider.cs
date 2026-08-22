@@ -21,7 +21,7 @@ namespace osu.Game.EzRealmSync.Realm
         {
             RealmSchemaToolPolicy.EnsureCanOpen(pinnedDiskSchemaVersion);
 
-            if (tryReadInProcess(realmFilePath, pinnedDiskSchemaVersion, progress, cancellationToken, out RealmDiffSnapshot? snapshot))
+            if (tryReadInProcess(realmFilePath, pinnedDiskSchemaVersion, progress, cancellationToken, out RealmDiffSnapshot snapshot))
                 return filterKinds(snapshot, entityKinds);
 
             return filterKinds(readViaSidecar(realmFilePath, pinnedDiskSchemaVersion, entityKinds, cancellationToken), entityKinds);
@@ -31,7 +31,7 @@ namespace osu.Game.EzRealmSync.Realm
         {
             RealmSchemaToolPolicy.EnsureCanOpen(pinnedDiskSchemaVersion);
 
-            if (tryOpenInProcess(realmFilePath, pinnedDiskSchemaVersion, out RealmAccess? access))
+            if (tryOpenInProcess(realmFilePath, pinnedDiskSchemaVersion, out RealmAccess access))
                 return access;
 
             throw createMissingReaderException(pinnedDiskSchemaVersion, realmFilePath);
@@ -70,7 +70,7 @@ namespace osu.Game.EzRealmSync.Realm
         {
             snapshot = null!;
 
-            if (!tryOpenInProcess(realmFilePath, pinnedDiskSchemaVersion, out RealmAccess? access))
+            if (!tryOpenInProcess(realmFilePath, pinnedDiskSchemaVersion, out RealmAccess access))
                 return false;
 
             using (access)
@@ -81,27 +81,8 @@ namespace osu.Game.EzRealmSync.Realm
             return true;
         }
 
-        private static bool tryOpenInProcess(string realmFilePath, int pinnedDiskSchemaVersion, out RealmAccess access)
-        {
-            access = null!;
-
-            try
-            {
-                access = RealmAccessOpener.Open(realmFilePath, pinnedDiskSchemaVersion);
-                access.Run(_ => { });
-                return true;
-            }
-            catch (RealmUserOperationException ex) when (ex.Kind is RealmUserErrorKind.LegacyReaderUnavailable or RealmUserErrorKind.MigrationRequired)
-            {
-                access?.Dispose();
-                return false;
-            }
-            catch (Exception)
-            {
-                access?.Dispose();
-                return false;
-            }
-        }
+        private static bool tryOpenInProcess(string realmFilePath, int pinnedDiskSchemaVersion, out RealmAccess access) =>
+            RealmAccessGateway.TryOpenInProcessForRead(realmFilePath, pinnedDiskSchemaVersion, out access);
 
         private static RealmDiffSnapshot readViaSidecar(
             string realmFilePath,

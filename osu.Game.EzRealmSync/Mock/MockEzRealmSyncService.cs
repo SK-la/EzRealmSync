@@ -28,23 +28,6 @@ namespace osu.Game.EzRealmSync.Mock
             });
         }
 
-        public async Task<ScanResult> ScanAsync(ScanRequest request, IProgress<ScanProgress>? progress = null, CancellationToken cancellationToken = default)
-        {
-            if (Options.ErrorInjection == MockErrorInjection.ScanCancelled)
-                throw new OperationCanceledException("扫描已取消（模拟）。");
-
-            if (Options.ErrorInjection == MockErrorInjection.ProcessLocked)
-                throw new InvalidOperationException("client.realm 正被占用，请关闭 osu! / Ez2Lazer（模拟）。");
-
-            if (Options.ErrorInjection == MockErrorInjection.InvalidPath)
-                throw new InvalidOperationException("路径无效（模拟）。");
-
-            await simulateWorkAsync(progress, "正在扫描差异…", cancellationToken).ConfigureAwait(false);
-
-            currentResult = generateDataset(Options.DatasetSize);
-            return currentResult;
-        }
-
         public async Task<ApplyResult> ApplyAsync(ApplyRequest request, IProgress<ApplyProgress>? progress = null, CancellationToken cancellationToken = default)
         {
             await simulateWorkAsync(

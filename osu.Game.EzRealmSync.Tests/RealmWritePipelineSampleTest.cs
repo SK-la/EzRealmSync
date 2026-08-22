@@ -1,6 +1,7 @@
 #if HAS_EZ_OSU_GAME
 using System.Text.RegularExpressions;
 using NUnit.Framework;
+using osu.Game.EzRealmSync.Models;
 using osu.Game.EzRealmSync.Realm;
 using osu.Game.EzRealmSync.Tests.TestInfrastructure;
 
@@ -16,7 +17,7 @@ namespace osu.Game.EzRealmSync.Tests
             using var writable = RealmSampleFixture.CreateWritableCopy(sample);
             string backupDirectory = Path.Combine(writable.TempDirectory, "backups");
 
-            var dataService = new RealmRealmDataService();
+            var dataService = new RealmRealmDataService(new RealmFileRegistry());
             string backupPath = await dataService.CreateTimestampedBackupAsync(writable.RealmFilePath, backupDirectory);
 
             Assert.That(File.Exists(backupPath), Is.True);
@@ -33,7 +34,7 @@ namespace osu.Game.EzRealmSync.Tests
             if (sample == null)
                 Assert.Ignore("未放置任何 .realm 样本文件，跳过样本写路径测试。");
 
-            return sample!;
+            return sample;
         }
     }
 }

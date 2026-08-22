@@ -12,7 +12,13 @@ namespace osu.Game.EzRealmSync.Realm
 
         public Task<ValidationResult> ValidatePathsAsync(PathConfiguration paths, CancellationToken cancellationToken = default) => Task.FromResult(ValidationResult.Failure(message));
 
-        public Task<ScanResult> ScanAsync(ScanRequest request, IProgress<ScanProgress>? progress = null, CancellationToken cancellationToken = default) => throw new NotImplementedException(message);
+        public Task<ScanResult> CompareRealmSetsAsync(
+            RealmSetOperation operation,
+            string sourceRealmId,
+            string targetRealmId,
+            EntityKindFilter entityFilter,
+            IProgress<ScanProgress>? progress = null,
+            CancellationToken cancellationToken = default) => throw new NotImplementedException(message);
 
         public Task<ApplyResult> ApplyAsync(ApplyRequest request, IProgress<ApplyProgress>? progress = null, CancellationToken cancellationToken = default) =>
             throw new NotImplementedException(message);

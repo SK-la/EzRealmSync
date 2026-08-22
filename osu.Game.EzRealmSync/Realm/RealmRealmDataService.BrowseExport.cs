@@ -50,7 +50,7 @@ namespace osu.Game.EzRealmSync.Realm
 
             var relativePaths = new List<(string sourceRelative, string destRelative, string? subDir)>();
 
-            using (var access = RealmSchemaProbe.Open(file.FilePath, file.SchemaVersion))
+            using (var access = RealmAccessGateway.OpenForMutation(file.FilePath, file.SchemaVersion))
             {
                 access.Run(realm =>
                 {

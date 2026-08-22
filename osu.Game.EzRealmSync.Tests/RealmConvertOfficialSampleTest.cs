@@ -15,13 +15,13 @@ namespace osu.Game.EzRealmSync.Tests
         {
             RealmSampleInfo sample = pick_ez_sample_with_realm_file();
             using var writable = RealmSampleFixture.CreateWritableCopy(sample);
-            var dataService = new RealmRealmDataService();
+            var dataService = new RealmRealmDataService(new RealmFileRegistry());
             var entry = await dataService.RegisterRealmFileAsync(writable.RealmFilePath);
 
             string differentOutput = Path.Combine(writable.TempDirectory, "different.realm");
 
-            var ex = Assert.ThrowsAsync<RealmUserOperationException>((Func<Task>)(async () =>
-                await dataService.ConvertToOfficialRealmAsync(entry.Id, OfficialConvertTarget.PreserveReadUpstream, differentOutput)));
+            var ex = Assert.ThrowsAsync<RealmUserOperationException>(async () =>
+                await dataService.ConvertToOfficialRealmAsync(entry.Id, OfficialConvertTarget.PreserveReadUpstream, differentOutput));
             Assert.That(ex!.Kind, Is.EqualTo(RealmUserErrorKind.PathConflict));
         }
 
@@ -30,13 +30,13 @@ namespace osu.Game.EzRealmSync.Tests
         {
             RealmSampleInfo sample = pick_ez_sample_with_realm_file();
             using var writable = RealmSampleFixture.CreateWritableCopy(sample);
-            var dataService = new RealmRealmDataService();
+            var dataService = new RealmRealmDataService(new RealmFileRegistry());
             var entry = await dataService.RegisterRealmFileAsync(writable.RealmFilePath);
 
             await using var lockStream = new FileStream(writable.RealmFilePath, FileMode.Open, FileAccess.ReadWrite, FileShare.None);
 
-            var ex = Assert.ThrowsAsync<RealmUserOperationException>((Func<Task>)(async () =>
-                await dataService.ConvertToOfficialRealmAsync(entry.Id, OfficialConvertTarget.PreserveReadUpstream)));
+            var ex = Assert.ThrowsAsync<RealmUserOperationException>(async () =>
+                await dataService.ConvertToOfficialRealmAsync(entry.Id, OfficialConvertTarget.PreserveReadUpstream));
             Assert.That(ex!.Kind, Is.EqualTo(RealmUserErrorKind.FileInUse));
         }
 
@@ -45,7 +45,7 @@ namespace osu.Game.EzRealmSync.Tests
         {
             RealmSampleInfo sample = pick_ez_sample_with_realm_file();
             using var writable = RealmSampleFixture.CreateWritableCopy(sample);
-            var dataService = new RealmRealmDataService();
+            var dataService = new RealmRealmDataService(new RealmFileRegistry());
             var before = await dataService.RegisterRealmFileAsync(writable.RealmFilePath);
 
             try
@@ -63,7 +63,7 @@ namespace osu.Game.EzRealmSync.Tests
                     Assert.That(after.Id, Is.EqualTo(before.Id));
                     Assert.That(after.DiskSchemaKind, Is.EqualTo(RealmDiskSchemaKind.PpyClient));
 
-                    if (before.SchemaVersion is int sourceSchema)
+                    if (before.SchemaVersion is { } sourceSchema)
                     {
                         int expectedOfficial = OfficialConvertPlanner.ResolveTargetOfficialUpstream(sourceSchema, OfficialConvertTarget.PreserveReadUpstream);
                         Assert.That(after.SchemaVersion, Is.EqualTo(expectedOfficial));
@@ -98,7 +98,7 @@ namespace osu.Game.EzRealmSync.Tests
         {
             RealmSampleInfo sample = pick_ez_sample_with_realm_file();
             using var writable = RealmSampleFixture.CreateWritableCopy(sample);
-            var dataService = new RealmRealmDataService();
+            var dataService = new RealmRealmDataService(new RealmFileRegistry());
             var entry = await dataService.RegisterRealmFileAsync(writable.RealmFilePath);
 
             string customBackupDir = Path.Combine(writable.TempDirectory, "custom-backups");

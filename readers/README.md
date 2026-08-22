@@ -1,6 +1,8 @@
 # EzRealmSync Reader 包
 
-当内置 NuGet（当前 Ez2Lazer 版本）无法用 pinned schema 打开旧版 Realm 时，工具会按磁盘 schema **自动**选用匹配的 reader 包，通过 **ReadSidecar 子进程**只读打开（同步 Scan / Apply 源库）。
+当内置 NuGet（当前 Ez2Lazer 版本）无法用 pinned schema **进程内**打开旧版 Realm 时，**所有只读 Diff 路径**（同步 Tab A/B 对比、Apply 读源库等）经 `RealmAccessGateway.ReadDiffSnapshot` 自动选用匹配的 reader 包，通过 **ReadSidecar 子进程**只读打开。
+
+**写回**（删改、Apply 写目标、数据 Tab live 浏览）仍只走 bundled 主 lib；legacy schema 需先在修复页升级，**不会**误用 Sidecar。
 
 ## 目录布局
 
@@ -62,7 +64,7 @@ pwsh scripts/Sync-ReaderLibs.ps1
 ## 使用方式
 
 1. manifest 已随 Release 提供；`lib/` 由脚本生成或从安装目录手动复制。
-2. 打开同步 Tab Scan — **无需重启**；每次 Scan 重新扫描 reader 包。
+2. 打开同步 Tab 做 A/B 对比或 Apply — **无需重启**；每次读 Diff 前 Gateway 会重新扫描 reader 包。
 3. 主 lib 能 pinned 打开时 **不启** sidecar；否则按 schema 匹配 reader 并 spawn ReadSidecar。
 
 ## 冲突

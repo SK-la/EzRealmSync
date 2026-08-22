@@ -4,7 +4,6 @@ using osu.Game.EzRealmSync.Abstractions;
 using osu.Game.EzRealmSync.Errors;
 using osu.Game.EzRealmSync.IO;
 using osu.Game.EzRealmSync.Models;
-using osu.Game.EzRealmSync.Realm.Readers;
 
 namespace osu.Game.EzRealmSync.Realm
 {
@@ -13,6 +12,13 @@ namespace osu.Game.EzRealmSync.Realm
     /// </summary>
     public sealed class RealmEzRealmSyncService : IEzRealmSyncService
     {
+        private readonly RealmFileRegistry registry;
+
+        public RealmEzRealmSyncService(RealmFileRegistry registry)
+        {
+            this.registry = registry;
+        }
+
         public Task<ValidationResult> ValidatePathsAsync(PathConfiguration paths, CancellationToken cancellationToken = default)
         {
             cancellationToken.ThrowIfCancellationRequested();
@@ -51,35 +57,45 @@ namespace osu.Game.EzRealmSync.Realm
             return Task.FromResult(ValidationResult.Success(warnings.ToArray()));
         }
 
-        public Task<ScanResult> ScanAsync(ScanRequest request, IProgress<ScanProgress>? progress = null, CancellationToken cancellationToken = default) =>
-            Task.Run(() => scanCore(request, progress, cancellationToken), cancellationToken);
+        public Task<ScanResult> CompareRealmSetsAsync(
+            RealmSetOperation operation,
+            string sourceRealmId,
+            string targetRealmId,
+            EntityKindFilter entityFilter,
+            IProgress<ScanProgress>? progress = null,
+            CancellationToken cancellationToken = default) =>
+            Task.Run(() => compareCore(operation, sourceRealmId, targetRealmId, entityFilter, progress, cancellationToken), cancellationToken);
 
-        private static ScanResult scanCore(ScanRequest request, IProgress<ScanProgress>? progress, CancellationToken cancellationToken)
-        {
-            RealmReaderRegistry.Instance.Refresh();
-
-            var plan = resolvePlan(request.WritePlan, request.Direction, request.Paths);
-
-            progress?.Report(new ScanProgress { Progress = 0, Message = "正在打开源库（A）…" });
-            cancellationToken.ThrowIfCancellationRequested();
-
-            var sourceSnapshot = readSnapshot(plan.SourceRealmFilePath, plan.SourceSchemaVersion, progress, cancellationToken);
-            progress?.Report(new ScanProgress { Progress = 0.5, Message = "正在读取目标库（B）…" });
-            var targetSnapshot = readSnapshot(plan.TargetRealmFilePath, plan.TargetSchemaVersion, progress, cancellationToken);
-
-            return RealmDiffEngine.Compare(sourceSnapshot, targetSnapshot, request.EntityKinds, progress, cancellationToken);
-        }
-
-        private static RealmDiffSnapshot readSnapshot(
-            string realmFilePath,
-            int? diskSchemaVersion,
+        private ScanResult compareCore(
+            RealmSetOperation operation,
+            string sourceRealmId,
+            string targetRealmId,
+            EntityKindFilter entityFilter,
             IProgress<ScanProgress>? progress,
             CancellationToken cancellationToken)
         {
-            int schema = diskSchemaVersion ?? RealmSchemaProbe.TryReadSchemaVersion(realmFilePath)
-                ?? throw new InvalidOperationException($"无法读取 Realm schema 版本：{realmFilePath}");
+            if (!registry.TryGet(sourceRealmId, out var sourceFile))
+                throw new InvalidOperationException($"未找到源 Realm：{sourceRealmId}");
 
-            return RealmDiffSnapshotProvider.Read(realmFilePath, schema, entityKinds: null, progress, cancellationToken);
+            if (!registry.TryGet(targetRealmId, out var targetFile))
+                throw new InvalidOperationException($"未找到目标 Realm：{targetRealmId}");
+
+            var kinds = RealmSetCompareHelper.ToEntityKinds(entityFilter);
+
+            progress?.Report(new ScanProgress { Progress = 0, Message = "正在读取源库…" });
+            cancellationToken.ThrowIfCancellationRequested();
+
+            int sourceSchema = RealmAccessGateway.ResolveSchemaVersion(sourceFile.FilePath, sourceFile.SchemaVersion);
+            var sourceSnapshot = RealmAccessGateway.ReadDiffSnapshot(sourceFile.FilePath, sourceSchema, kinds, progress, cancellationToken);
+
+            progress?.Report(new ScanProgress { Progress = 0.5, Message = "正在读取目标库…" });
+            cancellationToken.ThrowIfCancellationRequested();
+
+            int targetSchema = RealmAccessGateway.ResolveSchemaVersion(targetFile.FilePath, targetFile.SchemaVersion);
+            var targetSnapshot = RealmAccessGateway.ReadDiffSnapshot(targetFile.FilePath, targetSchema, kinds, progress, cancellationToken);
+
+            var diff = RealmDiffEngine.Compare(sourceSnapshot, targetSnapshot, kinds, progress, cancellationToken);
+            return RealmSetCompareHelper.ApplyOperation(diff, operation);
         }
 
         public Task<ApplyResult> ApplyAsync(ApplyRequest request, IProgress<ApplyProgress>? progress = null, CancellationToken cancellationToken = default) =>
@@ -87,7 +103,7 @@ namespace osu.Game.EzRealmSync.Realm
 
         private static ApplyResult applyCore(ApplyRequest request, IProgress<ApplyProgress>? progress, CancellationToken cancellationToken)
         {
-            RealmReaderRegistry.Instance.Refresh();
+            RealmAccessGateway.RefreshReaders();
 
             string? validationError = RealmApplySupport.ValidateApplyRequest(request);
             if (validationError != null)
@@ -95,7 +111,6 @@ namespace osu.Game.EzRealmSync.Realm
 
             var plan = resolvePlan(request.WritePlan, request.Direction, request.Paths);
 
-            // 综合并发检查：重试进程检测 + 排他文件锁
             string? guardError = Task.Run(() => RealmProcessGuard.ComprehensiveCheckAsync(plan.TargetRealmFilePath)).GetAwaiter().GetResult();
             if (guardError != null)
                 throw new RealmUserOperationException(RealmUserErrorKind.FileInUse, guardError);
@@ -113,14 +128,13 @@ namespace osu.Game.EzRealmSync.Realm
 
             using var targetAccess = openForPlanEndpoint(plan.TargetRealmFilePath, plan.TargetSchemaVersion);
 
-            int sourceSchema = plan.SourceSchemaVersion ?? RealmSchemaProbe.TryReadSchemaVersion(plan.SourceRealmFilePath)
-                ?? throw new InvalidOperationException($"无法读取 Realm schema 版本：{plan.SourceRealmFilePath}");
+            int sourceSchema = RealmAccessGateway.ResolveSchemaVersion(plan.SourceRealmFilePath, plan.SourceSchemaVersion);
 
             ApplyResult result;
 
-            if (RealmDiffSnapshotProvider.RequiresSidecarForRead(plan.SourceRealmFilePath, sourceSchema))
+            if (RealmAccessGateway.RequiresSidecarForRead(plan.SourceRealmFilePath, sourceSchema))
             {
-                var bundle = RealmDiffSnapshotProvider.ExportApplyBundleViaSidecar(
+                var bundle = RealmAccessGateway.ExportApplyBundleViaSidecar(
                     plan.SourceRealmFilePath,
                     sourceSchema,
                     request.ItemIds,
@@ -218,10 +232,8 @@ namespace osu.Game.EzRealmSync.Realm
 
         private static RealmAccess openForPlanEndpoint(string realmFilePath, int? diskSchemaVersion)
         {
-            int schema = diskSchemaVersion ?? RealmSchemaProbe.TryReadSchemaVersion(realmFilePath)
-                ?? throw new InvalidOperationException($"无法读取 Realm schema 版本：{realmFilePath}");
-
-            return RealmAccessOpener.Open(realmFilePath, schema);
+            int schema = RealmAccessGateway.ResolveSchemaVersion(realmFilePath, diskSchemaVersion);
+            return RealmAccessGateway.OpenForMutation(realmFilePath, schema);
         }
 
         public Task<IReadOnlyList<BackupEntry>> ListBackupsAsync(string? backupDirectory = null, CancellationToken cancellationToken = default)
