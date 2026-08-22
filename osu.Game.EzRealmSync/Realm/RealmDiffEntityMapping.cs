@@ -35,9 +35,15 @@ namespace osu.Game.EzRealmSync.Realm
             CollectionHashFingerprint = dto.CollectionHashFingerprint,
         };
 
-        public static RealmDiffSnapshot FromResult(RealmReadResult result) => new RealmDiffSnapshot
+        public static RealmDiffSnapshot FromResult(RealmReadResult result)
         {
-            Entities = result.Entities.Select(FromDto).ToArray(),
-        };
+            if (!result.Success)
+                throw new InvalidOperationException(result.ErrorMessage ?? "只读 Diff 快照失败。");
+
+            return new RealmDiffSnapshot
+            {
+                Entities = result.Entities.Select(FromDto).ToArray(),
+            };
+        }
     }
 }

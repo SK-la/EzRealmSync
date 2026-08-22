@@ -6,8 +6,8 @@ using osu.Game.EzRealmSync.Realm.Readers;
 namespace osu.Game.EzRealmSync.Realm
 {
     /// <summary>
-    ///     进程内打开 current schema 的共享逻辑（ReadDiff / ReadBrowse / Sidecar 对齐）。
-    ///     Legacy schema 不在此打开，由 Sidecar + reader 包负责。
+    /// 进程内打开：仅 Ez current。官方任意版本禁止进程内打开（Ez 对象模型含 Ez 列）。
+    /// Ez legacy 由 ReadSidecar；官方由 Official Worker（OfficialSchema）。
     /// </summary>
     internal static class RealmAccessOpenCore
     {
@@ -16,24 +16,25 @@ namespace osu.Game.EzRealmSync.Realm
             return RealmReaderRegistry.Instance.Router.ResolveRoute(pinnedDiskSchemaVersion);
         }
 
-        public static bool IsCurrentRoute(RealmReaderRoute route)
+        public static bool IsInProcessReadableRoute(RealmReaderRoute route) =>
+            route == RealmReaderRoute.EzCurrent;
+
+        public static bool RequiresOutOfProcessRead(int pinnedDiskSchemaVersion)
         {
-            return route is RealmReaderRoute.OfficialCurrent or RealmReaderRoute.EzCurrent;
+            return !IsInProcessReadableRoute(ResolveRoute(pinnedDiskSchemaVersion));
         }
 
-        public static bool RequiresSidecar(int pinnedDiskSchemaVersion)
-        {
-            return !IsCurrentRoute(ResolveRoute(pinnedDiskSchemaVersion));
-        }
+        /// <summary>兼容旧名：非 Ez current 即需子进程（官方 → Official Worker；Ez legacy → Sidecar）。</summary>
+        public static bool RequiresSidecar(int pinnedDiskSchemaVersion) =>
+            RequiresOutOfProcessRead(pinnedDiskSchemaVersion);
 
         public static RealmAccess OpenCurrentInProcess(string realmFilePath, int pinnedDiskSchemaVersion, RealmReaderRoute route)
         {
             return route switch
             {
-                RealmReaderRoute.OfficialCurrent => RealmDiffReader.OpenOfficialRealm(realmFilePath, pinnedDiskSchemaVersion),
                 RealmReaderRoute.EzCurrent => RealmDiffReader.OpenEzRealm(realmFilePath, pinnedDiskSchemaVersion),
                 _ => throw new InvalidOperationException(
-                    $"schema {pinnedDiskSchemaVersion} 非 bundled lib 当前版本，不能进程内打开：{realmFilePath}")
+                    $"schema {pinnedDiskSchemaVersion}（route={route}）不得进程内打开：官方走 Official Worker，Ez legacy 走 ReadSidecar。文件：{realmFilePath}")
             };
         }
 
@@ -42,10 +43,10 @@ namespace osu.Game.EzRealmSync.Realm
             access = null;
             RealmReaderRoute route = ResolveRoute(pinnedDiskSchemaVersion);
 
-            if (!IsCurrentRoute(route))
+            if (!IsInProcessReadableRoute(route))
             {
                 EzRealmSyncLog.Debug(
-                    $"In-process open skipped (legacy route {route}) schema={pinnedDiskSchemaVersion} file={realmFilePath}");
+                    $"In-process open skipped (route {route}) schema={pinnedDiskSchemaVersion} file={realmFilePath}");
                 return false;
             }
 
@@ -62,7 +63,7 @@ namespace osu.Game.EzRealmSync.Realm
                 access = null;
 
                 throw new InvalidOperationException(
-                    $"无法用 bundled lib 进程内打开当前 schema {pinnedDiskSchemaVersion}（route={route}）：{ExceptionFormatting.SafeFormat(ex)}",
+                    $"无法用 bundled lib 进程内打开当前 Ez schema {pinnedDiskSchemaVersion}（route={route}）：{ExceptionFormatting.SafeFormat(ex)}",
                     ex);
             }
         }

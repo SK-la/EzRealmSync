@@ -1,95 +1,65 @@
 # 数据操作原则（EzRealmSync）
 
+## 两套模型（产品轴）
+
+| 磁盘 | 模型 | 进程 |
+|------|------|------|
+| **官方**（schema &lt; 1000，如 51 / 52） | OfficialSchema 镜像（无 Ez 列） | `official-write/` Worker（读 + 转官方写 + 同步写入官方） |
+| **Ez current**（如 52007） | Ez `osu.Game` | 主进程 |
+| **Ez legacy**（如 51007） | Ez `osu.Game`（Sidecar 自包含 + readers 薄切片） | `read-sidecar/` |
+
+主进程 **永不**加载 OfficialSchema（`[MapTo]` 冲突）。  
+官方库 **禁止**再用 `OfficialRealmAccess` + Ez 对象模型假装官方（会 `MigrationNeeded` / 污染 Ez 列）。
+
 ## RealmAccessGateway（统一访问策略）
 
-所有 Tab / Service **不得**自行选择 `RealmSchemaProbe`、`RealmDiffSnapshotProvider` 或 Sidecar；经 `RealmAccessGateway` 按**操作意图**分流：
+所有 Tab / Service **不得**自行选择 Provider / Sidecar / Official Worker；经 `RealmAccessGateway` 按**操作意图**分流：
 
-| 入口 | 用途 | 打开方式 | Sidecar |
-|------|------|----------|---------|
-| `ProbeSchema` | 读文件头 schema | 磁盘 API，不打开库 | — |
-| `ReadDiffSnapshot` | 同步 A/B 对比、Apply 读源库 | current：进程内；legacy：ReadSidecar + `readers/` | legacy 时 |
-| `ReadBrowseSnapshot` | 数据 Tab **只读**浏览加载 | 同上 | legacy 时 |
-| `OpenForWrite` / `OpenForMutation` | 删改、导入、Apply 写目标 | 仅 bundled 主 lib | **否** — legacy 抛写操作 `MigrationRequired` |
-| `OpenForMigration` | 修复页升级 / 转官方 | 主 lib，允许在工作副本 migration | N/A |
+| 入口 | 用途 | 打开方式 |
+|------|------|----------|
+| `ProbeSchema` | 读文件头 schema | 磁盘 API，不打开库 |
+| `ReadDiffSnapshot` / `ReadBrowseSnapshot` | 同步对比、数据 Tab 浏览 | 官方 → Official Worker；Ez current → 进程内；Ez legacy → ReadSidecar |
+| `ExportApplyBundleViaSidecar` | Apply 读源导出 DTO | 官方 → Official Worker；Ez legacy → Sidecar |
+| `ApplyImportToOfficial` | 同步写入官方目标 | Official Worker `apply-import` |
+| `OpenForWrite` / `OpenForMutation` | 删改、导入、Apply 写 **Ez** 目标 | 仅 Ez；官方直接拒绝 |
+| `OpenForMigration` | 修复页升级 | **仅 Ez**；官方请用官方客户端升级或「转回官方版」 |
 
-**错误语义（框架层）：**
+**错误语义：**
 
-- 只读（Diff / 浏览）+ legacy + 有 reader 包 → Sidecar 成功，UI 无「写操作」提示。
-- 只读 + legacy + 无 reader 包 → `ReaderPackageMissing`（指向 `readers/` + `Sync-ReaderLibs.ps1`）。
-- **写回** + legacy schema → `MigrationRequired` / `LegacyReaderUnavailable`，文案含「写操作」，**不**走 Sidecar。
+- 只读官方：Official Worker；缺 Worker 构建产物 → 明确错误（重新 build Desktop）。
+- 只读 Ez legacy + 有 reader 包 → Sidecar；无包 → `ReaderPackageMissing`。
+- **写回官方（数据 Tab）** → `SchemaModelMismatch`（请用同步 / 转官方）。
+- **写回 Ez legacy** → `MigrationRequired`（请先修复页升级）。
 
-**运行时布局（Sidecar job）：**
+**运行时布局：**
 
-- Host 闭包：exe 根（主进程与 Ez legacy fallback）。
-- Official legacy 传递依赖：`readers/_shared/official/lib/`（`SharedLibDirectory`）。
-- 每 schema 薄切片：`readers/{id}/lib/osu.Game.dll`（`ReaderLibDirectory`）。
-- `read-sidecar/` 自带托管闭包（STJ、Sentry、osu.Game 等）；job 内 prepend 薄切片覆盖 `osu.Game.dll`。
-- **Native**（`realm-wrappers.dll` 等）：`read-sidecar/runtimes/` 或 `{exe}/runtimes/{当前 RID}/native/`；reader / `_shared` **不含** runtimes。
-
-同步 Tab 的 Compare + Apply 均经 `IEzRealmSyncService`，内部统一走 Gateway。
+- Host 闭包：exe 根（主进程 + Ez current）。
+- `official-write/`：OfficialSchema + Contracts + Realm native（官方读写）。
+- `read-sidecar/`：Ez 托管闭包（STJ、osu.Game 等）；仅服务 **Ez legacy**。
+- `readers/{id}/lib`：Ez legacy 薄切片；**不再**用于官方读。
 
 ## 三类能力
 
 | 能力 | 作用 | 是否改磁盘 schema |
 |------|------|-------------------|
-| **读取（数据 Tab）** | 完整浏览 `client.realm` 中各类对象（谱面集、难度、成绩、收藏夹、文件等） | **否** — 动态只读探测版本 + `OpenWithoutMigration` + `performSchemaMigration: false` |
-| **同步（同步 Tab）** | 在 A/B 库之间按 GUID 复制 **谱面集、难度、成绩、收藏夹**；跨官方/Ez 版本时剥离 Ez 独有字段 | **否** — 目标库保持原磁盘版本，仅增删改行数据 |
-| **导出 / 删除（数据 Tab 右键）** | 对 **谱面集、成绩、收藏夹** 写回 Realm（软删）或复制 `files/` 实体（谱面、`.osr`）；合集名单另用 osu!stable **`collection.db`** 导入导出 | **否** |
-| **修复 Tab「升级到 lib 最新」** | 在备份工作副本上 migration 到 bundled lib 的官方 / Ez schema，校验后原子替换 | **是** — 升到 lib 号（`UPSTREAM_SCHEMA_VERSION` / `EzFileSchemaVersion`） |
-| **修复 Tab「转回官方版」** | 剥 Ez 字段写入官方空库并原地覆盖；**保持读取号**或**升到 lib 官方号**二选一 | **是** — 目标为解码 upstream 或 lib 官方 upstream |
+| **读取（数据 Tab）** | 浏览各类对象 | **否** |
+| **同步（同步 Tab）** | A/B 按 GUID 复制；写入官方经 Official Worker | **否** |
+| **导出 / 删除（数据 Tab）** | Ez 库软删 / 导出文件 | **否**；官方库不支持数据 Tab 写回 |
+| **修复「升级到 lib 最新」** | Ez 工作副本 migration | **是**（仅 Ez） |
+| **修复「转回官方版」** | Official Worker 写官方库 | **是**（目标官方 schema） |
 
-游戏内仍用默认 `RealmAccess`（可迁移）；**除修复页显式升级 / 转官方外**，本工具禁止被动升/降 schema。
-
-## 版本号从哪来
+## 版本号
 
 | 用途 | 来源 |
 |------|------|
-| 文件当前版本 | 读磁盘文件头 |
-| 读取号（官方 upstream） | `Decode(文件头).official` |
-| lib 官方 / Ez 最新 | bundled `osu.Game.dll` |
-| 最低支持 | 工具常量（官方 ≥50，Ez 修订 ≥3） |
-| 同步风险提示 | 工具内置修订分类表 |
+| 文件当前版本 | 磁盘文件头 |
+| 官方 upstream | `Decode(文件头).official`（&lt;1000 即官方） |
+| lib 最新 | bundled `osu.Game` |
+| 最低支持 | 官方 ≥50，Ez 修订 ≥3 |
 
-## 支持区间
+## 版本识别
 
-- **上限**：lib 内置 schema（换工具 / NuGet 即变）。
-- **下限**：官方 upstream ≥50，Ez 修订 ≥3（如 `51006` 可打开；`51002` 拒绝）。
-- **同步**：upstream 不一致时确认框软警告，不阻断；不跑 migration。
-- **跨 upstream**（如 51 ↔ 52 数据复制）：同步 Tab **不改 schema**；跨 upstream 请用修复页升级或转官方。
-
-## 跨版本同步为何安全（同大版本内）
-
-- 各版本 Realm 都包含谱面集、难度、成绩、收藏夹等核心类型；Diff 按 **GUID** 对齐，不跑 migration。
-- Ez 独有列（分析、扩展 SR 等）写入官方库前由 `OfficialRealmMapper` 剥离；进 Ez2Lazer 后由客户端 **重新补算**。
-- 工具 **拒绝** 打开高于 / 低于同大版本支持区间的库。
-
-## 版本识别（防「被动换版」）
-
-1. **探测**：`RealmDiskSchemaReader` — Realm 动态 API 只读读文件头版本，不经 `RealmAccess` 构造。
-2. **打开**：按磁盘版本选择 `OfficialRealmAccess` / `RealmAccess`，并传入 `pinnedDiskSchemaVersion`；`MigrationCallback = null`。
-3. **禁止**：对用户库做被动 `performSchemaMigration: true`（会触发游戏启动维护、pending 清理、失败时删库重建）。
-4. **例外**：修复页「升级到 lib 最新」及「转回官方版」—— 仅在**已备份的工作副本**上 migration（升级）或显式写目标 schema（转官方），且 `allowDestructiveRecoveryOnSchemaMismatch: false`。
-5. **禁止**：用错误访问器打开库触发「schema 降级 → 备份并删库」。
-
-若库已被错误迁移，请从 `client_newer_version.realm` 或导入页备份恢复。
-
-## 数据 Tab 右键范围
-
-| 类型 | 删除 | 导出 |
-|------|------|------|
-| 谱面集 | `DeletePending = true`（与游戏一致） | 复制所属难度在 `files/` 中的实体 |
-| 难度 | 无单独删除（随谱面集） | 复制该难度在 `files/` 中的实体 |
-| 成绩 | `DeletePending = true` | 右键单个/批量导出 `.osr`；可选 `replays/玩家名/` 子目录 |
-| 收藏夹 | 从 Realm 移除记录 | **谱面**：按 MD5 复制 `files/` 实体；**合集**：`collection.db` 导入/导出（名称 + MD5） |
-| 其它类 | 仅浏览，无写操作 | — |
-
-操作前请 **关闭** osu!/Ez2Lazer；写库前可选时间戳备份（同步 Tab）。
-
-## 收藏夹谱面 vs 合集 `collection.db`
-
-这是两条独立能力：
-
-- **导谱面**（导出 Tab「收藏夹谱面」、数据 Tab「导出文件…」）：按收藏夹把 `files/` 里的谱面复制出来，需要共享 `files/`。
-- **导合集**（导出 Tab「合集 (collection.db)」、数据 Tab「导出/导入 collection.db…」）：osu!stable / Collection Manager 同款二进制（`collection.db`，导入也接受 `collections.db`），只含名称与谱面 MD5，**不**复制谱面文件。
-
-合集导入按 **名称** 对齐；已存在则把缺失的 MD5 并入，不存在则新建。谱面未入库时 hash 仍会记下。导入会写 Realm，请先关游戏；工具会按现有策略做时间戳备份。
+1. **探测**：`RealmDiskSchemaReader` 动态只读文件头。
+2. **打开**：官方 → OfficialSchema Worker；Ez → `RealmAccess`（pinned，无 migration）。
+3. **禁止**：对用户库被动 `performSchemaMigration: true`；禁止主进程 Ez 模型打开官方库。
+4. **例外**：修复页 Ez 升级；转官方写库（Official Worker）。

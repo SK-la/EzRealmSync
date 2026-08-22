@@ -8,7 +8,7 @@ using osu.Game.EzRealmSync.Realm.Readers;
 namespace osu.Game.EzRealmSync.Realm
 {
     /// <summary>
-    /// 读取 Diff 快照：优先主 lib 进程内打开；失败时按 manifest 选用 ReadSidecar。
+    /// Diff 快照：官方 → Official Worker；Ez current → 进程内；Ez legacy → ReadSidecar。
     /// </summary>
     public static class RealmDiffSnapshotProvider
     {
@@ -20,6 +20,13 @@ namespace osu.Game.EzRealmSync.Realm
             CancellationToken cancellationToken = default)
         {
             RealmSchemaToolPolicy.EnsureCanOpen(pinnedDiskSchemaVersion);
+
+            if (RealmSchemaSafety.IsOfficialDiskSchema(pinnedDiskSchemaVersion))
+            {
+                EzRealmSyncLog.Info(
+                    $"ReadDiffSnapshot via Official Worker schema={pinnedDiskSchemaVersion} file={realmFilePath}");
+                return filterKinds(readViaOfficialWorker(realmFilePath, pinnedDiskSchemaVersion, entityKinds, cancellationToken), entityKinds);
+            }
 
             if (tryReadInProcess(realmFilePath, pinnedDiskSchemaVersion, progress, cancellationToken, out RealmDiffSnapshot snapshot))
                 return filterKinds(snapshot, entityKinds);
@@ -39,6 +46,12 @@ namespace osu.Game.EzRealmSync.Realm
         {
             RealmSchemaToolPolicy.EnsureCanOpen(pinnedDiskSchemaVersion);
 
+            if (RealmSchemaSafety.IsOfficialDiskSchema(pinnedDiskSchemaVersion))
+            {
+                throw new InvalidOperationException(
+                    $"官方 schema {pinnedDiskSchemaVersion} 不得在主进程打开 RealmAccess；请走 Official Worker。文件：{realmFilePath}");
+            }
+
             if (tryOpenInProcess(realmFilePath, pinnedDiskSchemaVersion, out RealmAccess access))
                 return access;
 
@@ -46,7 +59,7 @@ namespace osu.Game.EzRealmSync.Realm
         }
 
         public static bool RequiresSidecarForRead(string realmFilePath, int pinnedDiskSchemaVersion) =>
-            RealmAccessOpenCore.RequiresSidecar(pinnedDiskSchemaVersion);
+            RealmAccessOpenCore.RequiresOutOfProcessRead(pinnedDiskSchemaVersion);
 
         public static RealmSyncApplyBundle ExportApplyBundleViaSidecar(
             string realmFilePath,
@@ -54,6 +67,9 @@ namespace osu.Game.EzRealmSync.Realm
             IReadOnlyList<Guid> itemIds,
             CancellationToken cancellationToken = default)
         {
+            if (RealmSchemaSafety.IsOfficialDiskSchema(pinnedDiskSchemaVersion))
+                return exportViaOfficialWorker(realmFilePath, pinnedDiskSchemaVersion, itemIds, cancellationToken);
+
             var package = resolveReaderPackage(pinnedDiskSchemaVersion, realmFilePath);
 
             var job = new RealmApplyExportJob
@@ -68,6 +84,27 @@ namespace osu.Game.EzRealmSync.Realm
 
             return RealmReadSidecarRunner.ExportApplyBundle(package, job, cancellationToken).Bundle
                    ?? throw new InvalidOperationException("ReadSidecar 未返回 Apply 导出包。");
+        }
+
+        private static RealmSyncApplyBundle exportViaOfficialWorker(
+            string realmFilePath,
+            int pinnedDiskSchemaVersion,
+            IReadOnlyList<Guid> itemIds,
+            CancellationToken cancellationToken)
+        {
+            ensureOfficialWorkerPresent(pinnedDiskSchemaVersion, realmFilePath);
+
+            var job = new RealmApplyExportJob
+            {
+                ReaderLibDirectory = string.Empty,
+                SourceRealmFilePath = Path.GetFullPath(realmFilePath),
+                PinnedDiskSchemaVersion = pinnedDiskSchemaVersion,
+                Profile = "official",
+                ItemIds = itemIds.ToList(),
+            };
+
+            return OfficialReadProcessRunner.ExportApplyBundle(job, cancellationToken).Bundle
+                   ?? throw new InvalidOperationException("Official Worker 未返回 Apply 导出包。");
         }
 
         private static bool tryReadInProcess(
@@ -102,6 +139,27 @@ namespace osu.Game.EzRealmSync.Realm
             return false;
         }
 
+        private static RealmDiffSnapshot readViaOfficialWorker(
+            string realmFilePath,
+            int pinnedDiskSchemaVersion,
+            IReadOnlyList<EntityKind>? entityKinds,
+            CancellationToken cancellationToken)
+        {
+            ensureOfficialWorkerPresent(pinnedDiskSchemaVersion, realmFilePath);
+
+            var job = new RealmReadJob
+            {
+                ReaderLibDirectory = string.Empty,
+                RealmFilePath = Path.GetFullPath(realmFilePath),
+                PinnedDiskSchemaVersion = pinnedDiskSchemaVersion,
+                Profile = "official",
+                EntityKinds = entityKinds?.Select(k => k.ToString()).ToList() ?? new List<string>(),
+            };
+
+            var result = OfficialReadProcessRunner.Read(job, cancellationToken);
+            return RealmDiffEntityMapping.FromResult(result);
+        }
+
         private static RealmDiffSnapshot readViaSidecar(
             string realmFilePath,
             int pinnedDiskSchemaVersion,
@@ -122,6 +180,16 @@ namespace osu.Game.EzRealmSync.Realm
 
             var result = RealmReadSidecarRunner.ReadDiffSnapshot(package, job, cancellationToken);
             return RealmDiffEntityMapping.FromResult(result);
+        }
+
+        private static void ensureOfficialWorkerPresent(int pinnedDiskSchemaVersion, string realmFilePath)
+        {
+            string worker = OfficialWriteProcessRunner.ResolveWorkerExecutablePathForTests();
+            if (!File.Exists(worker))
+            {
+                throw new InvalidOperationException(
+                    $"无法读取官方 schema {pinnedDiskSchemaVersion}：未找到 Official Worker（{worker}）。请重新 build Desktop 项目。文件：{realmFilePath}");
+            }
         }
 
         private static RealmReaderPackageInfo resolveReaderPackage(int pinnedDiskSchemaVersion, string realmFilePath)

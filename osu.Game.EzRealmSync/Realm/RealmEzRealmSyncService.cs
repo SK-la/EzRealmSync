@@ -1,6 +1,7 @@
 #if HAS_EZ_OSU_GAME
 using osu.Game.Database;
 using osu.Game.EzRealmSync.Abstractions;
+using osu.Game.EzRealmSync.Contracts;
 using osu.Game.EzRealmSync.Errors;
 using osu.Game.EzRealmSync.IO;
 using osu.Game.EzRealmSync.Models;
@@ -128,26 +129,57 @@ namespace osu.Game.EzRealmSync.Realm
                 backupPath = RealmFileBackup.CreateTimestampedCopy(plan.TargetRealmFilePath, backupDir);
             }
 
-            using var targetAccess = openForPlanEndpoint(plan.TargetRealmFilePath, plan.TargetSchemaVersion);
-
             int sourceSchema = RealmAccessGateway.ResolveSchemaVersion(plan.SourceRealmFilePath, plan.SourceSchemaVersion);
+            int targetSchema = RealmAccessGateway.ResolveSchemaVersion(plan.TargetRealmFilePath, plan.TargetSchemaVersion);
 
             ApplyResult result;
 
-            if (RealmAccessGateway.RequiresSidecarForRead(plan.SourceRealmFilePath, sourceSchema))
+            if (RealmSchemaSafety.IsOfficialDiskSchema(targetSchema))
             {
-                var bundle = RealmAccessGateway.ExportApplyBundleViaSidecar(
-                    plan.SourceRealmFilePath,
-                    sourceSchema,
+                RealmSyncApplyBundle bundle;
+
+                if (RealmAccessGateway.RequiresSidecarForRead(plan.SourceRealmFilePath, sourceSchema))
+                {
+                    bundle = RealmAccessGateway.ExportApplyBundleViaSidecar(
+                        plan.SourceRealmFilePath,
+                        sourceSchema,
+                        request.ItemIds,
+                        cancellationToken);
+                }
+                else
+                {
+                    using var sourceAccess = openForPlanEndpoint(plan.SourceRealmFilePath, plan.SourceSchemaVersion);
+                    bundle = OfficialConvertJobExporter.ExportPartialByIds(sourceAccess, request.ItemIds);
+                }
+
+                var import = RealmAccessGateway.ApplyImportToOfficial(
+                    plan.TargetRealmFilePath,
+                    targetSchema,
                     request.ItemIds,
+                    bundle,
                     cancellationToken);
 
-                result = RealmSyncApplyImporter.Apply(request, bundle, targetAccess, progress, cancellationToken);
+                result = new ApplyResult { AppliedCount = import.AppliedCount };
             }
             else
             {
-                using var sourceAccess = openForPlanEndpoint(plan.SourceRealmFilePath, plan.SourceSchemaVersion);
-                result = RealmRowCopier.Apply(request, sourceAccess, targetAccess, progress, cancellationToken);
+                using var targetAccess = openForPlanEndpoint(plan.TargetRealmFilePath, plan.TargetSchemaVersion);
+
+                if (RealmAccessGateway.RequiresSidecarForRead(plan.SourceRealmFilePath, sourceSchema))
+                {
+                    var bundle = RealmAccessGateway.ExportApplyBundleViaSidecar(
+                        plan.SourceRealmFilePath,
+                        sourceSchema,
+                        request.ItemIds,
+                        cancellationToken);
+
+                    result = RealmSyncApplyImporter.Apply(request, bundle, targetAccess, progress, cancellationToken);
+                }
+                else
+                {
+                    using var sourceAccess = openForPlanEndpoint(plan.SourceRealmFilePath, plan.SourceSchemaVersion);
+                    result = RealmRowCopier.Apply(request, sourceAccess, targetAccess, progress, cancellationToken);
+                }
             }
 
             return new ApplyResult { AppliedCount = result.AppliedCount, BackupPath = backupPath };

@@ -8,7 +8,7 @@ using osu.Game.EzRealmSync.Realm.Readers;
 namespace osu.Game.EzRealmSync.Realm
 {
     /// <summary>
-    /// 数据 Tab 只读浏览快照：current schema 进程内；legacy schema ReadSidecar + reader 包。
+    /// 数据 Tab 只读浏览：官方 → Official Worker；Ez current → 进程内；Ez legacy → ReadSidecar。
     /// </summary>
     public static class RealmBrowseSnapshotProvider
     {
@@ -21,6 +21,12 @@ namespace osu.Game.EzRealmSync.Realm
                          ?? throw new InvalidOperationException($"无法读取 Realm schema 版本：{file.FilePath}");
 
             RealmSchemaToolPolicy.EnsureCanOpen(schema);
+
+            if (RealmSchemaSafety.IsOfficialDiskSchema(schema))
+            {
+                EzRealmSyncLog.Info($"ReadBrowseSnapshot via Official Worker schema={schema} file={file.FilePath}");
+                return readViaOfficialWorker(file, schema, cancellationToken);
+            }
 
             if (tryReadInProcess(file, schema, progress, cancellationToken, out RealmSnapshot snapshot))
                 return snapshot;
@@ -52,6 +58,29 @@ namespace osu.Game.EzRealmSync.Realm
                 snapshot = RealmSnapshotBuilder.Build(file, access, progress, cancellationToken);
 
             return true;
+        }
+
+        private static RealmSnapshot readViaOfficialWorker(RealmFileEntry file, int pinnedDiskSchemaVersion, CancellationToken cancellationToken)
+        {
+            string worker = OfficialWriteProcessRunner.ResolveWorkerExecutablePathForTests();
+            if (!File.Exists(worker))
+            {
+                throw new InvalidOperationException(
+                    $"无法只读浏览官方 schema {pinnedDiskSchemaVersion}：未找到 Official Worker（{worker}）。请重新 build Desktop 项目。文件：{file.FilePath}");
+            }
+
+            var job = new RealmBrowseJob
+            {
+                ReaderLibDirectory = string.Empty,
+                RealmFilePath = Path.GetFullPath(file.FilePath),
+                PinnedDiskSchemaVersion = pinnedDiskSchemaVersion,
+                Profile = "official",
+                RealmId = file.Id,
+                DisplayName = file.DisplayName,
+            };
+
+            RealmBrowseResult result = OfficialReadProcessRunner.Browse(job, cancellationToken);
+            return RealmBrowseSnapshotMapping.FromResult(result);
         }
 
         private static RealmSnapshot readViaSidecar(RealmFileEntry file, int pinnedDiskSchemaVersion, CancellationToken cancellationToken)

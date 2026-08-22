@@ -47,14 +47,34 @@ namespace osu.Game.EzRealmSync.Tests
         }
 
         [Test]
-        public void TryOpenInProcessForRead_succeeds_for_current_official_schema_empty_realm()
+        public void TryOpenInProcessForRead_returns_false_for_official_schema()
         {
             int schema = RealmAccess.UpstreamSchemaVersion;
-            string path = Path.Combine(TestContext.CurrentContext.WorkDirectory, $"gw_current_{Guid.NewGuid():N}.realm");
+            string path = Path.Combine(TestContext.CurrentContext.WorkDirectory, $"gw_official_{Guid.NewGuid():N}.realm");
 
             try
             {
-                RealmNativeLifetime.CreateEmptyRealmFile(path, (ulong)schema);
+                RealmNativeUtilities.CreateEmptyRealmFile(path, (ulong)schema);
+                Assert.That(
+                    RealmAccessGateway.TryOpenInProcessForRead(path, schema, out RealmAccess? access),
+                    Is.False);
+                Assert.That(access, Is.Null);
+            }
+            finally
+            {
+                RealmNativeUtilities.DeleteRealmFiles(path);
+            }
+        }
+
+        [Test]
+        public void TryOpenInProcessForRead_succeeds_for_current_ez_schema_empty_realm()
+        {
+            int schema = RealmAccess.EzFileSchemaVersion;
+            string path = Path.Combine(TestContext.CurrentContext.WorkDirectory, $"gw_ez_current_{Guid.NewGuid():N}.realm");
+
+            try
+            {
+                RealmNativeUtilities.CreateEmptyRealmFile(path, (ulong)schema);
                 Assert.That(
                     RealmAccessGateway.TryOpenInProcessForRead(path, schema, out RealmAccess? access),
                     Is.True);
@@ -63,7 +83,7 @@ namespace osu.Game.EzRealmSync.Tests
             }
             finally
             {
-                RealmNativeLifetime.DeleteRealmFiles(path);
+                RealmNativeUtilities.DeleteRealmFiles(path);
             }
         }
 

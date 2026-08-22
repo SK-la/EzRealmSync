@@ -20,7 +20,7 @@ namespace osu.Game.EzRealmSync.Realm
             diskSchemaVersion ?? ProbeSchema(realmFilePath)
             ?? throw new InvalidOperationException($"无法读取 Realm schema 版本：{realmFilePath}");
 
-        /// <summary>只读 Diff 快照：主 lib 进程内优先，legacy 时 ReadSidecar + readers 包。</summary>
+        /// <summary>只读 Diff 快照：官方 Official Worker；Ez current 进程内；Ez legacy Sidecar。</summary>
         public static RealmDiffSnapshot ReadDiffSnapshot(
             string realmFilePath,
             int pinnedDiskSchemaVersion,
@@ -32,7 +32,7 @@ namespace osu.Game.EzRealmSync.Realm
             return RealmDiffSnapshotProvider.Read(realmFilePath, pinnedDiskSchemaVersion, entityKinds, progress, cancellationToken);
         }
 
-        /// <summary>数据 Tab 只读浏览快照：current 进程内；legacy Sidecar + reader 包。</summary>
+        /// <summary>数据 Tab 只读浏览：官方 Official Worker；Ez current 进程内；Ez legacy Sidecar。</summary>
         public static RealmSnapshot ReadBrowseSnapshot(
             RealmFileEntry file,
             IProgress<ScanProgress>? progress = null,
@@ -42,12 +42,14 @@ namespace osu.Game.EzRealmSync.Realm
             return RealmBrowseSnapshotProvider.Read(file, progress, cancellationToken);
         }
 
+        /// <summary>是否需要子进程只读（官方或 Ez legacy）。</summary>
         public static bool RequiresSidecarForRead(string realmFilePath, int pinnedDiskSchemaVersion)
         {
             RefreshReaders();
             return RealmDiffSnapshotProvider.RequiresSidecarForRead(realmFilePath, pinnedDiskSchemaVersion);
         }
 
+        /// <summary>子进程导出 Apply 包：官方 Official Worker；Ez legacy Sidecar。</summary>
         public static RealmSyncApplyBundle ExportApplyBundleViaSidecar(
             string realmFilePath,
             int pinnedDiskSchemaVersion,
@@ -58,16 +60,44 @@ namespace osu.Game.EzRealmSync.Realm
             return RealmDiffSnapshotProvider.ExportApplyBundleViaSidecar(realmFilePath, pinnedDiskSchemaVersion, itemIds, cancellationToken);
         }
 
+        /// <summary>官方目标库 Apply 写入（Official Worker）。</summary>
+        public static OfficialApplyImportResult ApplyImportToOfficial(
+            string targetRealmPath,
+            int pinnedDiskSchemaVersion,
+            IReadOnlyList<Guid> itemIds,
+            RealmSyncApplyBundle bundle,
+            CancellationToken cancellationToken = default)
+        {
+            var job = new OfficialApplyImportJob
+            {
+                TargetRealmPath = Path.GetFullPath(targetRealmPath),
+                PinnedDiskSchemaVersion = pinnedDiskSchemaVersion,
+                ItemIds = itemIds.ToList(),
+                Bundle = bundle,
+            };
+
+            return OfficialReadProcessRunner.ApplyImport(job, cancellationToken);
+        }
+
         /// <summary>写回 / 删改 / 导入；legacy schema 失败时不走 Sidecar。</summary>
         public static RealmAccess OpenForMutation(string realmFilePath, int? diskSchemaVersion = null) =>
             OpenForWrite(realmFilePath, diskSchemaVersion);
 
-        /// <summary>写回 / 删改 / 导入；legacy schema 失败时不走 Sidecar。</summary>
+        /// <summary>写回 / 删改 / 导入；仅 Ez 库。官方库禁止主进程 Ez 模型打开。</summary>
         public static RealmAccess OpenForWrite(string realmFilePath, int? diskSchemaVersion = null)
         {
+            int schema = ResolveSchemaVersion(realmFilePath, diskSchemaVersion);
+
+            if (RealmSchemaSafety.IsOfficialDiskSchema(schema))
+            {
+                throw new RealmUserOperationException(
+                    RealmUserErrorKind.SchemaModelMismatch,
+                    $"官方库（schema {schema}）不得用主进程 Ez 模型写回。同步写入官方请走 Official Worker；数据 Tab 删改仅支持 Ez 库。文件：{realmFilePath}");
+            }
+
             try
             {
-                return openWithoutMigration(realmFilePath, diskSchemaVersion);
+                return openWithoutMigration(realmFilePath, schema);
             }
             catch (RealmUserOperationException ex) when (ex.Kind is RealmUserErrorKind.MigrationRequired or RealmUserErrorKind.LegacyReaderUnavailable)
             {
@@ -75,9 +105,20 @@ namespace osu.Game.EzRealmSync.Realm
             }
         }
 
-        /// <summary>修复页 migration / 转官方等显式允许在工作副本上升 schema 的路径。</summary>
-        public static RealmAccess OpenForMigration(string realmFilePath, int? diskSchemaVersion = null) =>
-            openWithoutMigration(realmFilePath, diskSchemaVersion);
+        /// <summary>修复页 migration；仅 Ez。官方 schema 升级请用官方客户端。</summary>
+        public static RealmAccess OpenForMigration(string realmFilePath, int? diskSchemaVersion = null)
+        {
+            int schema = ResolveSchemaVersion(realmFilePath, diskSchemaVersion);
+
+            if (RealmSchemaSafety.IsOfficialDiskSchema(schema))
+            {
+                throw new RealmUserOperationException(
+                    RealmUserErrorKind.SchemaModelMismatch,
+                    $"官方库（schema {schema}）不得经 OfficialRealmAccess migration（会写入 Ez 列）。请用官方 osu!lazer 升级，或从 Ez「转回官方版」。文件：{realmFilePath}");
+            }
+
+            return openWithoutMigration(realmFilePath, schema);
+        }
 
         /// <summary>进程内只读打开 current schema；legacy 返回 false。</summary>
         public static bool TryOpenInProcessForRead(string realmFilePath, int pinnedDiskSchemaVersion, out RealmAccess? access)

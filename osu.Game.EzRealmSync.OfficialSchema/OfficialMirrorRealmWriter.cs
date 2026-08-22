@@ -117,6 +117,15 @@ namespace osu.Game.EzRealmSync.OfficialSchema
                 return added;
             };
 
+        public static int AppendBeatmapSets(RealmInstance realm, IReadOnlyList<OfficialBeatmapSetDto> sets) =>
+            writeBeatmapSets(realm, sets);
+
+        public static int AppendScores(RealmInstance realm, IReadOnlyList<OfficialScoreDto> scores) =>
+            writeScores(realm, scores);
+
+        public static int AppendCollections(RealmInstance realm, IReadOnlyList<OfficialCollectionDto> collections) =>
+            writeCollections(realm, collections);
+
         private static int writeBeatmapSets(RealmInstance realm, IReadOnlyList<OfficialBeatmapSetDto> sets) =>
             realm.Write(r =>
             {
