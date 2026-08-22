@@ -47,6 +47,27 @@ namespace osu.Game.EzRealmSync.Tests
         }
 
         [Test]
+        public void TryOpenInProcessForRead_succeeds_for_current_official_schema_empty_realm()
+        {
+            int schema = RealmAccess.UpstreamSchemaVersion;
+            string path = Path.Combine(TestContext.CurrentContext.WorkDirectory, $"gw_current_{Guid.NewGuid():N}.realm");
+
+            try
+            {
+                RealmNativeLifetime.CreateEmptyRealmFile(path, (ulong)schema);
+                Assert.That(
+                    RealmAccessGateway.TryOpenInProcessForRead(path, schema, out RealmAccess? access),
+                    Is.True);
+                Assert.That(access, Is.Not.Null);
+                access?.Dispose();
+            }
+            finally
+            {
+                RealmNativeLifetime.DeleteRealmFiles(path);
+            }
+        }
+
+        [Test]
         public void TryOpenInProcessForRead_returns_false_without_throw_when_legacy_open_fails()
         {
             var sample = RealmSampleFixture.GetSample("ez-old");
@@ -146,6 +167,14 @@ namespace osu.Game.EzRealmSync.Tests
                 .ToList();
 
             Assert.That(offenders, Is.Empty, $"以下文件仍直接调用 RealmSchemaProbe.Open：{string.Join(", ", offenders)}");
+        }
+
+        [Test]
+        public void LoadRealmSnapshot_does_not_call_OpenForMutation()
+        {
+            string repoRoot = Path.GetFullPath(Path.Combine(TestContext.CurrentContext.TestDirectory, "..", "..", "..", ".."));
+            string path = Path.Combine(repoRoot, "osu.Game.EzRealmSync", "Realm", "RealmRealmDataService.cs");
+            Assert.That(File.ReadAllText(path), Does.Not.Contain("OpenForMutation"));
         }
     }
 }

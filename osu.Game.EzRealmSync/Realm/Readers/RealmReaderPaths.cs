@@ -11,5 +11,22 @@ namespace osu.Game.EzRealmSync.Realm.Readers
 
             return DefaultPackagesDirectory;
         }
+
+        public static string OfficialSharedLibDirectory(string? packagesDirectory = null) =>
+            Path.Combine(ResolvePackagesDirectory(packagesDirectory), "_shared", "official", "lib");
+
+        public static string? ResolveSharedLibDirectory(string profile, string? packagesDirectory = null)
+        {
+            if (string.Equals(profile, "official", StringComparison.OrdinalIgnoreCase))
+            {
+                string official = OfficialSharedLibDirectory(packagesDirectory);
+                return Directory.Exists(official) ? official : null;
+            }
+
+            return EzRealmSyncBackend.ResolveRuntimeLibDirectory();
+        }
+
+        public static bool HasOfficialSharedBaseline(string? packagesDirectory = null) =>
+            File.Exists(Path.Combine(OfficialSharedLibDirectory(packagesDirectory), "Realm.dll"));
     }
 }

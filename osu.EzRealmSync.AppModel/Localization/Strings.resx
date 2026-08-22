@@ -236,14 +236,14 @@
   <data name="StatusFixSchemaUpgraded" xml:space="preserve"><value>Upgraded schema: {0} ({1} → lib {2}, backup: {3})</value></data>
   <data name="StatusFixSchemaAlreadyLatest" xml:space="preserve"><value>{0} is already at lib latest schema ({1}). Backup: {2}</value></data>
   <data name="ErrorConvertOfficialRequiresEz" xml:space="preserve"><value>Convert to official is only available for Ez extended Realm files.</value></data>
-  <data name="ErrorMigrationRequired" xml:space="preserve"><value>This Realm must be upgraded to lib latest before it can be opened. Use Fix → Upgrade to lib latest. Detail: {0}</value></data>
+  <data name="ErrorMigrationRequired" xml:space="preserve"><value>Write operations require upgrading this Realm to lib latest schema first. Use Fix → Upgrade to lib latest. Detail: {0}</value></data>
   <data name="ErrorFileInUse" xml:space="preserve"><value>Write blocked by pre-check (file in use). Close osu!/Ez2Lazer and retry. Detail: {0}</value></data>
   <data name="ErrorPathConflict" xml:space="preserve"><value>Path conflict: {0}</value></data>
-  <data name="ErrorLegacyReaderUnavailable" xml:space="preserve"><value>Only same-major schemas are supported. Upgrade the Realm with a matching client to the tool minimum, or update the tool. Detail: {0}</value></data>
+  <data name="ErrorLegacyReaderUnavailable" xml:space="preserve"><value>Write operations cannot open this schema with the current lib. Upgrade on the Fix tab, convert to official, or update the tool. Detail: {0}</value></data>
   <data name="ErrorSchemaTooLow" xml:space="preserve"><value>This Realm schema is below the tool's minimum (same major only). Upgrade it with a matching client first. Detail: {0}</value></data>
   <data name="ErrorSchemaTooHigh" xml:space="preserve"><value>This Realm schema is newer than the tool's built-in lib. Update EzRealmSync. Detail: {0}</value></data>
   <data name="ErrorSchemaModelMismatch" xml:space="preserve"><value>Disk schema version is already latest, but the object model does not match; upgrade cannot fix this. Align the tool with the client osu.Game, or restore from a full backup. Detail: {0}</value></data>
-  <data name="ErrorReaderPackageMissing" xml:space="preserve"><value>No reader package matches this Realm schema. Add a manifest + lib under readers/ (see readers/README.md). Detail: {0}</value></data>
+  <data name="ErrorReaderPackageMissing" xml:space="preserve"><value>Cannot open this schema read-only: reader package missing. Add manifest + lib under readers/ (see readers/README.md) and run Sync-ReaderLibs.ps1. Detail: {0}</value></data>
   <data name="ReaderSettings" xml:space="preserve"><value>Reader packages</value></data>
   <data name="ReaderPackagesDirectory" xml:space="preserve"><value>Reader packages folder</value></data>
   <data name="ActiveReaderPackage" xml:space="preserve"><value>Reader used at startup</value></data>

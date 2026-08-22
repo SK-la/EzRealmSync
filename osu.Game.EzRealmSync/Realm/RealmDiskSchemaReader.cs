@@ -116,7 +116,7 @@ namespace osu.Game.EzRealmSync.Realm
                 || message.Contains("DllNotFound", StringComparison.OrdinalIgnoreCase)
                 || message.Contains("unable to load", StringComparison.OrdinalIgnoreCase))
             {
-                return "无法加载 Realm 原生库 realm-wrappers.dll。请执行 dotnet build -t:SyncEzRealmLibs 并确认 exe/lib/runtimes/win-x64/native/ 完整。";
+                return "无法加载 Realm 原生库 realm-wrappers.dll。请执行 dotnet build -t:SyncEzRealmLibs 并确认 exe/runtimes/win-x64/native/ 完整。";
             }
 
             if (message.Contains("lock", StringComparison.OrdinalIgnoreCase)

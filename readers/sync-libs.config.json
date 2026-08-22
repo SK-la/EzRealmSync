@@ -1,7 +1,14 @@
 {
-  "$comment": "运行 scripts/Sync-ReaderLibs.ps1。type=nuget 时从 NuGet 还原 ez2lazer.Game / ppy.osu.Game 及传递依赖，无需下载客户端 zip。",
+  "$comment": "运行 scripts/Sync-ReaderLibs.ps1。薄切片：每 reader 仅 osu.Game.dll；official 传递依赖在 readers/_shared/official/lib/。",
   "defaults": {
     "realmVersion": "20.1.0"
+  },
+  "sharedBaselines": {
+    "official": {
+      "type": "nuget",
+      "gameId": "ppy.osu.Game",
+      "gameVersion": "2026.730.0"
+    }
   },
   "packages": [
     {

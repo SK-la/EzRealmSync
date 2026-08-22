@@ -7,15 +7,24 @@
 | 入口 | 用途 | 打开方式 | Sidecar |
 |------|------|----------|---------|
 | `ProbeSchema` | 读文件头 schema | 磁盘 API，不打开库 | — |
-| `ReadDiffSnapshot` | 同步 A/B 对比、Apply 读源库 | 主 lib 进程内 → 失败则 ReadSidecar + `readers/` | **是**（legacy 时） |
-| `OpenForMutation` | 数据 Tab 浏览/删改、Apply 写目标 | 仅 bundled 主 lib | **否** — legacy 抛 `MigrationRequired` |
+| `ReadDiffSnapshot` | 同步 A/B 对比、Apply 读源库 | current：进程内；legacy：ReadSidecar + `readers/` | legacy 时 |
+| `ReadBrowseSnapshot` | 数据 Tab **只读**浏览加载 | 同上 | legacy 时 |
+| `OpenForWrite` / `OpenForMutation` | 删改、导入、Apply 写目标 | 仅 bundled 主 lib | **否** — legacy 抛写操作 `MigrationRequired` |
 | `OpenForMigration` | 修复页升级 / 转官方 | 主 lib，允许在工作副本 migration | N/A |
 
 **错误语义（框架层）：**
 
-- 只读 Diff + 有 reader 包 → Sidecar 透明成功，UI 无「先升级」提示。
-- 只读 Diff + 无 reader 包 → `ReaderPackageMissing`（指向 `readers/` + `Sync-ReaderLibs.ps1`）。
-- 写回 + legacy schema → `MigrationRequired` / `LegacyReaderUnavailable`，文案明确「写操作需 lib 最新或先升级」，**不**与 Sidecar 读路径混用。
+- 只读（Diff / 浏览）+ legacy + 有 reader 包 → Sidecar 成功，UI 无「写操作」提示。
+- 只读 + legacy + 无 reader 包 → `ReaderPackageMissing`（指向 `readers/` + `Sync-ReaderLibs.ps1`）。
+- **写回** + legacy schema → `MigrationRequired` / `LegacyReaderUnavailable`，文案含「写操作」，**不**走 Sidecar。
+
+**运行时布局（Sidecar job）：**
+
+- Host 闭包：exe 根（主进程与 Ez legacy fallback）。
+- Official legacy 传递依赖：`readers/_shared/official/lib/`（`SharedLibDirectory`）。
+- 每 schema 薄切片：`readers/{id}/lib/osu.Game.dll`（`ReaderLibDirectory`）。
+- `read-sidecar/` 自带托管闭包（STJ、Sentry、osu.Game 等）；job 内 prepend 薄切片覆盖 `osu.Game.dll`。
+- **Native**（`realm-wrappers.dll` 等）：`read-sidecar/runtimes/` 或 `{exe}/runtimes/{当前 RID}/native/`；reader / `_shared` **不含** runtimes。
 
 同步 Tab 的 Compare + Apply 均经 `IEzRealmSyncService`，内部统一走 Gateway。
 

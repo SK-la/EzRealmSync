@@ -32,6 +32,16 @@ namespace osu.Game.EzRealmSync.Realm
             return RealmDiffSnapshotProvider.Read(realmFilePath, pinnedDiskSchemaVersion, entityKinds, progress, cancellationToken);
         }
 
+        /// <summary>数据 Tab 只读浏览快照：current 进程内；legacy Sidecar + reader 包。</summary>
+        public static RealmSnapshot ReadBrowseSnapshot(
+            RealmFileEntry file,
+            IProgress<ScanProgress>? progress = null,
+            CancellationToken cancellationToken = default)
+        {
+            RefreshReaders();
+            return RealmBrowseSnapshotProvider.Read(file, progress, cancellationToken);
+        }
+
         public static bool RequiresSidecarForRead(string realmFilePath, int pinnedDiskSchemaVersion)
         {
             RefreshReaders();

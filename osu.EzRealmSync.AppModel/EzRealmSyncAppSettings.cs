@@ -54,7 +54,7 @@ namespace osu.EzRealmSync.AppModel
 
         public static EzRealmSyncAppSettings Load(string? settingsPath = null)
         {
-            string path = settingsPath ?? EzRealmSyncDataPaths.SettingsFile;
+            string path = settingsPath ?? EzRealmSyncDataPaths.ResolveSettingsFile();
 
             try
             {
@@ -74,7 +74,7 @@ namespace osu.EzRealmSync.AppModel
 
         public static void Save(EzRealmSyncAppSettings settings, string? settingsPath = null)
         {
-            string path = settingsPath ?? EzRealmSyncDataPaths.SettingsFile;
+            string path = settingsPath ?? EzRealmSyncDataPaths.ResolveSettingsWriteFile();
             string? dir = Path.GetDirectoryName(path);
 
             if (!string.IsNullOrEmpty(dir))
@@ -103,6 +103,9 @@ namespace osu.EzRealmSync.AppModel
 
             if (string.IsNullOrWhiteSpace(settings.ExportDirectory))
                 settings.ExportDirectory = EzRealmSyncDataPaths.ExportsDirectory;
+
+            if (string.IsNullOrWhiteSpace(settings.ReaderPackagesDirectory))
+                settings.ReaderPackagesDirectory = EzRealmSyncDataPaths.ReadersDirectory;
         }
     }
 }

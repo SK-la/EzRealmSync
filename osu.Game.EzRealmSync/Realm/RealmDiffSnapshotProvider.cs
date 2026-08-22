@@ -59,6 +59,7 @@ namespace osu.Game.EzRealmSync.Realm
             var job = new RealmApplyExportJob
             {
                 ReaderLibDirectory = package.LibDirectory,
+                SharedLibDirectory = RealmReaderPaths.ResolveSharedLibDirectory(resolveProfile(pinnedDiskSchemaVersion, package)),
                 SourceRealmFilePath = Path.GetFullPath(realmFilePath),
                 PinnedDiskSchemaVersion = pinnedDiskSchemaVersion,
                 Profile = resolveProfile(pinnedDiskSchemaVersion, package),
@@ -112,6 +113,7 @@ namespace osu.Game.EzRealmSync.Realm
             var job = new RealmReadJob
             {
                 ReaderLibDirectory = package.LibDirectory,
+                SharedLibDirectory = RealmReaderPaths.ResolveSharedLibDirectory(resolveProfile(pinnedDiskSchemaVersion, package)),
                 RealmFilePath = Path.GetFullPath(realmFilePath),
                 PinnedDiskSchemaVersion = pinnedDiskSchemaVersion,
                 Profile = resolveProfile(pinnedDiskSchemaVersion, package),

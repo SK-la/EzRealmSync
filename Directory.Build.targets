@@ -167,34 +167,18 @@
   <Target Name="CopyEzRealmSyncLibsToOutput"
           AfterTargets="Build"
           Condition="'$(OutputType)' == 'WinExe' AND '$(UseLocalOsuLibs)' == 'true' AND ('@(EzRealmSyncRuntimeLib)' != '' OR '@(EzRealmSyncEngineOutput)' != '')">
-    <MakeDir Directories="$(OutputPath)lib" />
     <ItemGroup>
-      <_EzCopyToLib Include="@(EzRealmSyncRuntimeLib)" />
-      <_EzCopyToExe Include="@(EzRealmSyncEngineOutput)" />
+      <_EzCopyToOutput Include="@(EzRealmSyncRuntimeLib)" />
+      <_EzCopyToOutput Include="@(EzRealmSyncEngineOutput)" />
     </ItemGroup>
-    <Message Importance="high" Text="CopyEzRealmSyncLibs -> $(OutputPath)lib: @(_EzCopyToLib->'%(Filename)%(Extension)', ', ')" />
-    <Copy SourceFiles="@(_EzCopyToLib)"
-          DestinationFolder="$(OutputPath)lib"
+    <Message Importance="high" Text="CopyEzRealmSyncLibs -> $(OutputPath): @(_EzCopyToOutput->'%(Filename)%(Extension)', ', ')" />
+    <Copy SourceFiles="@(_EzCopyToOutput)"
+          DestinationFolder="$(OutputPath)"
           SkipUnchangedFiles="false" />
     <Copy SourceFiles="@(EzRealmSyncRuntimeNative)"
-          DestinationFiles="@(EzRealmSyncRuntimeNative->'$(OutputPath)lib\runtimes\%(RecursiveDir)%(Filename)%(Extension)')"
+          DestinationFiles="@(EzRealmSyncRuntimeNative->'$(OutputPath)runtimes\%(RecursiveDir)%(Filename)%(Extension)')"
           SkipUnchangedFiles="false"
           Condition="'@(EzRealmSyncRuntimeNative)' != ''" />
-    <Copy SourceFiles="@(_EzCopyToExe)"
-          DestinationFolder="$(OutputPath)"
-          SkipUnchangedFiles="false"
-          Condition="'@(_EzCopyToExe)' != ''" />
-  </Target>
-
-  <!-- 无构建 lib 时也创建运行时 lib 目录，便于用户手动放置 DLL -->
-  <Target Name="EnsureRuntimeLibFolder"
-          AfterTargets="Build"
-          Condition="'$(OutputType)' == 'WinExe'">
-    <MakeDir Directories="$(OutputPath)lib" />
-    <Copy SourceFiles="$(MSBuildThisFileDirectory)lib\README.md"
-          DestinationFiles="$(OutputPath)lib\README.md"
-          SkipUnchangedFiles="true"
-          Condition="Exists('$(MSBuildThisFileDirectory)lib\README.md')" />
   </Target>
 
   <!-- WPF MarkupCompile 需要能解析 osu.Game.EzRealmSync 的传递依赖（如 Realm.dll） -->
@@ -215,19 +199,14 @@
   <Target Name="CopyEzRealmSyncLibsToPublish"
           AfterTargets="Publish"
           Condition="'$(OutputType)' == 'WinExe' AND '$(UseLocalOsuLibs)' == 'true'">
-    <MakeDir Directories="$(PublishDir)lib" />
     <Copy SourceFiles="@(EzRealmSyncRuntimeLib)"
-          DestinationFolder="$(PublishDir)lib"
+          DestinationFolder="$(PublishDir)"
           SkipUnchangedFiles="false"
           Condition="'@(EzRealmSyncRuntimeLib)' != ''" />
     <Copy SourceFiles="@(EzRealmSyncRuntimeNative)"
-          DestinationFiles="@(EzRealmSyncRuntimeNative->'$(PublishDir)lib\runtimes\%(RecursiveDir)%(Filename)%(Extension)')"
+          DestinationFiles="@(EzRealmSyncRuntimeNative->'$(PublishDir)runtimes\%(RecursiveDir)%(Filename)%(Extension)')"
           SkipUnchangedFiles="false"
           Condition="'@(EzRealmSyncRuntimeNative)' != ''" />
-    <Copy SourceFiles="$(MSBuildThisFileDirectory)lib\README.md"
-          DestinationFiles="$(PublishDir)lib\README.md"
-          SkipUnchangedFiles="true"
-          Condition="Exists('$(MSBuildThisFileDirectory)lib\README.md')" />
   </Target>
 
   <!-- dotnet build -t:SyncReaderLibs EzRealmSync.sln -->
@@ -275,7 +254,7 @@
 
   <!-- NuGet / 本地 lib 发布：排除 Resources 并裁剪 osu.Game 闭包内渲染/音频等 dead weight DLL -->
   <Target Name="PruneEzRealmSyncPublish"
-          AfterTargets="CopyEzRealmSyncLibsToPublish;Publish"
+          AfterTargets="Publish;CopyEzRealmSyncLibsToPublish"
           Condition="'$(OutputType)' == 'WinExe'">
     <PropertyGroup>
       <_EzPublishDirNormalized>$([System.IO.Path]::GetFullPath('$(PublishDir)'))</_EzPublishDirNormalized>

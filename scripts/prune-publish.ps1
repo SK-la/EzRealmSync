@@ -59,16 +59,24 @@ $prunePatterns = @(
     'SDL3.dll'
 )
 
+$searchRoots = @($publishRoot)
+$libDir = Join-Path $publishRoot 'lib'
+if (Test-Path -LiteralPath $libDir) {
+    $searchRoots += $libDir
+}
+
 $beforeBytes = Get-FolderSizeBytes -Path $publishRoot
 $removedFiles = @()
 
-foreach ($pattern in $prunePatterns) {
-    Get-ChildItem -LiteralPath $publishRoot -Recurse -File -Filter $pattern -ErrorAction SilentlyContinue | ForEach-Object {
-        if (Test-ProtectedFile -FileName $_.Name) {
-            return
-        }
+foreach ($root in $searchRoots) {
+    foreach ($pattern in $prunePatterns) {
+        Get-ChildItem -LiteralPath $root -Recurse -File -Filter $pattern -ErrorAction SilentlyContinue | ForEach-Object {
+            if (Test-ProtectedFile -FileName $_.Name) {
+                return
+            }
 
-        $removedFiles += $_
+            $removedFiles += $_
+        }
     }
 }
 

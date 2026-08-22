@@ -51,8 +51,7 @@ namespace osu.Game.EzRealmSync.Realm
             cancellationToken.ThrowIfCancellationRequested();
             progress?.Report(new ScanProgress { Progress = 0, Message = $"正在打开 {file.DisplayName}…" });
 
-            using var access = RealmAccessGateway.OpenForMutation(file.FilePath, file.SchemaVersion);
-            var snapshot = RealmSnapshotBuilder.Build(file, access, progress, cancellationToken);
+            var snapshot = RealmAccessGateway.ReadBrowseSnapshot(file, progress, cancellationToken);
             snapshotCache[realmId] = snapshot;
             return snapshot;
         }

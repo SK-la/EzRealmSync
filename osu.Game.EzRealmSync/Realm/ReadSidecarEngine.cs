@@ -68,6 +68,44 @@ namespace osu.Game.EzRealmSync.Realm
             }
         }
 
+        public static RealmBrowseResult ReadBrowseSnapshot(RealmBrowseJob job)
+        {
+            try
+            {
+                using var access = open(new RealmReadJob
+                {
+                    ReaderLibDirectory = job.ReaderLibDirectory,
+                    RealmFilePath = job.RealmFilePath,
+                    PinnedDiskSchemaVersion = job.PinnedDiskSchemaVersion,
+                    Profile = job.Profile,
+                });
+
+                var file = new RealmFileEntry
+                {
+                    Id = job.RealmId,
+                    DisplayName = job.DisplayName,
+                    FilePath = job.RealmFilePath,
+                    SchemaVersion = job.PinnedDiskSchemaVersion,
+                };
+
+                var snapshot = RealmSnapshotBuilder.Build(file, access);
+
+                return new RealmBrowseResult
+                {
+                    Success = true,
+                    Snapshot = RealmBrowseSnapshotMapping.ToDto(snapshot),
+                };
+            }
+            catch (Exception ex)
+            {
+                return new RealmBrowseResult
+                {
+                    Success = false,
+                    ErrorMessage = ExceptionFormatting.SafeFormat(ex),
+                };
+            }
+        }
+
         private static RealmAccess open(RealmReadJob job)
         {
             bool ez = string.Equals(job.Profile, "ez", StringComparison.OrdinalIgnoreCase);

@@ -5,27 +5,26 @@ using System.Runtime.Loader;
 namespace osu.Game.EzRealmSync.Runtime
 {
     /// <summary>
-    /// 从 exe 同目录下的 <c>lib/</c>（或兼容的旧版平铺布局）解析 Ez osu.Game 运行时依赖。
+    /// 从 host exe 根目录（标准 dotnet 平铺布局）解析 Ez osu.Game 运行时依赖。
     /// 须在首次使用 Realm / osu.Game 类型之前调用 <see cref="Install"/>。
     /// </summary>
     public static class EzRealmSyncRuntimeLibLoader
     {
         private static bool handlersRegistered;
-        private static string? runtimeLibDirectory;
         private static readonly List<string> prependProbeDirectories = new List<string>();
 
-        public static string? RuntimeLibDirectory => runtimeLibDirectory;
+        public static string? RuntimeLibDirectory { get; private set; }
 
         public static void Install(string? runtimeLibDirectoryOverride = null)
         {
             if (!string.IsNullOrWhiteSpace(runtimeLibDirectoryOverride) && Directory.Exists(runtimeLibDirectoryOverride))
-                runtimeLibDirectory = Path.GetFullPath(runtimeLibDirectoryOverride);
-            else if (runtimeLibDirectory == null)
-                runtimeLibDirectory = EzRealmSyncBackend.ResolveRuntimeLibDirectory();
+                RuntimeLibDirectory = Path.GetFullPath(runtimeLibDirectoryOverride);
+            else if (RuntimeLibDirectory == null)
+                RuntimeLibDirectory = EzRealmSyncBackend.ResolveRuntimeLibDirectory();
 
             ensureHandlersRegistered();
 
-            if (runtimeLibDirectory == null)
+            if (RuntimeLibDirectory == null)
                 return;
 
             foreach (string name in preloadOrder)
@@ -33,6 +32,31 @@ namespace osu.Game.EzRealmSync.Runtime
 
             verifyRealmNativeLibraryPresent();
         }
+
+        /// <summary>
+        /// ReadSidecar Worker：注册 probe 链并校验 Realm native，但不 preload <c>osu.Game</c> / <c>osu.Framework</c>，
+        /// 以便 job 内 prepend reader 薄切片后再加载正确版本。
+        /// </summary>
+        public static void InstallSidecarHost(string? hostLibDirectoryOverride = null)
+        {
+            if (!string.IsNullOrWhiteSpace(hostLibDirectoryOverride) && Directory.Exists(hostLibDirectoryOverride))
+                RuntimeLibDirectory = Path.GetFullPath(hostLibDirectoryOverride);
+            else if (RuntimeLibDirectory == null)
+                RuntimeLibDirectory = EzRealmSyncBackend.ResolveRuntimeLibDirectory();
+
+            ensureHandlersRegistered();
+
+            foreach (string name in sidecarPreloadOrder)
+                tryLoadManaged(name);
+
+            verifyRealmNativeLibraryPresent();
+        }
+
+        private static readonly string[] sidecarPreloadOrder =
+        {
+            "Sentry",
+            "Realm",
+        };
 
         /// <summary>将目录置于 probe 链最前（reader Sidecar job 内 reader lib 优先于主 lib）。</summary>
         public static void PrependProbeDirectory(string directory)
@@ -110,14 +134,14 @@ namespace osu.Game.EzRealmSync.Runtime
             foreach (string directory in prependProbeDirectories)
                 yield return directory;
 
-            if (runtimeLibDirectory != null)
-                yield return runtimeLibDirectory;
+            if (RuntimeLibDirectory != null)
+                yield return RuntimeLibDirectory;
 
             yield return AppContext.BaseDirectory;
 
-            string parentLib = Path.GetFullPath(Path.Combine(AppContext.BaseDirectory, "..", "lib"));
-            if (Directory.Exists(parentLib))
-                yield return parentLib;
+            string parentHost = Path.GetFullPath(Path.Combine(AppContext.BaseDirectory, ".."));
+            if (File.Exists(Path.Combine(parentHost, "osu.Game.dll")))
+                yield return parentHost;
         }
 
         private static string? resolveNativeLibraryPath(string libraryName)
@@ -146,20 +170,20 @@ namespace osu.Game.EzRealmSync.Runtime
                 yield return directory;
             }
 
-            if (runtimeLibDirectory != null)
+            if (RuntimeLibDirectory != null)
             {
-                yield return Path.Combine(runtimeLibDirectory, "runtimes", rid, "native");
-                yield return runtimeLibDirectory;
+                yield return Path.Combine(RuntimeLibDirectory, "runtimes", rid, "native");
+                yield return RuntimeLibDirectory;
             }
 
             yield return Path.Combine(AppContext.BaseDirectory, "runtimes", rid, "native");
             yield return AppContext.BaseDirectory;
 
-            string parentLib = Path.GetFullPath(Path.Combine(AppContext.BaseDirectory, "..", "lib"));
-            if (Directory.Exists(parentLib))
+            string parentHost = Path.GetFullPath(Path.Combine(AppContext.BaseDirectory, ".."));
+            if (File.Exists(Path.Combine(parentHost, "osu.Game.dll")))
             {
-                yield return Path.Combine(parentLib, "runtimes", rid, "native");
-                yield return parentLib;
+                yield return Path.Combine(parentHost, "runtimes", rid, "native");
+                yield return parentHost;
             }
         }
 
@@ -168,9 +192,9 @@ namespace osu.Game.EzRealmSync.Runtime
             if (resolveNativeLibraryPath("realm-wrappers") != null)
                 return;
 
-            string hint = runtimeLibDirectory != null
-                ? Path.Combine(runtimeLibDirectory, "runtimes", resolveRuntimeIdentifier(), "native", "realm-wrappers.dll")
-                : "exe/lib/runtimes/.../realm-wrappers.dll";
+            string hint = RuntimeLibDirectory != null
+                ? Path.Combine(RuntimeLibDirectory, "runtimes", resolveRuntimeIdentifier(), "native", "realm-wrappers.dll")
+                : "exe/runtimes/.../realm-wrappers.dll";
 
             throw new InvalidOperationException(
                 $"未找到 Realm 原生库 realm-wrappers.dll（预期路径：{hint}）。请执行：dotnet build -t:SyncEzRealmLibs EzRealmSync.sln -c Debug，并重新生成 Desktop。");

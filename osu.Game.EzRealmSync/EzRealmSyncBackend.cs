@@ -33,27 +33,25 @@ namespace osu.Game.EzRealmSync
         public static bool IsRealBackendCompiled => typeof(EzRealmSyncBackend).Assembly.GetType("osu.Game.EzRealmSync.Realm.RealmRealmDataService") != null;
 
         /// <summary>
-        /// 运行时 Ez osu.Game 依赖目录：优先 <c>{exe}/lib</c>，其次 exe 根目录（旧平铺），再向上查找开发仓库 layout。
+        /// 运行时 Ez osu.Game 依赖目录：host exe 根、Sidecar 上级目录，或开发仓库 lib/。
         /// </summary>
-        public static string? ResolveRuntimeLibDirectory()
+        public static string? ResolveRuntimeLibDirectory() => resolveDefaultRuntimeLibDirectory();
+
+        private static string? resolveDefaultRuntimeLibDirectory()
         {
-            string exeLib = Path.Combine(AppContext.BaseDirectory, "lib");
-            if (File.Exists(Path.Combine(exeLib, "osu.Game.dll")))
-                return exeLib;
+            string hostRoot = EzRealmSyncDataPaths.ResolveHostApplicationRoot();
+            if (File.Exists(Path.Combine(hostRoot, "osu.Game.dll")))
+                return hostRoot;
 
             if (File.Exists(Path.Combine(AppContext.BaseDirectory, "osu.Game.dll")))
                 return AppContext.BaseDirectory;
-
-            string hostLib = Path.GetFullPath(Path.Combine(AppContext.BaseDirectory, "..", "lib"));
-            if (File.Exists(Path.Combine(hostLib, "osu.Game.dll")))
-                return hostLib;
 
             return findDevLibDirectory();
         }
 
         private static string? findDevLibDirectory()
         {
-            string? dir = AppContext.BaseDirectory;
+            string? dir = EzRealmSyncDataPaths.ResolveHostApplicationRoot();
 
             for (int i = 0; i < 6 && dir != null; i++)
             {

@@ -1,4 +1,4 @@
-# 按 readers/sync-libs.config.json 从 NuGet 还原 osu.Game 闭包到 readers/{id}/lib/。
+# 按 readers/sync-libs.config.json 还原 reader 薄切片（osu.Game.dll）与 official 共享基线。
 # 在仓库根目录或 Release 解压目录（exe 同目录）运行：pwsh scripts/Sync-ReaderLibs.ps1
 param(
     [string]$ConfigPath,
@@ -97,29 +97,67 @@ function Copy-ReaderLibClosure {
         [string]$DestLib
     )
 
+    Copy-ReaderThinSlice -SourceRoot $SourceRoot -DestLib $DestLib
+}
+
+function Copy-SharedReaderBaseline {
+    param(
+        [Parameter(Mandatory = $true)]
+        [string]$SourceRoot,
+        [Parameter(Mandatory = $true)]
+        [string]$DestLib
+    )
+
     Clear-ReaderLibDirectory -LibDirectory $DestLib
 
     $dlls = Get-ChildItem -LiteralPath $SourceRoot -File -Filter '*.dll' |
-        Where-Object { $_.Name -notlike '*Game.Resources*' -and $_.Name -notlike '*Resources.dll' }
+        Where-Object {
+            $_.Name -ne 'osu.Game.dll' -and
+            $_.Name -notlike '*Game.Resources*' -and
+            $_.Name -notlike '*Resources.dll'
+        }
 
     if (-not $dlls) {
-        throw "源目录无可用 DLL：$SourceRoot"
+        throw "共享基线源目录无可用 DLL：$SourceRoot"
     }
 
-    Copy-Item -LiteralPath ($dlls | ForEach-Object FullName) -Destination $DestLib -Force
+    Copy-Item -LiteralPath @($dlls | ForEach-Object FullName) -Destination $DestLib -Force
 
-    foreach ($candidate in @(
-            (Join-Path $SourceRoot 'runtimes'),
-            (Join-Path (Split-Path -Parent $SourceRoot) 'runtimes')
-        )) {
-        if (Test-Path -LiteralPath $candidate) {
-            Copy-Item -LiteralPath $candidate -Destination (Join-Path $DestLib 'runtimes') -Recurse -Force
-            break
-        }
+    # 不复制 runtimes/：native（realm-wrappers 等）由 Sidecar probe 主程序 exe 根 runtimes/{rid}/native。
+    $runtimesDir = Join-Path $DestLib 'runtimes'
+    if (Test-Path -LiteralPath $runtimesDir) {
+        Remove-Item -LiteralPath $runtimesDir -Recurse -Force
     }
 
-    if (-not (Test-Path -LiteralPath (Join-Path $DestLib 'osu.Game.dll'))) {
-        throw "复制后缺少 osu.Game.dll：$DestLib"
+    if (-not (Test-Path -LiteralPath (Join-Path $DestLib 'Realm.dll'))) {
+        throw "共享基线复制后缺少 Realm.dll：$DestLib"
+    }
+}
+
+function Copy-ReaderThinSlice {
+    param(
+        [Parameter(Mandatory = $true)]
+        [string]$SourceRoot,
+        [Parameter(Mandatory = $true)]
+        [string]$DestLib,
+        [string]$SharedBaselineLib
+    )
+
+    Clear-ReaderLibDirectory -LibDirectory $DestLib
+
+    $gameDll = Join-Path $SourceRoot 'osu.Game.dll'
+    if (-not (Test-Path -LiteralPath $gameDll)) {
+        throw "源目录缺少 osu.Game.dll：$SourceRoot"
+    }
+
+    Copy-Item -LiteralPath $gameDll -Destination (Join-Path $DestLib 'osu.Game.dll') -Force
+
+    $frameworkDll = Join-Path $SourceRoot 'osu.Framework.dll'
+    $sharedFramework = if ($SharedBaselineLib) { Join-Path $SharedBaselineLib 'osu.Framework.dll' } else { $null }
+    if ((Test-Path -LiteralPath $frameworkDll) -and
+        (-not $sharedFramework -or -not (Test-Path -LiteralPath $sharedFramework) -or
+         ((Get-FileHash -LiteralPath $frameworkDll -Algorithm SHA256).Hash -ne (Get-FileHash -LiteralPath $sharedFramework -Algorithm SHA256).Hash))) {
+        Copy-Item -LiteralPath $frameworkDll -Destination (Join-Path $DestLib 'osu.Framework.dll') -Force
     }
 }
 
@@ -496,7 +534,7 @@ function Resolve-SourceRoot {
 }
 
 $selected = @($config.packages)
-if ($ReaderDir -and $ReaderDir.Count -gt 0) {
+if ($ReaderDir -and @($ReaderDir).Count -gt 0) {
     $filter = @($ReaderDir)
     $selected = @($selected | Where-Object { $filter -contains [string]$_.readerDir })
 }
@@ -505,17 +543,52 @@ if ($selected.Count -eq 0) {
     throw '没有匹配的 reader 包。'
 }
 
-Write-Host "Sync-ReaderLibs: $($selected.Count) 个包 -> $scriptRoot\readers\{id}\lib"
+Write-Host "Sync-ReaderLibs: $($selected.Count) 个包 -> $scriptRoot\readers\{id}\lib（薄切片）"
 Write-Host "配置：$ConfigPath"
 Write-Host ''
 
 $pruneScript = Join-Path $PSScriptRoot 'prune-publish.ps1'
 $failures = @()
+$sharedOfficialLib = Join-Path $scriptRoot 'readers\_shared\official\lib'
+
+if ($config.sharedBaselines -and $config.sharedBaselines.official) {
+    Write-Host '==> _shared/official/lib（official 共享传递依赖）'
+    try {
+        $baseline = $config.sharedBaselines.official
+        $baselineSource = Invoke-NugetSource -Source $baseline -Package @{ readerDir = '_shared-official' } -ReaderKey '_shared-official' -Defaults $config.defaults
+        Write-Host "  源：$baselineSource"
+        Write-Host "  目标：$sharedOfficialLib"
+        Copy-SharedReaderBaseline -SourceRoot $baselineSource -DestLib $sharedOfficialLib
+
+        if ($Prune -and (Test-Path -LiteralPath $pruneScript)) {
+            Write-Host '  裁剪 dead weight DLL ...'
+            & $pruneScript $sharedOfficialLib
+        }
+
+        $dllCount = @(Get-ChildItem -LiteralPath $sharedOfficialLib -File -Filter '*.dll' -ErrorAction SilentlyContinue).Count
+        Write-Host "  完成：$dllCount 个 DLL（共享传递依赖，不含 osu.Game.dll）"
+    }
+    catch {
+        $failures += "_shared/official: $($_.Exception.Message)"
+        Write-Warning $_
+    }
+
+    Write-Host ''
+}
 
 foreach ($package in $selected) {
     $readerDirName = [string]$package.readerDir
     $destLib = Join-Path $scriptRoot "readers\$readerDirName\lib"
     $comment = [string]$package.comment
+    $profile = if ($package.PSObject.Properties.Match('profile').Count -gt 0) {
+        [string]$package.profile
+    }
+    elseif ($package.source -and [string]$package.source.gameId -eq 'ppy.osu.Game') {
+        'official'
+    }
+    else {
+        'ez'
+    }
 
     Write-Host "==> $readerDirName$(if ($comment) { " — $comment" })"
 
@@ -524,15 +597,15 @@ foreach ($package in $selected) {
         Write-Host "  源：$sourceRoot"
         Write-Host "  目标：$destLib"
 
-        Copy-ReaderLibClosure -SourceRoot $sourceRoot -DestLib $destLib
-
-        if ($Prune -and (Test-Path -LiteralPath $pruneScript)) {
-            Write-Host '  裁剪 dead weight DLL ...'
-            & $pruneScript $destLib
+        $sharedBaseline = $null
+        if ($profile -eq 'official' -and (Test-Path -LiteralPath $sharedOfficialLib)) {
+            $sharedBaseline = $sharedOfficialLib
         }
 
-        $dllCount = (Get-ChildItem -LiteralPath $destLib -File -Filter '*.dll').Count
-        Write-Host "  完成：$dllCount 个 DLL"
+        Copy-ReaderThinSlice -SourceRoot $sourceRoot -DestLib $destLib -SharedBaselineLib $sharedBaseline
+
+        $dllCount = @(Get-ChildItem -LiteralPath $destLib -File -Filter '*.dll' -ErrorAction SilentlyContinue).Count
+        Write-Host "  完成：$dllCount 个 DLL（薄切片，正常为 1–2 个）"
     }
     catch {
         $failures += "${readerDirName}: $($_.Exception.Message)"
