@@ -2,6 +2,7 @@
 using osu.Game.EzRealmSync.Abstractions;
 using osu.Game.EzRealmSync.IO;
 using osu.Game.EzRealmSync.Models;
+using osu.Game.EzRealmSync.Realm.Readers;
 
 namespace osu.Game.EzRealmSync.Realm
 {
@@ -73,6 +74,8 @@ namespace osu.Game.EzRealmSync.Realm
             IProgress<ScanProgress>? progress,
             CancellationToken cancellationToken)
         {
+            RealmReaderRegistry.Instance.Refresh();
+
             if (!registry.TryGet(sourceRealmId, out var sourceFile))
                 throw new InvalidOperationException($"未找到源 Realm：{sourceRealmId}");
 
@@ -84,14 +87,18 @@ namespace osu.Game.EzRealmSync.Realm
             progress?.Report(new ScanProgress { Progress = 0, Message = "正在读取源库…" });
             cancellationToken.ThrowIfCancellationRequested();
 
-            using var sourceAccess = RealmSchemaProbe.Open(sourceFile.FilePath, sourceFile.SchemaVersion);
-            var sourceSnapshot = RealmDiffReader.Read(sourceAccess, progress, cancellationToken);
+            int sourceSchema = sourceFile.SchemaVersion ?? RealmSchemaProbe.TryReadSchemaVersion(sourceFile.FilePath)
+                ?? throw new InvalidOperationException($"无法读取 Realm schema 版本：{sourceFile.FilePath}");
+
+            var sourceSnapshot = RealmDiffSnapshotProvider.Read(sourceFile.FilePath, sourceSchema, kinds, progress, cancellationToken);
 
             progress?.Report(new ScanProgress { Progress = 0.5, Message = "正在读取目标库…" });
             cancellationToken.ThrowIfCancellationRequested();
 
-            using var targetAccess = RealmSchemaProbe.Open(targetFile.FilePath, targetFile.SchemaVersion);
-            var targetSnapshot = RealmDiffReader.Read(targetAccess, progress, cancellationToken);
+            int targetSchema = targetFile.SchemaVersion ?? RealmSchemaProbe.TryReadSchemaVersion(targetFile.FilePath)
+                ?? throw new InvalidOperationException($"无法读取 Realm schema 版本：{targetFile.FilePath}");
+
+            var targetSnapshot = RealmDiffSnapshotProvider.Read(targetFile.FilePath, targetSchema, kinds, progress, cancellationToken);
 
             var diff = RealmDiffEngine.Compare(sourceSnapshot, targetSnapshot, kinds, progress, cancellationToken);
             return RealmSetCompareHelper.ApplyOperation(diff, operation);
