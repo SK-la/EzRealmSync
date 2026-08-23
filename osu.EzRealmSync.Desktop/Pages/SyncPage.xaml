@@ -12,12 +12,9 @@
       <RowDefinition Height="Auto" />
     </Grid.RowDefinitions>
 
+    <!-- A / B 对比端 -->
     <ui:Card Grid.Row="0" Padding="14" Margin="0,0,0,10">
       <Grid>
-        <Grid.RowDefinitions>
-          <RowDefinition Height="Auto" />
-          <RowDefinition Height="Auto" />
-        </Grid.RowDefinitions>
         <Grid.ColumnDefinitions>
           <ColumnDefinition Width="96" />
           <ColumnDefinition Width="*" />
@@ -25,53 +22,102 @@
           <ColumnDefinition Width="*" />
         </Grid.ColumnDefinitions>
 
-        <ui:TextBlock x:Name="SourceLabel"
-                      Grid.Row="0"
+        <ui:TextBlock x:Name="EndpointALabel"
                       Grid.Column="0"
                       Style="{StaticResource WorkspaceMutedText}"
                       VerticalAlignment="Center" />
-        <ComboBox x:Name="SourceCombo" Grid.Row="0" Grid.Column="1" Margin="8,4" DisplayMemberPath="DisplayName" SelectedValuePath="Id" SelectionChanged="SourceCombo_OnChanged" />
-        <ui:TextBlock x:Name="TargetLabel"
-                      Grid.Row="0"
+        <ComboBox x:Name="EndpointACombo"
+                  Grid.Column="1"
+                  Margin="8,4"
+                  DisplayMemberPath="DisplayName"
+                  SelectedValuePath="Id"
+                  SelectionChanged="EndpointACombo_OnChanged" />
+        <ui:TextBlock x:Name="EndpointBLabel"
                       Grid.Column="2"
                       Style="{StaticResource WorkspaceMutedText}"
                       VerticalAlignment="Center" />
-        <ComboBox x:Name="TargetCombo" Grid.Row="0" Grid.Column="3" Margin="8,4" DisplayMemberPath="DisplayName" SelectedValuePath="Id" SelectionChanged="TargetCombo_OnChanged" />
-
-        <ui:TextBlock x:Name="SetOpLabel"
-                      Grid.Row="1"
-                      Grid.Column="0"
-                      Style="{StaticResource WorkspaceMutedText}"
-                      VerticalAlignment="Center" />
-        <ComboBox x:Name="SetOpCombo" Grid.Row="1" Grid.Column="1" Margin="8,4" SelectionChanged="SetOpCombo_OnChanged" />
-        <ui:TextBlock x:Name="ActionLabel"
-                      Grid.Row="1"
-                      Grid.Column="2"
-                      Style="{StaticResource WorkspaceMutedText}"
-                      VerticalAlignment="Center" />
-        <ComboBox x:Name="ActionCombo" Grid.Row="1" Grid.Column="3" Margin="8,4" SelectionChanged="ActionCombo_OnChanged" />
+        <ComboBox x:Name="EndpointBCombo"
+                  Grid.Column="3"
+                  Margin="8,4"
+                  DisplayMemberPath="DisplayName"
+                  SelectedValuePath="Id"
+                  SelectionChanged="EndpointBCombo_OnChanged" />
       </Grid>
     </ui:Card>
 
-    <WrapPanel Grid.Row="1" Margin="0,0,0,10">
-      <ui:Button x:Name="ComputeButton" Margin="0,0,8,6" Click="Compute_OnClick" Appearance="Primary" Icon="{ui:SymbolIcon Calculator24}" />
-      <ui:Button x:Name="TabSourceOnly" Margin="0,0,8,6" Click="TabSourceOnly_OnClick" />
-      <ui:Button x:Name="TabTargetOnly" Margin="0,0,8,6" Click="TabTargetOnly_OnClick" />
-      <ui:Button x:Name="TabConflicted" Margin="0,0,8,6" Click="TabConflicted_OnClick" />
-      <ui:Button x:Name="SelectAllButton" Margin="0,0,8,6" Click="SelectAll_OnClick" />
-      <ComboBox x:Name="EntityFilterCombo" Width="148" Margin="0,0,0,6" SelectionChanged="EntityFilter_OnChanged" />
-    </WrapPanel>
+    <!-- 集合 / 操作 / 目标 / 功能按钮 -->
+    <ui:Card Grid.Row="1" Padding="14" Margin="0,0,0,10">
+      <Grid>
+        <Grid.RowDefinitions>
+          <RowDefinition Height="Auto" />
+          <RowDefinition Height="Auto" />
+        </Grid.RowDefinitions>
+
+        <Grid Grid.Row="0" Margin="0,0,0,8">
+          <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="96" />
+            <ColumnDefinition Width="*" />
+            <ColumnDefinition Width="96" />
+            <ColumnDefinition Width="*" />
+            <ColumnDefinition Width="96" />
+            <ColumnDefinition Width="*" />
+          </Grid.ColumnDefinitions>
+
+          <ui:TextBlock x:Name="SetOpLabel"
+                        Grid.Column="0"
+                        Style="{StaticResource WorkspaceMutedText}"
+                        VerticalAlignment="Center" />
+          <ComboBox x:Name="SetOpCombo"
+                    Grid.Column="1"
+                    Margin="8,4"
+                    SelectionChanged="SetOpCombo_OnChanged" />
+          <ui:TextBlock x:Name="ActionLabel"
+                        Grid.Column="2"
+                        Style="{StaticResource WorkspaceMutedText}"
+                        VerticalAlignment="Center" />
+          <ComboBox x:Name="ActionCombo"
+                    Grid.Column="3"
+                    Margin="8,4"
+                    SelectionChanged="ActionCombo_OnChanged" />
+          <ui:TextBlock x:Name="WriteTargetLabel"
+                        Grid.Column="4"
+                        Style="{StaticResource WorkspaceMutedText}"
+                        VerticalAlignment="Center" />
+          <ComboBox x:Name="WriteTargetCombo"
+                    Grid.Column="5"
+                    Margin="8,4"
+                    SelectionChanged="WriteTargetCombo_OnChanged" />
+        </Grid>
+
+        <Grid Grid.Row="1">
+          <StackPanel Orientation="Horizontal" HorizontalAlignment="Left" VerticalAlignment="Center">
+            <ui:Button x:Name="ComputeButton"
+                       Margin="0,0,8,0"
+                       Click="Compute_OnClick"
+                       Appearance="Primary"
+                       Icon="{ui:SymbolIcon Calculator24}" />
+            <ComboBox x:Name="EntityFilterCombo"
+                      Width="148"
+                      VerticalAlignment="Center"
+                      SelectionChanged="EntityFilter_OnChanged" />
+          </StackPanel>
+
+          <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Center">
+            <ui:Button x:Name="TabSourceOnly" Margin="0,0,8,0" Click="TabSourceOnly_OnClick" />
+            <ui:Button x:Name="TabTargetOnly" Margin="0,0,8,0" Click="TabTargetOnly_OnClick" />
+            <ui:Button x:Name="TabConflicted" Margin="0,0,8,0" Click="TabConflicted_OnClick" />
+            <ui:Button x:Name="SelectAllButton" Click="SelectAll_OnClick" />
+          </StackPanel>
+        </Grid>
+      </Grid>
+    </ui:Card>
 
     <ui:Card Grid.Row="2"
              Style="{StaticResource WorkspaceStretchCard}"
              Padding="8"
              Margin="0,0,0,10">
       <Grid VerticalAlignment="Stretch">
-        <Grid.RowDefinitions>
-          <RowDefinition Height="*" />
-        </Grid.RowDefinitions>
         <ui:DataGrid x:Name="SyncGrid"
-                     Grid.Row="0"
                      Style="{StaticResource WorkspaceStretchDataGrid}"
                      AutoGenerateColumns="False"
                      CanUserAddRows="False"
@@ -92,7 +138,12 @@
         <ui:TextBlock x:Name="SelectionText"
                       Style="{StaticResource WorkspaceMutedText}"
                       VerticalAlignment="Center" />
-        <ui:Button x:Name="ExecuteButton" Grid.Column="1" Margin="8,0" Click="Execute_OnClick" Appearance="Primary" Icon="{ui:SymbolIcon Checkmark24}" />
+        <ui:Button x:Name="ExecuteButton"
+                   Grid.Column="1"
+                   Margin="8,0"
+                   Click="Execute_OnClick"
+                   Appearance="Primary"
+                   Icon="{ui:SymbolIcon Checkmark24}" />
       </Grid>
     </ui:Card>
   </Grid>

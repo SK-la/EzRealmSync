@@ -74,6 +74,7 @@ namespace osu.EzRealmSync.Desktop.ViewModels
             bindPresenter(presenter.CurrentCategory, nameof(CurrentCategory));
             bindPresenter(presenter.SetOperation, nameof(SetOperation));
             bindPresenter(presenter.SyncAction, nameof(SyncAction));
+            bindPresenter(presenter.SyncWriteTarget, nameof(SyncWriteTarget));
             bindPresenter(presenter.SelectedDataGroup, nameof(SelectedDataGroup));
             bindPresenter(presenter.SelectedRealmClass, nameof(SelectedRealmClass));
             bindPresenter(presenter.CanUseFixAndExport, nameof(CanUseFixAndExport));
@@ -245,6 +246,12 @@ namespace osu.EzRealmSync.Desktop.ViewModels
             set => Presenter.SyncAction.Value = value;
         }
 
+        public SyncWriteEndpoint SyncWriteTarget
+        {
+            get => Presenter.SyncWriteTarget.Value;
+            set => Presenter.SyncWriteTarget.Value = value;
+        }
+
         public EntityKind SelectedDataGroup
         {
             get => Presenter.SelectedDataGroup.Value;
@@ -337,6 +344,7 @@ namespace osu.EzRealmSync.Desktop.ViewModels
         public string GetEntityFilterLabel(EntityKindFilter f) => RealmAppPresenter.GetEntityFilterLabel(f);
         public string GetSetOperationLabel(RealmSetOperation op) => RealmAppPresenter.GetSetOperationLabel(op);
         public string GetSyncActionLabel(RealmSyncAction a) => RealmAppPresenter.GetSyncActionLabel(a);
+        public string GetSyncWriteEndpointLabel(SyncWriteEndpoint e) => RealmAppPresenter.GetSyncWriteEndpointLabel(e);
         public string GetEntityKindLabel(EntityKind k) => RealmAppPresenter.GetEntityKindLabel(k);
 
         public string GetExportDataKindLabel(ExportDataKind k) => RealmAppPresenter.GetExportDataKindLabel(k);

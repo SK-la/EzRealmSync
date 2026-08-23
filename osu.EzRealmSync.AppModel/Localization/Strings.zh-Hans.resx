@@ -7,8 +7,8 @@
   <data name="AppTitle" xml:space="preserve"><value>osu! Realm 维护工具</value></data>
   <data name="AppTitleUiTest" xml:space="preserve"><value>osu! Realm 维护工具 [UI 测试]</value></data>
   <data name="Settings" xml:space="preserve"><value>设置</value></data>
-  <data name="EndpointA" xml:space="preserve"><value>A 端</value></data>
-  <data name="EndpointB" xml:space="preserve"><value>B 端</value></data>
+  <data name="EndpointA" xml:space="preserve"><value>A</value></data>
+<data name="EndpointB" xml:space="preserve"><value>B 端</value></data>
   <data name="Browse" xml:space="preserve"><value>浏览…</value></data>
   <data name="FolderPickerTitle" xml:space="preserve"><value>选择文件夹</value></data>
   <data name="FolderPickerUp" xml:space="preserve"><value>上一级</value></data>
@@ -51,17 +51,17 @@
   <data name="StatusUiTest" xml:space="preserve"><value>UI 测试模式 — 未连接真实数据库</value></data>
   <data name="StatusScanning" xml:space="preserve"><value>正在扫描…</value></data>
   <data name="StatusScanComplete" xml:space="preserve"><value>扫描完成 — {1}端有{3}端无 {2}，{3}端有{1}端无 {4}，不一致 {5}</value></data>
-  <data name="StatusDeleted" xml:space="preserve"><value>已从 {1} 端删除 {0} 项</value></data>
-  <data name="StatusAdded" xml:space="preserve"><value>已添加 {0} 项{1}</value></data>
-  <data name="StatusBackupSuffix" xml:space="preserve"><value>，备份: {0}</value></data>
+  <data name="StatusDeleted" xml:space="preserve"><value>已从「{1}」删除 {0} 项</value></data>
+<data name="StatusAdded" xml:space="preserve"><value>已向「{1}」添加/覆盖 {0} 项</value></data>
+<data name="StatusBackupSuffix" xml:space="preserve"><value>，备份: {0}</value></data>
   <data name="TabSourceOnly" xml:space="preserve"><value>{0} 端有 · {1} 端无</value></data>
   <data name="TabTargetOnly" xml:space="preserve"><value>{1} 端有 · {0} 端无</value></data>
   <data name="TabConflicted" xml:space="preserve"><value>不一致</value></data>
-  <data name="ErrorNoSelection" xml:space="preserve"><value>请先选择要处理的条目。</value></data>
-  <data name="ErrorConflictedApply" xml:space="preserve"><value>「不一致」条目仅展示，不能添加到目标端。</value></data>
-  <data name="ConfirmDelete" xml:space="preserve"><value>确定从 {1} 端删除 {0} 项？此操作不可撤销。</value></data>
-  <data name="ConfirmAdd" xml:space="preserve"><value>将 {0} 项写入目标 (B)「{1}」。</value></data>
-  <data name="ConfirmTitle" xml:space="preserve"><value>确认</value></data>
+<data name="ErrorNoSelection" xml:space="preserve"><value>请先选择要处理的条目。</value></data>
+  <data name="ErrorConflictedApply" xml:space="preserve"><value>不一致项可在选择操作目标后用「添加」覆盖目标端。</value></data>
+<data name="ConfirmDelete" xml:space="preserve"><value>确定从操作目标「{1}」删除 {0} 项？此操作不可撤销。</value></data>
+<data name="ConfirmAdd" xml:space="preserve"><value>将把 {0} 项从另一端写入操作目标「{1}」（两端都有但内容不同时会覆盖）。</value></data>
+<data name="ConfirmTitle" xml:space="preserve"><value>确认</value></data>
   <data name="DeleteTitle" xml:space="preserve"><value>删除</value></data>
   <data name="CtxDelete" xml:space="preserve"><value>删除</value></data>
   <data name="CtxCheck" xml:space="preserve"><value>勾选</value></data>
@@ -184,31 +184,31 @@
   <data name="ColEzSchema" xml:space="preserve"><value>Ez</value></data>
   <data name="ColSize" xml:space="preserve"><value>大小</value></data>
   <data name="LoadRealm" xml:space="preserve"><value>完整加载</value></data>
-  <data name="SourceRealm" xml:space="preserve"><value>源 (A)</value></data>
-  <data name="TargetRealm" xml:space="preserve"><value>目标 (B) — 写入接收端</value></data>
+  <data name="SourceRealm" xml:space="preserve"><value>A</value></data>
+<data name="TargetRealm" xml:space="preserve"><value>目标 (B) — 写入接收端</value></data>
   <data name="SetOperation" xml:space="preserve"><value>集合运算</value></data>
   <data name="SetIntersection" xml:space="preserve"><value>交集</value></data>
   <data name="SetUnion" xml:space="preserve"><value>并集</value></data>
   <data name="SetDifference" xml:space="preserve"><value>差集 (A−B)</value></data>
   <data name="SetSymmetricDifference" xml:space="preserve"><value>对称差</value></data>
-  <data name="SyncAction" xml:space="preserve"><value>动作</value></data>
-  <data name="ActionAdd" xml:space="preserve"><value>添加到目标</value></data>
-  <data name="ActionDelete" xml:space="preserve"><value>从源删除</value></data>
-  <data name="ComputeSet" xml:space="preserve"><value>计算</value></data>
+  <data name="SyncAction" xml:space="preserve"><value>操作</value></data>
+<data name="ActionAdd" xml:space="preserve"><value>添加到目标</value></data>
+  <data name="ActionDelete" xml:space="preserve"><value>删除</value></data>
+<data name="ComputeSet" xml:space="preserve"><value>计算</value></data>
   <data name="ExecuteAction" xml:space="preserve"><value>执行</value></data>
   <data name="StatusRealmList" xml:space="preserve"><value>列表中共 {0} 个 Realm 文件</value></data>
   <data name="StatusRealmRegistered" xml:space="preserve"><value>已注册：{0}</value></data>
   <data name="StatusBackupCreated" xml:space="preserve"><value>已创建备份：{0}</value></data>
   <data name="StatusRealmLoaded" xml:space="preserve"><value>已加载 {0}，全部分组共 {1} 行</value></data>
   <data name="StatusComputingSet" xml:space="preserve"><value>正在计算集合…</value></data>
-  <data name="StatusSetComplete" xml:space="preserve"><value>集合结果 — 仅源：{0}，仅目标：{1}，冲突：{2}</value></data>
-  <data name="StatusClickToCopyHint" xml:space="preserve"><value>点击复制</value></data>
+  <data name="StatusSetComplete" xml:space="preserve"><value>集合结果 — 仅 A：{0}，仅 B：{1}，不一致：{2}</value></data>
+<data name="StatusClickToCopyHint" xml:space="preserve"><value>点击复制</value></data>
   <data name="StatusCopiedToClipboard" xml:space="preserve"><value>已复制到剪贴板</value></data>
   <data name="ErrorPickSourceTarget" xml:space="preserve"><value>请选择数据源与目标源。</value></data>
   <data name="SelectRealmHint" xml:space="preserve"><value>选择 Realm 文件后点击「完整加载」</value></data>
   <data name="DataClasses" xml:space="preserve"><value>类</value></data>
-  <data name="TabOnlyInA" xml:space="preserve"><value>仅源 (A)</value></data>
-  <data name="TabOnlyInB" xml:space="preserve"><value>仅目标 (B)</value></data>
+  <data name="TabOnlyInA" xml:space="preserve"><value>仅 A</value></data>
+<data name="TabOnlyInB" xml:space="preserve"><value>仅目标 (B)</value></data>
   <data name="RealmClassBeatmap" xml:space="preserve"><value>谱面</value></data>
   <data name="RealmClassBeatmapCollection" xml:space="preserve"><value>收藏夹</value></data>
   <data name="RealmClassBeatmapMetadata" xml:space="preserve"><value>谱面元数据</value></data>
@@ -250,4 +250,19 @@
   <data name="ReaderPackageDefault" xml:space="preserve"><value>内置 NuGet / 本地 lib（默认）</value></data>
   <data name="ReaderPackageMissingLib" xml:space="preserve"><value> [缺少 lib]</value></data>
   <data name="ReaderRestartHint" xml:space="preserve"><value>将 reader 包放入 exe 同目录的 readers 文件夹（见下方路径）；切换 reader 后需重启应用。</value></data>
+  <data name="EndpointB" xml:space="preserve"><value>B</value></data>
+  <data name="TargetRealm" xml:space="preserve"><value>B</value></data>
+  <data name="SyncWriteTarget" xml:space="preserve"><value>操作目标</value></data>
+  <data name="WriteTargetA" xml:space="preserve"><value>A</value></data>
+  <data name="WriteTargetB" xml:space="preserve"><value>B</value></data>
+  <data name="ActionAdd" xml:space="preserve"><value>添加</value></data>
+  <data name="TabOnlyInB" xml:space="preserve"><value>仅 B</value></data>
+  <data name="TooltipTabOnlyInA" xml:space="preserve"><value>仅存在于 A、B 中没有的项。执行「添加」时会把勾选项写入所选操作目标（默认 B）；「删除」则从操作目标删除（若目标里不存在则无效果）。</value></data>
+  <data name="TooltipTabOnlyInB" xml:space="preserve"><value>仅存在于 B、A 中没有的项。执行「添加」时会把勾选项写入所选操作目标；「删除」从操作目标删除。</value></data>
+  <data name="TooltipTabConflicted" xml:space="preserve"><value>A 与 B 都有同一条目，但部分内容不一致。选「添加」且操作目标为 B：用 A 覆盖 B；目标为 A：用 B 覆盖 A。</value></data>
+  <data name="TooltipSelectAll" xml:space="preserve"><value>全选或取消全选当前列表中的行。</value></data>
+  <data name="TooltipComputeSet" xml:space="preserve"><value>按所选集合运算重新对比 A 与 B。</value></data>
+  <data name="TooltipExecuteAction" xml:space="preserve"><value>按「操作」与「操作目标」对勾选项执行写入或删除。</value></data>
+  <data name="TooltipSyncWriteTarget" xml:space="preserve"><value>选择写入/删除落在哪一端。默认 B。操作本身不再隐含目标。</value></data>
+  <data name="TooltipSyncAction" xml:space="preserve"><value>添加：把另一端的数据写入操作目标（已存在则覆盖）。删除：从操作目标删除勾选项。</value></data>
 </root>

@@ -31,6 +31,7 @@ namespace osu.EzRealmSync.Desktop.Pages
             configureSyncGridBehavior();
             refreshRealmCombos();
             SyncGrid.ItemsSource = vm.SyncRows;
+            SelectionText.Text = vm.SelectionCountText;
 
             vm.PropertyChanged += (_, e) =>
             {
@@ -65,14 +66,15 @@ namespace osu.EzRealmSync.Desktop.Pages
 
         private void refreshLabels()
         {
-            // A 恒为源、B 恒为目标（接收端）；执行写入只改 B。
-            SourceLabel.Text = Loc.Get("SourceRealm");
-            TargetLabel.Text = Loc.Get("TargetRealm");
+            EndpointALabel.Text = Loc.Get("EndpointA");
+            EndpointBLabel.Text = Loc.Get("EndpointB");
             SetOpLabel.Text = Loc.Get("SetOperation");
             ActionLabel.Text = Loc.Get("SyncAction");
+            WriteTargetLabel.Text = Loc.Get("SyncWriteTarget");
             ComputeButton.Content = Loc.Get("ComputeSet");
             ExecuteButton.Content = Loc.Get("ExecuteAction");
             refreshTabLabels();
+            refreshTooltips();
         }
 
         private void refreshTabLabels()
@@ -84,6 +86,19 @@ namespace osu.EzRealmSync.Desktop.Pages
             TabTargetOnly.Content = Loc.Get("TabOnlyInB");
             TabConflicted.Content = Loc.Get("TabConflicted");
             SelectAllButton.Content = Loc.Get("SelectAll");
+            refreshTooltips();
+        }
+
+        private void refreshTooltips()
+        {
+            TabSourceOnly.ToolTip = Loc.Get("TooltipTabOnlyInA");
+            TabTargetOnly.ToolTip = Loc.Get("TooltipTabOnlyInB");
+            TabConflicted.ToolTip = Loc.Get("TooltipTabConflicted");
+            SelectAllButton.ToolTip = Loc.Get("TooltipSelectAll");
+            ComputeButton.ToolTip = Loc.Get("TooltipComputeSet");
+            ExecuteButton.ToolTip = Loc.Get("TooltipExecuteAction");
+            WriteTargetCombo.ToolTip = Loc.Get("TooltipSyncWriteTarget");
+            ActionCombo.ToolTip = Loc.Get("TooltipSyncAction");
         }
 
         private void setupCombos()
@@ -97,12 +112,16 @@ namespace osu.EzRealmSync.Desktop.Pages
             foreach (var action in vm.SyncActions)
                 ActionCombo.Items.Add(new ComboBoxItem { Content = vm.GetSyncActionLabel(action), Tag = action });
 
+            foreach (var endpoint in Enum.GetValues<SyncWriteEndpoint>())
+                WriteTargetCombo.Items.Add(new ComboBoxItem { Content = vm.GetSyncWriteEndpointLabel(endpoint), Tag = endpoint });
+
             EntityFilterCombo.Items.Clear();
             foreach (var filter in vm.EntityFilters)
                 EntityFilterCombo.Items.Add(new ComboBoxItem { Content = vm.GetEntityFilterLabel(filter), Tag = filter });
 
             SetOpCombo.SelectedIndex = 2;
             ActionCombo.SelectedIndex = 0;
+            WriteTargetCombo.SelectedIndex = vm.SyncWriteTarget == SyncWriteEndpoint.A ? 0 : 1;
             EntityFilterCombo.SelectedIndex = 0;
         }
 
@@ -155,10 +174,10 @@ namespace osu.EzRealmSync.Desktop.Pages
             if (vm == null)
                 return;
 
-            SourceCombo.ItemsSource = vm.RealmFiles;
-            TargetCombo.ItemsSource = vm.RealmFiles;
-            SourceCombo.SelectedValue = vm.SyncRealmIdA;
-            TargetCombo.SelectedValue = vm.SyncRealmIdB;
+            EndpointACombo.ItemsSource = vm.RealmFiles;
+            EndpointBCombo.ItemsSource = vm.RealmFiles;
+            EndpointACombo.SelectedValue = vm.SyncRealmIdA;
+            EndpointBCombo.SelectedValue = vm.SyncRealmIdB;
         }
 
         private void updateCategoryTabs()
@@ -179,15 +198,15 @@ namespace osu.EzRealmSync.Desktop.Pages
             ComputeButton.IsEnabled = ExecuteButton.IsEnabled = !vm.IsBusy;
         }
 
-        private void SourceCombo_OnChanged(object sender, SelectionChangedEventArgs e)
+        private void EndpointACombo_OnChanged(object sender, SelectionChangedEventArgs e)
         {
-            if (vm != null && SourceCombo.SelectedValue is string id)
+            if (vm != null && EndpointACombo.SelectedValue is string id)
                 vm.SyncRealmIdA = id;
         }
 
-        private void TargetCombo_OnChanged(object sender, SelectionChangedEventArgs e)
+        private void EndpointBCombo_OnChanged(object sender, SelectionChangedEventArgs e)
         {
-            if (vm != null && TargetCombo.SelectedValue is string id)
+            if (vm != null && EndpointBCombo.SelectedValue is string id)
                 vm.SyncRealmIdB = id;
         }
 
@@ -201,6 +220,12 @@ namespace osu.EzRealmSync.Desktop.Pages
         {
             if (vm != null && ActionCombo.SelectedItem is ComboBoxItem { Tag: RealmSyncAction action })
                 vm.SyncAction = action;
+        }
+
+        private void WriteTargetCombo_OnChanged(object sender, SelectionChangedEventArgs e)
+        {
+            if (vm != null && WriteTargetCombo.SelectedItem is ComboBoxItem { Tag: SyncWriteEndpoint endpoint })
+                vm.SyncWriteTarget = endpoint;
         }
 
         private void EntityFilter_OnChanged(object sender, SelectionChangedEventArgs e)

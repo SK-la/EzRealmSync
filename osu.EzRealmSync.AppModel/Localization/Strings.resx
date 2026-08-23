@@ -7,8 +7,8 @@
   <data name="AppTitle" xml:space="preserve"><value>osu! Realm Maintainer</value></data>
   <data name="AppTitleUiTest" xml:space="preserve"><value>osu! Realm Maintainer [UI Test]</value></data>
   <data name="Settings" xml:space="preserve"><value>Settings</value></data>
-  <data name="EndpointA" xml:space="preserve"><value>A endpoint</value></data>
-  <data name="EndpointB" xml:space="preserve"><value>B endpoint</value></data>
+  <data name="EndpointA" xml:space="preserve"><value>A</value></data>
+<data name="EndpointB" xml:space="preserve"><value>B endpoint</value></data>
   <data name="Browse" xml:space="preserve"><value>Browse…</value></data>
   <data name="FolderPickerTitle" xml:space="preserve"><value>Select folder</value></data>
   <data name="FolderPickerUp" xml:space="preserve"><value>Up</value></data>
@@ -51,17 +51,17 @@
   <data name="StatusUiTest" xml:space="preserve"><value>UI test mode — not connected to a real database</value></data>
   <data name="StatusScanning" xml:space="preserve"><value>Scanning…</value></data>
   <data name="StatusScanComplete" xml:space="preserve"><value>Scan complete — {0} only in {1}: {2}, only in {3}: {4}, conflicted: {5}</value></data>
-  <data name="StatusDeleted" xml:space="preserve"><value>Deleted {0} item(s) from {1}</value></data>
-  <data name="StatusAdded" xml:space="preserve"><value>Added {0} item(s){1}</value></data>
-  <data name="StatusBackupSuffix" xml:space="preserve"><value>, backup: {0}</value></data>
+  <data name="StatusDeleted" xml:space="preserve"><value>Deleted {0} item(s) from "{1}"</value></data>
+<data name="StatusAdded" xml:space="preserve"><value>Added/overwrote {0} item(s) on "{1}"</value></data>
+<data name="StatusBackupSuffix" xml:space="preserve"><value>, backup: {0}</value></data>
   <data name="TabSourceOnly" xml:space="preserve"><value>{0} only · missing in {1}</value></data>
   <data name="TabTargetOnly" xml:space="preserve"><value>{0} only · missing in {1}</value></data>
   <data name="TabConflicted" xml:space="preserve"><value>Conflicted</value></data>
-  <data name="ErrorNoSelection" xml:space="preserve"><value>Select at least one item first.</value></data>
-  <data name="ErrorConflictedApply" xml:space="preserve"><value>Conflicted items are view-only and cannot be added to the target.</value></data>
-  <data name="ConfirmDelete" xml:space="preserve"><value>Delete {0} item(s) from {1}? This cannot be undone.</value></data>
-  <data name="ConfirmAdd" xml:space="preserve"><value>Write {0} item(s) to target (B) "{1}".</value></data>
-  <data name="ConfirmTitle" xml:space="preserve"><value>Confirm</value></data>
+<data name="ErrorNoSelection" xml:space="preserve"><value>Select at least one item first.</value></data>
+  <data name="ErrorConflictedApply" xml:space="preserve"><value>Conflicted items can be overwritten via Add after choosing a write target.</value></data>
+<data name="ConfirmDelete" xml:space="preserve"><value>Delete {0} item(s) from write target "{1}"? This cannot be undone.</value></data>
+<data name="ConfirmAdd" xml:space="preserve"><value>Write {0} item(s) from the other endpoint into write target "{1}" (overwrites when both exist but differ).</value></data>
+<data name="ConfirmTitle" xml:space="preserve"><value>Confirm</value></data>
   <data name="DeleteTitle" xml:space="preserve"><value>Delete</value></data>
   <data name="CtxDelete" xml:space="preserve"><value>Delete</value></data>
   <data name="CtxCheck" xml:space="preserve"><value>Check</value></data>
@@ -184,31 +184,31 @@
   <data name="ColEzSchema" xml:space="preserve"><value>Ez</value></data>
   <data name="ColSize" xml:space="preserve"><value>Size</value></data>
   <data name="LoadRealm" xml:space="preserve"><value>Load full data</value></data>
-  <data name="SourceRealm" xml:space="preserve"><value>Source (A)</value></data>
-  <data name="TargetRealm" xml:space="preserve"><value>Target (B) — write destination</value></data>
+  <data name="SourceRealm" xml:space="preserve"><value>A</value></data>
+<data name="TargetRealm" xml:space="preserve"><value>Target (B) — write destination</value></data>
   <data name="SetOperation" xml:space="preserve"><value>Set operation</value></data>
   <data name="SetIntersection" xml:space="preserve"><value>Intersection</value></data>
   <data name="SetUnion" xml:space="preserve"><value>Union</value></data>
   <data name="SetDifference" xml:space="preserve"><value>Difference (A−B)</value></data>
   <data name="SetSymmetricDifference" xml:space="preserve"><value>Symmetric difference</value></data>
   <data name="SyncAction" xml:space="preserve"><value>Action</value></data>
-  <data name="ActionAdd" xml:space="preserve"><value>Add to target</value></data>
-  <data name="ActionDelete" xml:space="preserve"><value>Delete from source</value></data>
-  <data name="ComputeSet" xml:space="preserve"><value>Compute</value></data>
+<data name="ActionAdd" xml:space="preserve"><value>Add to target</value></data>
+  <data name="ActionDelete" xml:space="preserve"><value>Delete</value></data>
+<data name="ComputeSet" xml:space="preserve"><value>Compute</value></data>
   <data name="ExecuteAction" xml:space="preserve"><value>Execute</value></data>
   <data name="StatusRealmList" xml:space="preserve"><value>{0} realm file(s) in list</value></data>
   <data name="StatusRealmRegistered" xml:space="preserve"><value>Registered: {0}</value></data>
   <data name="StatusBackupCreated" xml:space="preserve"><value>Backup created: {0}</value></data>
   <data name="StatusRealmLoaded" xml:space="preserve"><value>Loaded {0} — {1} row(s) in all groups</value></data>
   <data name="StatusComputingSet" xml:space="preserve"><value>Computing set operation…</value></data>
-  <data name="StatusSetComplete" xml:space="preserve"><value>Set result — source only: {0}, target only: {1}, conflicted: {2}</value></data>
-  <data name="StatusClickToCopyHint" xml:space="preserve"><value>Click to copy</value></data>
+  <data name="StatusSetComplete" xml:space="preserve"><value>Set result — only A: {0}, only B: {1}, conflicted: {2}</value></data>
+<data name="StatusClickToCopyHint" xml:space="preserve"><value>Click to copy</value></data>
   <data name="StatusCopiedToClipboard" xml:space="preserve"><value>Copied to clipboard</value></data>
   <data name="ErrorPickSourceTarget" xml:space="preserve"><value>Select source and target realm files.</value></data>
   <data name="SelectRealmHint" xml:space="preserve"><value>Select a realm file and click Load</value></data>
   <data name="DataClasses" xml:space="preserve"><value>CLASSES</value></data>
-  <data name="TabOnlyInA" xml:space="preserve"><value>Only in source (A)</value></data>
-  <data name="TabOnlyInB" xml:space="preserve"><value>Only in target (B)</value></data>
+  <data name="TabOnlyInA" xml:space="preserve"><value>Only A</value></data>
+<data name="TabOnlyInB" xml:space="preserve"><value>Only in target (B)</value></data>
   <data name="RealmClassBeatmap" xml:space="preserve"><value>Beatmap</value></data>
   <data name="RealmClassBeatmapCollection" xml:space="preserve"><value>BeatmapCollection</value></data>
   <data name="RealmClassBeatmapMetadata" xml:space="preserve"><value>BeatmapMetadata</value></data>
@@ -250,4 +250,19 @@
   <data name="ReaderPackageDefault" xml:space="preserve"><value>Built-in NuGet / local lib (default)</value></data>
   <data name="ReaderPackageMissingLib" xml:space="preserve"><value> [missing lib]</value></data>
   <data name="ReaderRestartHint" xml:space="preserve"><value>Place reader packages in the readers folder next to the exe (see path below). Restart after changing the reader.</value></data>
+  <data name="EndpointB" xml:space="preserve"><value>B</value></data>
+  <data name="TargetRealm" xml:space="preserve"><value>B</value></data>
+  <data name="SyncWriteTarget" xml:space="preserve"><value>Write target</value></data>
+  <data name="WriteTargetA" xml:space="preserve"><value>A</value></data>
+  <data name="WriteTargetB" xml:space="preserve"><value>B</value></data>
+  <data name="ActionAdd" xml:space="preserve"><value>Add</value></data>
+  <data name="TabOnlyInB" xml:space="preserve"><value>Only B</value></data>
+  <data name="TooltipTabOnlyInA" xml:space="preserve"><value>Items present only in A. Add writes checked rows to the write target (default B). Delete removes them from the write target if present.</value></data>
+  <data name="TooltipTabOnlyInB" xml:space="preserve"><value>Items present only in B. Add writes checked rows to the write target. Delete removes them from the write target.</value></data>
+  <data name="TooltipTabConflicted" xml:space="preserve"><value>Same item in A and B with differing fields. Add + target B overwrites B with A; target A overwrites A with B.</value></data>
+  <data name="TooltipSelectAll" xml:space="preserve"><value>Select or clear all rows in the current list.</value></data>
+  <data name="TooltipComputeSet" xml:space="preserve"><value>Recompute the A/B comparison with the selected set operation.</value></data>
+  <data name="TooltipExecuteAction" xml:space="preserve"><value>Run Add or Delete on checked rows against the write target.</value></data>
+  <data name="TooltipSyncWriteTarget" xml:space="preserve"><value>Choose which endpoint receives Add/Delete. Default is B. The action no longer implies the target.</value></data>
+  <data name="TooltipSyncAction" xml:space="preserve"><value>Add: copy from the other endpoint into the write target (overwrite if present). Delete: remove checked rows from the write target.</value></data>
 </root>

@@ -163,6 +163,9 @@ namespace osu.EzRealmSync.AppModel
         public Bindable<RealmSetOperation> SetOperation { get; } = new Bindable<RealmSetOperation>(RealmSetOperation.Difference);
         public Bindable<RealmSyncAction> SyncAction { get; } = new Bindable<RealmSyncAction>();
 
+        /// <summary>执行添加/删除时的操作目标端；默认 B。与对比用的 A/B 下拉独立。</summary>
+        public Bindable<SyncWriteEndpoint> SyncWriteTarget { get; } = new Bindable<SyncWriteEndpoint>(SyncWriteEndpoint.B);
+
         public BindableBool UiTestMode { get; } = new BindableBool();
 
         public Bindable<string?> ActiveReaderPackageId { get; } = new Bindable<string?>();
@@ -607,20 +610,29 @@ namespace osu.EzRealmSync.AppModel
             }
 
             bool delete = SyncAction.Value == RealmSyncAction.Delete;
-            var sourceFile = getRealmFile(SyncRealmIdA.Value);
-            var targetFile = getRealmFile(SyncRealmIdB.Value);
+            var fileA = getRealmFile(SyncRealmIdA.Value);
+            var fileB = getRealmFile(SyncRealmIdB.Value);
 
-            if (sourceFile == null || targetFile == null)
+            if (fileA == null || fileB == null)
                 return;
+
+            // 操作目标独立于对比端：Add = 从另一端复制到目标（冲突则覆盖）；Delete = 从目标删除。
+            bool writeToB = SyncWriteTarget.Value == SyncWriteEndpoint.B;
+            var writeFile = writeToB ? fileB : fileA;
+            var otherFile = writeToB ? fileA : fileB;
+
+            // Add：plan 源=另一端、目标=操作目标。Delete：plan 源=操作目标（DeleteFromSource 删源）。
+            var planSource = delete ? writeFile : otherFile;
+            var planTarget = delete ? otherFile : writeFile;
 
             if (ConfirmAsync == null)
                 return;
 
             string confirmMessage = delete
-                ? Loc.Format("ConfirmDelete", selected.Count, sourceFile.DisplayName)
-                : Loc.Format("ConfirmAdd", selected.Count, targetFile.DisplayName);
+                ? Loc.Format("ConfirmDelete", selected.Count, writeFile.DisplayName)
+                : Loc.Format("ConfirmAdd", selected.Count, writeFile.DisplayName);
 
-            if (sourceFile.SchemaVersion is { } schemaA && targetFile.SchemaVersion is { } schemaB)
+            if (fileA.SchemaVersion is { } schemaA && fileB.SchemaVersion is { } schemaB)
             {
                 string syncWarning = RealmSchemaTransitionAssessor.DescribeSyncPairWarning(schemaA, schemaB);
                 if (!string.IsNullOrWhiteSpace(syncWarning))
@@ -637,7 +649,7 @@ namespace osu.EzRealmSync.AppModel
 
             try
             {
-                if (!RealmWritePlan.TryFromEndpoints(sourceFile, targetFile, out var writePlan, out string? planError) || writePlan == null)
+                if (!RealmWritePlan.TryFromEndpoints(planSource, planTarget, out var writePlan, out string? planError) || writePlan == null)
                 {
                     runOnUi(() => StatusMessage.Value = planError ?? Loc.Get("ErrorPickSourceTarget"));
                     return;
@@ -655,8 +667,7 @@ namespace osu.EzRealmSync.AppModel
                 if (validation.Warnings.Count > 0)
                     runOnUi(() => StatusMessage.Value = string.Join(Environment.NewLine, validation.Warnings));
 
-                string writeTargetPath = delete ? sourceFile.FilePath : targetFile.FilePath;
-                await createWriteBackupAsync(writeTargetPath, token).ConfigureAwait(false);
+                await createWriteBackupAsync(writeFile.FilePath, token).ConfigureAwait(false);
 
                 var request = new ApplyRequest
                 {
@@ -675,8 +686,8 @@ namespace osu.EzRealmSync.AppModel
                 runOnUi(() =>
                 {
                     StatusMessage.Value = delete
-                        ? Loc.Format("StatusDeleted", result.AppliedCount, sourceFile.DisplayName)
-                        : Loc.Format("StatusAdded", result.AppliedCount, string.Empty);
+                        ? Loc.Format("StatusDeleted", result.AppliedCount, writeFile.DisplayName)
+                        : Loc.Format("StatusAdded", result.AppliedCount, writeFile.DisplayName);
 
                     Progress.Value = 1;
                 });
@@ -1837,8 +1848,8 @@ namespace osu.EzRealmSync.AppModel
 
         private void updateCanApply()
         {
-            // Add：仅 A + 冲突均可写入/覆盖 B；Delete 单独走删除动作校验（仍禁止在冲突 Tab 误点 Add 以外的限制已放开）。
-            CanApply.Value = !IsBusy.Value && SyncAction.Value == RealmSyncAction.Add;
+            // 操作（添加/删除）与操作目标（A/B）分离；忙碌时禁用。
+            CanApply.Value = !IsBusy.Value;
         }
 
         private void updateSelectionCount() => SelectionCount.Value = syncRows.Count(r => r.IsSelected);
@@ -1946,6 +1957,13 @@ namespace osu.EzRealmSync.AppModel
             RealmSyncAction.Add => Loc.Get("ActionAdd"),
             RealmSyncAction.Delete => Loc.Get("ActionDelete"),
             _ => action.ToString(),
+        };
+
+        public static string GetSyncWriteEndpointLabel(SyncWriteEndpoint endpoint) => endpoint switch
+        {
+            SyncWriteEndpoint.A => Loc.Get("WriteTargetA"),
+            SyncWriteEndpoint.B => Loc.Get("WriteTargetB"),
+            _ => endpoint.ToString(),
         };
 
         public static string GetEntityKindLabel(EntityKind kind) => kind switch
