@@ -272,6 +272,7 @@ namespace osu.Game.EzRealmSync.Mock
                     break;
 
                 case ExportDataKind.Score:
+                case ExportDataKind.ScoreDb:
                     foreach (var row in snapshot.Groups.First(g => g.EntityKind == EntityKind.Score).Rows)
                     {
                         string player = row.Artist;
@@ -286,8 +287,8 @@ namespace osu.Game.EzRealmSync.Mock
                             Title = row.Title,
                             Artist = row.Artist,
                             PlayerName = player,
-                            RelativePath = $"0/0/{row.Hash}",
-                            DestinationRelativePath = dest,
+                            RelativePath = kind == ExportDataKind.ScoreDb ? string.Empty : $"0/0/{row.Hash}",
+                            DestinationRelativePath = kind == ExportDataKind.ScoreDb ? null : dest,
                         });
                     }
 
@@ -332,6 +333,44 @@ namespace osu.Game.EzRealmSync.Mock
                 {
                     OutputRoot = outputFile,
                     ExportedCount = entries.Count,
+                    SkippedCount = 0,
+                };
+            }
+
+            if (request.Kind == ExportDataKind.ScoreDb)
+            {
+                // TODO(legacy-db-merge): 合并进磁盘已有 scores.db（按 MD5 追加/去重）尚未实现。
+                var groups = catalog.Items
+                                    .Where(i => idSet.Contains(i.Id))
+                                    .GroupBy(i => i.Artist ?? "unknown", StringComparer.OrdinalIgnoreCase)
+                                    .Select(g =>
+                                    {
+                                        string md5 = (g.Key + "-md5").PadRight(32, '0')[..32];
+                                        return new LegacyScoresDbBeatmapGroup(
+                                            md5,
+                                            g.Select(item => new LegacyScoresDbScore
+                                            {
+                                                GameplayMode = 0,
+                                                Version = LegacyScoresDb.DefaultVersion,
+                                                BeatmapMd5 = md5,
+                                                PlayerName = item.PlayerName ?? "player",
+                                                ReplayMd5 = item.Id.ToString("N"),
+                                                TotalScore = 100000,
+                                                MaxCombo = 100,
+                                                TimestampTicks = DateTime.UtcNow.Ticks,
+                                                OnlineScoreId = -1,
+                                            }).ToList());
+                                    })
+                                    .ToList();
+
+                string scoresFile = LegacyScoresDb.ResolveOutputFile(request.OutputDirectory, request.FolderName);
+                LegacyScoresDb.WriteFile(scoresFile, groups);
+                await simulateWorkAsync(progress, "导出完成", cancellationToken).ConfigureAwait(false);
+
+                return new RealmExportResult
+                {
+                    OutputRoot = scoresFile,
+                    ExportedCount = groups.Sum(x => x.Scores.Count),
                     SkippedCount = 0,
                 };
             }

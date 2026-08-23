@@ -7,6 +7,9 @@ namespace osu.Game.EzRealmSync.IO
     /// 格式：version int32 + collectionCount int32 + [name string + mapCount int32 + [md5 string]…]。
     /// 字符串为 osu 专用：先写 0x00（null）或 0x0b（有值）再跟 .NET BinaryWriter UTF-8 字符串。
     /// </summary>
+    /// <remarks>
+    /// TODO(legacy-db-merge): 支持把勾选收藏夹合并进磁盘上已有的 collection.db（当前可写出新文件，以及导入到 Realm）。
+    /// </remarks>
     public static class LegacyCollectionDb
     {
         public const string StableFileName = "collection.db";

@@ -7,6 +7,8 @@ namespace osu.Game.EzRealmSync.Models
         Collection,
         Score,
         CollectionDb,
+        /// <summary>写出 osu!stable <c>scores.db</c>（成绩元数据，不含 .osr 文件）。</summary>
+        ScoreDb,
     }
 
     public sealed class RealmExportItem

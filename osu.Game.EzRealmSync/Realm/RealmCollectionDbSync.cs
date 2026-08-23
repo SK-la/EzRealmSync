@@ -10,6 +10,9 @@ namespace osu.Game.EzRealmSync.Realm
     /// 在不迁移 schema 的前提下，把 Realm 收藏夹与 osu!stable <c>collection.db</c> 互转。
     /// 导入按名称合并 MD5（与游戏 <c>LegacyCollectionImporter</c> 一致）。
     /// </summary>
+    /// <remarks>
+    /// TODO(legacy-db-merge): 支持把收藏夹合并进磁盘上已有的 collection.db（当前仅支持导入到 Realm，以及写出新文件）。
+    /// </remarks>
     internal static class RealmCollectionDbSync
     {
         public static int Export(RealmAccess access, IReadOnlyCollection<Guid> selectedIds, string outputFile)

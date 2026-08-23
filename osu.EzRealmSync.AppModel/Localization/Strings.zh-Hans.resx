@@ -145,6 +145,7 @@
   <data name="ExportKindBeatmap" xml:space="preserve"><value>谱面</value></data>
   <data name="ExportKindCollection" xml:space="preserve"><value>收藏夹谱面</value></data>
   <data name="ExportKindCollectionDb" xml:space="preserve"><value>合集 (collection.db)</value></data>
+  <data name="ExportKindScoreDb" xml:space="preserve"><value>成绩 (scores.db)</value></data>
   <data name="ExportKindScore" xml:space="preserve"><value>成绩 (.osr)</value></data>
   <data name="ExportGroupScoresByPlayer" xml:space="preserve"><value>按玩家名分子文件夹</value></data>
   <data name="ColBeatmapCount" xml:space="preserve"><value>谱面数</value></data>
@@ -155,6 +156,8 @@
   <data name="ExportFolderName" xml:space="preserve"><value>子文件夹名（可选）</value></data>
   <data name="ExportFolderNameHint" xml:space="preserve"><value>留空则使用 songs- 或 replays- 加日期时间</value></data>
   <data name="ExportCollectionDbFolderHint" xml:space="preserve"><value>留空则使用 collections- 加日期时间并写出 collection.db。也可直接填写 collection.db / collections.db 作为文件名。</value></data>
+  <data name="ExportScoreDbFolderHint" xml:space="preserve"><value>留空则使用 scores- 加日期时间并写出 scores.db。也可直接填写 scores.db 作为文件名。</value></data>
+  <data name="ScoreDbHint" xml:space="preserve"><value>成绩名单以 osu!stable 的 scores.db 为载体：按谱面 MD5 分组写入成绩元数据，不复制 .osr。仅官方四模式；无谱面 MD5 的成绩会跳过。合并进已有 scores.db / 从 db 导入回 Realm 尚未支持。</value></data>
   <data name="ImportCollectionDb" xml:space="preserve"><value>导入 collection.db</value></data>
   <data name="CollectionDbHint" xml:space="preserve"><value>合集名单以 osu!stable 的 collection.db 为载体（也接受 collections.db），只含名称与谱面 MD5，不复制谱面文件。同名合集会合并 MD5；谱面未入库时仍按 hash 记录。导入前请关闭游戏。导出谱面请改用「收藏夹谱面」。</value></data>
   <data name="ErrorPickRealmForCollectionDb" xml:space="preserve"><value>请先选择目标 Realm 文件。</value></data>

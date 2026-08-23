@@ -36,7 +36,11 @@ namespace osu.Game.EzRealmSync.Realm
                         break;
 
                     case ExportDataKind.Score:
-                        addScores(realm, items, progress, cancellationToken);
+                        addScores(realm, items, progress, cancellationToken, requireReplayFile: true);
+                        break;
+
+                    case ExportDataKind.ScoreDb:
+                        addScores(realm, items, progress, cancellationToken, requireReplayFile: false);
                         break;
                 }
             });
@@ -117,7 +121,7 @@ namespace osu.Game.EzRealmSync.Realm
             }
         }
 
-        private static void addScores(RealmInstance realm, List<RealmExportItem> items, IProgress<ScanProgress>? progress, CancellationToken cancellationToken)
+        private static void addScores(RealmInstance realm, List<RealmExportItem> items, IProgress<ScanProgress>? progress, CancellationToken cancellationToken, bool requireReplayFile)
         {
             int index = 0;
             var scores = realm.All<ScoreInfo>().Where(s => !s.DeletePending).AsEnumerable().ToList();
@@ -126,12 +130,24 @@ namespace osu.Game.EzRealmSync.Realm
             {
                 cancellationToken.ThrowIfCancellationRequested();
 
-                var replay = score.Files.FirstOrDefault(f => f.Filename.EndsWith(".osr", StringComparison.OrdinalIgnoreCase));
-                if (replay == null)
-                    continue;
+                if (requireReplayFile)
+                {
+                    var replay = score.Files.FirstOrDefault(f => f.Filename.EndsWith(".osr", StringComparison.OrdinalIgnoreCase));
+                    if (replay == null)
+                        continue;
+                }
 
-                var entry = RealmExportExecutor.CreateScoreEntry(score, groupScoresByPlayer: true);
+                // scores.db 仅支持官方四模式；列表仍展示全部，导出时再跳过非 legacy。
                 string player = score.RealmUser.Username;
+                string relative = string.Empty;
+                string? dest = null;
+
+                if (requireReplayFile)
+                {
+                    var entry = RealmExportExecutor.CreateScoreEntry(score, groupScoresByPlayer: true);
+                    relative = entry.SourceRelative;
+                    dest = entry.DestinationRelative;
+                }
 
                 report(progress, ++index, scores.Count, score.GetDisplayString());
 
@@ -141,8 +157,8 @@ namespace osu.Game.EzRealmSync.Realm
                     Title = score.GetDisplayString(),
                     Artist = score.BeatmapInfo?.Metadata.Artist ?? score.BeatmapHash,
                     PlayerName = player,
-                    RelativePath = entry.SourceRelative,
-                    DestinationRelativePath = entry.DestinationRelative,
+                    RelativePath = relative,
+                    DestinationRelativePath = dest,
                 });
             }
         }

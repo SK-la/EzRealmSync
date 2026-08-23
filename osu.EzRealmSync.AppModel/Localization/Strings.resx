@@ -145,6 +145,7 @@
   <data name="ExportKindBeatmap" xml:space="preserve"><value>Beatmaps</value></data>
   <data name="ExportKindCollection" xml:space="preserve"><value>Collection songs</value></data>
   <data name="ExportKindCollectionDb" xml:space="preserve"><value>Collections (collection.db)</value></data>
+  <data name="ExportKindScoreDb" xml:space="preserve"><value>Scores (scores.db)</value></data>
   <data name="ExportKindScore" xml:space="preserve"><value>Scores (.osr)</value></data>
   <data name="ExportGroupScoresByPlayer" xml:space="preserve"><value>Group .osr by player name</value></data>
   <data name="ColBeatmapCount" xml:space="preserve"><value>Beatmaps</value></data>
@@ -155,6 +156,8 @@
   <data name="ExportFolderName" xml:space="preserve"><value>Subfolder name (optional)</value></data>
   <data name="ExportFolderNameHint" xml:space="preserve"><value>Leave empty for songs- or replays- plus timestamp</value></data>
   <data name="ExportCollectionDbFolderHint" xml:space="preserve"><value>Leave empty for collections- plus timestamp, writing collection.db. You may also type collection.db / collections.db as the file name.</value></data>
+  <data name="ExportScoreDbFolderHint" xml:space="preserve"><value>Leave empty for scores- plus timestamp, writing scores.db. You may also type scores.db as the file name.</value></data>
+  <data name="ScoreDbHint" xml:space="preserve"><value>Score lists use osu!stable scores.db: scores grouped by beatmap MD5, metadata only (no .osr). Official four modes only; scores without beatmap MD5 are skipped. Merging into an existing scores.db / importing back into Realm is not supported yet.</value></data>
   <data name="ImportCollectionDb" xml:space="preserve"><value>Import collection.db</value></data>
   <data name="CollectionDbHint" xml:space="preserve"><value>Collection lists use osu!stable collection.db (also accepts collections.db): names and beatmap MD5 hashes only, no song files. Same-name collections merge hashes. Close the game before importing. To copy beatmap files, use “Collection songs”.</value></data>
   <data name="ErrorPickRealmForCollectionDb" xml:space="preserve"><value>Select a Realm file first.</value></data>

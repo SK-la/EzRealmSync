@@ -35,7 +35,7 @@ GitHub Release 提供 `EzRealmSync-{版本}-win-x64.zip`（framework-dependent�
 
 **旧 schema 同步**：Release 包内带 `readers/`（manifest + `sync-libs.config.json`）与 `scripts/Sync-ReaderLibs.ps1`。主程序使用内置最新 `ez2lazer.Game`；若要从更旧 schema 的源库读取，在 exe 目录执行 `pwsh scripts/Sync-ReaderLibs.ps1`（需 .NET 8 **SDK**）生成各 reader 的 `lib/`。详见 [readers/README.md](readers/README.md)。
 
-主界面五 Tab：**导入**（osu! 数据目录 + Realm 列表 + 备份）→ **数据**（单库完整浏览；谱面集/成绩/收藏夹可写删与导出）→ **同步**（A/B 跨版本复制谱面集、难度、成绩、收藏夹，**不**改 schema）→ **修复** / **导出**（谱面与成绩共用导入目录下 `files/`；合集名单另用 osu!stable `collection.db`）。设置、备份、导出与 reader 包均位于 **exe 同目录**（`settings.json`、`backups/`、`exports/`、`readers/`）。
+主界面五 Tab：**导入**（osu! 数据目录 + Realm 列表 + 备份）→ **数据**（单库完整浏览；谱面集/成绩/收藏夹可写删与导出）→ **同步**（A/B 跨版本复制谱面集、难度、成绩、收藏夹，**不**改 schema）→ **修复** / **导出**（谱面与成绩文件共用导入目录下 `files/`；合集名单用 osu!stable `collection.db`，成绩名单用 `scores.db`，详见 [docs/LEGACY-DB-EXPORT.zh.md](docs/LEGACY-DB-EXPORT.zh.md)）。设置、备份、导出与 reader 包均位于 **exe 同目录**（`settings.json`、`backups/`、`exports/`、`readers/`）。
 
 数据安全与三类操作说明：[docs/DATA-OPERATIONS.zh.md](docs/DATA-OPERATIONS.zh.md)
 

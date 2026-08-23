@@ -1374,7 +1374,7 @@ namespace osu.EzRealmSync.AppModel
             }
 
             string filesDirectory = string.Empty;
-            bool needsFiles = SelectedExportKind.Value != ExportDataKind.CollectionDb;
+            bool needsFiles = SelectedExportKind.Value is not (ExportDataKind.CollectionDb or ExportDataKind.ScoreDb);
 
             if (needsFiles && !tryGetSharedFilesDirectory(out filesDirectory) && !launchOptions.UiTestMode)
             {
@@ -1977,6 +1977,7 @@ namespace osu.EzRealmSync.AppModel
             ExportDataKind.Collection => Loc.Get("ExportKindCollection"),
             ExportDataKind.CollectionDb => Loc.Get("ExportKindCollectionDb"),
             ExportDataKind.Score => Loc.Get("ExportKindScore"),
+            ExportDataKind.ScoreDb => Loc.Get("ExportKindScoreDb"),
             _ => kind.ToString(),
         };
 

@@ -348,6 +348,9 @@ namespace osu.Game.EzRealmSync.Realm
             if (request.Kind == ExportDataKind.CollectionDb)
                 return exportCollectionsDb(file, request, progress, cancellationToken);
 
+            if (request.Kind == ExportDataKind.ScoreDb)
+                return exportScoresDb(file, request, progress, cancellationToken);
+
             string folderName = string.IsNullOrWhiteSpace(request.FolderName)
                 ? defaultExportFolderName(request.Kind)
                 : request.FolderName.Trim();
@@ -493,10 +496,35 @@ namespace osu.Game.EzRealmSync.Realm
             };
         }
 
+        private static RealmExportResult exportScoresDb(
+            RealmFileEntry file,
+            RealmExportRequest request,
+            IProgress<ScanProgress>? progress,
+            CancellationToken cancellationToken)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            progress?.Report(new ScanProgress { Progress = 0.1, Message = "正在写出 scores.db…" });
+
+            string outputFile = LegacyScoresDb.ResolveOutputFile(request.OutputDirectory, request.FolderName);
+            int exported;
+            using (var access = RealmAccessGateway.OpenForMutation(file.FilePath, file.SchemaVersion))
+                exported = RealmScoresDbSync.Export(access, request.ItemIds, outputFile);
+
+            progress?.Report(new ScanProgress { Progress = 1, Message = "导出完成" });
+
+            return new RealmExportResult
+            {
+                OutputRoot = outputFile,
+                ExportedCount = exported,
+                SkippedCount = Math.Max(0, request.ItemIds.Count - exported),
+            };
+        }
+
         private static string defaultExportFolderName(ExportDataKind kind) => kind switch
         {
             ExportDataKind.Score => $"replays-{DateTime.Now:yyyyMMdd_HHmmss}",
             ExportDataKind.CollectionDb => $"collections-{DateTime.Now:yyyyMMdd_HHmmss}",
+            ExportDataKind.ScoreDb => $"scores-{DateTime.Now:yyyyMMdd_HHmmss}",
             _ => $"songs-{DateTime.Now:yyyyMMdd_HHmmss}",
         };
     }
