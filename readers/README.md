@@ -24,6 +24,8 @@ readers/
 
 Release 包预置 Ez legacy manifest；`lib/` 由 `Sync-ReaderLibs.ps1` 生成（不进 Git）。
 
+日常使用说明见仓库根目录 [README.md](../README.md)（「旧版本 Realm 读不了？」一节）。
+
 ## 开发本地测试
 
 ```powershell

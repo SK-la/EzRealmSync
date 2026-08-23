@@ -1,8 +1,8 @@
 # EzRealmSync 路线图
 
-**osu! Realm 维护工具**：双 `client.realm`（A/B）Diff、写入、备份、浏览。与 [EzRealmSyncTool-中文.md](../Ez2Lazer.wiki/EzRealmSyncTool-中文.md) 及 Cursor 计划 `ezrealmsynctool_规格` 对齐。
+**osu! Realm 维护工具**：双 `client.realm`（A/B）Diff、写入、备份、浏览、导出。使用说明见仓库 [README.md](../README.md)。
 
-## 当前状态（2026-05-29）
+## 当前状态（2026-08）
 
 | 里程碑 | 状态 | 说明 |
 |--------|------|------|
@@ -31,6 +31,7 @@
 - [x] **P3.1** 导出 Tab：收藏夹谱面按 `BeatmapMD5Hashes` 复制 files/；合集 `collection.db`；成绩 `.osr`
 - [x] **P3.2** 数据 Tab：成绩右键导出 `.osr`
 - [x] **P3.3** 数据 Tab：单难度导出；导出 Tab 右键导出；导出目录缓存失效
+- [x] **P3.4** 导出 Tab：`scores.db`（成绩名单）；合并进现有 db 见 `TODO(legacy-db-merge)` / [LEGACY-DB-EXPORT.zh.md](LEGACY-DB-EXPORT.zh.md)
 
 ## 仓库结构
 
