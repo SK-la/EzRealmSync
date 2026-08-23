@@ -13,7 +13,9 @@ namespace osu.Game.EzRealmSync.Realm
     {
         public static IEnumerable<BeatmapSetInfo> LiveBeatmapSets(this RealmInstance realm) => realm.All<BeatmapSetInfo>().AsEnumerable().Where(s => !s.DeletePending);
 
-        public static IEnumerable<BeatmapInfo> LiveBeatmaps(this RealmInstance realm) => realm.All<BeatmapInfo>().AsEnumerable().Where(b => b.BeatmapSet == null || !b.BeatmapSet.DeletePending);
+        /// <summary>未 Hidden、所属集未软删的难度（与官方 Diff/导出对齐，避免假「仅 A」）。</summary>
+        public static IEnumerable<BeatmapInfo> LiveBeatmaps(this RealmInstance realm) =>
+            realm.All<BeatmapInfo>().AsEnumerable().Where(b => !b.Hidden && (b.BeatmapSet == null || !b.BeatmapSet.DeletePending));
 
         public static IEnumerable<ScoreInfo> LiveScores(this RealmInstance realm) => realm.All<ScoreInfo>().AsEnumerable().Where(s => !s.DeletePending);
 

@@ -1837,8 +1837,8 @@ namespace osu.EzRealmSync.AppModel
 
         private void updateCanApply()
         {
-            bool conflicted = CurrentCategory.Value == DiffCategory.Conflicted;
-            CanApply.Value = !IsBusy.Value && !conflicted && SyncAction.Value == RealmSyncAction.Add;
+            // Add：仅 A + 冲突均可写入/覆盖 B；Delete 单独走删除动作校验（仍禁止在冲突 Tab 误点 Add 以外的限制已放开）。
+            CanApply.Value = !IsBusy.Value && SyncAction.Value == RealmSyncAction.Add;
         }
 
         private void updateSelectionCount() => SelectionCount.Value = syncRows.Count(r => r.IsSelected);
@@ -1886,6 +1886,8 @@ namespace osu.EzRealmSync.AppModel
         private void setBusy(bool busy) => runOnUi(() =>
         {
             IsBusy.Value = busy;
+            if (!busy)
+                Progress.Value = 0;
             updateCanApply();
         });
 

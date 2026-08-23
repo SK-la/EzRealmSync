@@ -2,7 +2,7 @@ using osu.Game.EzRealmSync.Contracts;
 
 namespace osu.Game.EzRealmSync.OfficialSchema
 {
-    /// <summary>将同步 Apply 包写入已有官方镜像库（upsert by GUID）。</summary>
+    /// <summary>将同步 Apply 包写入已有官方镜像库（按 GUID upsert：覆盖冲突并复活软删）。</summary>
     public static class OfficialMirrorApplyImporter
     {
         public static OfficialApplyImportResult Apply(OfficialApplyImportJob job)

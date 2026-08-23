@@ -133,8 +133,8 @@ namespace osu.Game.EzRealmSync.OfficialSchema
 
                 foreach (var setDto in sets)
                 {
-                    if (r.Find<BeatmapSetInfo>(setDto.ID) != null)
-                        continue;
+                    if (r.Find<BeatmapSetInfo>(setDto.ID) is BeatmapSetInfo existingSet)
+                        r.Remove(existingSet);
 
                     var set = new BeatmapSetInfo
                     {
@@ -144,7 +144,7 @@ namespace osu.Game.EzRealmSync.OfficialSchema
                         DateSubmitted = setDto.DateSubmitted,
                         DateRanked = setDto.DateRanked,
                         StatusInt = setDto.StatusInt,
-                        DeletePending = setDto.DeletePending,
+                        DeletePending = false,
                         Hash = setDto.Hash,
                         Protected = setDto.Protected,
                     };
@@ -153,6 +153,12 @@ namespace osu.Game.EzRealmSync.OfficialSchema
 
                     foreach (var beatmapDto in setDto.Beatmaps)
                     {
+                        if (r.Find<BeatmapInfo>(beatmapDto.ID) is BeatmapInfo existingBeatmap)
+                            r.Remove(existingBeatmap);
+
+                        if (beatmapDto.Hidden)
+                            continue;
+
                         var beatmap = new BeatmapInfo
                         {
                             ID = beatmapDto.ID,
@@ -172,7 +178,7 @@ namespace osu.Game.EzRealmSync.OfficialSchema
                             OnlineMD5Hash = beatmapDto.OnlineMD5Hash,
                             LastLocalUpdate = beatmapDto.LastLocalUpdate,
                             LastOnlineUpdate = beatmapDto.LastOnlineUpdate,
-                            Hidden = beatmapDto.Hidden,
+                            Hidden = false,
                             EndTimeObjectCount = beatmapDto.EndTimeObjectCount,
                             TotalObjectCount = beatmapDto.TotalObjectCount,
                             LastPlayed = beatmapDto.LastPlayed,
@@ -197,8 +203,8 @@ namespace osu.Game.EzRealmSync.OfficialSchema
 
                 foreach (var scoreDto in scores)
                 {
-                    if (r.Find<ScoreInfo>(scoreDto.ID) != null)
-                        continue;
+                    if (r.Find<ScoreInfo>(scoreDto.ID) is ScoreInfo existingScore)
+                        r.Remove(existingScore);
 
                     var score = new ScoreInfo
                     {
@@ -207,7 +213,7 @@ namespace osu.Game.EzRealmSync.OfficialSchema
                         Ruleset = resolveRuleset(r, scoreDto.RulesetShortName),
                         ClientVersion = scoreDto.ClientVersion,
                         Hash = scoreDto.Hash,
-                        DeletePending = scoreDto.DeletePending,
+                        DeletePending = false,
                         TotalScore = scoreDto.TotalScore,
                         TotalScoreWithoutMods = scoreDto.TotalScoreWithoutMods,
                         TotalScoreVersion = scoreDto.TotalScoreVersion,
@@ -249,8 +255,8 @@ namespace osu.Game.EzRealmSync.OfficialSchema
 
                 foreach (var collectionDto in collections)
                 {
-                    if (r.Find<BeatmapCollection>(collectionDto.ID) != null)
-                        continue;
+                    if (r.Find<BeatmapCollection>(collectionDto.ID) is BeatmapCollection existingCollection)
+                        r.Remove(existingCollection);
 
                     var collection = new BeatmapCollection
                     {

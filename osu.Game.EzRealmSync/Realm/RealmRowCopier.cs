@@ -215,31 +215,36 @@ namespace osu.Game.EzRealmSync.Realm
 
         private static void insertBeatmapSet(BeatmapSetInfo detached, RealmInstance target)
         {
-            if (target.Find<BeatmapSetInfo>(detached.ID) != null)
-                return;
+            // upsert：已存在（含软删）则移除后写入，使冲突/假「仅 A」可被覆盖并复活。
+            if (target.Find<BeatmapSetInfo>(detached.ID) is BeatmapSetInfo existing)
+                target.Remove(existing);
 
             linkFiles(target, detached.Files);
 
             foreach (var beatmap in detached.Beatmaps)
             {
+                if (target.Find<BeatmapInfo>(beatmap.ID) is BeatmapInfo existingBeatmap)
+                    target.Remove(existingBeatmap);
+
                 beatmap.Ruleset = resolveRuleset(target, beatmap.Ruleset);
                 beatmap.BeatmapSet = detached;
             }
 
+            detached.DeletePending = false;
             target.Add(detached);
         }
 
         private static void insertBeatmap(BeatmapInfo detached, RealmInstance target)
         {
-            if (target.Find<BeatmapInfo>(detached.ID) != null)
-                return;
-
             Guid setId = detached.BeatmapSet?.ID ?? Guid.Empty;
             if (setId == Guid.Empty)
                 throw new InvalidOperationException("难度缺少所属谱面集，请先同步谱面集。");
 
             var managedSet = target.Find<BeatmapSetInfo>(setId)
                              ?? throw new InvalidOperationException("目标库中不存在对应谱面集，请先同步谱面集。");
+
+            if (target.Find<BeatmapInfo>(detached.ID) is BeatmapInfo existing)
+                target.Remove(existing);
 
             detached.BeatmapSet = managedSet;
             detached.Ruleset = resolveRuleset(target, detached.Ruleset);
@@ -248,18 +253,19 @@ namespace osu.Game.EzRealmSync.Realm
 
         private static void insertCollection(BeatmapCollection detached, RealmInstance target)
         {
-            if (target.Find<BeatmapCollection>(detached.ID) != null)
-                return;
+            if (target.Find<BeatmapCollection>(detached.ID) is BeatmapCollection existing)
+                target.Remove(existing);
 
             target.Add(detached);
         }
 
         private static void insertScore(ScoreInfo detached, RealmInstance target)
         {
-            if (target.Find<ScoreInfo>(detached.ID) != null)
-                return;
+            if (target.Find<ScoreInfo>(detached.ID) is ScoreInfo existing)
+                target.Remove(existing);
 
             detached.Ruleset = resolveRuleset(target, detached.Ruleset);
+            detached.DeletePending = false;
 
             if (!string.IsNullOrEmpty(detached.BeatmapHash))
             {

@@ -98,8 +98,7 @@ namespace osu.EzRealmSync.Desktop
                             updateStatus(shell.StatusMessage);
                             break;
                         case nameof(ShellViewModel.Progress):
-                            StatusProgressRing.Progress = shell.Progress;
-                            StatusProgressRing.IsIndeterminate = shell is { IsBusy: true, Progress: <= 0 };
+                            updateStatusProgressRing();
                             break;
                         case nameof(ShellViewModel.CurrentTab):
                             navigateToTab(shell.CurrentTab);
@@ -107,6 +106,7 @@ namespace osu.EzRealmSync.Desktop
                         case nameof(ShellViewModel.IsBusy):
                             UiTestModeSwitch.IsEnabled = !shell.IsBusy;
                             ConfirmDeleteSwitch.IsEnabled = !shell.IsBusy;
+                            updateStatusProgressRing();
                             if (!shell.IsBusy)
                                 lastSnackbarStatus = null;
                             break;
@@ -166,9 +166,18 @@ namespace osu.EzRealmSync.Desktop
             updateFixExportNavEnabled();
             refreshLanguageCombo();
             updateStatus(vm.StatusMessage);
-            StatusProgressRing.Progress = vm.Progress;
-            StatusProgressRing.IsIndeterminate = vm.IsBusy && vm.Progress <= 0;
+            updateStatusProgressRing();
             UiTestModeSwitch.IsEnabled = !vm.IsBusy;
+        }
+
+        private void updateStatusProgressRing()
+        {
+            if (vm == null)
+                return;
+
+            bool busy = vm.IsBusy;
+            StatusProgressRing.Progress = busy ? vm.Progress : 0;
+            StatusProgressRing.IsIndeterminate = busy && vm.Progress <= 0;
         }
 
         private void refreshLanguageCombo()

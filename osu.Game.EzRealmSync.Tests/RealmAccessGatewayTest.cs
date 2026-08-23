@@ -54,7 +54,7 @@ namespace osu.Game.EzRealmSync.Tests
 
             try
             {
-                RealmNativeUtilities.CreateEmptyRealmFile(path, (ulong)schema);
+                RealmNativeLifetime.CreateEmptyRealmFile(path, (ulong)schema);
                 Assert.That(
                     RealmAccessGateway.TryOpenInProcessForRead(path, schema, out RealmAccess? access),
                     Is.False);
@@ -62,7 +62,7 @@ namespace osu.Game.EzRealmSync.Tests
             }
             finally
             {
-                RealmNativeUtilities.DeleteRealmFiles(path);
+                RealmNativeLifetime.DeleteRealmFiles(path);
             }
         }
 
@@ -74,7 +74,7 @@ namespace osu.Game.EzRealmSync.Tests
 
             try
             {
-                RealmNativeUtilities.CreateEmptyRealmFile(path, (ulong)schema);
+                RealmNativeLifetime.CreateEmptyRealmFile(path, (ulong)schema);
                 Assert.That(
                     RealmAccessGateway.TryOpenInProcessForRead(path, schema, out RealmAccess? access),
                     Is.True);
@@ -83,7 +83,7 @@ namespace osu.Game.EzRealmSync.Tests
             }
             finally
             {
-                RealmNativeUtilities.DeleteRealmFiles(path);
+                RealmNativeLifetime.DeleteRealmFiles(path);
             }
         }
 

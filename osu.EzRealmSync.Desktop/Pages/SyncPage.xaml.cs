@@ -65,8 +65,9 @@ namespace osu.EzRealmSync.Desktop.Pages
 
         private void refreshLabels()
         {
-            SourceLabel.Text = Loc.Get("EndpointA");
-            TargetLabel.Text = Loc.Get("EndpointB");
+            // A 恒为源、B 恒为目标（接收端）；执行写入只改 B。
+            SourceLabel.Text = Loc.Get("SourceRealm");
+            TargetLabel.Text = Loc.Get("TargetRealm");
             SetOpLabel.Text = Loc.Get("SetOperation");
             ActionLabel.Text = Loc.Get("SyncAction");
             ComputeButton.Content = Loc.Get("ComputeSet");

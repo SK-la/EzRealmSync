@@ -60,7 +60,7 @@
   <data name="ErrorNoSelection" xml:space="preserve"><value>请先选择要处理的条目。</value></data>
   <data name="ErrorConflictedApply" xml:space="preserve"><value>「不一致」条目仅展示，不能添加到目标端。</value></data>
   <data name="ConfirmDelete" xml:space="preserve"><value>确定从 {1} 端删除 {0} 项？此操作不可撤销。</value></data>
-  <data name="ConfirmAdd" xml:space="preserve"><value>将 {0} 项添加到 {1} 端。</value></data>
+  <data name="ConfirmAdd" xml:space="preserve"><value>将 {0} 项写入目标 (B)「{1}」。</value></data>
   <data name="ConfirmTitle" xml:space="preserve"><value>确认</value></data>
   <data name="DeleteTitle" xml:space="preserve"><value>删除</value></data>
   <data name="CtxDelete" xml:space="preserve"><value>删除</value></data>
@@ -184,8 +184,8 @@
   <data name="ColEzSchema" xml:space="preserve"><value>Ez</value></data>
   <data name="ColSize" xml:space="preserve"><value>大小</value></data>
   <data name="LoadRealm" xml:space="preserve"><value>完整加载</value></data>
-  <data name="SourceRealm" xml:space="preserve"><value>数据源 A</value></data>
-  <data name="TargetRealm" xml:space="preserve"><value>目标源 B</value></data>
+  <data name="SourceRealm" xml:space="preserve"><value>源 (A)</value></data>
+  <data name="TargetRealm" xml:space="preserve"><value>目标 (B) — 写入接收端</value></data>
   <data name="SetOperation" xml:space="preserve"><value>集合运算</value></data>
   <data name="SetIntersection" xml:space="preserve"><value>交集</value></data>
   <data name="SetUnion" xml:space="preserve"><value>并集</value></data>
@@ -201,14 +201,14 @@
   <data name="StatusBackupCreated" xml:space="preserve"><value>已创建备份：{0}</value></data>
   <data name="StatusRealmLoaded" xml:space="preserve"><value>已加载 {0}，全部分组共 {1} 行</value></data>
   <data name="StatusComputingSet" xml:space="preserve"><value>正在计算集合…</value></data>
-  <data name="StatusSetComplete" xml:space="preserve"><value>集合结果 — 仅 A：{0}，仅 B：{1}，冲突：{2}</value></data>
+  <data name="StatusSetComplete" xml:space="preserve"><value>集合结果 — 仅源：{0}，仅目标：{1}，冲突：{2}</value></data>
   <data name="StatusClickToCopyHint" xml:space="preserve"><value>点击复制</value></data>
   <data name="StatusCopiedToClipboard" xml:space="preserve"><value>已复制到剪贴板</value></data>
   <data name="ErrorPickSourceTarget" xml:space="preserve"><value>请选择数据源与目标源。</value></data>
   <data name="SelectRealmHint" xml:space="preserve"><value>选择 Realm 文件后点击「完整加载」</value></data>
   <data name="DataClasses" xml:space="preserve"><value>类</value></data>
-  <data name="TabOnlyInA" xml:space="preserve"><value>仅 A</value></data>
-  <data name="TabOnlyInB" xml:space="preserve"><value>仅 B</value></data>
+  <data name="TabOnlyInA" xml:space="preserve"><value>仅源 (A)</value></data>
+  <data name="TabOnlyInB" xml:space="preserve"><value>仅目标 (B)</value></data>
   <data name="RealmClassBeatmap" xml:space="preserve"><value>谱面</value></data>
   <data name="RealmClassBeatmapCollection" xml:space="preserve"><value>收藏夹</value></data>
   <data name="RealmClassBeatmapMetadata" xml:space="preserve"><value>谱面元数据</value></data>
