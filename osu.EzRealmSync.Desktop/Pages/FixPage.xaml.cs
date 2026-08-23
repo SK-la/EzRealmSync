@@ -55,7 +55,11 @@ namespace osu.EzRealmSync.Desktop.Pages
                     Dispatcher.Invoke(updateEnabled);
             };
 
-            vm.Presenter.FixIssuesChanged += () => Dispatcher.Invoke(() => IssuesGrid.ItemsSource = vm!.FixIssues);
+            vm.Presenter.FixIssuesChanged += () => Dispatcher.Invoke(() =>
+            {
+                DataGridColumnFilterHelper.ResetFilters(IssuesGrid);
+                IssuesGrid.ItemsSource = vm!.FixIssues;
+            });
             vm.Presenter.WorkspaceCapabilitiesChanged += () => Dispatcher.Invoke(updateEnabled);
 
             vm.Presenter.FixConvertLabelsChanged += () => Dispatcher.Invoke(refreshConvertButtons);
@@ -133,7 +137,7 @@ namespace osu.EzRealmSync.Desktop.Pages
         {
             IssuesGrid.Columns.Add(new DataGridTextColumn
             {
-                Header = header,
+                Header = DataGridColumnFilterHelper.CreatePropertyFilterHeader(IssuesGrid, header, path),
                 Binding = new Binding(path) { Mode = BindingMode.OneWay },
                 Width = width,
                 IsReadOnly = true,

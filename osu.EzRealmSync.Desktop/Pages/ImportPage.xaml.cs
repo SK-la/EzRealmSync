@@ -124,35 +124,35 @@ namespace osu.EzRealmSync.Desktop.Pages
 
             RealmFilesGrid.Columns.Add(new DataGridTextColumn
             {
-                Header = Loc.Get("ColRealmName"),
+                Header = DataGridColumnFilterHelper.CreatePropertyFilterHeader(RealmFilesGrid, Loc.Get("ColRealmName"), nameof(RealmFileRowModel.DisplayName)),
                 Binding = new Binding(nameof(RealmFileRowModel.DisplayName)) { Mode = BindingMode.OneWay },
                 Width = new DataGridLength(1, DataGridLengthUnitType.Star),
                 IsReadOnly = true,
             });
             RealmFilesGrid.Columns.Add(new DataGridTextColumn
             {
-                Header = Loc.Get("ColOfficialSchema"),
+                Header = DataGridColumnFilterHelper.CreatePropertyFilterHeader(RealmFilesGrid, Loc.Get("ColOfficialSchema"), nameof(RealmFileRowModel.OfficialSchemaDisplay)),
                 Binding = new Binding(nameof(RealmFileRowModel.OfficialSchemaDisplay)) { Mode = BindingMode.OneWay },
                 Width = 64,
                 IsReadOnly = true,
             });
             RealmFilesGrid.Columns.Add(new DataGridTextColumn
             {
-                Header = Loc.Get("ColEzSchema"),
+                Header = DataGridColumnFilterHelper.CreatePropertyFilterHeader(RealmFilesGrid, Loc.Get("ColEzSchema"), nameof(RealmFileRowModel.EzSchemaDisplay)),
                 Binding = new Binding(nameof(RealmFileRowModel.EzSchemaDisplay)) { Mode = BindingMode.OneWay },
                 Width = 56,
                 IsReadOnly = true,
             });
             RealmFilesGrid.Columns.Add(new DataGridTextColumn
             {
-                Header = Loc.Get("ColSize"),
+                Header = DataGridColumnFilterHelper.CreatePropertyFilterHeader(RealmFilesGrid, Loc.Get("ColSize"), nameof(RealmFileRowModel.SizeDisplay)),
                 Binding = new Binding(nameof(RealmFileRowModel.SizeDisplay)) { Mode = BindingMode.OneWay },
                 Width = 80,
                 IsReadOnly = true,
             });
             RealmFilesGrid.Columns.Add(new DataGridTextColumn
             {
-                Header = Loc.Get("ColRealmPath"),
+                Header = DataGridColumnFilterHelper.CreatePropertyFilterHeader(RealmFilesGrid, Loc.Get("ColRealmPath"), nameof(RealmFileRowModel.FilePath)),
                 Binding = new Binding(nameof(RealmFileRowModel.FilePath)) { Mode = BindingMode.OneWay },
                 Width = new DataGridLength(2, DataGridLengthUnitType.Star),
                 IsReadOnly = true,

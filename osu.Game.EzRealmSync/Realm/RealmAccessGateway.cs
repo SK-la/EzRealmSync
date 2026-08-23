@@ -138,13 +138,13 @@ namespace osu.Game.EzRealmSync.Realm
             {
                 return new RealmUserOperationException(
                     RealmUserErrorKind.LegacyReaderUnavailable,
-                    $"写操作无法用当前 lib 打开该 schema。请先在「修复」页升级或转官方，或确认工具与库版本一致。{ex.Detail}",
+                    $"缺少对应版本的 osu.Game.dll，无法打开这份 Realm 文件。{ex.Detail}",
                     ex);
             }
 
             return new RealmUserOperationException(
                 RealmUserErrorKind.MigrationRequired,
-                $"写操作需要 lib 最新 schema 才能打开该库。请在「修复」页点击「升级到 lib 最新」。{ex.Detail}",
+                $"无法修改这份 Realm 文件：版本过旧，需先升级。{ex.Detail}",
                 ex);
         }
     }

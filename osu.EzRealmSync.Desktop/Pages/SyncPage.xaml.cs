@@ -57,7 +57,11 @@ namespace osu.EzRealmSync.Desktop.Pages
                 });
             };
 
-            vm.Presenter.SyncRowsChanged += () => Dispatcher.Invoke(() => SyncGrid.ItemsSource = vm.SyncRows);
+            vm.Presenter.SyncRowsChanged += () => Dispatcher.Invoke(() =>
+            {
+                DataGridColumnFilterHelper.ResetFilters(SyncGrid);
+                SyncGrid.ItemsSource = vm.SyncRows;
+            });
             vm.Presenter.LabelsChanged += () => Dispatcher.Invoke(refreshTabLabels);
 
             updateCategoryTabs();
@@ -146,7 +150,7 @@ namespace osu.EzRealmSync.Desktop.Pages
         {
             SyncGrid.Columns.Add(new DataGridTextColumn
             {
-                Header = header,
+                Header = DataGridColumnFilterHelper.CreatePropertyFilterHeader(SyncGrid, header, path),
                 Binding = new Binding(path) { Mode = BindingMode.OneWay },
                 Width = width,
                 IsReadOnly = true,

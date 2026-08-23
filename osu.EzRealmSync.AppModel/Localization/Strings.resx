@@ -220,35 +220,40 @@
   <data name="FixConfirmSummary" xml:space="preserve"><value>Will create {0} placeholder(s) for missing files, delete {1} orphan file(s), and modify {2} illegal character(s). Continue?</value></data>
   <data name="FixConfirmTitle" xml:space="preserve"><value>Confirm fix</value></data>
   <data name="FixConvertOfficialRead" xml:space="preserve"><value>Convert (read upstream)</value></data>
-  <data name="FixConvertOfficialLibMinusOne" xml:space="preserve"><value>Convert (lib − 1)</value></data>
+  <data name="FixConvertOfficialLibMinusOne" xml:space="preserve"><value>Convert (DLL − 1)</value></data>
   <data name="FixConvertOfficialPreserve" xml:space="preserve"><value>Convert (read upstream)</value></data>
-  <data name="FixConvertOfficialToLib" xml:space="preserve"><value>Convert (lib)</value></data>
-  <data name="FixUpgradeSchema" xml:space="preserve"><value>Upgrade to lib latest</value></data>
-  <data name="FixUpgradeSchemaConfirm" xml:space="preserve"><value>This will upgrade the selected Realm to lib schema {0} (migration on a backed-up working copy, then replace the original). Backup directory: {1}. Close the game first. Continue?</value></data>
-  <data name="FixUpgradeSchemaTitle" xml:space="preserve"><value>Upgrade schema</value></data>
-  <data name="FixConvertOfficialReadConfirm" xml:space="preserve"><value>Rebuild an official ppy lazer client.realm (mirror schema {0}, overwrites this file; not an Ez sidecar). Backup directory: {1}. Continue?</value></data>
-  <data name="FixConvertOfficialLibMinusOneConfirm" xml:space="preserve"><value>Rebuild an official ppy lazer client.realm (mirror schema {0}, lib upstream minus 1; overwrites this file). Backup directory: {1}. Continue?</value></data>
-  <data name="FixConvertOfficialPreserveConfirm" xml:space="preserve"><value>Rebuild an official ppy lazer client.realm (mirror schema {0}, overwrites this file; not an Ez sidecar). Backup directory: {1}. Continue?</value></data>
-  <data name="FixConvertOfficialLibConfirm" xml:space="preserve"><value>Rebuild an official ppy lazer client.realm (mirror schema {0}, lib upstream; overwrites this file). Backup directory: {1}. Continue?</value></data>
+  <data name="FixConvertOfficialToLib" xml:space="preserve"><value>Convert (DLL)</value></data>
+  <data name="FixUpgradeSchema" xml:space="preserve"><value>Upgrade Realm file</value></data>
+  <data name="FixUpgradeSchemaConfirm" xml:space="preserve"><value>This will back up, then upgrade the selected Realm file (target version {0}). Backup directory: {1}. Close the game first. Continue?</value></data>
+  <data name="FixUpgradeSchemaTitle" xml:space="preserve"><value>Upgrade Realm file</value></data>
+  <data name="FixConvertOfficialReadConfirm" xml:space="preserve"><value>Rebuild an official ppy lazer client.realm (version {0}, overwrites this file). Backup directory: {1}. Continue?</value></data>
+  <data name="FixConvertOfficialLibMinusOneConfirm" xml:space="preserve"><value>Rebuild an official ppy lazer client.realm (version {0}, tool DLL support minus 1; overwrites this file). Backup directory: {1}. Continue?</value></data>
+  <data name="FixConvertOfficialPreserveConfirm" xml:space="preserve"><value>Rebuild an official ppy lazer client.realm (version {0}, overwrites this file). Backup directory: {1}. Continue?</value></data>
+  <data name="FixConvertOfficialLibConfirm" xml:space="preserve"><value>Rebuild an official ppy lazer client.realm (version {0}, current tool DLL; overwrites this file). Backup directory: {1}. Continue?</value></data>
   <data name="FixConvertOfficialTitle" xml:space="preserve"><value>Convert to official</value></data>
-  <data name="StatusFixConvertedOfficial" xml:space="preserve"><value>Rebuilt official client.realm: {0} → schema {1} (backup: {2}, wrote {3} table row(s))</value></data>
-  <data name="StatusFixConvertedOfficialSkipped" xml:space="preserve"><value>Skipped: {0} score(s), {1} skin(s), {2} beatmap set(s), {3} ruleset(s); pruned {4} collection entry(ies)</value></data>
-  <data name="StatusFixSchemaUpgraded" xml:space="preserve"><value>Upgraded schema: {0} ({1} → lib {2}, backup: {3})</value></data>
-  <data name="StatusFixSchemaAlreadyLatest" xml:space="preserve"><value>{0} is already at lib latest schema ({1}). Backup: {2}</value></data>
-  <data name="ErrorConvertOfficialRequiresEz" xml:space="preserve"><value>Convert to official is only available for Ez extended Realm files.</value></data>
-  <data name="ErrorMigrationRequired" xml:space="preserve"><value>Write operations require upgrading this Realm to lib latest schema first. Use Fix → Upgrade to lib latest. Detail: {0}</value></data>
-  <data name="ErrorFileInUse" xml:space="preserve"><value>Write blocked by pre-check (file in use). Close osu!/Ez2Lazer and retry. Detail: {0}</value></data>
+  <data name="StatusFixConvertedOfficial" xml:space="preserve"><value>Rebuilt official client.realm: {0} → version {1} (backup: {2}, wrote {3} row(s))</value></data>
+  <data name="StatusFixConvertedOfficialSkipped" xml:space="preserve"><value>Skipped: {0} score(s), {1} skin(s), {2} beatmap set(s), {3} ruleset(s); cleaned {4} collection entry(ies)</value></data>
+  <data name="StatusFixSchemaUpgraded" xml:space="preserve"><value>Upgraded Realm file: {0} ({1} → {2}, backup: {3})</value></data>
+  <data name="StatusFixSchemaAlreadyLatest" xml:space="preserve"><value>{0} is already at the latest version supported by the current DLL ({1}). Backup: {2}</value></data>
+  <data name="ErrorConvertOfficialRequiresEz" xml:space="preserve"><value>Convert to official is only available for Ez-extended Realm files.</value></data>
+  <data name="ErrorMigrationRequired" xml:space="preserve"><value>Cannot modify this Realm file: version is too old. Open the Fix tab and click Upgrade Realm file.</value></data>
+  <data name="ErrorFileInUse" xml:space="preserve"><value>The file is in use. Close osu!/Ez2Lazer and try again.</value></data>
   <data name="ErrorPathConflict" xml:space="preserve"><value>Path conflict: {0}</value></data>
-  <data name="ErrorLegacyReaderUnavailable" xml:space="preserve"><value>Write operations cannot open this schema with the current lib. Upgrade on the Fix tab, convert to official, or update the tool. Detail: {0}</value></data>
-  <data name="ErrorSchemaTooLow" xml:space="preserve"><value>This Realm schema is below the tool's minimum (same major only). Upgrade it with a matching client first. Detail: {0}</value></data>
-  <data name="ErrorSchemaTooHigh" xml:space="preserve"><value>This Realm schema is newer than the tool's built-in lib. Update EzRealmSync. Detail: {0}</value></data>
-  <data name="ErrorSchemaModelMismatch" xml:space="preserve"><value>Disk schema version is already latest, but the object model does not match; upgrade cannot fix this. Align the tool with the client osu.Game, or restore from a full backup. Detail: {0}</value></data>
-  <data name="ErrorReaderPackageMissing" xml:space="preserve"><value>Cannot open this schema read-only: reader package missing. Add manifest + lib under readers/ (see readers/README.md) and run Sync-ReaderLibs.ps1. Detail: {0}</value></data>
+  <data name="ErrorLegacyReaderUnavailable" xml:space="preserve"><value>Missing the matching osu.Game.dll for this Realm file. Upgrade the Realm file first, or update this tool.</value></data>
+  <data name="ErrorSchemaTooLow" xml:space="preserve"><value>This Realm file version is too old for this tool. Upgrade it with a matching client first.</value></data>
+  <data name="ErrorSchemaTooHigh" xml:space="preserve"><value>This Realm file version is newer than the DLL bundled with this tool. Update EzRealmSync.</value></data>
+  <data name="ErrorSchemaModelMismatch" xml:space="preserve"><value>The Realm file version number looks current, but it does not match this tool's osu.Game.dll. Upgrade cannot fix this — align tool and client versions, or restore from a full backup.</value></data>
+  <data name="ErrorReaderPackageMissing" xml:space="preserve"><value>Missing the matching osu.Game.dll for this Realm file. Add the reader package and try again.</value></data>
+  <data name="FilterColumn" xml:space="preserve"><value>Filter this column</value></data>
+  <data name="FilterSearchPlaceholder" xml:space="preserve"><value>Search…</value></data>
+  <data name="FilterBlankValue" xml:space="preserve"><value>(blank)</value></data>
+  <data name="FilterApply" xml:space="preserve"><value>Apply</value></data>
+  <data name="FilterClear" xml:space="preserve"><value>Clear</value></data>
   <data name="ReaderSettings" xml:space="preserve"><value>Reader packages</value></data>
   <data name="ReaderPackagesDirectory" xml:space="preserve"><value>Reader packages folder</value></data>
   <data name="ActiveReaderPackage" xml:space="preserve"><value>Reader used at startup</value></data>
-  <data name="ReaderPackageDefault" xml:space="preserve"><value>Built-in NuGet / local lib (default)</value></data>
-  <data name="ReaderPackageMissingLib" xml:space="preserve"><value> [missing lib]</value></data>
+  <data name="ReaderPackageDefault" xml:space="preserve"><value>Built-in NuGet / local DLL (default)</value></data>
+  <data name="ReaderPackageMissingLib" xml:space="preserve"><value> [missing DLL]</value></data>
   <data name="ReaderRestartHint" xml:space="preserve"><value>Place reader packages in the readers folder next to the exe (see path below). Restart after changing the reader.</value></data>
   <data name="EndpointB" xml:space="preserve"><value>B</value></data>
   <data name="TargetRealm" xml:space="preserve"><value>B</value></data>

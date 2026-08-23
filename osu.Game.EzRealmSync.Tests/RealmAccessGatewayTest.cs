@@ -43,7 +43,7 @@ namespace osu.Game.EzRealmSync.Tests
             }));
 
             Assert.That(ex!.Kind, Is.EqualTo(RealmUserErrorKind.MigrationRequired));
-            Assert.That(ex.Message, Does.Contain("写操作"));
+            Assert.That(ex.Message, Does.Contain("Realm 文件").Or.Contain("升级"));
         }
 
         [Test]

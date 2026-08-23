@@ -715,7 +715,6 @@ namespace osu.EzRealmSync.AppModel
 
             IsSelectAllMode.Value = anyUnselected;
             updateSelectionCount();
-            SyncRowsChanged?.Invoke();
         }
 
         public void UpdateSyncSelectionFromGrid() => updateSelectionCount();
@@ -726,7 +725,6 @@ namespace osu.EzRealmSync.AppModel
                 row.IsSelected = isChecked;
 
             updateSelectionCount();
-            SyncRowsChanged?.Invoke();
         }
 
         public void InvertSyncRowChecks()
@@ -736,7 +734,6 @@ namespace osu.EzRealmSync.AppModel
 
             IsSelectAllMode.Value = syncRows.Count > 0 && syncRows.All(r => r.IsSelected);
             updateSelectionCount();
-            SyncRowsChanged?.Invoke();
         }
 
         public async Task<bool> TryConfirmDeleteAsync(int count)
@@ -762,7 +759,6 @@ namespace osu.EzRealmSync.AppModel
                 row.IsSelected = isChecked;
 
             DataSelectionCount.Value = BrowseRows.Count(r => r.IsSelected);
-            BrowseTableChanged?.Invoke();
         }
 
         public void InvertBrowseRowChecks()
@@ -771,7 +767,6 @@ namespace osu.EzRealmSync.AppModel
                 row.IsSelected = !row.IsSelected;
 
             DataSelectionCount.Value = BrowseRows.Count(r => r.IsSelected);
-            BrowseTableChanged?.Invoke();
         }
 
         public async Task DeleteBrowseRowsAsync(IReadOnlyList<RealmBrowseRowModel> rows)
@@ -1319,32 +1314,24 @@ namespace osu.EzRealmSync.AppModel
         {
             foreach (var issue in issues)
                 issue.IsSelected = isChecked;
-
-            FixIssuesChanged?.Invoke();
         }
 
         public void InvertFixIssueChecks()
         {
             foreach (var issue in FixIssues)
                 issue.IsSelected = !issue.IsSelected;
-
-            FixIssuesChanged?.Invoke();
         }
 
         public void SetExportItemsChecked(IEnumerable<RealmExportItemModel> items, bool isChecked)
         {
             foreach (var item in items)
                 item.IsSelected = isChecked;
-
-            ExportItemsChanged?.Invoke();
         }
 
         public void InvertExportItemChecks()
         {
             foreach (var item in ExportItems)
                 item.IsSelected = !item.IsSelected;
-
-            ExportItemsChanged?.Invoke();
         }
 
         public void ClearExportItems()
@@ -1585,14 +1572,14 @@ namespace osu.EzRealmSync.AppModel
 
             return userError.Kind switch
             {
-                RealmUserErrorKind.FileInUse => Loc.Format("ErrorFileInUse", userError.Detail),
-                RealmUserErrorKind.MigrationRequired => Loc.Format("ErrorMigrationRequired", userError.Detail),
+                RealmUserErrorKind.FileInUse => Loc.Get("ErrorFileInUse"),
+                RealmUserErrorKind.MigrationRequired => Loc.Get("ErrorMigrationRequired"),
                 RealmUserErrorKind.PathConflict => Loc.Format("ErrorPathConflict", userError.Detail),
-                RealmUserErrorKind.LegacyReaderUnavailable => Loc.Format("ErrorLegacyReaderUnavailable", userError.Detail),
-                RealmUserErrorKind.SchemaTooLow => Loc.Format("ErrorSchemaTooLow", userError.Detail),
-                RealmUserErrorKind.SchemaTooHigh => Loc.Format("ErrorSchemaTooHigh", userError.Detail),
-                RealmUserErrorKind.SchemaModelMismatch => Loc.Format("ErrorSchemaModelMismatch", userError.Detail),
-                RealmUserErrorKind.ReaderPackageMissing => Loc.Format("ErrorReaderPackageMissing", userError.Detail),
+                RealmUserErrorKind.LegacyReaderUnavailable => Loc.Get("ErrorLegacyReaderUnavailable"),
+                RealmUserErrorKind.SchemaTooLow => Loc.Get("ErrorSchemaTooLow"),
+                RealmUserErrorKind.SchemaTooHigh => Loc.Get("ErrorSchemaTooHigh"),
+                RealmUserErrorKind.SchemaModelMismatch => Loc.Get("ErrorSchemaModelMismatch"),
+                RealmUserErrorKind.ReaderPackageMissing => Loc.Get("ErrorReaderPackageMissing"),
                 _ => userError.Detail,
             };
         }
@@ -1640,11 +1627,10 @@ namespace osu.EzRealmSync.AppModel
 
         private void refreshBrowseTable() => runOnUi(() =>
         {
-            BrowseRows.Clear();
-
             if (loadedSnapshot == null)
             {
                 BrowseColumns = Array.Empty<RealmColumnDefinition>();
+                ObservableCollectionReplace.ReplaceAll(BrowseRows, Array.Empty<RealmBrowseRowModel>());
                 DataSelectionCount.Value = 0;
                 BrowseTableChanged?.Invoke();
                 return;
@@ -1656,6 +1642,7 @@ namespace osu.EzRealmSync.AppModel
             if (group == null || !browseRowsByClass.TryGetValue(group.Class, out var rows))
             {
                 BrowseColumns = Array.Empty<RealmColumnDefinition>();
+                ObservableCollectionReplace.ReplaceAll(BrowseRows, Array.Empty<RealmBrowseRowModel>());
                 DataSelectionCount.Value = 0;
                 BrowseTableChanged?.Invoke();
                 return;
@@ -1663,8 +1650,8 @@ namespace osu.EzRealmSync.AppModel
 
             BrowseColumns = group.Columns;
 
-            foreach (var row in rows)
-                BrowseRows.Add(new RealmBrowseRowModel(row, group.Columns));
+            var models = rows.Select(row => new RealmBrowseRowModel(row, group.Columns)).ToList();
+            ObservableCollectionReplace.ReplaceAll(BrowseRows, models);
 
             DataSelectionCount.Value = BrowseRows.Count(r => r.IsSelected);
             BrowseTableChanged?.Invoke();

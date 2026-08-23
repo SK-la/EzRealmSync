@@ -27,7 +27,7 @@ namespace osu.Game.EzRealmSync.Models
             {
                 throw new RealmUserOperationException(
                     RealmUserErrorKind.SchemaTooHigh,
-                    $"库 schema {diskSchemaVersion} 高于本工具 lib 支持的 {LatestSupportedForKind(RealmSchemaSafety.Classify(diskSchemaVersion))}，请更新 EzRealmSync。");
+                    $"这份 Realm 文件版本 {diskSchemaVersion} 高于本工具自带 dll 支持的 {LatestSupportedForKind(RealmSchemaSafety.Classify(diskSchemaVersion))}，请更新 EzRealmSync。");
             }
 
             if (!RealmSchemaRevisionCatalog.IsSupportedDiskSchema(diskSchemaVersion))
@@ -36,13 +36,13 @@ namespace osu.Game.EzRealmSync.Models
                 {
                     throw new RealmUserOperationException(
                         RealmUserErrorKind.SchemaTooLow,
-                        $"官方库 schema {diskSchemaVersion} 低于本工具最低支持 {MinSupportedOfficialSchema}。请用对应版本客户端升到下限以上后再打开。");
+                        $"这份官方 Realm 文件版本 {diskSchemaVersion} 低于本工具最低支持 {MinSupportedOfficialSchema}。请用对应版本客户端升级后再打开。");
                 }
 
                 var (official, ez) = RealmSchemaVersions.Decode(diskSchemaVersion);
                 throw new RealmUserOperationException(
                     RealmUserErrorKind.SchemaTooLow,
-                    $"Ez 库 schema {diskSchemaVersion}（upstream {official}，Ez 修订 {ez}）低于本工具最低支持（官方 ≥{MinSupportedOfficialSchema}，Ez ≥{MinSupportedEzRevision}）。请用对应版本客户端升到下限以上后再打开。");
+                    $"这份 Ez Realm 文件版本 {diskSchemaVersion}（官方 {official}，Ez 修订 {ez}）低于本工具最低支持。请用对应版本客户端升级后再打开。");
             }
         }
 

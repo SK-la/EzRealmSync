@@ -1,3 +1,4 @@
+using System.Runtime.CompilerServices;
 using osu.EzRealmSync.AppModel.Localization;
 
 namespace osu.EzRealmSync.Desktop.Helpers
@@ -5,6 +6,7 @@ namespace osu.EzRealmSync.Desktop.Helpers
     internal static class CheckableDataGridHelper
     {
         private static int suppressSelectionSyncDepth;
+        private static readonly ConditionalWeakTable<DataGrid, object> keyboard_marquee_attached = new();
 
         public static void SuppressNextSelectionSync() => suppressSelectionSyncDepth++;
 
@@ -22,12 +24,15 @@ namespace osu.EzRealmSync.Desktop.Helpers
             grid.ClipboardCopyMode = DataGridClipboardCopyMode.None;
             grid.SelectionUnit = DataGridSelectionUnit.FullRow;
             grid.SelectionMode = DataGridSelectionMode.Extended;
+            grid.Focusable = true;
 
             grid.SelectionChanged += (_, e) =>
             {
                 SyncSelectionToChecks(grid, e, getAllItems, setItemsChecked);
                 afterSelectionChanged?.Invoke();
             };
+
+            AttachKeyboardAndMarquee(grid, getAllItems, setItemsChecked);
 
             DataGridContextMenuHelper.AttachExclusive(grid, menu =>
             {
@@ -58,6 +63,77 @@ namespace osu.EzRealmSync.Desktop.Helpers
                             await deleteSelectionAsync(targets);
                     });
             });
+        }
+
+        /// <summary>
+        /// 为未走完整 Configure 的网格挂载 Ctrl+A / Esc / 框选（如 Data 页自定义右键菜单）。
+        /// </summary>
+        public static void AttachKeyboardAndMarquee<T>(
+            DataGrid grid,
+            Func<IEnumerable<T>> getAllItems,
+            Action<IReadOnlyList<T>, bool> setItemsChecked)
+            where T : class
+        {
+            if (keyboard_marquee_attached.TryGetValue(grid, out _))
+                return;
+
+            keyboard_marquee_attached.Add(grid, new object());
+
+            grid.InputBindings.Add(new KeyBinding(
+                new RelaySelectCommand(() => selectAll(grid, getAllItems, setItemsChecked)),
+                Key.A,
+                ModifierKeys.Control));
+
+            grid.InputBindings.Add(new KeyBinding(
+                new RelaySelectCommand(() => clearAll(grid, getAllItems, setItemsChecked)),
+                Key.Escape,
+                ModifierKeys.None));
+
+            grid.PreviewKeyDown += (_, e) =>
+            {
+                if (e.Key == Key.A && Keyboard.Modifiers == ModifierKeys.Control)
+                {
+                    selectAll(grid, getAllItems, setItemsChecked);
+                    e.Handled = true;
+                }
+                else if (e.Key == Key.Escape)
+                {
+                    clearAll(grid, getAllItems, setItemsChecked);
+                    e.Handled = true;
+                }
+            };
+
+            DataGridMarqueeSelectionHelper.Attach(grid, getAllItems, setItemsChecked);
+        }
+
+        private static void selectAll<T>(
+            DataGrid grid,
+            Func<IEnumerable<T>> getAllItems,
+            Action<IReadOnlyList<T>, bool> setItemsChecked)
+            where T : class
+        {
+            var all = getAllItems().ToList();
+            if (all.Count == 0)
+                return;
+
+            setItemsChecked(all, true);
+            SuppressNextSelectionSync();
+            grid.SelectAll();
+        }
+
+        private static void clearAll<T>(
+            DataGrid grid,
+            Func<IEnumerable<T>> getAllItems,
+            Action<IReadOnlyList<T>, bool> setItemsChecked)
+            where T : class
+        {
+            var all = getAllItems().ToList();
+            if (all.Count == 0)
+                return;
+
+            setItemsChecked(all, false);
+            SuppressNextSelectionSync();
+            grid.UnselectAll();
         }
 
         public static void SyncSelectionToChecks<T>(
@@ -128,6 +204,21 @@ namespace osu.EzRealmSync.Desktop.Helpers
         {
             var prop = item.GetType().GetProperty(DataGridCheckColumnHelper.IS_SELECTED_PROPERTY_NAME);
             return prop?.PropertyType == typeof(bool) && prop.GetValue(item) is true;
+        }
+
+        private sealed class RelaySelectCommand : ICommand
+        {
+            private readonly Action execute;
+
+            public RelaySelectCommand(Action execute) => this.execute = execute;
+
+            public bool CanExecute(object? parameter) => true;
+
+            public void Execute(object? parameter) => execute();
+
+#pragma warning disable CS0067
+            public event EventHandler? CanExecuteChanged;
+#pragma warning restore CS0067
         }
     }
 }

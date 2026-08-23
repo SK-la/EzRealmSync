@@ -77,7 +77,11 @@ namespace osu.EzRealmSync.Desktop.Pages
                         Dispatcher.Invoke(updateExportGridColumns);
                 };
 
-                vm.Presenter.ExportItemsChanged += () => Dispatcher.Invoke(() => ExportGrid.ItemsSource = vm!.ExportItems);
+                vm.Presenter.ExportItemsChanged += () => Dispatcher.Invoke(() =>
+                {
+                    DataGridColumnFilterHelper.ResetFilters(ExportGrid);
+                    ExportGrid.ItemsSource = vm!.ExportItems;
+                });
                 vm.Presenter.WorkspaceCapabilitiesChanged += () => Dispatcher.Invoke(updateEnabled);
 
                 GroupScoresByPlayerCheck.Checked += (_, _) => setGroupScoresByPlayer(true);
@@ -182,7 +186,7 @@ namespace osu.EzRealmSync.Desktop.Pages
         {
             return new DataGridTextColumn
             {
-                Header = header,
+                Header = DataGridColumnFilterHelper.CreatePropertyFilterHeader(ExportGrid, header, path),
                 Binding = new Binding(path) { Mode = BindingMode.OneWay },
                 Width = width,
                 IsReadOnly = true,
@@ -226,14 +230,19 @@ namespace osu.EzRealmSync.Desktop.Pages
             FolderNameBox.ToolTip = Loc.Get(isCollectionDb ? "ExportCollectionDbFolderHint" : "ExportFolderNameHint");
             updateEnabled();
 
-            colSecondary.Header = isCollectionList ? Loc.Get("ColBeatmapCount") : Loc.Get("ColArtist");
-            colSecondary.Binding = new Binding(isCollectionList ? nameof(RealmExportItemModel.BeatmapCountLabel) : nameof(RealmExportItemModel.Artist))
+            string secondaryHeader = isCollectionList ? Loc.Get("ColBeatmapCount") : Loc.Get("ColArtist");
+            string secondaryPath = isCollectionList ? nameof(RealmExportItemModel.BeatmapCountLabel) : nameof(RealmExportItemModel.Artist);
+            colSecondary.Header = DataGridColumnFilterHelper.CreatePropertyFilterHeader(ExportGrid, secondaryHeader, secondaryPath);
+            colSecondary.Binding = new Binding(secondaryPath)
             {
                 Mode = BindingMode.OneWay,
             };
 
             colExtra.Visibility = isScore ? Visibility.Visible : Visibility.Collapsed;
-            colExtra.Header = Loc.Get("ColExportPlayer");
+            colExtra.Header = DataGridColumnFilterHelper.CreatePropertyFilterHeader(
+                ExportGrid,
+                Loc.Get("ColExportPlayer"),
+                nameof(RealmExportItemModel.PlayerName));
 
             colPath.Visibility = isCollectionList ? Visibility.Collapsed : Visibility.Visible;
         }

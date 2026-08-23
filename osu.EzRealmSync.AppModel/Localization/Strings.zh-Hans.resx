@@ -220,35 +220,40 @@
   <data name="FixConfirmSummary" xml:space="preserve"><value>将创建 {0} 个缺失文件占位，删除 {1} 个僵尸文件，修改 {2} 个非法字符。是否继续？</value></data>
   <data name="FixConfirmTitle" xml:space="preserve"><value>确认修复</value></data>
   <data name="FixConvertOfficialRead" xml:space="preserve"><value>转官方（读取号）</value></data>
-  <data name="FixConvertOfficialLibMinusOne" xml:space="preserve"><value>转官方（lib-1）</value></data>
+  <data name="FixConvertOfficialLibMinusOne" xml:space="preserve"><value>转官方（dll-1）</value></data>
   <data name="FixConvertOfficialPreserve" xml:space="preserve"><value>转官方（读取号）</value></data>
-  <data name="FixConvertOfficialToLib" xml:space="preserve"><value>转官方（lib 版）</value></data>
-  <data name="FixUpgradeSchema" xml:space="preserve"><value>升级到 lib 最新</value></data>
-  <data name="FixUpgradeSchemaConfirm" xml:space="preserve"><value>将把所选 Realm 升级到 lib schema {0}（在备份工作副本上 migration 后替换原文件）。备份目录：{1}。请先关闭游戏。是否继续？</value></data>
-  <data name="FixUpgradeSchemaTitle" xml:space="preserve"><value>升级 schema</value></data>
-  <data name="FixConvertOfficialReadConfirm" xml:space="preserve"><value>将重建为官方 ppy lazer 可用的 client.realm（镜像 schema {0}，覆盖原文件；非 Ez sidecar）。备份目录：{1}。是否继续？</value></data>
-  <data name="FixConvertOfficialLibMinusOneConfirm" xml:space="preserve"><value>将重建为官方 ppy lazer 可用的 client.realm（镜像 schema {0}，lib upstream 减 1；覆盖原文件）。备份目录：{1}。是否继续？</value></data>
-  <data name="FixConvertOfficialPreserveConfirm" xml:space="preserve"><value>将重建为官方 ppy lazer 可用的 client.realm（镜像 schema {0}，覆盖原文件；非 Ez sidecar）。备份目录：{1}。是否继续？</value></data>
-  <data name="FixConvertOfficialLibConfirm" xml:space="preserve"><value>将重建为官方 ppy lazer 可用的 client.realm（镜像 schema {0}，lib upstream；覆盖原文件）。备份目录：{1}。是否继续？</value></data>
+  <data name="FixConvertOfficialToLib" xml:space="preserve"><value>转官方（dll 版）</value></data>
+  <data name="FixUpgradeSchema" xml:space="preserve"><value>升级 Realm 文件</value></data>
+  <data name="FixUpgradeSchemaConfirm" xml:space="preserve"><value>将先备份，再升级所选 Realm 文件（目标版本 {0}）。备份目录：{1}。请先关闭游戏。是否继续？</value></data>
+  <data name="FixUpgradeSchemaTitle" xml:space="preserve"><value>升级 Realm 文件</value></data>
+  <data name="FixConvertOfficialReadConfirm" xml:space="preserve"><value>将重建为官方 ppy lazer 可用的 client.realm（版本 {0}，覆盖原文件）。备份目录：{1}。是否继续？</value></data>
+  <data name="FixConvertOfficialLibMinusOneConfirm" xml:space="preserve"><value>将重建为官方 ppy lazer 可用的 client.realm（版本 {0}，本工具 dll 支持版本减 1；覆盖原文件）。备份目录：{1}。是否继续？</value></data>
+  <data name="FixConvertOfficialPreserveConfirm" xml:space="preserve"><value>将重建为官方 ppy lazer 可用的 client.realm（版本 {0}，覆盖原文件）。备份目录：{1}。是否继续？</value></data>
+  <data name="FixConvertOfficialLibConfirm" xml:space="preserve"><value>将重建为官方 ppy lazer 可用的 client.realm（版本 {0}，本工具当前 dll；覆盖原文件）。备份目录：{1}。是否继续？</value></data>
   <data name="FixConvertOfficialTitle" xml:space="preserve"><value>转回官方版</value></data>
-  <data name="StatusFixConvertedOfficial" xml:space="preserve"><value>已重建为官方 client.realm：{0} → schema {1}（备份：{2}，写入 {3} 表项）</value></data>
-  <data name="StatusFixConvertedOfficialSkipped" xml:space="preserve"><value>已跳过：成绩 {0}、皮肤 {1}、谱面集 {2}、规则集 {3}；收藏夹 prune {4} 项</value></data>
-  <data name="StatusFixSchemaUpgraded" xml:space="preserve"><value>已升级 schema：{0}（{1} → lib {2}，备份：{3}）</value></data>
-  <data name="StatusFixSchemaAlreadyLatest" xml:space="preserve"><value>{0} 已是 lib 最新 schema（{1}）。备份：{2}</value></data>
-  <data name="ErrorConvertOfficialRequiresEz" xml:space="preserve"><value>「转回官方版」仅适用于 Ez 扩展库。</value></data>
-  <data name="ErrorMigrationRequired" xml:space="preserve"><value>写操作需要先升到 lib 最新 schema 才能打开该库。请在「修复」页点击「升级到 lib 最新」。详情：{0}</value></data>
-  <data name="ErrorFileInUse" xml:space="preserve"><value>写入前检查阻断：文件正在被占用。请先关闭 osu!/Ez2Lazer 后重试。详情：{0}</value></data>
+  <data name="StatusFixConvertedOfficial" xml:space="preserve"><value>已重建为官方 client.realm：{0} → 版本 {1}（备份：{2}，写入 {3} 项）</value></data>
+  <data name="StatusFixConvertedOfficialSkipped" xml:space="preserve"><value>已跳过：成绩 {0}、皮肤 {1}、谱面集 {2}、规则集 {3}；收藏夹清理 {4} 项</value></data>
+  <data name="StatusFixSchemaUpgraded" xml:space="preserve"><value>已升级 Realm 文件：{0}（{1} → {2}，备份：{3}）</value></data>
+  <data name="StatusFixSchemaAlreadyLatest" xml:space="preserve"><value>{0} 已是当前 dll 支持的最新版本（{1}）。备份：{2}</value></data>
+  <data name="ErrorConvertOfficialRequiresEz" xml:space="preserve"><value>「转回官方版」仅适用于 Ez 扩展的 Realm 文件。</value></data>
+  <data name="ErrorMigrationRequired" xml:space="preserve"><value>无法修改这份 Realm 文件：版本过旧。请到「修复」页点击「升级 Realm 文件」。</value></data>
+  <data name="ErrorFileInUse" xml:space="preserve"><value>文件正在被占用。请先关闭 osu!/Ez2Lazer 后重试。</value></data>
   <data name="ErrorPathConflict" xml:space="preserve"><value>路径冲突：{0}</value></data>
-  <data name="ErrorLegacyReaderUnavailable" xml:space="preserve"><value>写操作无法用当前 lib 打开该 schema。请先在「修复」页升级或转官方，或更新工具。详情：{0}</value></data>
-  <data name="ErrorSchemaTooLow" xml:space="preserve"><value>该 Realm schema 低于本工具最低支持（同大版本）。请用对应版本客户端升到下限以上后再试。详情：{0}</value></data>
-  <data name="ErrorSchemaTooHigh" xml:space="preserve"><value>该 Realm schema 高于本工具内置 lib。请更新 EzRealmSync。详情：{0}</value></data>
-  <data name="ErrorSchemaModelMismatch" xml:space="preserve"><value>磁盘 schema 版本号已是最新，但对象模型不匹配，升级无法修复。请对齐工具与客户端的 osu.Game，或从完整备份恢复。详情：{0}</value></data>
-  <data name="ErrorReaderPackageMissing" xml:space="preserve"><value>无法只读打开该 schema：缺少 reader 包。请在 readers/ 下添加 manifest.json 与 lib/（参见 readers/README.md），并运行 Sync-ReaderLibs.ps1。详情：{0}</value></data>
+  <data name="ErrorLegacyReaderUnavailable" xml:space="preserve"><value>缺少对应版本的 osu.Game.dll，无法打开这份 Realm 文件。请先升级 Realm 文件，或更新本工具后再试。</value></data>
+  <data name="ErrorSchemaTooLow" xml:space="preserve"><value>这份 Realm 文件版本过低，本工具无法打开。请先用对应版本的客户端升级后再试。</value></data>
+  <data name="ErrorSchemaTooHigh" xml:space="preserve"><value>这份 Realm 文件版本高于本工具自带的 dll。请更新 EzRealmSync。</value></data>
+  <data name="ErrorSchemaModelMismatch" xml:space="preserve"><value>Realm 文件版本号看起来已是最新，但与本工具的 osu.Game.dll 不匹配，升级无法修复。请确认工具与客户端版本一致，或从完整备份恢复。</value></data>
+  <data name="ErrorReaderPackageMissing" xml:space="preserve"><value>缺少对应版本的 osu.Game.dll，无法打开这份 Realm 文件。请补齐 reader 包后再试。</value></data>
+  <data name="FilterColumn" xml:space="preserve"><value>筛选此列</value></data>
+  <data name="FilterSearchPlaceholder" xml:space="preserve"><value>搜索…</value></data>
+  <data name="FilterBlankValue" xml:space="preserve"><value>（空）</value></data>
+  <data name="FilterApply" xml:space="preserve"><value>应用</value></data>
+  <data name="FilterClear" xml:space="preserve"><value>清除</value></data>
   <data name="ReaderSettings" xml:space="preserve"><value>Reader 包</value></data>
   <data name="ReaderPackagesDirectory" xml:space="preserve"><value>Reader 包目录</value></data>
   <data name="ActiveReaderPackage" xml:space="preserve"><value>启动时使用的 reader</value></data>
-  <data name="ReaderPackageDefault" xml:space="preserve"><value>内置 NuGet / 本地 lib（默认）</value></data>
-  <data name="ReaderPackageMissingLib" xml:space="preserve"><value> [缺少 lib]</value></data>
+  <data name="ReaderPackageDefault" xml:space="preserve"><value>内置 NuGet / 本地 dll（默认）</value></data>
+  <data name="ReaderPackageMissingLib" xml:space="preserve"><value> [缺少 dll]</value></data>
   <data name="ReaderRestartHint" xml:space="preserve"><value>将 reader 包放入 exe 同目录的 readers 文件夹（见下方路径）；切换 reader 后需重启应用。</value></data>
   <data name="EndpointB" xml:space="preserve"><value>B</value></data>
   <data name="TargetRealm" xml:space="preserve"><value>B</value></data>

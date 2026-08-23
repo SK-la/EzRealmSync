@@ -77,6 +77,11 @@ namespace osu.EzRealmSync.Desktop.Pages
                     (rows, check) => vm.Presenter.SetBrowseRowsChecked(rows, check));
             };
 
+            CheckableDataGridHelper.AttachKeyboardAndMarquee(
+                DataGrid,
+                () => vm.BrowseRows,
+                (rows, check) => vm.Presenter.SetBrowseRowsChecked(rows, check));
+
             DataGridContextMenuHelper.AttachExclusive(DataGrid, menu =>
             {
                 DataGridContextMenuHelper.AddItem(menu, "check", Loc.Get("CtxCheck"),
@@ -177,12 +182,14 @@ namespace osu.EzRealmSync.Desktop.Pages
             if (vm == null)
                 return;
 
+            DataGridColumnFilterHelper.ResetFilters(DataGrid);
             rebuildBrowseColumns(vm.BrowseColumns);
             DataGrid.ItemsSource = vm.BrowseRows;
         }
 
         private void rebuildBrowseColumns(IReadOnlyList<RealmColumnDefinition> columns)
         {
+            DataGridColumnFilterHelper.ClearColumnFilters(DataGrid);
             DataGrid.Columns.Clear();
 
             DataGrid.Columns.Add(DataGridCheckColumnHelper.CreateColumn());
@@ -191,7 +198,10 @@ namespace osu.EzRealmSync.Desktop.Pages
             {
                 DataGrid.Columns.Add(new DataGridTextColumn
                 {
-                    Header = formatColumnHeader(column),
+                    Header = DataGridColumnFilterHelper.CreateBrowseFilterHeader(
+                        DataGrid,
+                        formatColumnHeader(column),
+                        column.PropertyKey),
                     Binding = new Binding
                     {
                         Converter = browse_cell_converter,

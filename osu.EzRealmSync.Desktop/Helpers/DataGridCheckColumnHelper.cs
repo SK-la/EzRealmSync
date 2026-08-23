@@ -1,5 +1,6 @@
 using System.Windows.Controls.Primitives;
 using System.Windows.Data;
+using WpfCheckBox = System.Windows.Controls.CheckBox;
 
 namespace osu.EzRealmSync.Desktop.Helpers
 {
@@ -12,7 +13,7 @@ namespace osu.EzRealmSync.Desktop.Helpers
 
         public static DataGridTemplateColumn CreateColumn(double width = 40)
         {
-            var checkFactory = new FrameworkElementFactory(typeof(ToggleButton));
+            var checkFactory = new FrameworkElementFactory(typeof(WpfCheckBox));
             checkFactory.SetBinding(
                 ToggleButton.IsCheckedProperty,
                 new Binding(IS_SELECTED_PROPERTY_NAME)
@@ -22,6 +23,7 @@ namespace osu.EzRealmSync.Desktop.Helpers
                 });
             checkFactory.SetValue(FrameworkElement.HorizontalAlignmentProperty, HorizontalAlignment.Center);
             checkFactory.SetValue(FrameworkElement.VerticalAlignmentProperty, VerticalAlignment.Center);
+            checkFactory.SetValue(UIElement.FocusableProperty, false);
             checkFactory.AddHandler(
                 UIElement.PreviewMouseLeftButtonDownEvent,
                 new MouseButtonEventHandler(onCheckBoxPreviewMouseLeftButtonDown),
@@ -37,7 +39,7 @@ namespace osu.EzRealmSync.Desktop.Helpers
 
         private static void onCheckBoxPreviewMouseLeftButtonDown(object sender, MouseButtonEventArgs e)
         {
-            if (sender is not CheckBox checkBox || checkBox.DataContext == null)
+            if (sender is not WpfCheckBox checkBox || checkBox.DataContext == null)
                 return;
 
             var prop = checkBox.DataContext.GetType().GetProperty(IS_SELECTED_PROPERTY_NAME);

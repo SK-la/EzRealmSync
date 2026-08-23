@@ -56,14 +56,17 @@
     </ui:NavigationView>
 
     <ui:ContentDialogHost x:Name="RootContentDialogHost"
-                          Grid.Row="1"
-                          Grid.RowSpan="2"
+                          Grid.Row="0"
+                          Grid.RowSpan="3"
+                          Panel.ZIndex="20"
                           IsHitTestVisible="False" />
     <ui:SnackbarPresenter x:Name="RootSnackbarPresenter"
-                          Grid.Row="2"
+                          Grid.Row="0"
+                          Grid.RowSpan="3"
                           HorizontalAlignment="Right"
                           VerticalAlignment="Bottom"
-                          Margin="0,0,12,72"
+                          Margin="0,0,12,88"
+                          Panel.ZIndex="30"
                           IsHitTestVisible="False" />
 
     <ui:Card Grid.Row="2" Margin="12,0,12,10" Padding="12,10" Panel.ZIndex="1">
