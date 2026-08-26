@@ -46,7 +46,7 @@ namespace osu.Game.EzRealmSync.Realm
 
                 if (request.DeleteFromSource)
                 {
-                    if (tryDeleteFromSource(id, sourceAccess))
+                    if (RealmSyncDeleter.tryDelete(id, sourceAccess))
                         applied++;
                 }
                 else if (tryCopyToTarget(id, sourceAccess, targetAccess, stripEzFieldsForOfficial, normalizeEzFieldsForTarget))
@@ -108,36 +108,6 @@ namespace osu.Game.EzRealmSync.Realm
             });
 
             return copied;
-        }
-
-        private static bool tryDeleteFromSource(Guid id, RealmAccess sourceAccess)
-        {
-            bool deleted = false;
-
-            sourceAccess.Write(source =>
-            {
-                if (source.Find<BeatmapSetInfo>(id) is BeatmapSetInfo set)
-                {
-                    set.DeletePending = true;
-                    deleted = true;
-                    return;
-                }
-
-                if (source.Find<ScoreInfo>(id) is ScoreInfo score)
-                {
-                    score.DeletePending = true;
-                    deleted = true;
-                    return;
-                }
-
-                if (source.Find<BeatmapCollection>(id) is BeatmapCollection collection)
-                {
-                    source.Remove(collection);
-                    deleted = true;
-                }
-            });
-
-            return deleted;
         }
 
         private static bool tryDetachBeatmapSet(RealmInstance source, Guid id, out BeatmapSetInfo detached)

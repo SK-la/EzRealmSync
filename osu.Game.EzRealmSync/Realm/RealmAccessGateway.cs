@@ -79,6 +79,25 @@ namespace osu.Game.EzRealmSync.Realm
             return OfficialReadProcessRunner.ApplyImport(job, cancellationToken);
         }
 
+        /// <summary>官方目标库软删（Official Worker）。</summary>
+        public static OfficialApplyImportResult ApplyDeleteToOfficial(
+            string targetRealmPath,
+            int pinnedDiskSchemaVersion,
+            IReadOnlyList<Guid> itemIds,
+            CancellationToken cancellationToken = default)
+        {
+            var job = new OfficialApplyImportJob
+            {
+                TargetRealmPath = Path.GetFullPath(targetRealmPath),
+                PinnedDiskSchemaVersion = pinnedDiskSchemaVersion,
+                ItemIds = itemIds.ToList(),
+                DeleteFromSource = true,
+                Bundle = new RealmSyncApplyBundle(),
+            };
+
+            return OfficialReadProcessRunner.ApplyImport(job, cancellationToken);
+        }
+
         /// <summary>写回 / 删改 / 导入；legacy schema 失败时不走 Sidecar。</summary>
         public static RealmAccess OpenForMutation(string realmFilePath, int? diskSchemaVersion = null) =>
             OpenForWrite(realmFilePath, diskSchemaVersion);

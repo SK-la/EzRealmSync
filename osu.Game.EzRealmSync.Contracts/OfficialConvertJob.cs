@@ -292,6 +292,8 @@ namespace osu.Game.EzRealmSync.Contracts
 
         public List<Guid> ItemIds { get; set; } = new List<Guid>();
 
+        public bool DeleteFromSource { get; set; }
+
         public required RealmSyncApplyBundle Bundle { get; set; }
     }
 

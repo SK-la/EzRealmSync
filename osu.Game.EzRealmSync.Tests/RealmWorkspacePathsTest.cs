@@ -121,5 +121,49 @@ namespace osu.Game.EzRealmSync.Tests
             string realmPath = Path.Combine(workspace, "data", "client.realm");
             Assert.That(RealmWorkspacePaths.ResolveStorageRoot(realmPath), Is.EqualTo(workspace));
         }
+
+        [Test]
+        public void ResolveStorageRelativeRealmPath_preserves_data_segment()
+        {
+            string realmPath = Path.Combine(workspace, "data", "client.realm");
+            Assert.That(RealmWorkspacePaths.ResolveStorageRelativeRealmPath(realmPath), Is.EqualTo(Path.Combine("data", "client.realm")));
+        }
+
+        [Test]
+        public void ResolveStorageRelativeRealmPath_root_level_realm()
+        {
+            string ezRoot = Path.Combine(Path.GetTempPath(), "EzRealmSyncTests", Guid.NewGuid().ToString("N"));
+            Directory.CreateDirectory(ezRoot);
+            string realmPath = Path.Combine(ezRoot, "client_51007.realm");
+            File.WriteAllText(realmPath, "mock");
+
+            try
+            {
+                Assert.That(RealmWorkspacePaths.ResolveStorageRelativeRealmPath(realmPath), Is.EqualTo("client_51007.realm"));
+            }
+            finally
+            {
+                if (Directory.Exists(ezRoot))
+                    Directory.Delete(ezRoot, recursive: true);
+            }
+        }
+
+        [Test]
+        public void TryFromEndpoints_delete_uses_same_source_and_target()
+        {
+            var entry = new RealmFileEntry
+            {
+                Id = Guid.NewGuid().ToString("N"),
+                FilePath = Path.Combine(workspace, "data", "client.realm"),
+                DisplayName = "client.realm",
+                SchemaVersion = 51_007,
+            };
+
+            Assert.That(RealmWritePlan.TryFromEndpoints(entry, entry, out var plan, out string? error), Is.True);
+            Assert.That(error, Is.Null);
+            Assert.That(plan, Is.Not.Null);
+            Assert.That(plan!.SourceRealmFilePath, Is.EqualTo(plan.TargetRealmFilePath));
+            Assert.That(plan.LegacyDirection, Is.EqualTo(SyncDirection.EzToEz));
+        }
     }
 }

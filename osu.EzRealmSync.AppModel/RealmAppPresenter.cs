@@ -621,9 +621,9 @@ namespace osu.EzRealmSync.AppModel
             var writeFile = writeToB ? fileB : fileA;
             var otherFile = writeToB ? fileA : fileB;
 
-            // Add：plan 源=另一端、目标=操作目标。Delete：plan 源=操作目标（DeleteFromSource 删源）。
+            // Add：plan 源=另一端、目标=操作目标。Delete：源=目标=操作目标（单库软删）。
             var planSource = delete ? writeFile : otherFile;
-            var planTarget = delete ? otherFile : writeFile;
+            var planTarget = writeFile;
 
             if (ConfirmAsync == null)
                 return;

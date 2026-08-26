@@ -100,6 +100,21 @@ namespace osu.Game.EzRealmSync.Models
             return directory;
         }
 
+        /// <summary>
+        /// 供 <see cref="NativeStorage"/> 打开的相对路径（如 <c>data\client.realm</c>），
+        /// 不可仅用 <see cref="Path.GetFileName"/>（会丢失 <c>data\</c> 段）。
+        /// </summary>
+        public static string ResolveStorageRelativeRealmPath(string realmFilePath)
+        {
+            string fullPath = Path.GetFullPath(realmFilePath);
+            string storageRoot = ResolveStorageRoot(fullPath);
+
+            if (string.Equals(fullPath, storageRoot, StringComparison.OrdinalIgnoreCase))
+                return Path.GetFileName(fullPath);
+
+            return Path.GetRelativePath(storageRoot, fullPath);
+        }
+
         public static string ResolveDataDirectory(string realmFilePath) => Path.GetDirectoryName(Path.GetFullPath(realmFilePath)) ?? string.Empty;
 
         public static string ResolveClientRealmPath(string? workspacePath)

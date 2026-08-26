@@ -27,6 +27,9 @@ namespace osu.Game.EzRealmSync.Realm
             if (validationError != null)
                 throw new InvalidOperationException(validationError);
 
+            if (request.DeleteFromSource)
+                throw new InvalidOperationException("Delete 不得经 sidecar importer；请走单库删除路径。");
+
             bool stripEzFieldsForOfficial = request.WritePlan?.StripEzFieldsForTarget
                                             ?? request.Direction == SyncDirection.EzToOfficial;
             bool normalizeEzFieldsForTarget = request.WritePlan?.NormalizeEzFieldsForTarget

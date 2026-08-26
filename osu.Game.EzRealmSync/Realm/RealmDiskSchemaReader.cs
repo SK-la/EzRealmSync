@@ -163,7 +163,7 @@ namespace osu.Game.EzRealmSync.Realm
             try
             {
                 string storageRoot = RealmWorkspacePaths.ResolveStorageRoot(fullPath);
-                string filename = Path.GetFileName(fullPath);
+                string filename = RealmWorkspacePaths.ResolveStorageRelativeRealmPath(fullPath);
                 using var access = OfficialRealmAccess.OpenWithoutMigration(new NativeStorage(storageRoot), filename, pinnedSchema);
                 access.Run(_ => { });
                 return true;

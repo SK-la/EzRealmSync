@@ -173,7 +173,7 @@ namespace osu.Game.EzRealmSync.Realm
         {
             string fullPath = Path.GetFullPath(realmFilePath);
             string storageRoot = RealmWorkspacePaths.ResolveStorageRoot(fullPath);
-            string filename = Path.GetFileName(fullPath);
+            string filename = RealmWorkspacePaths.ResolveStorageRelativeRealmPath(fullPath);
             var storage = new NativeStorage(storageRoot);
 
             // 与 OpenWithMigrationForTool 等价：migration + 禁止降级删库；用公开构造以便当前 NuGet 也可编译。

@@ -114,7 +114,11 @@ namespace osu.Game.EzRealmSync.Realm
 
             var plan = resolvePlan(request.WritePlan, request.Direction, request.Paths);
 
-            string? guardError = Task.Run(() => RealmProcessGuard.ComprehensiveCheckAsync(plan.TargetRealmFilePath)).GetAwaiter().GetResult();
+            string mutationPath = request.DeleteFromSource
+                ? plan.SourceRealmFilePath
+                : plan.TargetRealmFilePath;
+
+            string? guardError = Task.Run(() => RealmProcessGuard.ComprehensiveCheckAsync(mutationPath), cancellationToken).GetAwaiter().GetResult();
             if (guardError != null)
                 throw new RealmUserOperationException(RealmUserErrorKind.FileInUse, guardError);
 
@@ -126,7 +130,7 @@ namespace osu.Game.EzRealmSync.Realm
                     ? EzRealmSyncDefaults.DefaultBackupDirectory
                     : request.BackupDirectory;
 
-                backupPath = RealmFileBackup.CreateTimestampedCopy(plan.TargetRealmFilePath, backupDir);
+                backupPath = RealmFileBackup.CreateTimestampedCopy(mutationPath, backupDir);
             }
 
             int sourceSchema = RealmAccessGateway.ResolveSchemaVersion(plan.SourceRealmFilePath, plan.SourceSchemaVersion);
@@ -134,7 +138,30 @@ namespace osu.Game.EzRealmSync.Realm
 
             ApplyResult result;
 
-            if (RealmSchemaSafety.IsOfficialDiskSchema(targetSchema))
+            if (request.DeleteFromSource)
+            {
+                int mutationSchema = RealmAccessGateway.ResolveSchemaVersion(mutationPath, plan.TargetSchemaVersion);
+
+                if (RealmSchemaSafety.IsOfficialDiskSchema(mutationSchema))
+                {
+                    var delete = RealmAccessGateway.ApplyDeleteToOfficial(
+                        mutationPath,
+                        mutationSchema,
+                        request.ItemIds,
+                        cancellationToken);
+
+                    if (!delete.Success)
+                        throw new InvalidOperationException(delete.ErrorMessage ?? "Official Worker 删除失败。");
+
+                    result = new ApplyResult { AppliedCount = delete.AppliedCount };
+                }
+                else
+                {
+                    using var targetAccess = openForPlanEndpoint(mutationPath, mutationSchema);
+                    result = RealmSyncDeleter.Apply(request, targetAccess, progress, cancellationToken);
+                }
+            }
+            else if (RealmSchemaSafety.IsOfficialDiskSchema(targetSchema))
             {
                 RealmSyncApplyBundle bundle;
 
@@ -158,6 +185,9 @@ namespace osu.Game.EzRealmSync.Realm
                     request.ItemIds,
                     bundle,
                     cancellationToken);
+
+                if (!import.Success)
+                    throw new InvalidOperationException(import.ErrorMessage ?? "Official Worker apply-import 失败。");
 
                 result = new ApplyResult { AppliedCount = import.AppliedCount };
             }

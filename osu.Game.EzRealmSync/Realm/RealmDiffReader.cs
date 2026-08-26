@@ -51,7 +51,7 @@ namespace osu.Game.EzRealmSync.Realm
         {
             string fullPath = Path.GetFullPath(realmFilePath);
             string storageRoot = RealmWorkspacePaths.ResolveStorageRoot(fullPath);
-            string filename = Path.GetFileName(fullPath);
+            string filename = RealmWorkspacePaths.ResolveStorageRelativeRealmPath(fullPath);
             var storage = new NativeStorage(storageRoot);
 
             return ez

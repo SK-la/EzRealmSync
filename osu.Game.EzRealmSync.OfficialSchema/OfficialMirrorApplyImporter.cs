@@ -11,6 +11,19 @@ namespace osu.Game.EzRealmSync.OfficialSchema
             {
                 string path = Path.GetFullPath(job.TargetRealmPath);
                 int schema = job.PinnedDiskSchemaVersion;
+
+                if (job.DeleteFromSource)
+                {
+                    using var deleteRealm = OfficialMirrorRealm.OpenPinned(path, schema);
+                    int deletedCount = OfficialMirrorRealmWriter.SoftDeleteByIds(deleteRealm, job.ItemIds);
+
+                    return new OfficialApplyImportResult
+                    {
+                        Success = true,
+                        AppliedCount = deletedCount,
+                    };
+                }
+
                 var idSet = job.ItemIds.ToHashSet();
 
                 var filtered = new RealmSyncApplyBundle
