@@ -49,18 +49,20 @@ namespace osu.Game.EzRealmSync.Realm
         {
             using var process = Process.Start(psi) ?? throw new InvalidOperationException("无法启动 Worker 进程。");
 
-            using (cancellationToken.Register(() =>
+            using (cancellationToken.Register(state =>
             {
+                var p = (Process?)state;
+
                 try
                 {
-                    if (!process.HasExited)
-                        process.Kill(entireProcessTree: true);
+                    if (p != null && !p.HasExited)
+                        p.Kill(entireProcessTree: true);
                 }
                 catch
                 {
                     // 取消路径忽略 kill 失败。
                 }
-            }))
+            }, process))
             {
                 var stdoutTask = process.StandardOutput.ReadToEndAsync(cancellationToken);
                 var stderrTask = process.StandardError.ReadToEndAsync(cancellationToken);
