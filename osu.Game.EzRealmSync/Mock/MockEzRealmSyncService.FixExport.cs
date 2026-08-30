@@ -342,7 +342,7 @@ namespace osu.Game.EzRealmSync.Mock
                 // TODO(legacy-db-merge): 合并进磁盘已有 scores.db（按 MD5 追加/去重）尚未实现。
                 var groups = catalog.Items
                                     .Where(i => idSet.Contains(i.Id))
-                                    .GroupBy(i => i.Artist ?? "unknown", StringComparer.OrdinalIgnoreCase)
+                                    .GroupBy(i => i.Artist, StringComparer.OrdinalIgnoreCase)
                                     .Select(g =>
                                     {
                                         string md5 = (g.Key + "-md5").PadRight(32, '0')[..32];

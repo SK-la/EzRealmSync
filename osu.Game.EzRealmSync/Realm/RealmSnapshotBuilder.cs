@@ -78,7 +78,7 @@ namespace osu.Game.EzRealmSync.Realm
             {
                 ["Hash"] = b.Hash,
                 ["StarRating"] = b.StarRating.ToString("F2"),
-                ["Ruleset"] = b.Ruleset?.ShortName ?? string.Empty,
+                ["Ruleset"] = b.Ruleset.ShortName,
                 ["BeatmapSet"] = b.BeatmapSet?.Hash ?? string.Empty,
             })).ToList(),
         };
@@ -131,7 +131,7 @@ namespace osu.Game.EzRealmSync.Realm
                 ["Date"] = s.Date.ToString("g"),
                 ["TotalScore"] = s.TotalScore.ToString("N0"),
                 ["Accuracy"] = s.Accuracy.ToString("P2"),
-                ["Ruleset"] = s.Ruleset?.ShortName ?? string.Empty,
+                ["Ruleset"] = s.Ruleset.ShortName,
                 ["Beatmap"] = s.BeatmapInfo?.Hash ?? s.BeatmapHash,
             })).ToList(),
         };

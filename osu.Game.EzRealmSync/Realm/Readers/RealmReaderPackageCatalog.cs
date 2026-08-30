@@ -39,7 +39,7 @@ namespace osu.Game.EzRealmSync.Realm.Readers
                         Id = manifest.Id,
                         DisplayName = string.IsNullOrWhiteSpace(manifest.DisplayName) ? manifest.Id : manifest.DisplayName,
                         Profile = manifest.Profile,
-                        DiskSchemaVersions = manifest.DiskSchemaVersions ?? Array.Empty<int>(),
+                        DiskSchemaVersions = manifest.DiskSchemaVersions,
                         PackageDirectory = packageDirectory,
                         LibDirectory = libDirectory,
                     });

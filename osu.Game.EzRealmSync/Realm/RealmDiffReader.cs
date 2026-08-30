@@ -87,7 +87,7 @@ namespace osu.Game.EzRealmSync.Realm
                     Hash = beatmap.Hash,
                     Title = beatmap.Metadata.Title,
                     Artist = beatmap.Metadata.Artist,
-                    Ruleset = beatmap.Ruleset?.ShortName ?? string.Empty,
+                    Ruleset = beatmap.Ruleset.ShortName,
                     DifficultyName = beatmap.DifficultyName,
                 };
             }
@@ -104,7 +104,7 @@ namespace osu.Game.EzRealmSync.Realm
                     Hash = score.Hash,
                     Title = score.BeatmapInfo?.Metadata.Title ?? score.BeatmapHash,
                     Artist = score.BeatmapInfo?.Metadata.Artist ?? string.Empty,
-                    Ruleset = score.Ruleset?.ShortName ?? string.Empty,
+                    Ruleset = score.Ruleset.ShortName,
                     Date = score.Date,
                 };
             }
@@ -130,7 +130,7 @@ namespace osu.Game.EzRealmSync.Realm
             if (hashes.Count == 0)
                 return string.Empty;
 
-            var sorted = hashes.OrderBy(h => h, StringComparer.Ordinal).ToArray();
+            string[] sorted = hashes.OrderBy(h => h, StringComparer.Ordinal).ToArray();
             return string.Join("|", sorted);
         }
     }

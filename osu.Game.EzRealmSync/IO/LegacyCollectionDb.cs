@@ -148,7 +148,7 @@ namespace osu.Game.EzRealmSync.IO
 
     public sealed class LegacyCollectionDbEntry
     {
-        public LegacyCollectionDbEntry(string name, IReadOnlyList<string> beatmapMd5Hashes)
+        public LegacyCollectionDbEntry(string? name, IReadOnlyList<string>? beatmapMd5Hashes)
         {
             Name = name ?? string.Empty;
             BeatmapMd5Hashes = beatmapMd5Hashes ?? Array.Empty<string>();

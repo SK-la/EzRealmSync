@@ -74,6 +74,7 @@ namespace osu.EzRealmSync.Desktop.Helpers
             try
             {
                 object? current = item;
+
                 foreach (string segment in propertyPath.Split('.'))
                 {
                     if (current == null)
@@ -149,6 +150,7 @@ namespace osu.EzRealmSync.Desktop.Helpers
                     return;
 
                 var active = filters.Where(f => f.IsActive).ToList();
+
                 if (active.Count == 0)
                 {
                     view.Filter = null;
@@ -165,7 +167,7 @@ namespace osu.EzRealmSync.Desktop.Helpers
                 if (grid.ItemsSource == null)
                     yield break;
 
-                foreach (var item in grid.ItemsSource)
+                foreach (object? item in grid.ItemsSource)
                     yield return item;
             }
 
@@ -233,7 +235,7 @@ namespace osu.EzRealmSync.Desktop.Helpers
 
             public bool Matches(object item)
             {
-                string cell = getCellText(item) ?? string.Empty;
+                string cell = getCellText(item);
 
                 if (checkedValues is { Count: > 0 } && !checkedValues.Contains(cell))
                     return false;
@@ -286,6 +288,7 @@ namespace osu.EzRealmSync.Desktop.Helpers
                 stack.Children.Add(uiSearch);
 
                 WpfStackPanel? checksPanel = null;
+
                 if (showCheckboxes)
                 {
                     checksPanel = new WpfStackPanel { Margin = new Thickness(0, 0, 0, 8) };
@@ -341,12 +344,13 @@ namespace osu.EzRealmSync.Desktop.Helpers
 
                 applyBtn.Click += (_, _) =>
                 {
-                    searchText = uiSearch.Text?.Trim() ?? string.Empty;
+                    searchText = uiSearch.Text.Trim();
 
                     if (checksPanel != null)
                     {
                         var selected = new HashSet<string>(StringComparer.Ordinal);
-                        foreach (var child in checksPanel.Children)
+
+                        foreach (object? child in checksPanel.Children)
                         {
                             if (child is WpfCheckBox { IsChecked: true, Tag: string value })
                                 selected.Add(value);
@@ -400,6 +404,7 @@ namespace osu.EzRealmSync.Desktop.Helpers
                 try
                 {
                     object? resource = Application.Current.TryFindResource(resourceKey);
+
                     if (resource is SolidColorBrush solid)
                     {
                         var c = solid.Color;
@@ -423,13 +428,14 @@ namespace osu.EzRealmSync.Desktop.Helpers
                 showCheckboxes = true;
                 var seen = new HashSet<string>(StringComparer.Ordinal);
 
-                foreach (var item in host.EnumerateSourceItems())
+                foreach (object? item in host.EnumerateSourceItems())
                 {
-                    string cell = getCellText(item) ?? string.Empty;
+                    string cell = getCellText(item);
                     if (!seen.Add(cell))
                         continue;
 
                     distinctValues.Add(cell);
+
                     if (seen.Count > MaxDistinctCheckboxValues)
                     {
                         showCheckboxes = false;

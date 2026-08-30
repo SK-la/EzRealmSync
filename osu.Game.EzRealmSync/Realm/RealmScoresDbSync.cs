@@ -67,6 +67,7 @@ namespace osu.Game.EzRealmSync.Realm
                 return false;
 
             int mods = 0;
+
             try
             {
                 mods = (int)score.Ruleset.CreateInstance().ConvertToLegacyMods(score.Mods);
@@ -97,6 +98,7 @@ namespace osu.Game.EzRealmSync.Realm
                 : FormattableString.Invariant($"lazer-{score.RealmUser.Username}-{score.Date}").ComputeMD5Hash();
 
             bool perfect;
+
             try
             {
                 perfect = score.MaxCombo == score.GetMaximumAchievableCombo();
@@ -111,7 +113,7 @@ namespace osu.Game.EzRealmSync.Realm
                 GameplayMode = (byte)Math.Clamp(score.Ruleset.OnlineID, 0, 255),
                 Version = version,
                 BeatmapMd5 = beatmapMd5,
-                PlayerName = score.RealmUser.Username ?? string.Empty,
+                PlayerName = score.RealmUser.Username,
                 ReplayMd5 = replayMd5,
                 Count300 = (ushort)(score.GetCount300() ?? 0),
                 Count100 = (ushort)(score.GetCount100() ?? 0),

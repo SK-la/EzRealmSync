@@ -47,21 +47,20 @@ namespace osu.Game.EzRealmSync.Realm
 
         public static WorkerProcessResult Run(ProcessStartInfo psi, CancellationToken cancellationToken = default)
         {
-            using var process = Process.Start(psi)
-                                  ?? throw new InvalidOperationException("无法启动 Worker 进程。");
+            using var process = Process.Start(psi) ?? throw new InvalidOperationException("无法启动 Worker 进程。");
 
             using (cancellationToken.Register(() =>
-                   {
-                       try
-                       {
-                           if (!process.HasExited)
-                               process.Kill(entireProcessTree: true);
-                       }
-                       catch
-                       {
-                           // 取消路径忽略 kill 失败。
-                       }
-                   }))
+            {
+                try
+                {
+                    if (!process.HasExited)
+                        process.Kill(entireProcessTree: true);
+                }
+                catch
+                {
+                    // 取消路径忽略 kill 失败。
+                }
+            }))
             {
                 var stdoutTask = process.StandardOutput.ReadToEndAsync(cancellationToken);
                 var stderrTask = process.StandardError.ReadToEndAsync(cancellationToken);

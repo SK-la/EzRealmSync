@@ -213,7 +213,7 @@ namespace osu.Game.EzRealmSync.IO
 
     public sealed class LegacyScoresDbBeatmapGroup
     {
-        public LegacyScoresDbBeatmapGroup(string beatmapMd5, IReadOnlyList<LegacyScoresDbScore> scores)
+        public LegacyScoresDbBeatmapGroup(string? beatmapMd5, IReadOnlyList<LegacyScoresDbScore>? scores)
         {
             BeatmapMd5 = beatmapMd5 ?? string.Empty;
             Scores = scores ?? Array.Empty<LegacyScoresDbScore>();

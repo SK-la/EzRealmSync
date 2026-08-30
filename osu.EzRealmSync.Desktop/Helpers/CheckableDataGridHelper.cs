@@ -188,7 +188,7 @@ namespace osu.EzRealmSync.Desktop.Helpers
 
             var result = new List<T>();
 
-            foreach (var item in grid.SelectedItems)
+            foreach (object? item in grid.SelectedItems)
             {
                 if (item is T row)
                     result.Add(row);
