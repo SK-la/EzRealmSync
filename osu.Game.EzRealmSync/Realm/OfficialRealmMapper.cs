@@ -34,10 +34,13 @@ namespace osu.Game.EzRealmSync.Realm
         /// </summary>
         public static void NormalizeEzOnlyBeatmapFields(BeatmapInfo beatmap) => resetUnknownEzBeatmapMetadata(beatmap);
 
+        /// <summary>
+        /// 写入官方 schema 目标前：丢弃 Ez 扩展列（目标磁盘无对应列），归一为默认 Lazer。
+        /// </summary>
         public static void StripEzOnlyScoreFields(ScoreInfo score)
         {
-            score.ManiaHitMode = -1;
-            score.ManiaHealthMode = -1;
+            score.ManiaHitMode = 0;
+            score.ManiaHealthMode = 0;
         }
 
         public static void StripEzOnlyRulesetFields(RulesetInfo ruleset) => ruleset.LastAppliedXxySrVersion = 0;
