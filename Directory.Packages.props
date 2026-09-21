@@ -1,7 +1,8 @@
 <!--
-  中央包版本（CPM）。Dependabot 每日检查，仅两种 PR：
-  - ez2lazer：Framework/Game，CI 通过即合
-  - other-nuget：其余包同 PR，仅周五自动合
+  中央包版本（CPM）。Dependabot 每日检查 master，两组 PR：
+  - ez2lazer：Framework / Game，CI 通过即合
+  - other-nuget：其余包同 PR，CI 通过即合
+  Game.Resources 仅用于压掉 ez2lazer.Game 的传递依赖，不参与更新。
 -->
 <Project>
   <PropertyGroup>

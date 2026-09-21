@@ -15,6 +15,14 @@
     <PackageTags>osu ez2lazer realm sync</PackageTags>
   </PropertyGroup>
 
+  <!-- ez2lazer.Game 会传递带入 Game.Resources；本工具不需要皮肤/字体资源，全局压掉。 -->
+  <ItemGroup>
+    <PackageReference Include="ez2lazer.Game.Resources">
+      <ExcludeAssets>all</ExcludeAssets>
+      <PrivateAssets>all</PrivateAssets>
+    </PackageReference>
+  </ItemGroup>
+
   <ItemGroup>
     <EmbeddedResource Remove="Resources\**\*.*"/>
   </ItemGroup>
