@@ -19,7 +19,7 @@
 ### 1. 环境
 
 - Windows 10/11
-- 已安装 [.NET 8 Desktop Runtime](https://dotnet.microsoft.com/download/dotnet/8.0)（装过 Ez2Lazer 的一般已有）
+- 已安装 [.NET 10 Desktop Runtime](https://dotnet.microsoft.com/download/dotnet/10.0)（装过 Ez2Lazer 的一般已有）
 
 ### 2. 下载
 
@@ -95,7 +95,7 @@
 主程序自带**当前** Ez / 官方能力。若要从更旧的 Ez schema 只读同步：
 
 1. Release 包里已有 `readers/` 的 manifest 与 `scripts/Sync-ReaderLibs.ps1`  
-2. 在 **exe 目录**执行（需要本机有 .NET 8 **SDK**）：
+2. 在 **exe 目录**执行（需要本机有 .NET 10 **SDK**）：
 
 ```powershell
 pwsh scripts/Sync-ReaderLibs.ps1
@@ -123,7 +123,7 @@ pwsh scripts/Sync-ReaderLibs.ps1
 
 ### 构建与运行
 
-需要 **.NET 8 SDK**，解决方案：`EzRealmSync.sln`。
+需要 **.NET 10 SDK**，解决方案：`EzRealmSync.sln`。
 
 ```bash
 cd EzRealmSync

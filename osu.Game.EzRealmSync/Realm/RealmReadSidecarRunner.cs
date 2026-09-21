@@ -104,10 +104,10 @@ namespace osu.Game.EzRealmSync.Realm
                          Path.Combine(baseDir, "read-sidecar", "EzRealmSync.ReadSidecar.dll"),
                          Path.Combine(baseDir, "EzRealmSync.ReadSidecar.exe"),
                          Path.Combine(baseDir, "EzRealmSync.ReadSidecar.dll"),
-                         Path.Combine(baseDir, "..", "osu.Game.EzRealmSync.ReadSidecar", "bin", "Debug", "net8.0", "EzRealmSync.ReadSidecar.exe"),
-                         Path.Combine(baseDir, "..", "osu.Game.EzRealmSync.ReadSidecar", "bin", "Debug", "net8.0", "EzRealmSync.ReadSidecar.dll"),
-                         Path.Combine(baseDir, "..", "..", "osu.Game.EzRealmSync.ReadSidecar", "bin", "Debug", "net8.0", "EzRealmSync.ReadSidecar.exe"),
-                         Path.Combine(baseDir, "..", "..", "osu.Game.EzRealmSync.ReadSidecar", "bin", "Debug", "net8.0", "EzRealmSync.ReadSidecar.dll"),
+                         Path.Combine(baseDir, "..", "osu.Game.EzRealmSync.ReadSidecar", "bin", "Debug", "net10.0", "EzRealmSync.ReadSidecar.exe"),
+                         Path.Combine(baseDir, "..", "osu.Game.EzRealmSync.ReadSidecar", "bin", "Debug", "net10.0", "EzRealmSync.ReadSidecar.dll"),
+                         Path.Combine(baseDir, "..", "..", "osu.Game.EzRealmSync.ReadSidecar", "bin", "Debug", "net10.0", "EzRealmSync.ReadSidecar.exe"),
+                         Path.Combine(baseDir, "..", "..", "osu.Game.EzRealmSync.ReadSidecar", "bin", "Debug", "net10.0", "EzRealmSync.ReadSidecar.dll"),
                      })
             {
                 string full = Path.GetFullPath(candidate);

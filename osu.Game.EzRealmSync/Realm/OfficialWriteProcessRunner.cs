@@ -80,10 +80,10 @@ namespace osu.Game.EzRealmSync.Realm
                          Path.Combine(baseDir, "official-write", "EzRealmSync.OfficialWrite.dll"),
                          Path.Combine(baseDir, "EzRealmSync.OfficialWrite.exe"),
                          Path.Combine(baseDir, "EzRealmSync.OfficialWrite.dll"),
-                         Path.Combine(baseDir, "..", "osu.Game.EzRealmSync.OfficialWrite", "bin", "Debug", "net8.0", "EzRealmSync.OfficialWrite.exe"),
-                         Path.Combine(baseDir, "..", "osu.Game.EzRealmSync.OfficialWrite", "bin", "Debug", "net8.0", "EzRealmSync.OfficialWrite.dll"),
-                         Path.Combine(baseDir, "..", "..", "osu.Game.EzRealmSync.OfficialWrite", "bin", "Debug", "net8.0", "EzRealmSync.OfficialWrite.exe"),
-                         Path.Combine(baseDir, "..", "..", "osu.Game.EzRealmSync.OfficialWrite", "bin", "Debug", "net8.0", "EzRealmSync.OfficialWrite.dll"),
+                         Path.Combine(baseDir, "..", "osu.Game.EzRealmSync.OfficialWrite", "bin", "Debug", "net10.0", "EzRealmSync.OfficialWrite.exe"),
+                         Path.Combine(baseDir, "..", "osu.Game.EzRealmSync.OfficialWrite", "bin", "Debug", "net10.0", "EzRealmSync.OfficialWrite.dll"),
+                         Path.Combine(baseDir, "..", "..", "osu.Game.EzRealmSync.OfficialWrite", "bin", "Debug", "net10.0", "EzRealmSync.OfficialWrite.exe"),
+                         Path.Combine(baseDir, "..", "..", "osu.Game.EzRealmSync.OfficialWrite", "bin", "Debug", "net10.0", "EzRealmSync.OfficialWrite.dll"),
                      })
             {
                 string full = Path.GetFullPath(candidate);

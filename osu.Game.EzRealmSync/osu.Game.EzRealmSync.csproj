@@ -1,6 +1,6 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup Label="Project">
-    <TargetFramework>net8.0</TargetFramework>
+    <TargetFramework>net10.0</TargetFramework>
     <RootNamespace>osu.Game.EzRealmSync</RootNamespace>
     <Description>Ez Realm 同步契约与引擎；默认 ez2lazer.Game NuGet，本地 lib/ 需 -p:UseLocalOsuLibs=true。</Description>
     <CopyLocalLockFileAssemblies Condition="'$(UseLocalOsuLibs)' == 'true'">false</CopyLocalLockFileAssemblies>

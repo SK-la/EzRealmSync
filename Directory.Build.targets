@@ -20,8 +20,8 @@
 
   <!-- 构建 WinExe 时把 lib/*.dll 与引擎程序集复制到输出目录 -->
   <PropertyGroup>
-    <OfficialWriteOutputDir>$(MSBuildThisFileDirectory)osu.Game.EzRealmSync.OfficialWrite\bin\$(Configuration)\net8.0</OfficialWriteOutputDir>
-    <ReadSidecarOutputDir>$(MSBuildThisFileDirectory)osu.Game.EzRealmSync.ReadSidecar\bin\$(Configuration)\net8.0</ReadSidecarOutputDir>
+    <OfficialWriteOutputDir>$(MSBuildThisFileDirectory)osu.Game.EzRealmSync.OfficialWrite\bin\$(Configuration)\$(EzRealmSyncWorkerTfm)</OfficialWriteOutputDir>
+    <ReadSidecarOutputDir>$(MSBuildThisFileDirectory)osu.Game.EzRealmSync.ReadSidecar\bin\$(Configuration)\$(EzRealmSyncWorkerTfm)</ReadSidecarOutputDir>
   </PropertyGroup>
 
   <Target Name="CopyOfficialWriteWorkerToOutput"
@@ -161,7 +161,7 @@
   </Target>
 
   <ItemGroup Condition="'$(UseLocalOsuLibs)' == 'true'">
-    <EzRealmSyncEngineOutput Include="$(MSBuildThisFileDirectory)osu.Game.EzRealmSync\bin\$(Configuration)\net8.0\osu.Game.EzRealmSync.dll" />
+    <EzRealmSyncEngineOutput Include="$(MSBuildThisFileDirectory)osu.Game.EzRealmSync\bin\$(Configuration)\$(EzRealmSyncWorkerTfm)\osu.Game.EzRealmSync.dll" />
   </ItemGroup>
 
   <Target Name="CopyEzRealmSyncLibsToOutput"
@@ -187,7 +187,7 @@
           DependsOnTargets="ResolveProjectReferences"
           Condition="'$(OutputType)' == 'WinExe' AND '$(UseLocalOsuLibs)' == 'true'">
     <ItemGroup>
-      <_WpfStageDll Include="$(MSBuildThisFileDirectory)osu.Game.EzRealmSync\bin\$(Configuration)\net8.0\osu.Game.EzRealmSync.dll" />
+      <_WpfStageDll Include="$(MSBuildThisFileDirectory)osu.Game.EzRealmSync\bin\$(Configuration)\$(EzRealmSyncWorkerTfm)\osu.Game.EzRealmSync.dll" />
       <_WpfStageDll Include="$(EzRealmSyncLibDir)\Realm.dll" Condition="Exists('$(EzRealmSyncLibDir)\Realm.dll')" />
       <_WpfStageDll Include="$(EzRealmSyncLibDir)\osu.Game.dll" Condition="Exists('$(EzRealmSyncLibDir)\osu.Game.dll')" />
       <_WpfStageDll Include="$(EzRealmSyncLibDir)\osu.Framework.dll" Condition="Exists('$(EzRealmSyncLibDir)\osu.Framework.dll')" />
@@ -219,7 +219,7 @@
   <!-- dotnet build -t:SyncEzRealmLibs EzRealmSync.sln -->
   <PropertyGroup>
     <EzOsuGameProject>$(MSBuildThisFileDirectory)..\osu\osu.Game\osu.Game.csproj</EzOsuGameProject>
-    <EzOsuGamePublishStagingDir>$(MSBuildThisFileDirectory)obj\SyncEzRealmLibs\$(Configuration)\net8.0</EzOsuGamePublishStagingDir>
+    <EzOsuGamePublishStagingDir>$(MSBuildThisFileDirectory)obj\SyncEzRealmLibs\$(Configuration)\$(EzRealmSyncWorkerTfm)</EzOsuGamePublishStagingDir>
   </PropertyGroup>
 
   <Target Name="SyncEzRealmLibs"
