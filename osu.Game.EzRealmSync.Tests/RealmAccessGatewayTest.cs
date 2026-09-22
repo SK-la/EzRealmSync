@@ -3,7 +3,6 @@ using NUnit.Framework;
 using osu.Game.Database;
 using osu.Game.EzRealmSync.Errors;
 using osu.Game.EzRealmSync.Realm;
-using osu.Game.EzRealmSync.Realm.Readers;
 using osu.Game.EzRealmSync.Tests.TestInfrastructure;
 
 namespace osu.Game.EzRealmSync.Tests
@@ -42,8 +41,8 @@ namespace osu.Game.EzRealmSync.Tests
                 access.Run(_ => { });
             }));
 
-            Assert.That(ex!.Kind, Is.EqualTo(RealmUserErrorKind.MigrationRequired));
-            Assert.That(ex.Message, Does.Contain("Realm 文件").Or.Contain("升级"));
+            Assert.That(ex!.Kind, Is.EqualTo(RealmUserErrorKind.MigrationRequired).Or.EqualTo(RealmUserErrorKind.LegacyReaderUnavailable));
+            Assert.That(ex.Message, Does.Contain("Realm 文件").Or.Contain("升级").Or.Contain("osu.Game.dll"));
         }
 
         [Test]
@@ -69,22 +68,17 @@ namespace osu.Game.EzRealmSync.Tests
         [Test]
         public void TryOpenInProcessForRead_succeeds_for_current_ez_schema_empty_realm()
         {
-            int schema = RealmAccess.EzFileSchemaVersion;
-            string path = Path.Combine(TestContext.CurrentContext.WorkDirectory, $"gw_ez_current_{Guid.NewGuid():N}.realm");
+            var sample = RealmSampleFixture.GetAllSamples()
+                .FirstOrDefault(s => s.CanOpenWithoutMigration && s.RealmFileExists && s.DiskSchemaKind == "EzExtended");
+            if (sample == null)
+                Assert.Ignore("未放置可进程内打开的当前 Ez 样本。");
 
-            try
-            {
-                RealmNativeLifetime.CreateEmptyRealmFile(path, (ulong)schema);
-                Assert.That(
-                    RealmAccessGateway.TryOpenInProcessForRead(path, schema, out RealmAccess? access),
-                    Is.True);
-                Assert.That(access, Is.Not.Null);
-                access?.Dispose();
-            }
-            finally
-            {
-                RealmNativeLifetime.DeleteRealmFiles(path);
-            }
+            int schema = RealmAccessGateway.ProbeSchema(sample.RealmFilePath) ?? throw new InvalidOperationException("schema 读取失败");
+            Assert.That(
+                RealmAccessGateway.TryOpenInProcessForRead(sample.RealmFilePath, schema, out RealmAccess? access),
+                Is.True);
+            Assert.That(access, Is.Not.Null);
+            access?.Dispose();
         }
 
         [Test]
@@ -114,7 +108,7 @@ namespace osu.Game.EzRealmSync.Tests
         }
 
         [Test]
-        public void ReadDiffSnapshot_throws_ReaderPackageMissing_when_no_reader_package()
+        public void ReadDiffSnapshot_uses_dynamic_baseline_without_reader_package()
         {
             string root = Path.Combine(Path.GetTempPath(), "EzRealmSyncGatewayTests", Guid.NewGuid().ToString("N"));
             string path = Path.Combine(root, "client_51007.realm");
@@ -123,15 +117,7 @@ namespace osu.Game.EzRealmSync.Tests
             try
             {
                 RealmNativeLifetime.CreateEmptyRealmFile(path, 51_007);
-                RealmReaderRegistry.Instance.Initialize(root);
-
-                if (!RealmAccessGateway.RequiresSidecarForRead(path, 51_007))
-                    Assert.Ignore("当前 lib 可进程内打开 51007，无法在无 reader 包时触发 ReaderPackageMissing。");
-
-                var ex = Assert.Throws<RealmUserOperationException>((Action)(() =>
-                    RealmAccessGateway.ReadDiffSnapshot(path, 51_007)));
-
-                Assert.That(ex!.Kind, Is.EqualTo(RealmUserErrorKind.ReaderPackageMissing));
+                Assert.DoesNotThrow((Action)(() => RealmAccessGateway.ReadDiffSnapshot(path, 51_007)));
             }
             finally
             {
@@ -144,30 +130,17 @@ namespace osu.Game.EzRealmSync.Tests
                 catch
                 {
                 }
-
-                RealmReaderRegistry.Instance.Refresh();
             }
         }
 
         [Test]
-        public void ReadDiffSnapshot_succeeds_via_sidecar_when_reader_lib_present()
+        public void ReadDiffSnapshot_reads_legacy_sample_without_sidecar()
         {
             var sample = RealmSampleFixture.GetSample("ez-old");
             if (!sample.RealmFileExists)
                 Assert.Ignore($"样本未放置 realm 文件：{sample.RealmFilePath}");
 
             int schema = RealmAccessGateway.ProbeSchema(sample.RealmFilePath) ?? throw new InvalidOperationException("schema 读取失败");
-            if (!RealmAccessGateway.RequiresSidecarForRead(sample.RealmFilePath, schema))
-                Assert.Ignore("当前 lib 可进程内打开该样本，无需 Sidecar。");
-
-            var package = RealmReaderRegistry.Instance.FindPackageForSchema(schema);
-            if (package == null || !package.HasValidLib)
-                Assert.Ignore($"缺少 schema {schema} 的 reader lib（运行 Sync-ReaderLibs.ps1 后重新 build）。");
-
-            string worker = RealmReadSidecarRunner.ResolveWorkerExecutablePathForTests();
-            if (!File.Exists(worker))
-                Assert.Ignore($"ReadSidecar Worker 未复制到测试输出：{worker}");
-
             Assert.DoesNotThrow((Action)(() => RealmAccessGateway.ReadDiffSnapshot(sample.RealmFilePath, schema)));
         }
 

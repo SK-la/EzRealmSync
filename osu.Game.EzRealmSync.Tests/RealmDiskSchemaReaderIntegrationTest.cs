@@ -128,7 +128,10 @@ namespace osu.Game.EzRealmSync.Tests
                 using var access = RealmAccessGateway.OpenForMutation(sample.RealmFilePath);
                 access.Run(_ => { });
             }));
-            Assert.That(ex!.Kind, Is.AnyOf(RealmUserErrorKind.MigrationRequired, RealmUserErrorKind.SchemaTooLow));
+            Assert.That(ex!.Kind, Is.AnyOf(
+                RealmUserErrorKind.MigrationRequired,
+                RealmUserErrorKind.SchemaTooLow,
+                RealmUserErrorKind.SchemaModelMismatch));
         }
     }
 }

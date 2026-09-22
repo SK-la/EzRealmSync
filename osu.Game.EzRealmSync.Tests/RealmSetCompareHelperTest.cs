@@ -38,6 +38,14 @@ namespace osu.Game.EzRealmSync.Tests
         public void ToEntityKinds_maps_filter()
         {
             Assert.That(RealmSetCompareHelper.ToEntityKinds(EntityKindFilter.Score), Is.EqualTo(new[] { EntityKind.Score }));
+            Assert.That(RealmSetCompareHelper.ToEntityKinds(EntityKindFilter.Skin), Is.EqualTo(new[] { EntityKind.Skin }));
+            Assert.That(RealmSetCompareHelper.ToEntityKinds(EntityKindFilter.All), Is.EqualTo(new[]
+            {
+                EntityKind.BeatmapSet,
+                EntityKind.Beatmap,
+                EntityKind.BeatmapCollection,
+                EntityKind.Skin,
+            }));
         }
     }
 }
