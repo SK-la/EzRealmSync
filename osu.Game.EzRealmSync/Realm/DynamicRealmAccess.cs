@@ -136,7 +136,7 @@ namespace osu.Game.EzRealmSync.Realm
                 if (parameters.Length != 1)
                     continue;
 
-                if (!parameters[0].ParameterType.IsAssignableFrom(value.GetType())
+                if (!parameters[0].ParameterType.IsInstanceOfType(value)
                     && parameters[0].ParameterType != typeof(IRealmObjectBase)
                     && parameters[0].ParameterType != typeof(object))
                 {
@@ -159,7 +159,7 @@ namespace osu.Game.EzRealmSync.Realm
                     continue;
 
                 Type parameterType = method.GetParameters()[0].ParameterType;
-                if (!parameterType.IsAssignableFrom(value.GetType())
+                if (!parameterType.IsInstanceOfType(value)
                     && parameterType != typeof(IRealmObjectBase)
                     && parameterType != typeof(object))
                 {
@@ -191,11 +191,12 @@ namespace osu.Game.EzRealmSync.Realm
         {
             try
             {
-                foreach (var candidate in obj.ObjectSchema)
-                {
-                    if (string.Equals(candidate.Name, property, StringComparison.Ordinal))
-                        return candidate;
-                }
+                if (obj.ObjectSchema != null)
+                    foreach (var candidate in obj.ObjectSchema)
+                    {
+                        if (string.Equals(candidate.Name, property, StringComparison.Ordinal))
+                            return candidate;
+                    }
             }
             catch
             {

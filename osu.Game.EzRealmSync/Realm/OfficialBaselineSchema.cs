@@ -43,11 +43,11 @@ namespace osu.Game.EzRealmSync.Realm
             "ManiaHealthMode",
         ];
 
-        private static readonly Guid ez2_skin_id = new("fc372386-381d-4f8e-897a-c1d89ef39f9c");
-        private static readonly Guid ez_style_pro_skin_id = new("1E70839C-C0D8-4DBF-B747-0C08C89D412B");
-        private static readonly Guid sbi_skin_id = new("fc372386-381d-4f8e-897a-c1d89ef39f2c");
+        private static readonly Guid ez2_skin_id = new Guid("fc372386-381d-4f8e-897a-c1d89ef39f9c");
+        private static readonly Guid ez_style_pro_skin_id = new Guid("1E70839C-C0D8-4DBF-B747-0C08C89D412B");
+        private static readonly Guid sbi_skin_id = new Guid("fc372386-381d-4f8e-897a-c1d89ef39f2c");
 
-        private static readonly HashSet<string> ez_only_rulesets = new(StringComparer.OrdinalIgnoreCase)
+        private static readonly HashSet<string> ez_only_rulesets = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
         {
             "diva",
             "bms",
@@ -106,6 +106,6 @@ namespace osu.Game.EzRealmSync.Realm
                     "User", "Mods", "Statistics", "MaximumStatistics", "Pauses", "Rank", "Combo", "IsLegacyScore"),
             };
 
-        private static HashSet<string> names(params string[] values) => new(values, StringComparer.Ordinal);
+        private static HashSet<string> names(params string[] values) => new HashSet<string>(values, StringComparer.Ordinal);
     }
 }

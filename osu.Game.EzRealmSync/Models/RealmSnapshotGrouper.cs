@@ -10,13 +10,13 @@ namespace osu.Game.EzRealmSync.Models
             var result = new List<RealmGroupSnapshot>();
 
             foreach (var (entityKind, objectClass) in new[]
-            {
-                (EntityKind.BeatmapSet, RealmObjectClass.BeatmapSet),
-                (EntityKind.Beatmap, RealmObjectClass.Beatmap),
-                (EntityKind.Score, RealmObjectClass.Score),
-                (EntityKind.BeatmapCollection, RealmObjectClass.BeatmapCollection),
-                (EntityKind.Skin, RealmObjectClass.Skin),
-            })
+                     {
+                         (EntityKind.BeatmapSet, RealmObjectClass.BeatmapSet),
+                         (EntityKind.Beatmap, RealmObjectClass.Beatmap),
+                         (EntityKind.Score, RealmObjectClass.Score),
+                         (EntityKind.BeatmapCollection, RealmObjectClass.BeatmapCollection),
+                         (EntityKind.Skin, RealmObjectClass.Skin),
+                     })
             {
                 var group = classes.FirstOrDefault(c => c.Class == objectClass);
                 if (group == null)
@@ -48,16 +48,20 @@ namespace osu.Game.EzRealmSync.Models
                 Id = row.Id,
                 EntityKind = kind,
                 Title = title,
-                Artist = row.Cells.TryGetValue("Artist", out string? artist) ? artist : string.Empty,
-                Hash = row.Cells.TryGetValue("Hash", out string? hash) ? hash : row.Id.ToString("N"),
-                Ruleset = row.Cells.TryGetValue("Ruleset", out string? ruleset) ? ruleset
-                    : row.Cells.TryGetValue("ShortName", out string? shortName) ? shortName
-                    : "osu",
+                Artist = row.Cells.TryGetValue("Artist", out string? artist)
+                    ? artist
+                    : string.Empty,
+                Hash = row.Cells.TryGetValue("Hash", out string? hash)
+                    ? hash
+                    : row.Id.ToString("N"),
+                Ruleset = row.Cells.TryGetValue("Ruleset", out string? ruleset)
+                    ? ruleset
+                    : row.Cells.GetValueOrDefault("ShortName", "osu"),
                 Date = kind == EntityKind.Score
-                    && row.Cells.TryGetValue("Date", out string? date)
-                    && DateTimeOffset.TryParse(date, out var parsed)
-                        ? parsed
-                        : null,
+                       && row.Cells.TryGetValue("Date", out string? date)
+                       && DateTimeOffset.TryParse(date, out var parsed)
+                    ? parsed
+                    : null,
                 Extra = kind == EntityKind.BeatmapSet && row.Cells.TryGetValue("OnlineID", out string? onlineId)
                     ? $"OnlineID={onlineId}"
                     : null,

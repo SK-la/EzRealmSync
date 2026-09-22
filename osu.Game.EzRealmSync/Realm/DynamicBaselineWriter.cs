@@ -408,7 +408,7 @@ namespace osu.Game.EzRealmSync.Realm
 
             foreach (var beatmap in DynamicRealmAccess.All(session.Realm, OfficialBaselineSchema.Beatmap))
             {
-                if (DynamicRealmAccess.Get<bool>(beatmap, "Hidden") == true)
+                if (DynamicRealmAccess.Get<bool>(beatmap, "Hidden"))
                     continue;
 
                 string hash = DynamicRealmAccess.GetString(beatmap, "Hash");

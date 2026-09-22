@@ -80,7 +80,7 @@ namespace osu.Game.EzRealmSync.Realm
                     && DynamicRealmAccess.Find(session.Realm, OfficialBaselineSchema.Beatmap, id) is { } beatmap)
                 {
                     var parent = DynamicRealmAccess.Get<IRealmObjectBase>(beatmap, "BeatmapSet");
-                    if (parent != null && DynamicRealmAccess.Get<bool>(parent, "DeletePending") == true)
+                    if (parent != null && DynamicRealmAccess.Get<bool>(parent, "DeletePending"))
                         continue;
 
                     bundle.Beatmaps.Add(mapBeatmap(beatmap));
@@ -122,7 +122,7 @@ namespace osu.Game.EzRealmSync.Realm
 
             foreach (var set in DynamicRealmAccess.All(session.Realm, OfficialBaselineSchema.BeatmapSet))
             {
-                if (DynamicRealmAccess.Get<bool>(set, "DeletePending") == true)
+                if (DynamicRealmAccess.Get<bool>(set, "DeletePending"))
                     continue;
 
                 IRealmObjectBase? firstBeatmap = DynamicRealmAccess.EnumerateObjects(set, "Beatmaps").FirstOrDefault();
@@ -147,11 +147,11 @@ namespace osu.Game.EzRealmSync.Realm
 
             foreach (var beatmap in DynamicRealmAccess.All(session.Realm, OfficialBaselineSchema.Beatmap))
             {
-                if (DynamicRealmAccess.Get<bool>(beatmap, "Hidden") == true)
+                if (DynamicRealmAccess.Get<bool>(beatmap, "Hidden"))
                     continue;
 
                 var parent = DynamicRealmAccess.Get<IRealmObjectBase>(beatmap, "BeatmapSet");
-                if (parent != null && DynamicRealmAccess.Get<bool>(parent, "DeletePending") == true)
+                if (parent != null && DynamicRealmAccess.Get<bool>(parent, "DeletePending"))
                     continue;
 
                 var metadata = DynamicRealmAccess.Get<IRealmObjectBase>(beatmap, "Metadata");
@@ -197,7 +197,7 @@ namespace osu.Game.EzRealmSync.Realm
 
             foreach (var skin in DynamicRealmAccess.All(session.Realm, OfficialBaselineSchema.Skin))
             {
-                if (DynamicRealmAccess.Get<bool>(skin, "DeletePending") == true)
+                if (DynamicRealmAccess.Get<bool>(skin, "DeletePending"))
                     continue;
 
                 Guid id = DynamicRealmAccess.Get<Guid>(skin, "ID");
@@ -224,7 +224,7 @@ namespace osu.Game.EzRealmSync.Realm
 
             foreach (var score in DynamicRealmAccess.All(session.Realm, OfficialBaselineSchema.Score))
             {
-                if (DynamicRealmAccess.Get<bool>(score, "DeletePending") == true)
+                if (DynamicRealmAccess.Get<bool>(score, "DeletePending"))
                     continue;
 
                 var beatmap = DynamicRealmAccess.Get<IRealmObjectBase>(score, "BeatmapInfo");
@@ -315,7 +315,7 @@ namespace osu.Game.EzRealmSync.Realm
 
             foreach (var beatmap in DynamicRealmAccess.EnumerateObjects(set, "Beatmaps"))
             {
-                if (DynamicRealmAccess.Get<bool>(beatmap, "Hidden") == true)
+                if (DynamicRealmAccess.Get<bool>(beatmap, "Hidden"))
                     continue;
 
                 dto.Beatmaps.Add(mapBeatmap(beatmap));
@@ -329,7 +329,7 @@ namespace osu.Game.EzRealmSync.Realm
                     if (parent == null || DynamicRealmAccess.Get<Guid>(parent, "ID") != dto.ID)
                         continue;
 
-                    if (DynamicRealmAccess.Get<bool>(beatmap, "Hidden") == true)
+                    if (DynamicRealmAccess.Get<bool>(beatmap, "Hidden"))
                         continue;
 
                     dto.Beatmaps.Add(mapBeatmap(beatmap));
@@ -469,13 +469,12 @@ namespace osu.Game.EzRealmSync.Realm
             };
         }
 
-        private static OfficialRealmUserDto mapUser(IRealmObjectBase? user) =>
-            new()
-            {
-                OnlineID = DynamicRealmAccess.Get<int>(user, "OnlineID"),
-                Username = DynamicRealmAccess.GetString(user, "Username"),
-                CountryString = DynamicRealmAccess.GetString(user, "CountryCode"),
-            };
+        private static OfficialRealmUserDto mapUser(IRealmObjectBase? user) => new OfficialRealmUserDto
+        {
+            OnlineID = DynamicRealmAccess.Get<int>(user, "OnlineID"),
+            Username = DynamicRealmAccess.GetString(user, "Username"),
+            CountryString = DynamicRealmAccess.GetString(user, "CountryCode"),
+        };
 
         private static string fingerprint(IEnumerable<string> hashes)
         {

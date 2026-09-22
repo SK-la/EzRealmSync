@@ -96,7 +96,7 @@ namespace osu.Game.EzRealmSync.Realm
 
         public bool HasProperty(string className, string propertyName)
         {
-            if (!realm.Schema.TryFindObjectSchema(className, out var schema) || schema == null)
+            if (!realm.Schema.TryFindObjectSchema(className, out var schema))
                 return false;
 
             return schema.Any(p => string.Equals(p.Name, propertyName, StringComparison.Ordinal));

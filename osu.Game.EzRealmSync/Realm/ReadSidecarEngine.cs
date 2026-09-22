@@ -90,11 +90,11 @@ namespace osu.Game.EzRealmSync.Realm
                 return Array.Empty<EntityKind>();
 
             return kinds
-                .Select(k => Enum.TryParse<EntityKind>(k, out var parsed) ? parsed : (EntityKind?)null)
-                .Where(k => k != null)
-                .Select(k => k!.Value)
-                .Distinct()
-                .ToArray();
+                   .Select(k => Enum.TryParse<EntityKind>(k, out var parsed) ? parsed : (EntityKind?)null)
+                   .Where(k => k != null)
+                   .Select(k => k!.Value)
+                   .Distinct()
+                   .ToArray();
         }
     }
 }

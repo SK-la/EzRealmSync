@@ -124,7 +124,7 @@ namespace osu.Game.EzRealmSync.OfficialSchema
 
                 foreach (var setDto in sets)
                 {
-                    if (r.Find<BeatmapSetInfo>(setDto.ID) is BeatmapSetInfo existingSet)
+                    if (r.Find<BeatmapSetInfo>(setDto.ID) is { } existingSet)
                         r.Remove(existingSet);
 
                     var set = new BeatmapSetInfo
@@ -144,7 +144,7 @@ namespace osu.Game.EzRealmSync.OfficialSchema
 
                     foreach (var beatmapDto in setDto.Beatmaps)
                     {
-                        if (r.Find<BeatmapInfo>(beatmapDto.ID) is BeatmapInfo existingBeatmap)
+                        if (r.Find<BeatmapInfo>(beatmapDto.ID) is { } existingBeatmap)
                             r.Remove(existingBeatmap);
 
                         if (beatmapDto.Hidden)
@@ -194,7 +194,7 @@ namespace osu.Game.EzRealmSync.OfficialSchema
 
                 foreach (var scoreDto in scores)
                 {
-                    if (r.Find<ScoreInfo>(scoreDto.ID) is ScoreInfo existingScore)
+                    if (r.Find<ScoreInfo>(scoreDto.ID) is { } existingScore)
                         r.Remove(existingScore);
 
                     var score = new ScoreInfo
@@ -246,7 +246,7 @@ namespace osu.Game.EzRealmSync.OfficialSchema
 
                 foreach (var collectionDto in collections)
                 {
-                    if (r.Find<BeatmapCollection>(collectionDto.ID) is BeatmapCollection existingCollection)
+                    if (r.Find<BeatmapCollection>(collectionDto.ID) is { } existingCollection)
                         r.Remove(existingCollection);
 
                     var collection = new BeatmapCollection
