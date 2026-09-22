@@ -292,6 +292,7 @@ namespace osu.Game.EzRealmSync.Realm
             var metadata = DynamicRealmAccess.Get<IRealmObjectBase>(beatmap, "Metadata");
             var settings = DynamicRealmAccess.Get<IRealmObjectBase>(beatmap, "UserSettings");
             var ruleset = DynamicRealmAccess.Get<IRealmObjectBase>(beatmap, "Ruleset");
+            var parentSet = DynamicRealmAccess.Get<IRealmObjectBase>(beatmap, "BeatmapSet");
 
             return new OfficialBeatmapDto
             {
@@ -328,6 +329,7 @@ namespace osu.Game.EzRealmSync.Realm
                 LastPlayed = DynamicRealmAccess.Get<DateTimeOffset?>(beatmap, "LastPlayed"),
                 BeatDivisor = DynamicRealmAccess.Get<int>(beatmap, "BeatDivisor"),
                 EditorTimestamp = DynamicRealmAccess.Get<double?>(beatmap, "EditorTimestamp"),
+                BeatmapSetID = parentSet == null ? Guid.Empty : DynamicRealmAccess.Get<Guid>(parentSet, "ID"),
             };
         }
 

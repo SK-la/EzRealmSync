@@ -135,6 +135,9 @@ namespace osu.Game.EzRealmSync.Contracts
         public int BeatDivisor { get; set; }
 
         public double? EditorTimestamp { get; set; }
+
+        /// <summary>所属谱面集 ID；单独同步难度时用来在目标库挂回父集合（空表示源库中该难度无归属）。</summary>
+        public Guid BeatmapSetID { get; set; }
     }
 
     public sealed class OfficialBeatmapMetadataDto

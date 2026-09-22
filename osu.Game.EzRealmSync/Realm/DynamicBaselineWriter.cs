@@ -136,11 +136,14 @@ namespace osu.Game.EzRealmSync.Realm
                     session.Realm.Remove(existingBeatmap);
 
                 var beatmap = createBeatmap(session, beatmapDto);
-                DynamicRealmAccess.Set(beatmap, OfficialBaselineSchema.Beatmap, "BeatmapSet", set);
-                DynamicRealmAccess.AddToList(DynamicRealmAccess.GetListRaw(set, "Beatmaps"), beatmap);
+                linkBeatmapToSet(session, beatmap, set);
             }
         }
 
+        /// <summary>
+        /// 单独同步难度：目标已有父谱面集时补齐/更新该难度；父集合缺失则报错（与 typed 路径同语义），
+        /// 不做「写了个没人引用的孤儿难度」。
+        /// </summary>
         private static bool upsertStandaloneBeatmap(DynamicRealmSession session, OfficialBeatmapDto dto)
         {
             if (!session.HasClass(OfficialBaselineSchema.Beatmap))
@@ -149,14 +152,42 @@ namespace osu.Game.EzRealmSync.Realm
             var existing = DynamicRealmAccess.Find(session.Realm, OfficialBaselineSchema.Beatmap, dto.ID);
             if (existing != null)
             {
-                var parent = DynamicRealmAccess.Get<IRealmObjectBase>(existing, "BeatmapSet");
                 writeBeatmapFields(session, existing, dto);
-                if (parent != null)
-                    DynamicRealmAccess.Set(existing, OfficialBaselineSchema.Beatmap, "BeatmapSet", parent);
+
+                if (dto.BeatmapSetID != Guid.Empty
+                    && DynamicRealmAccess.Find(session.Realm, OfficialBaselineSchema.BeatmapSet, dto.BeatmapSetID) is { } targetParent)
+                {
+                    linkBeatmapToSet(session, existing, targetParent);
+                }
+
                 return true;
             }
 
-            return false;
+            if (dto.BeatmapSetID == Guid.Empty
+                || DynamicRealmAccess.Find(session.Realm, OfficialBaselineSchema.BeatmapSet, dto.BeatmapSetID) is not { } parent)
+            {
+                throw new InvalidOperationException(
+                    $"目标库中不存在难度 {dto.ID} 所属的谱面集，请先同步谱面集（或改为选择整个谱面集）。");
+            }
+
+            var created = createBeatmap(session, dto);
+            linkBeatmapToSet(session, created, parent);
+            return true;
+        }
+
+        private static void linkBeatmapToSet(DynamicRealmSession session, IRealmObjectBase beatmap, IRealmObjectBase set)
+        {
+            DynamicRealmAccess.Set(beatmap, OfficialBaselineSchema.Beatmap, "BeatmapSet", set);
+
+            object? list = DynamicRealmAccess.GetListRaw(set, "Beatmaps");
+            if (list == null)
+                return;
+
+            Guid id = DynamicRealmAccess.Get<Guid>(beatmap, "ID");
+            if (DynamicRealmAccess.EnumerateObjects(set, "Beatmaps").Any(existing => DynamicRealmAccess.Get<Guid>(existing, "ID") == id))
+                return;
+
+            DynamicRealmAccess.AddToList(list, beatmap);
         }
 
         private static IRealmObjectBase createBeatmap(DynamicRealmSession session, OfficialBeatmapDto dto)
