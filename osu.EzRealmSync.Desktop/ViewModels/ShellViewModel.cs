@@ -111,7 +111,6 @@ namespace osu.EzRealmSync.Desktop.ViewModels
             ConvertFixRealmOfficialCommand = createAsyncCommand(
                 () => presenter.ConvertSelectedFixRealmToOfficialAsync(),
                 () => !IsBusy && CanUseFixAndExport && CanUseFixConvertPrimary);
-            UpgradeFixRealmSchemaCommand = createAsyncCommand(() => presenter.UpgradeSelectedFixRealmSchemaAsync(), () => !IsBusy && CanUseFixAndExport);
             ToggleFixSelectAllCommand = new RelayCommand(presenter.ToggleFixSelectAll);
             LoadExportCatalogCommand = createAsyncCommand(() => presenter.LoadExportCatalogAsync(), () => !IsBusy);
             ExportSelectedCommand = createAsyncCommand(() => presenter.ExportSelectedAsync(), () => !IsBusy);
@@ -324,7 +323,6 @@ namespace osu.EzRealmSync.Desktop.ViewModels
         public ICommand ApplyFixSelectedCommand { get; }
         public ICommand ApplyAllFixesCommand { get; }
         public ICommand ConvertFixRealmOfficialCommand { get; }
-        public ICommand UpgradeFixRealmSchemaCommand { get; }
         public ICommand ToggleFixSelectAllCommand { get; }
         public ICommand LoadExportCatalogCommand { get; }
         public ICommand ExportSelectedCommand { get; }

@@ -25,11 +25,5 @@ namespace osu.Game.EzRealmSync.Abstractions
             string? backupDirectory = null,
             IProgress<ScanProgress>? progress = null,
             CancellationToken cancellationToken = default);
-
-        Task<RealmSchemaUpgradeResult> UpgradeSchemaToLatestAsync(
-            string realmId,
-            string? backupDirectory = null,
-            IProgress<ScanProgress>? progress = null,
-            CancellationToken cancellationToken = default);
     }
 }

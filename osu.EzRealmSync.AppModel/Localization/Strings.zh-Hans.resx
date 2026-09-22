@@ -127,7 +127,7 @@
   <data name="StatusNoRealmRegistered" xml:space="preserve"><value>在 {0} 发现 .realm 但未能注册到列表，请查看 lib/osu.Game.dll 或关闭 UI 测试后重试</value></data>
   <data name="StatusFilesFolderRequired" xml:space="preserve"><value>该目录下缺少 files/。请选择含 *.realm 与 files/ 的数据根目录（所有 Realm 共用 files/）。</value></data>
   <data name="StatusStorageReady" xml:space="preserve"><value>已发现 {0} 个 Realm；共享文件库：{1}</value></data>
-  <data name="FixRequiresFilesHint" xml:space="preserve"><value>修复与导出使用导入页数据目录下的共享 files/ 文件夹。</value></data>
+  <data name="FixRequiresFilesHint" xml:space="preserve"><value>修复与导出使用导入页数据目录下的共享 files/ 文件夹。本工具不会改动 Realm 文件的版本号：库版本比本工具支持的旧时，请先用 Ez2Lazer 客户端打开一次，让游戏完成迁移。</value></data>
   <data name="FixScan" xml:space="preserve"><value>扫描问题</value></data>
   <data name="FixApplySelected" xml:space="preserve"><value>修复选中</value></data>
   <data name="FixApplyAll" xml:space="preserve"><value>全部修复</value></data>
@@ -226,19 +226,14 @@
   <data name="FixConfirmTitle" xml:space="preserve"><value>确认修复</value></data>
   <data name="FixConvertOfficial" xml:space="preserve"><value>转回官方版</value></data>
   <data name="FixConvertOfficialWithUpstream" xml:space="preserve"><value>转回官方版（官方 {0}）</value></data>
-  <data name="FixUpgradeSchema" xml:space="preserve"><value>升级 Realm 文件</value></data>
-  <data name="FixUpgradeSchemaConfirm" xml:space="preserve"><value>将先备份，再升级所选 Realm 文件（目标版本 {0}）。备份目录：{1}。请先关闭游戏。是否继续？</value></data>
-  <data name="FixUpgradeSchemaTitle" xml:space="preserve"><value>升级 Realm 文件</value></data>
   <data name="FixConvertOfficialConfirm" xml:space="preserve"><value>将把这整份 Ez 库收窄为官方 {0} 的 client.realm（覆盖原文件，原件先备份到 {1}）。官方不认识的 Ez 表与 Ez 列会从文件里永久删除，只能从备份找回。schema 来源：{2}。是否继续？</value></data>
   <data name="FixConvertOfficialBackupBeside" xml:space="preserve"><value>同目录（文件名加时间戳的副本）</value></data>
   <data name="FixConvertOfficialTitle" xml:space="preserve"><value>转回官方版</value></data>
   <data name="StatusFixConvertedOfficial" xml:space="preserve"><value>已收窄为官方 client.realm：{0} → 版本 {1}（备份：{2}，搬运 {3} 行）</value></data>
   <data name="StatusFixConvertedOfficialDropped" xml:space="preserve"><value>已删除 Ez 表 {0} 张、Ez 列 {1} 列</value></data>
-  <data name="StatusFixSchemaUpgraded" xml:space="preserve"><value>已升级 Realm 文件：{0}（{1} → {2}，备份：{3}）</value></data>
-  <data name="StatusFixSchemaAlreadyLatest" xml:space="preserve"><value>{0} 已是当前 dll 支持的最新版本（{1}）。备份：{2}</value></data>
   <data name="ErrorConvertOfficialRequiresEz" xml:space="preserve"><value>「转回官方版」仅适用于 Ez 扩展的 Realm 文件。</value></data>
   <data name="ErrorConvertOfficialNoUpstream" xml:space="preserve"><value>无法从版本号 {0} 判断该收窄到哪个官方版本。</value></data>
-  <data name="ErrorMigrationRequired" xml:space="preserve"><value>无法修改这份 Realm 文件：版本过旧。请到「修复」页点击「升级 Realm 文件」。</value></data>
+  <data name="ErrorMigrationRequired" xml:space="preserve"><value>无法修改这份 Realm 文件：版本对本工具过旧。请先用 Ez2Lazer 客户端打开一次，让游戏完成迁移后再试。</value></data>
   <data name="ErrorFileInUse" xml:space="preserve"><value>文件正在被占用。请先关闭 osu!/Ez2Lazer 后重试。</value></data>
   <data name="ErrorPathConflict" xml:space="preserve"><value>路径冲突：{0}</value></data>
   <data name="ErrorLegacyReaderUnavailable" xml:space="preserve"><value>缺少对应版本的 osu.Game.dll，无法打开这份 Realm 文件。请先升级 Realm 文件，或更新本工具后再试。</value></data>
