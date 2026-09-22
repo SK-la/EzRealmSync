@@ -1927,6 +1927,7 @@ namespace osu.EzRealmSync.AppModel
             EntityKindFilter.Beatmap => Loc.Get("EntityBeatmap"),
             EntityKindFilter.Score => Loc.Get("EntityScore"),
             EntityKindFilter.BeatmapCollection => Loc.Get("EntityBeatmapCollection"),
+            EntityKindFilter.Skin => Loc.Get("EntitySkin"),
             _ => filter.ToString(),
         };
 

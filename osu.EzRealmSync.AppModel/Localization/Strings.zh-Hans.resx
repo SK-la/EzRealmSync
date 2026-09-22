@@ -92,6 +92,7 @@
   <data name="EntityBeatmap" xml:space="preserve"><value>难度</value></data>
   <data name="EntityScore" xml:space="preserve"><value>成绩</value></data>
   <data name="EntityBeatmapCollection" xml:space="preserve"><value>收藏夹</value></data>
+  <data name="EntitySkin" xml:space="preserve"><value>皮肤</value></data>
   <data name="CtxExport" xml:space="preserve"><value>导出文件…</value></data>
   <data name="CtxExportCollectionDb" xml:space="preserve"><value>导出合集 (collection.db)…</value></data>
   <data name="CtxImportCollectionDb" xml:space="preserve"><value>导入合集 (collection.db)…</value></data>

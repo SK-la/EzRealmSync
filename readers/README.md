@@ -1,6 +1,6 @@
 # EzRealmSync Reader 包
 
-当内置 NuGet 无法进程内打开 **Ez legacy** Realm 时，只读路径经 Gateway 选用 reader 包，通过 **ReadSidecar** 子进程打开。
+当数据页要用完整 Ez 模型打开 **Ez legacy** Realm 时，只读路径经 Gateway 选用 reader 包，通过 **ReadSidecar** 子进程打开。**同步不走本目录**，也不用这些 DLL 打开用户库。
 
 **官方库（schema &lt; 1000）不走本目录**——一律 `official-write/` + OfficialSchema。
 

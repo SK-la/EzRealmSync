@@ -92,6 +92,7 @@
   <data name="EntityBeatmap" xml:space="preserve"><value>Beatmaps</value></data>
   <data name="EntityScore" xml:space="preserve"><value>Scores</value></data>
   <data name="EntityBeatmapCollection" xml:space="preserve"><value>Collections</value></data>
+  <data name="EntitySkin" xml:space="preserve"><value>Skins</value></data>
   <data name="CtxExport" xml:space="preserve"><value>Export files…</value></data>
   <data name="CtxExportCollectionDb" xml:space="preserve"><value>Export collection.db…</value></data>
   <data name="CtxImportCollectionDb" xml:space="preserve"><value>Import collection.db…</value></data>

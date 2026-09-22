@@ -1,7 +1,7 @@
 # OfficialSchema 镜像
 
 与 ppy 官方 `client.realm` 对齐的 Realm 模型，**不含 Ez 扩展列**。  
-仅由 `official-write/` Worker 加载；**主进程不得引用本程序集**（与 Ez `osu.Game` 的 `[MapTo]` 冲突）。
+仅由 `official-write/` Worker 与测试夹具加载；**主进程同步不得引用本程序集打开用户库**（与 Ez `osu.Game` 的 `[MapTo]` 冲突）。日常 A/B 同步走 DynamicRealm 官方基线列。
 
 | 对齐 ppy upstream | 对象类型 |
 |-------------------|----------|
