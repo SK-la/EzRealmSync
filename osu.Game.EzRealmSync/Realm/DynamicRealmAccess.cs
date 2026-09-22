@@ -191,12 +191,15 @@ namespace osu.Game.EzRealmSync.Realm
         {
             try
             {
-                if (obj.ObjectSchema != null)
-                    foreach (var candidate in obj.ObjectSchema)
+                // 要取到局部：连写两次 obj.ObjectSchema 时编译器无法证明第二次非空（CS8602）。
+                if (obj.ObjectSchema is { } schema)
+                {
+                    foreach (var candidate in schema)
                     {
                         if (string.Equals(candidate.Name, property, StringComparison.Ordinal))
                             return candidate;
                     }
+                }
             }
             catch
             {
