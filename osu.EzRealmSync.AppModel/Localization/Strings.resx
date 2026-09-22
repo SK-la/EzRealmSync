@@ -230,6 +230,7 @@
   <data name="FixUpgradeSchemaConfirm" xml:space="preserve"><value>This will back up, then upgrade the selected Realm file (target version {0}). Backup directory: {1}. Close the game first. Continue?</value></data>
   <data name="FixUpgradeSchemaTitle" xml:space="preserve"><value>Upgrade Realm file</value></data>
   <data name="FixConvertOfficialConfirm" xml:space="preserve"><value>This narrows this Ez library into an official {0} client.realm (overwrites this file; the original is backed up to {1}). Ez-only tables and columns are deleted permanently from the file — recoverable only from the backup. Schema source: {2}. Continue?</value></data>
+  <data name="FixConvertOfficialBackupBeside" xml:space="preserve"><value>the same folder (timestamped copy of the file)</value></data>
   <data name="FixConvertOfficialTitle" xml:space="preserve"><value>Convert to official</value></data>
   <data name="StatusFixConvertedOfficial" xml:space="preserve"><value>Narrowed to official client.realm: {0} → version {1} (backup: {2}, copied {3} row(s))</value></data>
   <data name="StatusFixConvertedOfficialDropped" xml:space="preserve"><value>Removed {0} Ez table(s) and {1} Ez column(s)</value></data>

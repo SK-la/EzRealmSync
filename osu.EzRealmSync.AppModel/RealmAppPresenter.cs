@@ -1135,7 +1135,7 @@ namespace osu.EzRealmSync.AppModel
 
             if (!OfficialSchemaSourceResolver.TryFromSnapshots(upstream, out OfficialSchemaSource? official, out string? sourceError))
             {
-                runOnUi(() => StatusMessage.Value = sourceError);
+                runOnUi(() => StatusMessage.Value = sourceError ?? string.Empty);
 
                 if (PickRealmPathAsync == null)
                     return;
@@ -1158,13 +1158,16 @@ namespace osu.EzRealmSync.AppModel
                 }
             }
 
-            string backupDir = string.IsNullOrWhiteSpace(BackupDirectory.Value)
-                ? EzRealmSyncDefaults.DefaultBackupDirectory
-                : BackupDirectory.Value;
+            // 备份目录按设置为准；设置为空时不替它兜底——服务会退化为「同目录 + 文件名加时间戳后缀」。
+            string backupDir = BackupDirectory.Value.Trim();
 
             if (ConfirmAsync != null)
             {
-                string message = Loc.Format("FixConvertOfficialConfirm", official!.UpstreamVersion, backupDir, official.Description);
+                string backupTarget = string.IsNullOrEmpty(backupDir)
+                    ? Loc.Get("FixConvertOfficialBackupBeside")
+                    : backupDir;
+
+                string message = Loc.Format("FixConvertOfficialConfirm", official!.UpstreamVersion, backupTarget, official.Description);
 
                 if (!await ConfirmAsync(message, Loc.Get("FixConvertOfficialTitle"), true).ConfigureAwait(false))
                     return;

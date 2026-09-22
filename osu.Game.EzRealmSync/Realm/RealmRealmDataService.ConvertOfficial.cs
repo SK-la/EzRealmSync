@@ -50,9 +50,7 @@ namespace osu.Game.EzRealmSync.Realm
                 throw new RealmUserOperationException(RealmUserErrorKind.FileInUse, guardError);
 
             progress?.Report(new ScanProgress { Progress = 0.05, Message = "正在创建自动备份…" });
-
-            string backupDir = string.IsNullOrWhiteSpace(backupDirectory) ? EzRealmSyncDefaults.DefaultBackupDirectory : backupDirectory;
-            string backupPath = RealmFileBackup.CreateTimestampedCopy(sourcePath, backupDir);
+            string backupPath = createBackupOf(sourcePath, backupDirectory);
 
             string tempRoot = EzRealmSyncDataPaths.CreateTempSubdirectory("official-convert");
 
@@ -90,8 +88,26 @@ namespace osu.Game.EzRealmSync.Realm
             }
         }
 
-        private static OfficialSchemaSource resolveOfficialSource(int upstream, string? officialSchemaSourcePath)
+        /// <summary>
+        /// 收窄前的自动备份。配置了备份目录就进那里（时间戳命名，沿用全工具的备份规范）；
+        /// 没配置则退化为「同目录 + 文件名加时间戳后缀」——用户明确要求"没设置备份文件夹时也要留一份原件"，
+        /// 而覆盖是不可逆的，所以这条退路不能省。
+        /// </summary>
+        private static string createBackupOf(string sourcePath, string? backupDirectory)
         {
+            if (!string.IsNullOrWhiteSpace(backupDirectory))
+                return RealmFileBackup.CreateTimestampedCopy(sourcePath, backupDirectory);
+
+            string stamp = DateTimeOffset.Now.ToString("yyyyMMdd_HHmmss");
+            string beside = Path.Combine(
+                Path.GetDirectoryName(sourcePath)!,
+                $"{Path.GetFileNameWithoutExtension(sourcePath)}_ezbackup_{stamp}{Path.GetExtension(sourcePath)}");
+
+            File.Copy(sourcePath, beside, overwrite: false);
+            return beside;
+        }
+
+        private static OfficialSchemaSource resolveOfficialSource(int upstream, string? officialSchemaSourcePath)        {
             if (!string.IsNullOrWhiteSpace(officialSchemaSourcePath))
                 return OfficialSchemaSourceResolver.FromFile(officialSchemaSourcePath, upstream);
 
