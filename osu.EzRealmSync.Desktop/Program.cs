@@ -17,7 +17,7 @@ namespace osu.EzRealmSync.Desktop
 
             var settings = AppSettingsStore.Load();
 
-            EzRealmSyncLog.Info($"Backend={(EzRealmSyncBackend.IsRealBackendCompiled ? "real" : "stub")}");
+            EzRealmSyncLog.Info("EzRealmSync starting");
 
             var options = EzRealmSyncLaunchOptions.Parse(args);
             Loc.SetLanguage(AppLanguage.ZhHans);

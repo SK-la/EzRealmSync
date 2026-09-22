@@ -64,8 +64,6 @@ namespace osu.Game.EzRealmSync
 
         public static string RealmPipeDirectory => Path.Combine(TempDirectory, "lazer");
 
-        public static string DefaultRuntimeLibDirectory => ApplicationRoot;
-
         public static void EnsureStandardDirectories()
         {
             Directory.CreateDirectory(BackupsDirectory);

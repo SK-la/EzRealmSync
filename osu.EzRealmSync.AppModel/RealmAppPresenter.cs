@@ -53,7 +53,6 @@ namespace osu.EzRealmSync.AppModel
 
             services.SetUiTestMode(initialUiTest, force: true);
             UiTestMode.Value = initialUiTest;
-            BackendKind = services.BackendKind;
             StatusMessage.Value = resolveBackendStatusMessage();
             loadingSettings = false;
 
@@ -165,8 +164,6 @@ namespace osu.EzRealmSync.AppModel
         public Bindable<SyncWriteEndpoint> SyncWriteTarget { get; } = new Bindable<SyncWriteEndpoint>(SyncWriteEndpoint.B);
 
         public BindableBool UiTestMode { get; } = new BindableBool();
-
-        public EzRealmSyncBackendKind BackendKind { get; private set; }
 
         public Bindable<EntityKindFilter> EntityFilter { get; } = new Bindable<EntityKindFilter>();
         public Bindable<DiffCategory> CurrentCategory { get; } = new Bindable<DiffCategory>();
@@ -1643,16 +1640,10 @@ namespace osu.EzRealmSync.AppModel
             }
 
             services.SetUiTestMode(uiTest);
-            BackendKind = services.BackendKind;
             clearSessionState();
             StatusMessage.Value = uiTest
                 ? Loc.Get("StatusUiTest")
-                : BackendKind switch
-                {
-                    EzRealmSyncBackendKind.Real => Loc.Get("StatusBackendSwitchedReal"),
-                    EzRealmSyncBackendKind.Stub => Loc.Get("StatusMissingLib"),
-                    _ => Loc.Get("StatusReady"),
-                };
+                : Loc.Get("StatusBackendSwitchedReal");
 
             LabelsChanged?.Invoke();
             updateWorkspaceCapabilities();

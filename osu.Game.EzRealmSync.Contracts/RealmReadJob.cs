@@ -1,14 +1,8 @@
 namespace osu.Game.EzRealmSync.Contracts
 {
-    /// <summary>ReadSidecar Worker 输入：按 reader lib pinned 只读 Diff 快照。</summary>
+    /// <summary>OfficialWrite Worker 输入：以 pinned disk schema 只读 Diff 快照。</summary>
     public sealed class RealmReadJob
     {
-        /// <summary>reader 包内 <c>lib/</c> 绝对路径（薄切片，通常仅 osu.Game.dll）。</summary>
-        public required string ReaderLibDirectory { get; set; }
-
-        /// <summary>profile 共享传递依赖目录（official → readers/_shared/official/lib；ez → host lib）。</summary>
-        public string? SharedLibDirectory { get; set; }
-
         public required string RealmFilePath { get; set; }
 
         public int PinnedDiskSchemaVersion { get; set; }

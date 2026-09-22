@@ -5,29 +5,26 @@ using System.Runtime.Loader;
 namespace osu.Game.EzRealmSync.Runtime
 {
     /// <summary>
-    /// 解析产品进程的托管/原生运行时依赖（osu.Framework、Realm 与 Realm 原生 realm-wrappers）。
+    /// 解析产品进程的托管/原生运行时依赖（osu.Framework、Realm 与 Realm 原生 <c>realm-wrappers</c>）。
     /// <para>
-    /// 产品进程不加载 <c>osu.Game.dll</c>：Realm 读写全走 DynamicRealm，官方产物的写出交给
-    /// OfficialWrite Worker（见 docs/DATA-OPERATIONS.zh.md）。
+    /// 产品进程不加载 <c>osu.Game.dll</c>（读写全走 DynamicRealm，官方产物由 OfficialWrite Worker 写出），
+    /// 所以这里只预载框架与 Realm，不碰 osu.Game。
     /// </para>
     /// </summary>
     public static class EzRealmSyncRuntimeLibLoader
     {
         private static bool handlersRegistered;
 
-        public static string? RuntimeLibDirectory { get; private set; }
+        /// <summary>依赖所在目录；默认即进程目录（发布布局为平铺 + <c>runtimes/&lt;rid&gt;/native</c>）。</summary>
+        public static string RuntimeLibDirectory { get; private set; } = AppContext.BaseDirectory;
 
+        /// <param name="runtimeLibDirectoryOverride">仅测试使用：指定夹具目录，绕过进程目录。</param>
         public static void Install(string? runtimeLibDirectoryOverride = null)
         {
             if (!string.IsNullOrWhiteSpace(runtimeLibDirectoryOverride) && Directory.Exists(runtimeLibDirectoryOverride))
                 RuntimeLibDirectory = Path.GetFullPath(runtimeLibDirectoryOverride);
-            else if (RuntimeLibDirectory == null)
-                RuntimeLibDirectory = EzRealmSyncBackend.ResolveRuntimeLibDirectory();
 
             ensureHandlersRegistered();
-
-            if (RuntimeLibDirectory == null)
-                return;
 
             foreach (string name in preloadOrder)
                 tryLoadManaged(name);
@@ -71,7 +68,7 @@ namespace osu.Game.EzRealmSync.Runtime
                 ? assemblyName
                 : assemblyName + ".dll";
 
-            foreach (string directory in probeManagedDirectories())
+            foreach (string directory in probeDirectories())
             {
                 string path = Path.Combine(directory, fileName);
                 if (!File.Exists(path))
@@ -94,53 +91,32 @@ namespace osu.Game.EzRealmSync.Runtime
             return null;
         }
 
-        private static IEnumerable<string> probeManagedDirectories()
-        {
-            if (RuntimeLibDirectory != null)
-                yield return RuntimeLibDirectory;
-
-            yield return AppContext.BaseDirectory;
-
-            string parentHost = Path.GetFullPath(Path.Combine(AppContext.BaseDirectory, ".."));
-            if (File.Exists(Path.Combine(parentHost, "EzRealmSync.exe")))
-                yield return parentHost;
-        }
-
         private static string? resolveNativeLibraryPath(string libraryName)
         {
             string fileName = libraryName.EndsWith(".dll", StringComparison.OrdinalIgnoreCase)
                 ? libraryName
                 : libraryName + ".dll";
 
-            foreach (string directory in probeNativeDirectories())
+            string rid = resolveRuntimeIdentifier();
+
+            foreach (string directory in probeDirectories())
             {
-                string path = Path.Combine(directory, fileName);
-                if (File.Exists(path))
-                    return path;
+                foreach (string candidate in new[] { Path.Combine(directory, "runtimes", rid, "native", fileName), Path.Combine(directory, fileName) })
+                {
+                    if (File.Exists(candidate))
+                        return candidate;
+                }
             }
 
             return null;
         }
 
-        private static IEnumerable<string> probeNativeDirectories()
+        private static IEnumerable<string> probeDirectories()
         {
-            string rid = resolveRuntimeIdentifier();
+            yield return RuntimeLibDirectory;
 
-            if (RuntimeLibDirectory != null)
-            {
-                yield return Path.Combine(RuntimeLibDirectory, "runtimes", rid, "native");
-                yield return RuntimeLibDirectory;
-            }
-
-            yield return Path.Combine(AppContext.BaseDirectory, "runtimes", rid, "native");
-            yield return AppContext.BaseDirectory;
-
-            string parentHost = Path.GetFullPath(Path.Combine(AppContext.BaseDirectory, ".."));
-            if (File.Exists(Path.Combine(parentHost, "EzRealmSync.exe")))
-            {
-                yield return Path.Combine(parentHost, "runtimes", rid, "native");
-                yield return parentHost;
-            }
+            if (!string.Equals(RuntimeLibDirectory, AppContext.BaseDirectory, StringComparison.OrdinalIgnoreCase))
+                yield return AppContext.BaseDirectory;
         }
 
         private static void verifyRealmNativeLibraryPresent()
@@ -148,12 +124,11 @@ namespace osu.Game.EzRealmSync.Runtime
             if (resolveNativeLibraryPath("realm-wrappers") != null)
                 return;
 
-            string hint = RuntimeLibDirectory != null
-                ? Path.Combine(RuntimeLibDirectory, "runtimes", resolveRuntimeIdentifier(), "native", "realm-wrappers.dll")
-                : "exe/runtimes/.../realm-wrappers.dll";
+            string rid = resolveRuntimeIdentifier();
+            string hint = Path.Combine(RuntimeLibDirectory, "runtimes", rid, "native", "realm-wrappers.dll");
 
             throw new InvalidOperationException(
-                $"未找到 Realm 原生库 realm-wrappers.dll（预期路径：{hint}）。请执行：dotnet build -t:SyncEzRealmLibs EzRealmSync.sln -c Debug，并重新生成 Desktop。");
+                $"未找到 Realm 原生库 realm-wrappers.dll（预期路径：{hint}）。请重新安装/构建 EzRealmSync，或检查发布目录的 runtimes/{rid}/native 是否完整。");
         }
 
         private static string resolveRuntimeIdentifier()

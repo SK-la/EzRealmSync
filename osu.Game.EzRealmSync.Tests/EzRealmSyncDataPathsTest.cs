@@ -15,7 +15,7 @@ namespace osu.Game.EzRealmSync.Tests
             Assert.That(EzRealmSyncDataPaths.ExportsDirectory, Is.EqualTo(Path.Combine(root, "exports")));
             Assert.That(EzRealmSyncDataPaths.TempDirectory, Is.EqualTo(Path.Combine(root, "temp")));
             Assert.That(EzRealmSyncDataPaths.LogsDirectory, Is.EqualTo(Path.Combine(root, "log")));
-            Assert.That(EzRealmSyncDataPaths.DefaultRuntimeLibDirectory, Is.EqualTo(root));
+            Assert.That(EzRealmSyncDataPaths.SnapshotsDirectory, Is.EqualTo(Path.Combine(root, "snapshots")));
         }
 
         [Test]

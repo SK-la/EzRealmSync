@@ -50,18 +50,6 @@
           Condition="'@(_OfficialWriteRuntime)' != ''" />
   </Target>
 
-  <Target Name="CopyReadersFolderToTestOutput"
-          AfterTargets="Build"
-          Condition="'$(MSBuildProjectName)' == 'osu.Game.EzRealmSync.Tests'">
-    <ItemGroup>
-      <_ReadersContent Include="$(MSBuildThisFileDirectory)readers\**\*.*" />
-    </ItemGroup>
-    <Copy SourceFiles="@(_ReadersContent)"
-          DestinationFiles="@(_ReadersContent->'$(OutputPath)readers\%(RecursiveDir)%(Filename)%(Extension)')"
-          SkipUnchangedFiles="true"
-          Condition="'@(_ReadersContent)' != ''" />
-  </Target>
-
   <Target Name="CopyOfficialWriteWorkerToTestOutput"
           AfterTargets="Build"
           DependsOnTargets="ResolveProjectReferences"
@@ -89,14 +77,7 @@
           Condition="'@(_OfficialWriteRuntime)' != ''" />
   </Target>
 
-  <!-- dotnet build -t:SyncReaderLibs EzRealmSync.sln（刷新 readers/ 里的测试夹具 dll） -->
-  <Target Name="SyncReaderLibs"
-          Condition="'$(MSBuildProjectName)' == 'osu.Game.EzRealmSync.Tests'">
-    <Exec Command="pwsh -NoProfile -ExecutionPolicy Bypass -File &quot;$(MSBuildThisFileDirectory)scripts\Sync-ReaderLibs.ps1&quot;"
-          IgnoreExitCode="false" />
-  </Target>
-
-  <!-- dotnet build -t:SyncEzRealmLibs EzRealmSync.sln（刷新 lib/ 本地覆盖，-p:UseLocalOsuLibs=true 的测试用） -->
+  <!-- dotnet build -t:SyncEzRealmLibs EzRealmSync.sln（刷新 lib/，供 -p:UseLocalOsuLibs=true 的测试用） -->
   <PropertyGroup>
     <EzOsuGameProject>$(MSBuildThisFileDirectory)..\osu\osu.Game\osu.Game.csproj</EzOsuGameProject>
     <EzOsuGamePublishStagingDir>$(MSBuildThisFileDirectory)obj\SyncEzRealmLibs\$(Configuration)\$(EzRealmSyncWorkerTfm)</EzOsuGamePublishStagingDir>

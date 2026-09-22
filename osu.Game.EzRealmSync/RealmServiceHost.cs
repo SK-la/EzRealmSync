@@ -19,8 +19,6 @@ namespace osu.Game.EzRealmSync
 
         public bool UiTestMode { get; private set; }
 
-        public EzRealmSyncBackendKind BackendKind { get; private set; }
-
         public IEzRealmSyncService Sync => session.Sync;
 
         public IRealmDataService Data => session.Data;
@@ -36,7 +34,6 @@ namespace osu.Game.EzRealmSync
 
             UiTestMode = uiTestMode;
             session = EzRealmSyncServiceFactory.CreateSession(uiTestMode, mockOptions);
-            BackendKind = EzRealmSyncBackend.Detect(session.Data);
         }
     }
 }

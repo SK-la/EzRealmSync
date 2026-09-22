@@ -42,7 +42,6 @@ namespace osu.Game.EzRealmSync.Tests.TestInfrastructure
             {
                 var result = OfficialWorkerProcess.Read(new RealmReadJob
                 {
-                    ReaderLibDirectory = string.Empty,
                     RealmFilePath = realmPath,
                     PinnedDiskSchemaVersion = pinnedSchemaVersion,
                     Profile = "official",
