@@ -109,10 +109,10 @@
 | `osu.EzRealmSync.Desktop` | WPF + WPF-UI 界面 |
 | `osu.EzRealmSync.AppModel` | 界面状态（Presenter、本地化） |
 | `osu.Game.EzRealmSync` | Realm 读写、同步、修复、导出逻辑 |
-| `osu.Game.EzRealmSync.OfficialSchema` / `OfficialWrite` | 官方库读写 Worker |
+| `osu.Game.EzRealmSync.OfficialSchema` / `OfficialWrite` | 官方 schema 镜像与 Worker；只服务测试（造官方参考库、官方 DLL 打开验收），产品不启动它 |
 | `osu.Game.EzRealmSync.Tests` | 测试；也是唯一允许加载 `osu.Game.dll` 的地方（typed parity 对照） |
 
-产品工程只依赖 **`ez2lazer.Framework`**（osu.Framework），**不依赖** `ez2lazer.Game`：读写全走 DynamicRealm，官方产物由 `OfficialWrite` Worker 用官方 schema 镜像写出。测试工程才引 `ez2lazer.Game`，用来做 typed 对照。发布前 CI 会跑 `scripts/smoke-publish.ps1`，它断言 `osu.Game.dll` **不得**出现在发布目录。
+产品工程只依赖 **`ez2lazer.Framework`**（osu.Framework），**不依赖** `ez2lazer.Game`：读写全走 DynamicRealm，「转回官方版」是与源库同版的收窄迁移（`DynamicOfficialConverter` + 官方 schema 快照）。测试工程才引 `ez2lazer.Game`，用来做 typed 对照。产品侧没有 typed 打开、csproj 里也不会再出现 `ez2lazer.Game`（由 `RealmAccessGatewayTest` 的两个守卫挡回退）；发布前 CI 再跑 `scripts/prune-publish.ps1`（随 publish 自动执行）与 `scripts/smoke-publish.ps1`，后者断言 `osu.Game.dll` **不得**出现在发布目录。
 
 ### 构建与运行
 

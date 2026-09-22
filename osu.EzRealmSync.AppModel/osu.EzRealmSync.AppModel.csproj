@@ -18,7 +18,8 @@
   </ItemGroup>
 
   <ItemGroup>
+    <!-- 只认 osu.Framework（Bindables/WinForms 宿主）；typed 游戏包不再引入，
+         否则 osu.Game.dll 会被打进输出，只能靠 prune-publish 事后硬删。 -->
     <PackageReference Include="ez2lazer.Framework" />
-    <PackageReference Include="ez2lazer.Game" />
   </ItemGroup>
 </Project>
