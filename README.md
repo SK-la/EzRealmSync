@@ -110,7 +110,7 @@
 | `osu.EzRealmSync.AppModel` | 界面状态（Presenter、本地化） |
 | `osu.Game.EzRealmSync` | Realm 读写、同步、修复、导出逻辑 |
 | `osu.Game.EzRealmSync.OfficialSchema` / `OfficialWrite` | 官方库读写 Worker |
-| `osu.Game.EzRealmSync.Tests` | 测试；也是唯一允许加载 `osu.Game.dll` 的地方（parity 对照、`readers/` 夹具） |
+| `osu.Game.EzRealmSync.Tests` | 测试；也是唯一允许加载 `osu.Game.dll` 的地方（typed parity 对照） |
 
 产品工程只依赖 **`ez2lazer.Framework`**（osu.Framework），**不依赖** `ez2lazer.Game`：读写全走 DynamicRealm，官方产物由 `OfficialWrite` Worker 用官方 schema 镜像写出。测试工程才引 `ez2lazer.Game`，用来做 typed 对照。发布前 CI 会跑 `scripts/smoke-publish.ps1`，它断言 `osu.Game.dll` **不得**出现在发布目录。
 

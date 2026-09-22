@@ -27,7 +27,7 @@
 - [x] **P2.4b** 任意 A→B 库对（含同类型/跨版本）Diff+写入；`RealmWritePlan`；导入页备份还原 UI
 - [x] **P2.4c** 单目录扫描（Ez 根目录 `*.realm` + 共享 `files/`）；`RealmServiceSession` 共享注册表；真实修复/导出
 - [x] **P2.5a** `RealmProcessGuard`；`RealmIllegalCharacterFixer` 写回；`RealmOrphanFileScanner` 僵尸文件
-- [ ] **P2.5b** 手工验收：关游戏 → 导入 → 同步写入 → 修复/导出（需 `lib/osu.Game.dll`）
+- [ ] **P2.5b** 手工验收：关游戏 → 导入 → 同步写入 → 修复/导出
 - [x] **P3.1** 导出 Tab：收藏夹谱面按 `BeatmapMD5Hashes` 复制 files/；合集 `collection.db`；成绩 `.osr`
 - [x] **P3.2** 数据 Tab：成绩右键导出 `.osr`
 - [x] **P3.3** 数据 Tab：单难度导出；导出 Tab 右键导出；导出目录缓存失效
@@ -37,13 +37,16 @@
 
 ```
 EzRealmSync/
-  osu.Game.EzRealmSync/      # 契约、Mock、Phase 2 引擎
-  osu.EzRealmSync.AppModel/  # Presenter、设置
-  osu.EzRealmSync.Desktop/   # WPF Exe
-  osu.EzRealmSync/           # 旧 Framework UI（参考，不在 sln）
+  osu.Game.EzRealmSync/            # 契约、Mock、动态读写引擎
+  osu.Game.EzRealmSync.Contracts/  # Worker 与宿主共享的 DTO
+  osu.Game.EzRealmSync.OfficialSchema/  # 官方 schema 镜像
+  osu.Game.EzRealmSync.OfficialWrite/   # 官方库读写 Worker
+  osu.EzRealmSync.AppModel/        # Presenter、设置
+  osu.EzRealmSync.Desktop/         # WPF Exe
+  osu.Game.EzRealmSync.Tests/      # 测试；唯一允许加载 osu.Game.dll 的地方
 ```
 
-Phase 2 依赖 `lib/osu.Game.dll`（见 [lib/README.md](../lib/README.md)）。
+产品侧读写不依赖 `osu.Game.dll`（见 [DATA-OPERATIONS.zh.md](DATA-OPERATIONS.zh.md)）；测试要 typed 对照时用 `-p:UseLocalOsuLibs=true` 从 `lib/` 取（见 [lib/README.md](../lib/README.md)）。
 
 ## 单元测试
 

@@ -21,7 +21,7 @@ dotnet build EzRealmSync.sln -p:UseLocalOsuLibs=true       # 让测试工程引�
 
 - **不**使用 nuget.org 的 `ppy.osu.Game`（无 Ez Realm 扩展）。
 - 产品发布目录里不允许出现 `osu.Game.dll`：`scripts/prune-publish.ps1` 会清掉它，`scripts/smoke-publish.ps1` 会反向断言。
-- `readers/` 里按版本保存的官方 dll 是早期「按版本直连 osu.Game 打开产物」的夹具，当前验收口径已改成交给 `OfficialWrite` Worker（官方 schema 镜像）；这些文件暂时保留，但已无代码引用。
+- 「产物能不能被官方读」的验收口径不在这里：交给 `osu.Game.EzRealmSync.OfficialWrite` Worker（官方 schema 镜像）以 pinned disk schema 打开，见 `DllOpenCompatibilityTest`。
 
 ## 清理
 
