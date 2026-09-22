@@ -175,6 +175,43 @@ namespace osu.Game.EzRealmSync.Tests
         }
 
         [Test]
+        public async Task Convert_without_a_backup_folder_leaves_a_timestamped_copy_beside_the_source()
+        {
+            // 设置里没有备份目录时也不能裸覆盖：退化为「同目录 + 文件名加时间戳后缀」。
+            string root = RealisticEzRealmSeeder.NewRoot("convert-beside-backup");
+
+            try
+            {
+                string ezPath = Path.Combine(root, "client.realm");
+                seedEzLibrary(ezPath);
+
+                string officialPath = Path.Combine(root, "official-52.realm");
+                createEmptyOfficialLibraryViaWorker(officialPath);
+
+                var service = new RealmRealmDataService(new RealmFileRegistry());
+                RealmFileEntry entry = await service.RegisterRealmFileAsync(ezPath);
+
+                RealmOfficialConversionResult result = await service.ConvertToOfficialRealmAsync(
+                    entry.Id,
+                    officialSchemaSourcePath: officialPath,
+                    backupDirectory: string.Empty);
+
+                RealmNativeLifetime.Flush();
+
+                Assert.That(result.BackupPath, Is.Not.Null);
+                Assert.That(Path.GetDirectoryName(result.BackupPath!), Is.EqualTo(Path.GetDirectoryName(Path.GetFullPath(ezPath))));
+                Assert.That(Path.GetFileName(result.BackupPath!), Does.Contain("_ezbackup_"));
+                Assert.That(File.Exists(result.BackupPath!), Is.True);
+                Assert.That(RealmDiskSchemaReader.TryReadSchemaVersion(result.BackupPath!), Is.EqualTo(ez_schema), "同目录副本必须是原来的 Ez 库。");
+                Assert.That(RealmDiskSchemaReader.TryReadSchemaVersion(ezPath), Is.EqualTo(official_upstream));
+            }
+            finally
+            {
+                RealisticEzRealmSeeder.Cleanup(root);
+            }
+        }
+
+        [Test]
         public void Official_schema_source_must_match_the_upstream_of_the_ez_library()
         {
             string root = RealisticEzRealmSeeder.NewRoot("convert-source-mismatch");
