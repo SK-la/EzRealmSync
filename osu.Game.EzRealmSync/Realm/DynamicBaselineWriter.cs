@@ -26,6 +26,10 @@ namespace osu.Game.EzRealmSync.Realm
             RealmSchemaSnapshotStore.Default.TryCapture(session);
             RealmSchemaSnapshot schemaBefore = DynamicSchemaReader.Read(session);
 
+            // 官方目标（磁盘版本 < 1000）要按官方能还原的口径过滤：Ez 规则集 / 外部托管的谱面集、
+            // 以及 Ez 判定语义或非官方 mod 的成绩写过去只会变成官方端看不见或语义错误的行。
+            bool officialTarget = RealmSchemaSafety.IsOfficialDiskSchema(session.DiskSchemaVersion);
+
             // Ez 扩展列 = 目标独有、官方没有的列；覆盖写入（删行重建）必须把它们原值搬回去。
             EzColumnResolver ezColumns = EzColumnResolver.Resolve(session);
 
@@ -36,6 +40,10 @@ namespace osu.Game.EzRealmSync.Realm
                 foreach (var set in bundle.BeatmapSets.Where(s => idSet.Contains(s.ID)))
                 {
                     cancellationToken.ThrowIfCancellationRequested();
+
+                    if (officialTarget && !shouldExportSet(set, skips))
+                        continue;
+
                     upsertBeatmapSet(session, ezColumns, set);
                     applied++;
                 }
@@ -43,6 +51,13 @@ namespace osu.Game.EzRealmSync.Realm
                 foreach (var beatmap in bundle.Beatmaps.Where(b => idSet.Contains(b.ID)))
                 {
                     cancellationToken.ThrowIfCancellationRequested();
+
+                    if (officialTarget && !OfficialExportPolicy.IsOfficialRuleset(beatmap.RulesetShortName, null))
+                    {
+                        skips.Add($"规则集 {beatmap.RulesetShortName} 是 Ez 专用的，官方客户端打不开这条难度：难度 {beatmap.DifficultyName}");
+                        continue;
+                    }
+
                     if (upsertStandaloneBeatmap(session, beatmap))
                         applied++;
                 }
@@ -68,6 +83,9 @@ namespace osu.Game.EzRealmSync.Realm
                 {
                     cancellationToken.ThrowIfCancellationRequested();
                     beatmapsByHash ??= buildBeatmapHashIndex(session);
+
+                    if (officialTarget && !isOfficialScore(score, skips))
+                        continue;
 
                     if (upsertScore(session, ezColumns, score, beatmapsByHash, skips))
                         applied++;
@@ -261,6 +279,54 @@ namespace osu.Game.EzRealmSync.Realm
 
             var created = createBeatmap(session, dto);
             linkBeatmapToSet(session, created, parent);
+            return true;
+        }
+
+        /// <summary>
+        /// 官方目标下这个谱面集能不能写：外部托管的集（内容在 Ez 的外部目录，官方只认 <c>files/</c>）
+        /// 与只含 Ez 规则集难度的集写过去等于「官方看不见内容 / 打开就一个空集」，直接跳过并记录原因。
+        /// </summary>
+        private static bool shouldExportSet(OfficialBeatmapSetDto set, SkipCollector skips)
+        {
+            if (set.ExternallyHosted)
+            {
+                skips.Add($"谱面集 {set.Hash} 的内容位于 Ez 外部目录，官方客户端读不到，未写入");
+                return false;
+            }
+
+            var beatmaps = set.Beatmaps.Where(b => !b.Hidden).ToList();
+
+            if (beatmaps.Count == 0)
+                return true;
+
+            if (beatmaps.Any(b => OfficialExportPolicy.IsOfficialRuleset(b.RulesetShortName, null)))
+                return true;
+
+            skips.Add($"谱面集 {set.Hash} 只含 Ez 专用规则集难度，官方客户端打不开，未写入");
+            return false;
+        }
+
+        /// <summary>官方目标下这条成绩能不能写：官方规则集 + 双 Lazer 判定/血条语义 + mod 全在官方名录里。</summary>
+        private static bool isOfficialScore(OfficialScoreDto score, SkipCollector skips)
+        {
+            if (!OfficialExportPolicy.IsOfficialRuleset(score.RulesetShortName, null))
+            {
+                skips.Add($"成绩的规则集 {score.RulesetShortName} 是 Ez 专用的，官方客户端无法还原，未写入");
+                return false;
+            }
+
+            if (score.ManiaHitMode > 0 || score.ManiaHealthMode > 0)
+            {
+                skips.Add("成绩使用 Ez 判定语义（非 Lazer 判定/血条），官方重算会算错，未写入");
+                return false;
+            }
+
+            if (!OfficialExportPolicy.areModsOfficial(score.RulesetShortName, score.ModsJson))
+            {
+                skips.Add("成绩带有官方客户端不认识的 mod，官方无法还原，未写入");
+                return false;
+            }
+
             return true;
         }
 

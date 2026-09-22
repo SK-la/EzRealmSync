@@ -1,9 +1,13 @@
 using NUnit.Framework;
+using osu.Game.Beatmaps;
+using osu.Game.Database;
+using osu.Game.EzOsuGame.Configuration;
 using osu.Game.EzRealmSync.Contracts;
 using osu.Game.EzRealmSync.Models;
 using osu.Game.EzRealmSync.Realm;
 using osu.Game.EzRealmSync.Realm.Dynamic;
 using osu.Game.EzRealmSync.Tests.TestInfrastructure;
+using osu.Game.Scoring;
 using Realms;
 
 namespace osu.Game.EzRealmSync.Tests
@@ -313,10 +317,7 @@ namespace osu.Game.EzRealmSync.Tests
         [Test]
         public void Score_sync_applies_ez_only_ruleset_when_target_already_has_it()
         {
-            string worker = OfficialWorkerProcess.ResolveWorkerExecutablePathForTests();
-            if (!File.Exists(worker))
-                Assert.Ignore($"OfficialWrite Worker 未复制到测试输出：{worker}");
-
+            // Ez 目标（磁盘版本 52010）：Ez 专用规则集的成绩在 Ez 侧必须完整保留——过滤只针对官方目标。
             string root = Path.Combine(TestContext.CurrentContext.WorkDirectory, "dyn-score-ezrs-" + Guid.NewGuid().ToString("N"));
             Directory.CreateDirectory(root);
 
@@ -328,8 +329,17 @@ namespace osu.Game.EzRealmSync.Tests
 
             try
             {
+                if (!File.Exists(OfficialWorkerProcess.ResolveWorkerExecutablePathForTests()))
+                    Assert.Ignore("OfficialWrite Worker 未复制到测试输出，无法造带 bms 成绩的源库。");
+
                 createOfficialRealmViaWorker(sourcePath, 51, setId, beatmapId, "BMS Song", scoreId, rulesetShortName: "bms");
-                createOfficialRealmViaWorker(targetPath, 51, setId, beatmapId, "BMS Song", rulesetShortName: "bms");
+                RealisticEzRealmSeeder.CreateCurrentEzRealm(targetPath, RealmAccess.EzFileSchemaVersion);
+
+                // 先把谱面集同步进 Ez 目标（会落 bms 规则集行与难度），再同步成绩：目标已有该规则集。
+                DynamicBaselineWriter.Apply(
+                    new ApplyRequest { ItemIds = [setId], CreateBackup = false },
+                    DynamicBaselineReader.ExportByIds(sourcePath, [setId]),
+                    targetPath);
 
                 var bundle = DynamicBaselineReader.ExportByIds(sourcePath, [scoreId]);
                 var result = DynamicBaselineWriter.Apply(
@@ -337,7 +347,7 @@ namespace osu.Game.EzRealmSync.Tests
                     bundle,
                     targetPath);
 
-                Assert.That(result.AppliedCount, Is.EqualTo(1), "目标已有该规则集时应正常写入（Ez → Ez 场景）。");
+                Assert.That(result.AppliedCount, Is.EqualTo(1), "Ez 目标下 Ez 专用规则集的成绩必须写入。");
                 Assert.That(result.SkippedCount, Is.Zero);
             }
             finally
@@ -346,6 +356,281 @@ namespace osu.Game.EzRealmSync.Tests
                 tryDelete(root);
             }
         }
+
+        [Test]
+        public void Score_sync_filters_ez_only_ruleset_score_even_when_the_official_target_has_the_ruleset()
+        {
+            // 官方目标：Ez 专用规则集的成绩官方还原不了，目标里恰好有同名规则集行也不写——
+            // 官方客户端只会把它显示成「不可用规则集」的成绩。
+            string root = Path.Combine(TestContext.CurrentContext.WorkDirectory, "dyn-score-ezrs-official-" + Guid.NewGuid().ToString("N"));
+            Directory.CreateDirectory(root);
+
+            string sourcePath = Path.Combine(root, "source.realm");
+            string targetPath = Path.Combine(root, "target.realm");
+            Guid setId = Guid.Parse("10000000-0000-0000-0000-000000000005");
+            Guid beatmapId = Guid.Parse("20000000-0000-0000-0000-000000000005");
+            Guid scoreId = Guid.Parse("30000000-0000-0000-0000-000000000005");
+
+            try
+            {
+                if (!File.Exists(OfficialWorkerProcess.ResolveWorkerExecutablePathForTests()))
+                    Assert.Ignore("OfficialWrite Worker 未复制到测试输出，无法造官方目标库。");
+
+                createOfficialRealmViaWorker(sourcePath, 51, setId, beatmapId, "BMS Song", scoreId, rulesetShortName: "bms");
+                createOfficialRealmViaWorker(targetPath, 51, setId, beatmapId, "BMS Song", rulesetShortName: "bms");
+
+                var result = DynamicBaselineWriter.Apply(
+                    new ApplyRequest { ItemIds = [scoreId], CreateBackup = false },
+                    DynamicBaselineReader.ExportByIds(sourcePath, [scoreId]),
+                    targetPath);
+
+                Assert.That(result.AppliedCount, Is.Zero, "Ez 专用规则集的成绩不该写进官方库。");
+                Assert.That(result.SkipReasons, Has.Some.Contains("bms"));
+
+                using var verify = DynamicRealmSession.OpenDynamic(targetPath, readOnly: true);
+                Assert.That(DynamicRealmAccess.Find(verify.Realm, OfficialBaselineSchema.Score, scoreId), Is.Null, "官方目标里出现了不该有的成绩。");
+            }
+            finally
+            {
+                RealmNativeLifetime.Flush();
+                tryDelete(root);
+            }
+        }
+
+        [Test]
+        public void Score_sync_filters_ez_judgement_and_ez_mod_scores_only_for_official_targets()
+        {
+            string root = Path.Combine(TestContext.CurrentContext.WorkDirectory, "dyn-score-official-policy-" + Guid.NewGuid().ToString("N"));
+            Directory.CreateDirectory(root);
+
+            string sourcePath = Path.Combine(root, "source.realm");
+            string officialPath = Path.Combine(root, "official.realm");
+            string ezPath = Path.Combine(root, "ez.realm");
+
+            Guid setId = Guid.Parse("10000000-0000-0000-0000-000000000006");
+            Guid beatmapId = Guid.Parse("20000000-0000-0000-0000-000000000006");
+            Guid ezModeScoreId = Guid.Parse("30000000-0000-0000-0000-000000000006");
+            Guid ezModScoreId = Guid.Parse("30000000-0000-0000-0000-000000000007");
+            Guid plainScoreId = Guid.Parse("30000000-0000-0000-0000-000000000008");
+
+            try
+            {
+                if (!File.Exists(OfficialWorkerProcess.ResolveWorkerExecutablePathForTests()))
+                    Assert.Ignore("OfficialWrite Worker 未复制到测试输出，无法造官方目标库。");
+
+                seedEzSourceWithEzScores(sourcePath, setId, beatmapId, ezModeScoreId, ezModScoreId, plainScoreId);
+
+                var bundle = DynamicBaselineReader.ExportByIds(sourcePath, [ezModeScoreId, ezModScoreId, plainScoreId]);
+
+                createOfficialRealmViaWorker(officialPath, 51, setId, beatmapId, "Policy Song", rulesetShortName: "osu");
+
+                var officialResult = DynamicBaselineWriter.Apply(
+                    new ApplyRequest { ItemIds = [ezModeScoreId, ezModScoreId, plainScoreId], CreateBackup = false },
+                    bundle,
+                    officialPath);
+
+                Assert.Multiple(() =>
+                {
+                    Assert.That(officialResult.AppliedCount, Is.EqualTo(1), "官方目标只该收下普通成绩。");
+                    Assert.That(officialResult.SkipReasons, Has.Some.Contains("Ez 判定语义"));
+                    Assert.That(officialResult.SkipReasons, Has.Some.Contains("mod"));
+                });
+
+                using (var verify = DynamicRealmSession.OpenDynamic(officialPath, readOnly: true))
+                {
+                    Assert.That(DynamicRealmAccess.Find(verify.Realm, OfficialBaselineSchema.Score, plainScoreId), Is.Not.Null, "普通成绩没写进去。");
+                    Assert.That(DynamicRealmAccess.Find(verify.Realm, OfficialBaselineSchema.Score, ezModeScoreId), Is.Null, "Ez 判定语义的成绩写进了官方库。");
+                    Assert.That(DynamicRealmAccess.Find(verify.Realm, OfficialBaselineSchema.Score, ezModScoreId), Is.Null, "带 Ez 专用 mod 的成绩写进了官方库。");
+                }
+
+                // 同一个 bundle 写进 Ez 目标：三条都该保留（过滤只在官方目标生效）。
+                RealisticEzRealmSeeder.CreateCurrentEzRealm(ezPath, RealmAccess.EzFileSchemaVersion);
+
+                DynamicBaselineWriter.Apply(
+                    new ApplyRequest { ItemIds = [setId], CreateBackup = false },
+                    DynamicBaselineReader.ExportByIds(sourcePath, [setId]),
+                    ezPath);
+
+                var ezResult = DynamicBaselineWriter.Apply(
+                    new ApplyRequest { ItemIds = [ezModeScoreId, ezModScoreId, plainScoreId], CreateBackup = false },
+                    bundle,
+                    ezPath);
+
+                Assert.That(ezResult.AppliedCount, Is.EqualTo(3), "Ez 目标不该过滤 Ez 判定语义与 Ez 专用 mod 的成绩。");
+            }
+            finally
+            {
+                RealmNativeLifetime.Flush();
+                tryDelete(root);
+            }
+        }
+
+        [Test]
+        public void Set_sync_filters_externally_hosted_sets_only_for_official_targets()
+        {
+            string root = Path.Combine(TestContext.CurrentContext.WorkDirectory, "dyn-set-external-" + Guid.NewGuid().ToString("N"));
+            Directory.CreateDirectory(root);
+
+            string sourcePath = Path.Combine(root, "source.realm");
+            string officialPath = Path.Combine(root, "official.realm");
+            string ezPath = Path.Combine(root, "ez.realm");
+
+            Guid setId = Guid.Parse("10000000-0000-0000-0000-000000000007");
+            Guid beatmapId = Guid.Parse("20000000-0000-0000-0000-000000000007");
+
+            try
+            {
+                if (!File.Exists(OfficialWorkerProcess.ResolveWorkerExecutablePathForTests()))
+                    Assert.Ignore("OfficialWrite Worker 未复制到测试输出，无法造官方目标库。");
+
+                seedExternalHostedSet(sourcePath, setId, beatmapId);
+                createEmptyOfficialRealmViaWorker(officialPath, 51);
+
+                var bundle = DynamicBaselineReader.ExportByIds(sourcePath, [setId]);
+                Assert.That(bundle.BeatmapSets[0].ExternallyHosted, Is.True, "源谱面集没有带上外部托管标记，过滤无从判断。");
+
+                var officialResult = DynamicBaselineWriter.Apply(
+                    new ApplyRequest { ItemIds = [setId], CreateBackup = false },
+                    bundle,
+                    officialPath);
+
+                Assert.That(officialResult.AppliedCount, Is.Zero, "外部托管的谱面集内容在 Ez 的磁盘目录，官方读不到。");
+                Assert.That(officialResult.SkipReasons, Has.Some.Contains("外部目录"));
+
+                // Ez 目标：外部托管的集必须照常写入（Ez 客户端读得到那个目录）。
+                RealisticEzRealmSeeder.CreateCurrentEzRealm(ezPath, RealmAccess.EzFileSchemaVersion);
+
+                var ezResult = DynamicBaselineWriter.Apply(
+                    new ApplyRequest { ItemIds = [setId], CreateBackup = false },
+                    bundle,
+                    ezPath);
+
+                Assert.That(ezResult.AppliedCount, Is.EqualTo(1), "Ez 目标不该过滤外部托管的谱面集。");
+            }
+            finally
+            {
+                RealmNativeLifetime.Flush();
+                tryDelete(root);
+            }
+        }
+
+        /// <summary>造一份 Ez 源库：一条普通成绩 + 一条 Ez 判定语义成绩 + 一条 Ez 专用 mod 成绩。</summary>
+        private static void seedEzSourceWithEzScores(string path, Guid setId, Guid beatmapId, Guid ezModeScoreId, Guid ezModScoreId, Guid plainScoreId)
+        {
+            RealisticEzRealmSeeder.CreateCurrentEzRealm(path, RealmAccess.EzFileSchemaVersion);
+
+            var bundle = new RealmSyncApplyBundle
+            {
+                BeatmapSets =
+                [
+                    new OfficialBeatmapSetDto
+                    {
+                        ID = setId,
+                        Hash = "set-hash",
+                        DateAdded = DateTimeOffset.UtcNow,
+                        Beatmaps =
+                        [
+                            new OfficialBeatmapDto
+                            {
+                                ID = beatmapId,
+                                DifficultyName = "Normal",
+                                RulesetShortName = "osu",
+                                Hash = "bm-hash",
+                                MD5Hash = "md5",
+                                Metadata = new OfficialBeatmapMetadataDto { Title = "Policy Song", Artist = "Artist" },
+                            },
+                        ],
+                    },
+                ],
+                Scores =
+                [
+                    scoreDto(plainScoreId, "bm-hash", """[{"acronym":"HD"}]"""),
+                    scoreDto(ezModeScoreId, "bm-hash", """[{"acronym":"HD"}]"""),
+                    scoreDto(ezModScoreId, "bm-hash", """[{"acronym":"NCl"}]"""),
+                ],
+            };
+
+            var result = DynamicBaselineWriter.Apply(
+                new ApplyRequest { ItemIds = [setId, plainScoreId, ezModeScoreId, ezModScoreId], CreateBackup = false },
+                bundle,
+                path);
+
+            Assert.That(result.SkipReasons, Is.Empty, "夹具写入被跳过了，测试前提不成立。");
+
+            using var access = TypedRealmAccess.OpenForMutation(path, RealmAccess.EzFileSchemaVersion);
+
+            access.Write(realm =>
+            {
+                var score = realm.All<ScoreInfo>().Single(s => s.ID == ezModeScoreId);
+                score.ManiaHitMode = (int)EzEnumHitMode.O2Jam;
+            });
+
+            RealmNativeLifetime.Flush();
+        }
+
+        /// <summary>造一份 Ez 源库：一个外部托管的谱面集（内容在 Ez 的磁盘目录）。</summary>
+        private static void seedExternalHostedSet(string path, Guid setId, Guid beatmapId)
+        {
+            RealisticEzRealmSeeder.CreateCurrentEzRealm(path, RealmAccess.EzFileSchemaVersion);
+
+            var bundle = new RealmSyncApplyBundle
+            {
+                BeatmapSets =
+                [
+                    new OfficialBeatmapSetDto
+                    {
+                        ID = setId,
+                        Hash = "set-hash",
+                        DateAdded = DateTimeOffset.UtcNow,
+                        Beatmaps =
+                        [
+                            new OfficialBeatmapDto
+                            {
+                                ID = beatmapId,
+                                DifficultyName = "Normal",
+                                RulesetShortName = "osu",
+                                Hash = "bm-hash",
+                                MD5Hash = "md5",
+                                Metadata = new OfficialBeatmapMetadataDto { Title = "External Song", Artist = "Artist" },
+                            },
+                        ],
+                    },
+                ],
+            };
+
+            DynamicBaselineWriter.Apply(
+                new ApplyRequest { ItemIds = [setId], CreateBackup = false },
+                bundle,
+                path);
+
+            using (var access = TypedRealmAccess.OpenForMutation(path, RealmAccess.EzFileSchemaVersion))
+            {
+                access.Write(realm =>
+                {
+                    var set = realm.All<BeatmapSetInfo>().Single(s => s.ID == setId);
+                    set.HostingKind = BeatmapSetHostingKind.External;
+                    set.ExternalContentRoot = @"D:\EzExternal\sync";
+                });
+            }
+
+            RealmNativeLifetime.Flush();
+        }
+
+        private static OfficialScoreDto scoreDto(Guid id, string beatmapHash, string modsJson) => new()
+        {
+            ID = id,
+            BeatmapHash = beatmapHash,
+            RulesetShortName = "osu",
+            ClientVersion = "2026.917.0",
+            Hash = "replay-" + id,
+            TotalScore = 1_000_000,
+            MaxCombo = 500,
+            Accuracy = 0.99,
+            Date = DateTimeOffset.UtcNow,
+            User = new OfficialRealmUserDto { OnlineID = 2, Username = "player", CountryString = "CR" },
+            ModsJson = modsJson,
+            StatisticsJson = "{\"Great\":100}",
+        };
 
         private static void createEmptyOfficialRealmViaWorker(string path, int schema)
         {

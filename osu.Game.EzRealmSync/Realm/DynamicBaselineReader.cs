@@ -281,6 +281,9 @@ namespace osu.Game.EzRealmSync.Realm
                 RankInt = DynamicRealmAccess.Get<int>(score, "Rank"),
                 Combo = DynamicRealmAccess.Get<int>(score, "Combo"),
                 IsLegacyScore = DynamicRealmAccess.Get<bool>(score, "IsLegacyScore"),
+                // Ez 判定/血条语义列：只在源库是 Ez 库时存在，写给官方目标前用它判定能否还原。
+                ManiaHitMode = DynamicRealmAccess.HasProperty(score, "ManiaHitMode") ? DynamicRealmAccess.Get<int>(score, "ManiaHitMode") : 0,
+                ManiaHealthMode = DynamicRealmAccess.HasProperty(score, "ManiaHealthMode") ? DynamicRealmAccess.Get<int>(score, "ManiaHealthMode") : 0,
             };
 
             foreach (int pause in DynamicRealmAccess.EnumerateValues<int>(score, "Pauses"))
@@ -309,6 +312,8 @@ namespace osu.Game.EzRealmSync.Realm
                 DeletePending = false,
                 Hash = DynamicRealmAccess.GetString(set, "Hash"),
                 Protected = DynamicRealmAccess.Get<bool>(set, "Protected"),
+                // HostingKind 是 Ez 扩展列；官方来源没有这列，即 Internal。
+                ExternallyHosted = DynamicRealmAccess.HasProperty(set, "HostingKind") && DynamicRealmAccess.Get<int>(set, "HostingKind") == 1,
             };
 
             foreach (var file in DynamicRealmAccess.EnumerateObjects(set, "Files"))

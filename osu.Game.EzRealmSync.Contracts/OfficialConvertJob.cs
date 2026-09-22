@@ -85,11 +85,16 @@ namespace osu.Game.EzRealmSync.Contracts
 
         public bool Protected { get; set; }
 
+        /// <summary>
+        /// 源库里这个谱面集的内容在 Ez 的外部目录（<c>BeatmapSetHostingKind.External</c>），不在 <c>files/</c>。
+        /// 写入官方目标时会被过滤；官方 schema 没有对应列，只用于判定。
+        /// </summary>
+        public bool ExternallyHosted { get; set; }
+
         public List<OfficialNamedFileDto> Files { get; set; } = new List<OfficialNamedFileDto>();
 
         public List<OfficialBeatmapDto> Beatmaps { get; set; } = new List<OfficialBeatmapDto>();
     }
-
     public sealed class OfficialBeatmapDto
     {
         public Guid ID { get; set; }
@@ -208,6 +213,15 @@ namespace osu.Game.EzRealmSync.Contracts
         public string BeatmapHash { get; set; } = string.Empty;
 
         public required string RulesetShortName { get; set; }
+
+        /// <summary>
+        /// 源库里这条成绩的 mania 判定语义（Ez 扩展列，官方 schema 没有）。写入官方目标时用来判定
+        /// 「官方能不能还原」；<b>不</b>写入目标，纯判定用。缺列（官方来源）读作 0 = Lazer。
+        /// </summary>
+        public int ManiaHitMode { get; set; }
+
+        /// <summary>源库里这条成绩的 mania 血条语义，同 <see cref="ManiaHitMode"/>：只用于判定。</summary>
+        public int ManiaHealthMode { get; set; }
 
         public string ClientVersion { get; set; } = string.Empty;
 
