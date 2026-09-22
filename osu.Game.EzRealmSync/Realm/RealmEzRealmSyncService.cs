@@ -146,7 +146,13 @@ namespace osu.Game.EzRealmSync.Realm
                 result = DynamicBaselineWriter.Apply(request, bundle, plan.TargetRealmFilePath, targetSchema, progress, cancellationToken);
             }
 
-            return new ApplyResult { AppliedCount = result.AppliedCount, BackupPath = backupPath };
+            return new ApplyResult
+            {
+                AppliedCount = result.AppliedCount,
+                SkippedCount = result.SkippedCount,
+                SkipReasons = result.SkipReasons,
+                BackupPath = backupPath,
+            };
         }
 
         private static RealmWritePlan resolvePlan(RealmWritePlan? explicitPlan, SyncDirection direction, PathConfiguration paths)

@@ -260,8 +260,36 @@ namespace osu.Game.EzRealmSync.Realm
 
             foreach (object? item in enumerable)
             {
-                if (unwrap(item) is T typed)
+                if (item is RealmValue realmValue)
+                {
+                    if (realmValue.Type == RealmValueType.Null)
+                        continue;
+
+                    // RealmValue.AsAny 会把所有整数归一成 long、浮点归一成 double，
+                    // 因此 IList<int> / IList<float> 这类窄类型必须走 As<T> 的数值转换。
+                    if (tryAsValue<T>(realmValue, out T? converted))
+                        yield return converted!;
+
+                    continue;
+                }
+
+                if (item is T typed)
                     yield return typed;
+            }
+        }
+
+        private static bool tryAsValue<T>(RealmValue value, out T? result)
+        {
+            try
+            {
+                result = value.As<T>();
+                return true;
+            }
+            catch
+            {
+                // 数值溢出 / 类型无转换路径：按「该元素不可用」跳过，不影响同列表其它元素。
+                result = default;
+                return false;
             }
         }
 

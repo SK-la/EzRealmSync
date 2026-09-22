@@ -101,6 +101,14 @@ namespace osu.Game.EzRealmSync.Realm
                     var skinDto = mapSkin(skin);
                     if (skinDto != null)
                         bundle.Skins.Add(skinDto);
+                    continue;
+                }
+
+                if (session.HasClass(OfficialBaselineSchema.Score)
+                    && DynamicRealmAccess.Find(session.Realm, OfficialBaselineSchema.Score, id) is { } score
+                    && DynamicRealmAccess.Get<bool>(score, "DeletePending") != true)
+                {
+                    bundle.Scores.Add(mapScore(score));
                 }
             }
 
@@ -236,6 +244,51 @@ namespace osu.Game.EzRealmSync.Realm
                     Date = DynamicRealmAccess.Get<DateTimeOffset>(score, "Date"),
                 };
             }
+        }
+
+        private static OfficialScoreDto mapScore(IRealmObjectBase score)
+        {
+            var ruleset = DynamicRealmAccess.Get<IRealmObjectBase>(score, "Ruleset");
+
+            var dto = new OfficialScoreDto
+            {
+                ID = DynamicRealmAccess.Get<Guid>(score, "ID"),
+                BeatmapHash = DynamicRealmAccess.GetString(score, "BeatmapHash"),
+                RulesetShortName = DynamicRealmAccess.GetString(ruleset, "ShortName"),
+                ClientVersion = DynamicRealmAccess.GetString(score, "ClientVersion"),
+                Hash = DynamicRealmAccess.GetString(score, "Hash"),
+                DeletePending = false,
+                TotalScore = DynamicRealmAccess.Get<long>(score, "TotalScore"),
+                TotalScoreWithoutMods = DynamicRealmAccess.Get<long>(score, "TotalScoreWithoutMods"),
+                TotalScoreVersion = DynamicRealmAccess.Get<int>(score, "TotalScoreVersion"),
+                LegacyTotalScore = DynamicRealmAccess.Get<long?>(score, "LegacyTotalScore"),
+                BackgroundReprocessingFailed = DynamicRealmAccess.Get<bool>(score, "BackgroundReprocessingFailed"),
+                MaxCombo = DynamicRealmAccess.Get<int>(score, "MaxCombo"),
+                Accuracy = DynamicRealmAccess.Get<double>(score, "Accuracy"),
+                Date = DynamicRealmAccess.Get<DateTimeOffset>(score, "Date"),
+                PP = DynamicRealmAccess.Get<double?>(score, "PP"),
+                OnlineID = DynamicRealmAccess.Get<long>(score, "OnlineID"),
+                LegacyOnlineID = DynamicRealmAccess.Get<long>(score, "LegacyOnlineID"),
+                User = mapUser(DynamicRealmAccess.Get<IRealmObjectBase>(score, "User")),
+                ModsJson = DynamicRealmAccess.GetString(score, "Mods"),
+                StatisticsJson = DynamicRealmAccess.GetString(score, "Statistics"),
+                MaximumStatisticsJson = DynamicRealmAccess.GetString(score, "MaximumStatistics"),
+                RankInt = DynamicRealmAccess.Get<int>(score, "Rank"),
+                Combo = DynamicRealmAccess.Get<int>(score, "Combo"),
+                IsLegacyScore = DynamicRealmAccess.Get<bool>(score, "IsLegacyScore"),
+            };
+
+            foreach (int pause in DynamicRealmAccess.EnumerateValues<int>(score, "Pauses"))
+                dto.Pauses.Add(pause);
+
+            foreach (var file in DynamicRealmAccess.EnumerateObjects(score, "Files"))
+            {
+                OfficialNamedFileDto? usage = mapFileUsage(file);
+                if (usage != null)
+                    dto.Files.Add(usage);
+            }
+
+            return dto;
         }
 
         private static OfficialBeatmapSetDto mapBeatmapSet(IRealmObjectBase set)

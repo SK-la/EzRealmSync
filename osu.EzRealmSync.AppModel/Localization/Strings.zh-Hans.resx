@@ -53,6 +53,7 @@
   <data name="StatusScanComplete" xml:space="preserve"><value>扫描完成 — {1}端有{3}端无 {2}，{3}端有{1}端无 {4}，不一致 {5}</value></data>
   <data name="StatusDeleted" xml:space="preserve"><value>已从「{1}」删除 {0} 项</value></data>
 <data name="StatusAdded" xml:space="preserve"><value>已向「{1}」添加/覆盖 {0} 项</value></data>
+<data name="StatusAddedWithSkipped" xml:space="preserve"><value>已向「{1}」添加/覆盖 {0} 项；跳过 {2} 项（{3}）</value></data>
 <data name="StatusBackupSuffix" xml:space="preserve"><value>，备份: {0}</value></data>
   <data name="TabSourceOnly" xml:space="preserve"><value>{0} 端有 · {1} 端无</value></data>
   <data name="TabTargetOnly" xml:space="preserve"><value>{1} 端有 · {0} 端无</value></data>

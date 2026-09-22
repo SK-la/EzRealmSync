@@ -19,6 +19,7 @@ namespace osu.Game.EzRealmSync.Realm
         {
             using var session = DynamicRealmSession.OpenPinned(targetRealmPath, targetSchema, readOnly: false);
             var idSet = request.ItemIds.ToHashSet();
+            var skips = new SkipCollector();
             int applied = 0;
 
             session.Realm.Write(() =>
@@ -50,10 +51,32 @@ namespace osu.Game.EzRealmSync.Realm
                     if (upsertSkin(session, skin))
                         applied++;
                 }
+
+                // 成绩链接靠 BeatmapHash；索引建在这里，才能带上本次刚写入的难度。
+                Dictionary<string, IRealmObjectBase>? beatmapsByHash = null;
+
+                foreach (var score in bundle.Scores.Where(s => idSet.Contains(s.ID)))
+                {
+                    cancellationToken.ThrowIfCancellationRequested();
+                    beatmapsByHash ??= buildBeatmapHashIndex(session);
+
+                    if (upsertScore(session, score, beatmapsByHash, skips))
+                        applied++;
+                }
             });
 
-            progress?.Report(new ApplyProgress { Progress = 1, Message = "写入完成" });
-            return new ApplyResult { AppliedCount = applied };
+            progress?.Report(new ApplyProgress
+            {
+                Progress = 1,
+                Message = skips.Count == 0 ? "写入完成" : $"写入完成，跳过 {skips.Count} 项。",
+            });
+
+            return new ApplyResult
+            {
+                AppliedCount = applied,
+                SkippedCount = skips.Count,
+                SkipReasons = skips.Reasons,
+            };
         }
 
         public static ApplyResult SoftDelete(
@@ -291,6 +314,126 @@ namespace osu.Game.EzRealmSync.Realm
             return true;
         }
 
+        /// <summary>
+        /// 成绩按 <c>BeatmapHash</c> 链接（与官方 <c>ScoreInfo.BeatmapInfo</c> 的契约一致：本地成绩与谱面生命周期解耦）。
+        /// 目标缺该谱面、缺少归属规则集、或缺 <c>Score</c> 表时**不写入**，只计数并记录原因——
+        /// 不落一条在目标端永远不可见的「悬空成绩」。
+        /// </summary>
+        private static bool upsertScore(
+            DynamicRealmSession session,
+            OfficialScoreDto dto,
+            Dictionary<string, IRealmObjectBase> beatmapsByHash,
+            SkipCollector skips)
+        {
+            if (!session.HasClass(OfficialBaselineSchema.Score))
+            {
+                skips.Add("目标库没有 Score 表（版本过旧）");
+                return false;
+            }
+
+            if (string.IsNullOrWhiteSpace(dto.BeatmapHash))
+            {
+                skips.Add("成绩没有谱写面 Hash，无法链接谱面");
+                return false;
+            }
+
+            if (!beatmapsByHash.TryGetValue(dto.BeatmapHash, out var beatmap))
+            {
+                skips.Add($"目标库缺少该成绩对应的谱面（Hash {shortHash(dto.BeatmapHash)}）");
+                return false;
+            }
+
+            if (tryResolveScoreRuleset(session, dto.RulesetShortName) is not { } ruleset)
+            {
+                skips.Add($"目标库没有规则集 {dto.RulesetShortName}（Ez 专用规则集的成绩需要先在目标端具备该规则集）");
+                return false;
+            }
+
+            var existing = DynamicRealmAccess.Find(session.Realm, OfficialBaselineSchema.Score, dto.ID);
+            if (existing != null)
+                session.Realm.Remove(existing);
+
+            var score = DynamicRealmAccess.Create(session.Realm, OfficialBaselineSchema.Score, dto.ID);
+            DynamicRealmAccess.Set(score, OfficialBaselineSchema.Score, "BeatmapInfo", beatmap);
+            DynamicRealmAccess.Set(score, OfficialBaselineSchema.Score, "ClientVersion", dto.ClientVersion);
+            DynamicRealmAccess.Set(score, OfficialBaselineSchema.Score, "BeatmapHash", dto.BeatmapHash);
+            DynamicRealmAccess.Set(score, OfficialBaselineSchema.Score, "Ruleset", ruleset);
+            DynamicRealmAccess.Set(score, OfficialBaselineSchema.Score, "Hash", dto.Hash);
+            DynamicRealmAccess.Set(score, OfficialBaselineSchema.Score, "DeletePending", false);
+            DynamicRealmAccess.Set(score, OfficialBaselineSchema.Score, "TotalScore", dto.TotalScore);
+            DynamicRealmAccess.Set(score, OfficialBaselineSchema.Score, "TotalScoreWithoutMods", dto.TotalScoreWithoutMods);
+            DynamicRealmAccess.Set(score, OfficialBaselineSchema.Score, "TotalScoreVersion", dto.TotalScoreVersion);
+            DynamicRealmAccess.Set(score, OfficialBaselineSchema.Score, "LegacyTotalScore", dto.LegacyTotalScore);
+            DynamicRealmAccess.Set(score, OfficialBaselineSchema.Score, "BackgroundReprocessingFailed", dto.BackgroundReprocessingFailed);
+            DynamicRealmAccess.Set(score, OfficialBaselineSchema.Score, "MaxCombo", dto.MaxCombo);
+            DynamicRealmAccess.Set(score, OfficialBaselineSchema.Score, "Accuracy", dto.Accuracy);
+            DynamicRealmAccess.Set(score, OfficialBaselineSchema.Score, "Date", dto.Date);
+            DynamicRealmAccess.Set(score, OfficialBaselineSchema.Score, "PP", dto.PP);
+            DynamicRealmAccess.Set(score, OfficialBaselineSchema.Score, "OnlineID", dto.OnlineID);
+            DynamicRealmAccess.Set(score, OfficialBaselineSchema.Score, "LegacyOnlineID", dto.LegacyOnlineID);
+            DynamicRealmAccess.Set(score, OfficialBaselineSchema.Score, "Mods", dto.ModsJson);
+            DynamicRealmAccess.Set(score, OfficialBaselineSchema.Score, "Statistics", dto.StatisticsJson);
+            DynamicRealmAccess.Set(score, OfficialBaselineSchema.Score, "MaximumStatistics", dto.MaximumStatisticsJson);
+            DynamicRealmAccess.Set(score, OfficialBaselineSchema.Score, "Rank", dto.RankInt);
+            DynamicRealmAccess.Set(score, OfficialBaselineSchema.Score, "Combo", dto.Combo);
+            DynamicRealmAccess.Set(score, OfficialBaselineSchema.Score, "IsLegacyScore", dto.IsLegacyScore);
+
+            var user = createChild(session, score, "User", OfficialBaselineSchema.RealmUser);
+            writeUser(user, dto.User);
+
+            object? pauses = DynamicRealmAccess.GetListRaw(score, "Pauses");
+            DynamicRealmAccess.ClearList(pauses);
+            foreach (int pause in dto.Pauses)
+                DynamicRealmAccess.AddToList(pauses, pause);
+
+            linkFiles(session, score, dto.Files);
+            return true;
+        }
+
+        /// <summary>
+        /// <c>Hash → 难度</c> 索引。同 Hash 只保留首次出现的行，避免同谱面多份本地行时反复改写链接目标。
+        /// </summary>
+        private static Dictionary<string, IRealmObjectBase> buildBeatmapHashIndex(DynamicRealmSession session)
+        {
+            var index = new Dictionary<string, IRealmObjectBase>(StringComparer.Ordinal);
+
+            if (!session.HasClass(OfficialBaselineSchema.Beatmap))
+                return index;
+
+            foreach (var beatmap in DynamicRealmAccess.All(session.Realm, OfficialBaselineSchema.Beatmap))
+            {
+                if (DynamicRealmAccess.Get<bool>(beatmap, "Hidden") == true)
+                    continue;
+
+                string hash = DynamicRealmAccess.GetString(beatmap, "Hash");
+                if (!string.IsNullOrEmpty(hash))
+                    index.TryAdd(hash, beatmap);
+            }
+
+            return index;
+        }
+
+        /// <summary>
+        /// 成绩的规则集：目标已有同名行则复用；目标没有且该 ShortName 属 Ez 专用（diva / bms）时返回 null，
+        /// 由调用方跳过——不往目标库里凭空插 Ez 规则集行。
+        /// </summary>
+        private static IRealmObjectBase? tryResolveScoreRuleset(DynamicRealmSession session, string shortName)
+        {
+            if (!session.HasClass(OfficialBaselineSchema.Ruleset))
+                return null;
+
+            if (!string.IsNullOrWhiteSpace(shortName)
+                && DynamicRealmAccess.Find(session.Realm, OfficialBaselineSchema.Ruleset, shortName) is { } existing)
+            {
+                return existing;
+            }
+
+            return OfficialBaselineSchema.IsEzOnlyRuleset(shortName) ? null : resolveRuleset(session, shortName);
+        }
+
+        private static string shortHash(string hash) =>
+            hash.Length <= 8 ? hash : hash[..8];
+
         private static IRealmObjectBase createChild(DynamicRealmSession session, IRealmObjectBase parent, string property, string className)
         {
             try
@@ -352,6 +495,29 @@ namespace osu.Game.EzRealmSync.Realm
             DynamicRealmAccess.Set(user, OfficialBaselineSchema.RealmUser, "OnlineID", dto.OnlineID);
             DynamicRealmAccess.Set(user, OfficialBaselineSchema.RealmUser, "Username", dto.Username);
             DynamicRealmAccess.Set(user, OfficialBaselineSchema.RealmUser, "CountryCode", dto.CountryString);
+        }
+
+        /// <summary>按原因去重的跳过计数；原因用于展示，因此设上限避免刷屏。</summary>
+        private sealed class SkipCollector
+        {
+            private const int max_distinct_reasons = 5;
+
+            private readonly List<string> reasons = new List<string>();
+
+            public int Count { get; private set; }
+
+            public IReadOnlyList<string> Reasons => reasons;
+
+            public void Add(string reason)
+            {
+                Count++;
+
+                if (reasons.Contains(reason, StringComparer.Ordinal))
+                    return;
+
+                if (reasons.Count < max_distinct_reasons)
+                    reasons.Add(reason);
+            }
         }
     }
 }

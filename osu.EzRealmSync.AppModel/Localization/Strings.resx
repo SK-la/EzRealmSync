@@ -53,6 +53,7 @@
   <data name="StatusScanComplete" xml:space="preserve"><value>Scan complete — {0} only in {1}: {2}, only in {3}: {4}, conflicted: {5}</value></data>
   <data name="StatusDeleted" xml:space="preserve"><value>Deleted {0} item(s) from "{1}"</value></data>
 <data name="StatusAdded" xml:space="preserve"><value>Added/overwrote {0} item(s) on "{1}"</value></data>
+<data name="StatusAddedWithSkipped" xml:space="preserve"><value>Added/overwrote {0} item(s) on "{1}"; skipped {2} ({3})</value></data>
 <data name="StatusBackupSuffix" xml:space="preserve"><value>, backup: {0}</value></data>
   <data name="TabSourceOnly" xml:space="preserve"><value>{0} only · missing in {1}</value></data>
   <data name="TabTargetOnly" xml:space="preserve"><value>{0} only · missing in {1}</value></data>

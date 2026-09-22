@@ -27,6 +27,7 @@ namespace osu.Game.EzRealmSync.Realm
             Skin,
             File,
             Ruleset,
+            Score,
         ];
 
         public static readonly IReadOnlyList<string> EzOnlyPropertyNames =

@@ -685,9 +685,7 @@ namespace osu.EzRealmSync.AppModel
 
                 runOnUi(() =>
                 {
-                    StatusMessage.Value = delete
-                        ? Loc.Format("StatusDeleted", result.AppliedCount, writeFile.DisplayName)
-                        : Loc.Format("StatusAdded", result.AppliedCount, writeFile.DisplayName);
+                    StatusMessage.Value = buildApplyStatus(delete, result, writeFile.DisplayName);
 
                     Progress.Value = 1;
                 });
@@ -702,6 +700,21 @@ namespace osu.EzRealmSync.AppModel
             {
                 setBusy(false);
             }
+        }
+
+        /// <summary>
+        /// 同步结果文案：跳过数 > 0 时附上原因。原因来自动态引擎（中文），这里只做拼接不做翻译。
+        /// </summary>
+        private static string buildApplyStatus(bool delete, ApplyResult result, string displayName)
+        {
+            if (delete)
+                return Loc.Format("StatusDeleted", result.AppliedCount, displayName);
+
+            if (result.SkippedCount == 0)
+                return Loc.Format("StatusAdded", result.AppliedCount, displayName);
+
+            string reasons = string.Join("；", result.SkipReasons);
+            return Loc.Format("StatusAddedWithSkipped", result.AppliedCount, displayName, result.SkippedCount, reasons);
         }
 
         public void ToggleSyncSelectAll()
