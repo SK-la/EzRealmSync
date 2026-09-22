@@ -18,6 +18,7 @@ namespace osu.Game.EzRealmSync.Models
         Beatmap,
         Score,
         BeatmapCollection,
+        Skin,
     }
 
     /// <summary>
@@ -39,6 +40,9 @@ namespace osu.Game.EzRealmSync.Models
 
         [Description("收藏夹")]
         BeatmapCollection,
+
+        [Description("皮肤")]
+        Skin,
     }
 
     public enum DiffCategory

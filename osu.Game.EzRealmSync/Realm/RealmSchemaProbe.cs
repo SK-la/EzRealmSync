@@ -11,7 +11,7 @@ namespace osu.Game.EzRealmSync.Realm
     /// </summary>
     public static class RealmSchemaProbe
     {
-        /// <summary>仅读取文件头 schema，不迁移、不写盘。</summary>
+        /// <summary>仅读取文件头 schema，不迁移、不写盘、不加载 osu.Game.dll。</summary>
         public static int? TryReadSchemaVersion(string realmFilePath) => RealmDiskSchemaReader.TryReadSchemaVersion(realmFilePath);
 
         /// <summary>按磁盘版本打开，<b>绝不</b>执行 Realm 迁移。</summary>

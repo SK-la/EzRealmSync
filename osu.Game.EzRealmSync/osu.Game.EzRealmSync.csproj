@@ -5,6 +5,9 @@
     <Description>Ez Realm 同步契约与引擎；默认 ez2lazer.Game NuGet，本地 lib/ 需 -p:UseLocalOsuLibs=true。</Description>
     <CopyLocalLockFileAssemblies Condition="'$(UseLocalOsuLibs)' == 'true'">false</CopyLocalLockFileAssemblies>
   </PropertyGroup>
+  <ItemGroup>
+    <InternalsVisibleTo Include="osu.Game.EzRealmSync.Tests" />
+  </ItemGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\osu.Game.EzRealmSync.Contracts\osu.Game.EzRealmSync.Contracts.csproj" />

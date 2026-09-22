@@ -1,7 +1,5 @@
 #if HAS_EZ_OSU_GAME
-using osu.Game.Database;
 using osu.Game.EzRealmSync.Abstractions;
-using osu.Game.EzRealmSync.Contracts;
 using osu.Game.EzRealmSync.Errors;
 using osu.Game.EzRealmSync.IO;
 using osu.Game.EzRealmSync.Models;
@@ -9,7 +7,7 @@ using osu.Game.EzRealmSync.Models;
 namespace osu.Game.EzRealmSync.Realm
 {
     /// <summary>
-    /// Phase 2：通过 lib/osu.Game.dll 中的 RealmAccess / OfficialRealmAccess 实现真实 Diff/同步。
+    /// 同步走 DynamicRealm 官方基线；不使用 osu.Game.dll 打开用户库。
     /// </summary>
     public sealed class RealmEzRealmSyncService : IEzRealmSyncService
     {
@@ -106,8 +104,6 @@ namespace osu.Game.EzRealmSync.Realm
 
         private static ApplyResult applyCore(ApplyRequest request, IProgress<ApplyProgress>? progress, CancellationToken cancellationToken)
         {
-            RealmAccessGateway.RefreshReaders();
-
             string? validationError = RealmApplySupport.ValidateApplyRequest(request);
             if (validationError != null)
                 throw new InvalidOperationException(validationError);
@@ -140,76 +136,14 @@ namespace osu.Game.EzRealmSync.Realm
 
             if (request.DeleteFromSource)
             {
-                int mutationSchema = RealmAccessGateway.ResolveSchemaVersion(mutationPath, plan.TargetSchemaVersion);
-
-                if (RealmSchemaSafety.IsOfficialDiskSchema(mutationSchema))
-                {
-                    var delete = RealmAccessGateway.ApplyDeleteToOfficial(
-                        mutationPath,
-                        mutationSchema,
-                        request.ItemIds,
-                        cancellationToken);
-
-                    if (!delete.Success)
-                        throw new InvalidOperationException(delete.ErrorMessage ?? "Official Worker 删除失败。");
-
-                    result = new ApplyResult { AppliedCount = delete.AppliedCount };
-                }
-                else
-                {
-                    using var targetAccess = openForPlanEndpoint(mutationPath, mutationSchema);
-                    result = RealmSyncDeleter.Apply(request, targetAccess, progress, cancellationToken);
-                }
-            }
-            else if (RealmSchemaSafety.IsOfficialDiskSchema(targetSchema))
-            {
-                RealmSyncApplyBundle bundle;
-
-                if (RealmAccessGateway.RequiresSidecarForRead(plan.SourceRealmFilePath, sourceSchema))
-                {
-                    bundle = RealmAccessGateway.ExportApplyBundleViaSidecar(
-                        plan.SourceRealmFilePath,
-                        sourceSchema,
-                        request.ItemIds,
-                        cancellationToken);
-                }
-                else
-                {
-                    using var sourceAccess = openForPlanEndpoint(plan.SourceRealmFilePath, plan.SourceSchemaVersion);
-                    bundle = OfficialConvertJobExporter.ExportPartialByIds(sourceAccess, request.ItemIds);
-                }
-
-                var import = RealmAccessGateway.ApplyImportToOfficial(
-                    plan.TargetRealmFilePath,
-                    targetSchema,
-                    request.ItemIds,
-                    bundle,
-                    cancellationToken);
-
-                if (!import.Success)
-                    throw new InvalidOperationException(import.ErrorMessage ?? "Official Worker apply-import 失败。");
-
-                result = new ApplyResult { AppliedCount = import.AppliedCount };
+                int mutationSchema = RealmAccessGateway.ResolveSchemaVersion(mutationPath, null);
+                result = DynamicBaselineWriter.SoftDelete(request, mutationPath, mutationSchema, progress, cancellationToken);
             }
             else
             {
-                using var targetAccess = openForPlanEndpoint(plan.TargetRealmFilePath, plan.TargetSchemaVersion);
-
-                if (RealmAccessGateway.RequiresSidecarForRead(plan.SourceRealmFilePath, sourceSchema))
-                {
-                    var bundle = RealmAccessGateway.ExportApplyBundleViaSidecar(
-                        plan.SourceRealmFilePath,
-                        sourceSchema,
-                        request.ItemIds,
-                        cancellationToken);
-
-                    result = RealmSyncApplyImporter.Apply(request, bundle, targetAccess, progress, cancellationToken);
-                }
-                else
-                {
-                    using var sourceAccess = openForPlanEndpoint(plan.SourceRealmFilePath, plan.SourceSchemaVersion);
-                    result = RealmRowCopier.Apply(request, sourceAccess, targetAccess, progress, cancellationToken);
-                }
+                var bundle = DynamicBaselineReader.ExportByIds(plan.SourceRealmFilePath, sourceSchema, request.ItemIds);
+                DynamicBaselineFileCopier.CopyMissing(plan.SourceRealmFilePath, plan.TargetRealmFilePath, bundle);
+                result = DynamicBaselineWriter.Apply(request, bundle, plan.TargetRealmFilePath, targetSchema, progress, cancellationToken);
             }
 
             return new ApplyResult { AppliedCount = result.AppliedCount, BackupPath = backupPath };
@@ -292,12 +226,6 @@ namespace osu.Game.EzRealmSync.Realm
                 TargetKind = targetKind,
                 LegacyDirection = direction,
             };
-        }
-
-        private static RealmAccess openForPlanEndpoint(string realmFilePath, int? diskSchemaVersion)
-        {
-            int schema = RealmAccessGateway.ResolveSchemaVersion(realmFilePath, diskSchemaVersion);
-            return RealmAccessGateway.OpenForMutation(realmFilePath, schema);
         }
 
         public Task<IReadOnlyList<BackupEntry>> ListBackupsAsync(string? backupDirectory = null, CancellationToken cancellationToken = default)

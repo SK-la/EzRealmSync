@@ -15,6 +15,7 @@ namespace osu.Game.EzRealmSync.Realm
                 EntityKind.Beatmap => compareBeatmap(source, target),
                 EntityKind.Score => compareScore(source, target),
                 EntityKind.BeatmapCollection => compareCollection(source, target),
+                EntityKind.Skin => compareSkin(source, target),
                 _ => null,
             };
         }
@@ -63,6 +64,19 @@ namespace osu.Game.EzRealmSync.Realm
 
             if (source.Date != target.Date)
                 parts.Add("Date");
+
+            return format(parts);
+        }
+
+        private static string? compareSkin(RealmDiffEntity source, RealmDiffEntity target)
+        {
+            var parts = new List<string>();
+
+            if (!string.Equals(source.Hash, target.Hash, StringComparison.Ordinal))
+                parts.Add("Hash");
+
+            if (!string.Equals(source.Title, target.Title, StringComparison.Ordinal))
+                parts.Add("名称");
 
             return format(parts);
         }

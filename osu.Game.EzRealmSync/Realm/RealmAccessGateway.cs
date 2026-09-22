@@ -1,18 +1,21 @@
 #if HAS_EZ_OSU_GAME
 using osu.Game.Database;
+#endif
 using osu.Game.EzRealmSync.Contracts;
 using osu.Game.EzRealmSync.Errors;
 using osu.Game.EzRealmSync.Models;
+#if HAS_EZ_OSU_GAME
 using osu.Game.EzRealmSync.Realm.Readers;
+#endif
 
 namespace osu.Game.EzRealmSync.Realm
 {
     /// <summary>
-    /// 统一 Realm 访问策略：按操作意图（探测 / 只读 / 写回 / 修复 migration）分流。
+    /// 统一 Realm 访问策略：同步走 DynamicRealm；typed 打开仅用于修复/转官方/数据页。
     /// </summary>
     public static class RealmAccessGateway
     {
-        /// <summary>只读文件头 schema，不打开库。</summary>
+        /// <summary>只读文件头 schema，不打开库、不加载 osu.Game.dll。</summary>
         public static int? ProbeSchema(string realmFilePath) =>
             RealmDiskSchemaReader.TryReadSchemaVersion(realmFilePath);
 
@@ -20,7 +23,7 @@ namespace osu.Game.EzRealmSync.Realm
             diskSchemaVersion ?? ProbeSchema(realmFilePath)
             ?? throw new InvalidOperationException($"无法读取 Realm schema 版本：{realmFilePath}");
 
-        /// <summary>只读 Diff 快照：官方 Official Worker；Ez current 进程内；Ez legacy Sidecar。</summary>
+        /// <summary>只读 Diff 快照：官方基线 DynamicRealm，不加载 osu.Game.dll。</summary>
         public static RealmDiffSnapshot ReadDiffSnapshot(
             string realmFilePath,
             int pinnedDiskSchemaVersion,
@@ -28,9 +31,9 @@ namespace osu.Game.EzRealmSync.Realm
             IProgress<ScanProgress>? progress = null,
             CancellationToken cancellationToken = default)
         {
-            RefreshReaders();
-            return RealmDiffSnapshotProvider.Read(realmFilePath, pinnedDiskSchemaVersion, entityKinds, progress, cancellationToken);
+            return DynamicBaselineReader.ReadDiffSnapshot(realmFilePath, pinnedDiskSchemaVersion, entityKinds, progress, cancellationToken);
         }
+#if HAS_EZ_OSU_GAME
 
         /// <summary>数据 Tab 只读浏览：官方 Official Worker；Ez current 进程内；Ez legacy Sidecar。</summary>
         public static RealmSnapshot ReadBrowseSnapshot(
@@ -166,6 +169,6 @@ namespace osu.Game.EzRealmSync.Realm
                 $"无法修改这份 Realm 文件：版本过旧，需先升级。{ex.Detail}",
                 ex);
         }
+#endif
     }
 }
-#endif

@@ -91,5 +91,7 @@ namespace osu.Game.EzRealmSync.Contracts
         public List<OfficialScoreDto> Scores { get; set; } = new List<OfficialScoreDto>();
 
         public List<OfficialCollectionDto> Collections { get; set; } = new List<OfficialCollectionDto>();
+
+        public List<OfficialSkinDto> Skins { get; set; } = new List<OfficialSkinDto>();
     }
 }

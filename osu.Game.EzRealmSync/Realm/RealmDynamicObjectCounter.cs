@@ -36,6 +36,7 @@ namespace osu.Game.EzRealmSync.Realm
             {
                 IsDynamic = true,
                 IsReadOnly = true,
+                Schema = Array.Empty<Type>(),
                 FallbackPipePath = tempPathLocation,
             };
 

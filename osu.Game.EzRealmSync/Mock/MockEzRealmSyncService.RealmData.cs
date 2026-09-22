@@ -275,7 +275,8 @@ namespace osu.Game.EzRealmSync.Mock
                 EntityKindFilter.Beatmap => new[] { EntityKind.Beatmap },
                 EntityKindFilter.Score => new[] { EntityKind.Score },
                 EntityKindFilter.BeatmapCollection => new[] { EntityKind.BeatmapCollection },
-                _ => new[] { EntityKind.BeatmapSet, EntityKind.Beatmap, EntityKind.Score, EntityKind.BeatmapCollection },
+                EntityKindFilter.Skin => new[] { EntityKind.Skin },
+                _ => new[] { EntityKind.BeatmapSet, EntityKind.Beatmap, EntityKind.BeatmapCollection, EntityKind.Skin },
             };
 
             return snapshot.Groups.Where(g => kinds.Contains(g.EntityKind)).SelectMany(g => g.Rows).ToList();
