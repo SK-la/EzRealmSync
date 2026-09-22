@@ -6,6 +6,7 @@ using osu.Game.EzRealmSync.Models;
 using osu.Game.EzRealmSync.Realm;
 using osu.Game.EzRealmSync.Realm.Dynamic;
 using osu.Game.EzRealmSync.Tests.TestInfrastructure;
+using Realms;
 
 namespace osu.Game.EzRealmSync.Tests
 {
@@ -43,23 +44,22 @@ namespace osu.Game.EzRealmSync.Tests
 
                 OfficialSchemaSource official = readOfficialSchemaSource();
 
-                long setsBefore;
-                long scoresBefore;
-                Guid firstSetId;
+                // 过滤后应搬的行由测试自己按「官方能不能用」的朴素判据数出来：外部托管的集、其下的难度、
+                // 挂在它们上面的成绩，以及 Ez 判定语义 / Ez 专用 mod 的成绩都不该过去。过滤写错（多搬或少搬）
+                // 都会与这里的期望值对不上。
+                ConvertExpectation expected;
 
                 using (var ez = DynamicRealmSession.OpenDynamic(ezPath, readOnly: true))
                 {
                     Assert.That(DynamicSchemaReader.Read(ez).HasClass(ez_only_class), Is.True, "Ez 源库没有 Ez 表，测试失去意义。");
 
-                    setsBefore = count(ez, OfficialBaselineSchema.BeatmapSet);
-                    scoresBefore = count(ez, OfficialBaselineSchema.Score);
-                    firstSetId = DynamicRealmAccess.All(ez.Realm, OfficialBaselineSchema.BeatmapSet)
-                                                     .AsEnumerable()
-                                                     .Select(s => DynamicRealmAccess.Get<Guid>(s, "ID"))
-                                                     .FirstOrDefault();
+                    expected = readExpectation(ez);
                 }
 
-                Assert.That(setsBefore, Is.GreaterThan(0), "Ez 源库里没有谱面集。");
+                Assert.That(expected.SetsBefore, Is.GreaterThan(0), "Ez 源库里没有谱面集。");
+                Assert.That(expected.KeptSets, Is.Not.Empty, "Ez 源库里没有被留下的谱面集，测试失去意义。");
+                Assert.That(expected.DroppedSets, Is.Not.Empty, "源库里没有会被滤掉的谱面集，测试失去意义。");
+                Assert.That(expected.DroppedScores, Is.Not.Empty, "源库里没有会被滤掉的成绩，测试失去意义。");
 
                 OfficialConvertStats stats = DynamicOfficialConverter.Convert(ezPath, official, targetPath);
 
@@ -72,6 +72,8 @@ namespace osu.Game.EzRealmSync.Tests
                     stats.DroppedColumns,
                     Does.Contain($"{OfficialBaselineSchema.BeatmapSet}.{ez_only_beatmap_set_column}"),
                     "Ez 列没有被记为剔除。");
+                Assert.That(stats.Notes, Has.Some.Contains("谱面集"), "被滤掉的谱面集没有出现在报告里。");
+                Assert.That(stats.Notes, Has.Some.Contains("成绩"), "被滤掉的成绩没有出现在报告里。");
 
                 using var produced = DynamicRealmSession.OpenDynamic(targetPath, readOnly: true);
                 RealmSchemaSnapshot producedSchema = DynamicSchemaReader.Read(produced);
@@ -82,11 +84,17 @@ namespace osu.Game.EzRealmSync.Tests
                 Assert.That(produced.HasProperty(OfficialBaselineSchema.BeatmapSet, ez_only_beatmap_set_column), Is.False, "产物里出现了谱面集的 Ez 列。");
                 Assert.That(produced.HasProperty(OfficialBaselineSchema.Score, ez_only_score_column), Is.False, "产物里出现了成绩的 Ez 列。");
 
-                Assert.That(count(produced, OfficialBaselineSchema.BeatmapSet), Is.EqualTo(setsBefore), "谱面集行数在产物里对不上。");
-                Assert.That(count(produced, OfficialBaselineSchema.Score), Is.EqualTo(scoresBefore), "成绩行数在产物里对不上。");
+                Assert.That(count(produced, OfficialBaselineSchema.BeatmapSet), Is.EqualTo(expected.KeptSets.Count), "产物里的谱面集行数与官方能用的集合不符。");
+                Assert.That(count(produced, OfficialBaselineSchema.Beatmap), Is.EqualTo(expected.KeptBeatmaps.Count), "产物里的难度行数与被留下的谱面集不符。");
+                Assert.That(count(produced, OfficialBaselineSchema.Score), Is.EqualTo(expected.KeptScores.Count), "产物里的成绩行数与官方能还原的数量不符。");
 
-                var set = DynamicRealmAccess.Find(produced.Realm, OfficialBaselineSchema.BeatmapSet, firstSetId);
-                Assert.That(set, Is.Not.Null, "产物里缺了源库的谱面集。");
+                // 被滤掉的行必须一行都不在产物里：这是「官方端读得到、且读得对」的反面保证。
+                assertIdsAbsent(produced, OfficialBaselineSchema.BeatmapSet, expected.DroppedSets);
+                assertIdsAbsent(produced, OfficialBaselineSchema.Beatmap, expected.DroppedBeatmaps);
+                assertIdsAbsent(produced, OfficialBaselineSchema.Score, expected.DroppedScores);
+
+                var set = DynamicRealmAccess.Find(produced.Realm, OfficialBaselineSchema.BeatmapSet, expected.KeptSets[0]);
+                Assert.That(set, Is.Not.Null, "产物里缺了源库中被留下的谱面集。");
                 Assert.That(DynamicRealmAccess.GetString(set, "Hash"), Is.Not.Empty, "产物里谱面集的 Hash 丢了。");
                 Assert.That(DynamicRealmAccess.EnumerateObjects(set!, "Beatmaps").Any(), Is.True, "产物里谱面集的难度列表是空的。");
             }
@@ -244,6 +252,95 @@ namespace osu.Game.EzRealmSync.Tests
             RealisticEzRealmSeeder.CreateCurrentEzRealm(path, ez_schema);
             RealisticEzRealmSeeder.SeedFromOfficialSample(path, ez_schema);
             RealisticEzRealmSeeder.WriteEzOnlyValues(path, ez_schema);
+        }
+
+        /// <summary>「转官方后官方端还能用的行」与「必须被滤掉的行」，以及源库总数（用于确认样本有两侧）。</summary>
+        private sealed record ConvertExpectation(
+            long SetsBefore,
+            List<Guid> KeptSets,
+            List<Guid> KeptBeatmaps,
+            List<Guid> KeptScores,
+            List<Guid> DroppedSets,
+            List<Guid> DroppedBeatmaps,
+            List<Guid> DroppedScores);
+
+        /// <summary>
+        /// 测试侧独立算一遍期望：判据刻意写死成「官方四规则集 + 非外部托管 + 非软删 + 双 Lazer 判定 + mod 全在
+        /// 官方名录」，与产品侧的 <c>OfficialExportPolicy</c> 分开实现，产品漏判/多判都能被这组期望抓出来。
+        /// </summary>
+        private static ConvertExpectation readExpectation(DynamicRealmSession ez)
+        {
+            var officialRulesets = new HashSet<string>(StringComparer.Ordinal) { "osu", "mania", "taiko", "catch" };
+
+            bool rulesetOk(IRealmObjectBase? row) => officialRulesets.Contains(DynamicRealmAccess.GetString(row, "ShortName"));
+
+            var rulesetsByName = DynamicRealmAccess.All(ez.Realm, OfficialBaselineSchema.Ruleset)
+                                                   .AsEnumerable()
+                                                   .ToDictionary(r => DynamicRealmAccess.GetString(r, "ShortName"), r => rulesetOk(r));
+
+            var beatmaps = DynamicRealmAccess.All(ez.Realm, OfficialBaselineSchema.Beatmap)
+                                             .AsEnumerable()
+                                             .Select(b => new
+                                             {
+                                                 Id = DynamicRealmAccess.Get<Guid>(b, "ID"),
+                                                 Hash = DynamicRealmAccess.GetString(b, "Hash"),
+                                                 Hidden = DynamicRealmAccess.Get<bool>(b, "Hidden"),
+                                                 RulesetOk = rulesetsByName.GetValueOrDefault(
+                                                     DynamicRealmAccess.GetString(DynamicRealmAccess.Get<IRealmObjectBase>(b, "Ruleset"), "ShortName")),
+                                                 SetId = DynamicRealmAccess.Get<IRealmObjectBase>(b, "BeatmapSet") is { } parent
+                                                     ? DynamicRealmAccess.Get<Guid>(parent, "ID")
+                                                     : Guid.Empty,
+                                             })
+                                             .ToList();
+
+            var keptSets = new List<Guid>();
+            var droppedSets = new List<Guid>();
+
+            foreach (IRealmObjectBase set in DynamicRealmAccess.All(ez.Realm, OfficialBaselineSchema.BeatmapSet).AsEnumerable())
+            {
+                Guid id = DynamicRealmAccess.Get<Guid>(set, "ID");
+                bool external = DynamicRealmAccess.Get<int>(set, "HostingKind") == 1;
+                bool deletePending = DynamicRealmAccess.Get<bool>(set, "DeletePending");
+                bool hasUsableBeatmap = beatmaps.Any(b => b.SetId == id && !b.Hidden && b.RulesetOk);
+
+                (external || deletePending || !hasUsableBeatmap ? droppedSets : keptSets).Add(id);
+            }
+
+            var keptBeatmaps = beatmaps.Where(b => !b.Hidden && b.RulesetOk && keptSets.Contains(b.SetId)).ToList();
+            var keptHashes = keptBeatmaps.Select(b => b.Hash).ToHashSet(StringComparer.Ordinal);
+
+            var keptScores = new List<Guid>();
+            var droppedScores = new List<Guid>();
+
+            foreach (IRealmObjectBase score in DynamicRealmAccess.All(ez.Realm, OfficialBaselineSchema.Score).AsEnumerable())
+            {
+                bool ezSemantics = DynamicRealmAccess.Get<int>(score, "ManiaHitMode") > 0 || DynamicRealmAccess.Get<int>(score, "ManiaHealthMode") > 0;
+                bool modsOk = !DynamicRealmAccess.GetString(score, "Mods").Contains("\"NCl\"", StringComparison.Ordinal);
+                bool beatmapKept = keptHashes.Contains(DynamicRealmAccess.GetString(score, "BeatmapHash"));
+
+                bool keep = rulesetOk(DynamicRealmAccess.Get<IRealmObjectBase>(score, "Ruleset"))
+                            && !ezSemantics
+                            && modsOk
+                            && !DynamicRealmAccess.Get<bool>(score, "DeletePending")
+                            && beatmapKept;
+
+                (keep ? keptScores : droppedScores).Add(DynamicRealmAccess.Get<Guid>(score, "ID"));
+            }
+
+            return new ConvertExpectation(
+                count(ez, OfficialBaselineSchema.BeatmapSet),
+                keptSets,
+                keptBeatmaps.Select(b => b.Id).ToList(),
+                keptScores,
+                droppedSets,
+                beatmaps.Where(b => !keptBeatmaps.Contains(b)).Select(b => b.Id).ToList(),
+                droppedScores);
+        }
+
+        private static void assertIdsAbsent(DynamicRealmSession produced, string className, IReadOnlyList<Guid> ids)
+        {
+            foreach (Guid id in ids)
+                Assert.That(DynamicRealmAccess.Find(produced.Realm, className, id), Is.Null, $"{className} {id} 本应被滤掉，却出现在了产物里。");
         }
 
         /// <summary>

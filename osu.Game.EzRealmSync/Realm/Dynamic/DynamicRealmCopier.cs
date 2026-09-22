@@ -28,7 +28,8 @@ namespace osu.Game.EzRealmSync.Realm.Dynamic
             DynamicRealmSession source,
             DynamicRealmSession target,
             IProgress<ScanProgress>? progress = null,
-            CancellationToken cancellationToken = default)
+            CancellationToken cancellationToken = default,
+            IDynamicCopyFilter? filter = null)
         {
             ArgumentNullException.ThrowIfNull(source);
             ArgumentNullException.ThrowIfNull(target);
@@ -36,7 +37,7 @@ namespace osu.Game.EzRealmSync.Realm.Dynamic
             RealmSchemaSnapshot sourceSchema = DynamicSchemaReader.Read(source);
             RealmSchemaSnapshot targetSchema = DynamicSchemaReader.Read(target);
 
-            var context = new CopyContext(source, target, sourceSchema, targetSchema, progress);
+            var context = new CopyContext(source, target, sourceSchema, targetSchema, progress, filter);
 
             using (var transaction = target.Realm.BeginWrite())
             {
@@ -56,6 +57,7 @@ namespace osu.Game.EzRealmSync.Realm.Dynamic
             private readonly RealmSchemaSnapshot sourceSchema;
             private readonly RealmSchemaSnapshot targetSchema;
             private readonly IProgress<ScanProgress>? progress;
+            private readonly IDynamicCopyFilter? filter;
 
             /// <summary>
             /// 源行 → 目标行。按<b>行身份</b>记（Realm 包装对象的 Equals/GetHashCode 就是这个语义，无主键的类也适用）：
@@ -65,6 +67,7 @@ namespace osu.Game.EzRealmSync.Realm.Dynamic
 
             private readonly List<(RealmClassSchema Class, IRealmObjectBase Source)> rows = new();
             private readonly Dictionary<string, int> rowsPerClass = new(StringComparer.Ordinal);
+            private readonly Dictionary<string, int> skippedPerClass = new(StringComparer.Ordinal);
             private readonly List<string> notes = new();
 
             public CopyContext(
@@ -72,17 +75,23 @@ namespace osu.Game.EzRealmSync.Realm.Dynamic
                 DynamicRealmSession target,
                 RealmSchemaSnapshot sourceSchema,
                 RealmSchemaSnapshot targetSchema,
-                IProgress<ScanProgress>? progress)
+                IProgress<ScanProgress>? progress,
+                IDynamicCopyFilter? filter)
             {
                 this.source = source;
                 this.target = target;
                 this.sourceSchema = sourceSchema;
                 this.targetSchema = targetSchema;
                 this.progress = progress;
+                this.filter = filter;
             }
 
             public DynamicCopyResult ToResult() =>
-                new(rows.Count, new Dictionary<string, int>(rowsPerClass, StringComparer.Ordinal), notes.ToArray());
+                new(
+                    rows.Count,
+                    new Dictionary<string, int>(rowsPerClass, StringComparer.Ordinal),
+                    new Dictionary<string, int>(skippedPerClass, StringComparer.Ordinal),
+                    notes.ToArray());
 
             /// <summary>建好目标库的整类行，并登记「源行 → 目标行」。嵌入类不在这里出现。</summary>
             public void buildSkeleton(CancellationToken cancellationToken)
@@ -107,6 +116,12 @@ namespace osu.Game.EzRealmSync.Realm.Dynamic
                     foreach (IRealmObjectBase row in DynamicRealmAccess.All(source.Realm, targetClass.Name).AsEnumerable())
                     {
                         cancellationToken.ThrowIfCancellationRequested();
+
+                        if (filter != null && !filter.ShouldCopy(targetClass.Name, row))
+                        {
+                            skippedPerClass[targetClass.Name] = skippedPerClass.GetValueOrDefault(targetClass.Name) + 1;
+                            continue;
+                        }
 
                         targetBySource[row] = createRow(targetClass, sourceClass, row);
                         rows.Add((targetClass, row));
@@ -329,9 +344,12 @@ namespace osu.Game.EzRealmSync.Realm.Dynamic
         }
     }
 
-    /// <summary>搬运结果：搬了多少行、每类多少行，以及被跳过的列/链接（Ez 列、目标版本没有的列都记这里）。</summary>
+    /// <summary>
+    /// 搬运结果：搬了多少行、每类多少行、被过滤器拒掉多少行，以及被跳过的列/链接（Ez 列、目标版本没有的列都记这里）。
+    /// </summary>
     public sealed record DynamicCopyResult(
         int Rows,
         IReadOnlyDictionary<string, int> RowsPerClass,
+        IReadOnlyDictionary<string, int> SkippedPerClass,
         IReadOnlyList<string> Notes);
 }

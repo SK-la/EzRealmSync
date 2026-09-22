@@ -38,6 +38,7 @@ namespace osu.Game.EzRealmSync.Realm.Dynamic
             var sourceCounts = new Dictionary<string, long>(StringComparer.Ordinal);
             var droppedClasses = new List<string>();
             var droppedColumns = new List<string>();
+            var notes = new List<string>();
             DynamicCopyResult copy;
 
             progress?.Report(new ScanProgress { Progress = 0.1, Message = $"正在按官方 {official.UpstreamVersion} schema 建库…" });
@@ -51,10 +52,15 @@ namespace osu.Game.EzRealmSync.Realm.Dynamic
             {
                 collectDropped(sourceSchema, official.Snapshot, droppedClasses, droppedColumns);
 
+                // 官方端用不了的行（Ez 规则集、外部托管、Ez 判定语义 / Ez mod 的成绩）不搬；待搬行数按过滤器算，
+                // 才能拿来做产物自检。
+                var filter = new OfficialRealmCopyFilter(source);
+                filter.BuildIndexes();
+
                 foreach (RealmClassSchema targetClass in official.Snapshot.Classes)
                 {
                     if (!targetClass.IsEmbedded && sourceSchema.HasClass(targetClass.Name))
-                        sourceCounts[targetClass.Name] = DynamicRealmAccess.All(source.Realm, targetClass.Name).AsEnumerable().LongCount();
+                        sourceCounts[targetClass.Name] = countRowsToCopy(source, targetClass.Name, filter);
                 }
 
                 cancellationToken.ThrowIfCancellationRequested();
@@ -65,13 +71,38 @@ namespace osu.Game.EzRealmSync.Realm.Dynamic
                     (ulong)official.UpstreamVersion,
                     readOnly: false);
 
-                copy = DynamicRealmCopier.Copy(source, target, progress, cancellationToken);
+                copy = DynamicRealmCopier.Copy(source, target, progress, cancellationToken, filter);
             }
+
+            notes.AddRange(copy.Notes);
+            notes.AddRange(summariseSkipped(copy));
 
             progress?.Report(new ScanProgress { Progress = 0.95, Message = "正在校验产物…" });
             verify(targetRealmPath, official, sourceCounts);
 
-            return new OfficialConvertStats(official.UpstreamVersion, copy.Rows, droppedClasses, droppedColumns, copy.Notes);
+            return new OfficialConvertStats(official.UpstreamVersion, copy.Rows, droppedClasses, droppedColumns, notes);
+        }
+
+        /// <summary>自检用的「应搬行数」：按同一个过滤器数，而不是源库总行数。</summary>
+        private static long countRowsToCopy(DynamicRealmSession source, string className, IDynamicCopyFilter filter) =>
+            DynamicRealmAccess.All(source.Realm, className)
+                              .AsEnumerable()
+                              .LongCount(row => filter.ShouldCopy(className, row));
+
+        private static IEnumerable<string> summariseSkipped(DynamicCopyResult copy)
+        {
+            foreach ((string className, int skipped) in copy.SkippedPerClass.Where(pair => pair.Value > 0))
+            {
+                yield return className switch
+                {
+                    OfficialBaselineSchema.Ruleset => $"官方端不认识的规则集 {skipped} 条（Ez 专用规则集）未搬运。",
+                    OfficialBaselineSchema.BeatmapSet => $"外部托管 / 只含 Ez 规则集难度的谱面集 {skipped} 个未搬运。",
+                    OfficialBaselineSchema.Beatmap => $"Ez 规则集或已隐藏的难度 {skipped} 条未搬运。",
+                    OfficialBaselineSchema.Score => $"官方无法还原的成绩 {skipped} 条未搬运（Ez 判定语义 / 非官方 mod / 难度未搬运）。",
+                    OfficialBaselineSchema.BeatmapMetadata => $"未被搬运难度引用的元数据 {skipped} 条未搬运。",
+                    _ => $"{className} 有 {skipped} 条未搬运。",
+                };
+            }
         }
 
         private static void collectDropped(

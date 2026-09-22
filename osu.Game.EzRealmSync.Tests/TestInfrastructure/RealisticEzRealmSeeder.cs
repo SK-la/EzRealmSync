@@ -2,6 +2,7 @@
 using NUnit.Framework;
 using osu.Game.Beatmaps;
 using osu.Game.Database;
+using osu.Game.EzOsuGame.Configuration;
 using osu.Game.EzRealmSync.Contracts;
 using osu.Game.EzRealmSync.Models;
 using osu.Game.EzRealmSync.Realm;
@@ -191,17 +192,24 @@ namespace osu.Game.EzRealmSync.Tests.TestInfrastructure
             RealmSampleFixture.GetAllSamples()
                               .FirstOrDefault(s => s.RealmFileExists && s.DiskSchemaKind == diskSchemaKind);
 
-        /// <summary>往 Ez 扩展列写真实值：这些列官方样本里没有，只能 typed 写。</summary>
+        /// <summary>
+        /// 往 Ez 扩展列写真实值：这些列官方样本里没有，只能 typed 写。
+        ///
+        /// 刻意只让**一个**谱面集外部托管、**一条**成绩是 Ez 判定语义、**一条**成绩带 Ez 专用 mod：
+        /// 「转官方 / 往官方同步」的过滤要有被滤掉的与被留下的两侧样本，全滤或全留都测不出过滤是否生效。
+        /// </summary>
         public static void WriteEzOnlyValues(string path, int schema)
         {
             using var access = TypedRealmAccess.OpenForMutation(path, schema);
 
             access.Write(realm =>
             {
-                foreach (var set in realm.All<BeatmapSetInfo>())
+                BeatmapSetInfo? externalSet = realm.All<BeatmapSetInfo>().FirstOrDefault();
+
+                if (externalSet != null)
                 {
-                    set.ExternalContentRoot = @"D:\EzExternal\parity";
-                    set.HostingKindInt = (int)BeatmapSetHostingKind.External;
+                    externalSet.ExternalContentRoot = @"D:\EzExternal\parity";
+                    externalSet.HostingKindInt = (int)BeatmapSetHostingKind.External;
                 }
 
                 foreach (var beatmap in realm.All<BeatmapInfo>())
@@ -210,10 +218,21 @@ namespace osu.Game.EzRealmSync.Tests.TestInfrastructure
                     beatmap.PerformancePoints = 210;
                 }
 
+                ScoreInfo? ezModeScore = realm.All<ScoreInfo>().FirstOrDefault();
+                ScoreInfo? ezModScore = realm.All<ScoreInfo>().ToList().Skip(1).FirstOrDefault();
+
                 foreach (var score in realm.All<ScoreInfo>())
                 {
-                    score.ManiaHitMode = 4;
                     score.SessionAccuracyCutoffA = 0.25;
+
+                    if (ezModeScore != null && score.ID == ezModeScore.ID)
+                    {
+                        score.ManiaHitMode = (int)EzEnumHitMode.O2Jam;
+                        score.ManiaHealthMode = (int)EzEnumHealthMode.O2JamHard;
+                    }
+
+                    if (ezModScore != null && score.ID == ezModScore.ID)
+                        score.ModsJson = """[{"acronym":"NCl"}]""";
                 }
             });
 
