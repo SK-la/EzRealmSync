@@ -108,12 +108,9 @@ namespace osu.EzRealmSync.Desktop.ViewModels
             ScanFixIssuesCommand = createAsyncCommand(() => presenter.ScanFixIssuesAsync(), () => !IsBusy && CanUseFixAndExport);
             ApplyFixSelectedCommand = createAsyncCommand(() => presenter.ApplySelectedFixesAsync(), () => !IsBusy && CanUseFixAndExport);
             ApplyAllFixesCommand = createAsyncCommand(() => presenter.ApplyAllFixesAsync(), () => !IsBusy && CanUseFixAndExport);
-            ConvertFixRealmPreserveCommand = createAsyncCommand(
-                () => presenter.ConvertSelectedFixRealmToOfficialPrimaryAsync(),
+            ConvertFixRealmOfficialCommand = createAsyncCommand(
+                () => presenter.ConvertSelectedFixRealmToOfficialAsync(),
                 () => !IsBusy && CanUseFixAndExport && CanUseFixConvertPrimary);
-            ConvertFixRealmToLibCommand = createAsyncCommand(
-                () => presenter.ConvertSelectedFixRealmToOfficialAsync(OfficialConvertTarget.UpgradeToLibUpstream),
-                () => !IsBusy && CanUseFixAndExport);
             UpgradeFixRealmSchemaCommand = createAsyncCommand(() => presenter.UpgradeSelectedFixRealmSchemaAsync(), () => !IsBusy && CanUseFixAndExport);
             ToggleFixSelectAllCommand = new RelayCommand(presenter.ToggleFixSelectAll);
             LoadExportCatalogCommand = createAsyncCommand(() => presenter.LoadExportCatalogAsync(), () => !IsBusy);
@@ -326,8 +323,7 @@ namespace osu.EzRealmSync.Desktop.ViewModels
         public ICommand ScanFixIssuesCommand { get; }
         public ICommand ApplyFixSelectedCommand { get; }
         public ICommand ApplyAllFixesCommand { get; }
-        public ICommand ConvertFixRealmPreserveCommand { get; }
-        public ICommand ConvertFixRealmToLibCommand { get; }
+        public ICommand ConvertFixRealmOfficialCommand { get; }
         public ICommand UpgradeFixRealmSchemaCommand { get; }
         public ICommand ToggleFixSelectAllCommand { get; }
         public ICommand LoadExportCatalogCommand { get; }

@@ -2,6 +2,7 @@ using NUnit.Framework;
 using osu.Game.EzRealmSync.Contracts;
 using osu.Game.EzRealmSync.Models;
 using osu.Game.EzRealmSync.Realm;
+using osu.Game.EzRealmSync.Realm.Dynamic;
 using osu.Game.EzRealmSync.Tests.TestInfrastructure;
 using Realms;
 
@@ -55,7 +56,10 @@ namespace osu.Game.EzRealmSync.Tests
                 Assert.That(DynamicRealmAccess.GetString(copied, "Hash"), Is.EqualTo("set-hash"));
 
                 assertDynamicOpenPreservesSchema(targetPath, 51);
-                OfficialMirrorSchemaVerifier.Verify(targetPath, 51, 0);
+
+                // 产物必须是一份纯官方库：schema 里不许出现 Ez 表或 Ez 列（官方客户端才不会认错）。
+                using (var produced = DynamicRealmSession.OpenDynamic(targetPath, readOnly: true))
+                    Assert.That(RealmSchemaSnapshotClassifier.HasEzFingerprint(DynamicSchemaReader.Read(produced)), Is.False, "产物里出现了 Ez 表或 Ez 列。");
             }
             finally
             {

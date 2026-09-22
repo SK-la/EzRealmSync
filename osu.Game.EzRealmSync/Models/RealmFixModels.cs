@@ -57,6 +57,7 @@ namespace osu.Game.EzRealmSync.Models
         public int SkippedCount { get; init; }
     }
 
+    /// <summary>「转回官方版」的结果：原路径上的文件已经被收窄成官方 <see cref="TargetSchemaVersion"/>。</summary>
     public sealed class RealmOfficialConversionResult
     {
         public string TargetRealmFilePath { get; init; } = string.Empty;
@@ -65,11 +66,20 @@ namespace osu.Game.EzRealmSync.Models
 
         public string? BackupPath { get; init; }
 
+        /// <summary>源库的磁盘版本（Ez 号，如 52010）。</summary>
+        public int SourceSchemaVersion { get; init; }
+
+        /// <summary>产物的官方 upstream（文件头写入的版本，如 52）。</summary>
         public int TargetSchemaVersion { get; init; }
 
-        public OfficialConvertTarget ConvertTarget { get; init; }
+        /// <summary>目标 schema 的事实来源（快照或所选的官方库文件）。</summary>
+        public string SchemaSourceDescription { get; init; } = string.Empty;
 
-        public OfficialConvertFilterStats? FilterStats { get; init; }
+        /// <summary>被剔除的 Ez 表（官方不认识的整表）。</summary>
+        public IReadOnlyList<string> DroppedClasses { get; init; } = Array.Empty<string>();
+
+        /// <summary>被剔除的 Ez 列（<c>类.列</c>）。</summary>
+        public IReadOnlyList<string> DroppedColumns { get; init; } = Array.Empty<string>();
     }
 
     public sealed class RealmSchemaUpgradeResult

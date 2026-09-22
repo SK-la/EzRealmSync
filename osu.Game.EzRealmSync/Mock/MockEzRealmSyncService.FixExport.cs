@@ -141,24 +141,16 @@ namespace osu.Game.EzRealmSync.Mock
 
         public async Task<RealmOfficialConversionResult> ConvertToOfficialRealmAsync(
             string realmId,
-            OfficialConvertTarget convertTarget,
-            string? outputRealmFilePath = null,
+            string? officialSchemaSourcePath = null,
             string? backupDirectory = null,
             IProgress<ScanProgress>? progress = null,
             CancellationToken cancellationToken = default)
         {
             var snapshot = await ensureLoadedAsync(realmId, progress, cancellationToken).ConfigureAwait(false);
-            await simulateWorkAsync(progress, "正在转换为官方库…", cancellationToken).ConfigureAwait(false);
+            await simulateWorkAsync(progress, "正在收窄为官方库…", cancellationToken).ConfigureAwait(false);
 
-            string target = string.IsNullOrWhiteSpace(outputRealmFilePath)
-                ? Path.Combine(Path.GetTempPath(), $"client_{Guid.NewGuid():N}.realm")
-                : Path.GetFullPath(outputRealmFilePath.Trim());
-
-            string? dir = Path.GetDirectoryName(target);
-            if (!string.IsNullOrEmpty(dir))
-                Directory.CreateDirectory(dir);
-
-            await File.WriteAllTextAsync(target, $"// mock official realm converted from {snapshot.DisplayName}", cancellationToken).ConfigureAwait(false);
+            string target = Path.Combine(Path.GetTempPath(), $"client_{Guid.NewGuid():N}.realm");
+            await File.WriteAllTextAsync(target, $"// mock official realm narrowed from {snapshot.DisplayName}", cancellationToken).ConfigureAwait(false);
 
             string backupDir = string.IsNullOrWhiteSpace(backupDirectory)
                 ? EzRealmSyncDefaults.DefaultBackupDirectory
@@ -168,15 +160,13 @@ namespace osu.Game.EzRealmSync.Mock
             return new RealmOfficialConversionResult
             {
                 TargetRealmFilePath = target,
+                SourceSchemaVersion = 52_010,
+                TargetSchemaVersion = 52,
                 AppliedCount = snapshot.Groups.Sum(g => g.Rows.Count),
                 BackupPath = Path.Combine(backupDir, $"client_backup_{Guid.NewGuid():N}.realm"),
-                TargetSchemaVersion = convertTarget switch
-                {
-                    OfficialConvertTarget.UpgradeToLibUpstream => 52,
-                    OfficialConvertTarget.LibMinusOneUpstream => 51,
-                    _ => 51,
-                },
-                ConvertTarget = convertTarget,
+                SchemaSourceDescription = "（UI 测试模式的模拟值）",
+                DroppedClasses = new[] { "EzDanEstimate" },
+                DroppedColumns = new[] { "BeatmapSet.ExternalContentRoot", "Score.ManiaHitMode" },
             };
         }
 

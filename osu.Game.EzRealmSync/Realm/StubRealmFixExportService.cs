@@ -24,8 +24,7 @@ namespace osu.Game.EzRealmSync.Realm
 
         public Task<RealmOfficialConversionResult> ConvertToOfficialRealmAsync(
             string realmId,
-            OfficialConvertTarget convertTarget,
-            string? outputRealmFilePath = null,
+            string? officialSchemaSourcePath = null,
             string? backupDirectory = null,
             IProgress<ScanProgress>? progress = null,
             CancellationToken cancellationToken = default) => throw new InvalidOperationException(message);

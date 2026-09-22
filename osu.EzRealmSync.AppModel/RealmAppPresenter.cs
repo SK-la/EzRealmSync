@@ -7,6 +7,7 @@ using osu.Game.EzRealmSync.Contracts;
 using osu.Game.EzRealmSync.Errors;
 using osu.Game.EzRealmSync.Mock;
 using osu.Game.EzRealmSync.Models;
+using osu.Game.EzRealmSync.Realm.Dynamic;
 using osu.Game.EzRealmSync.Realm.Readers;
 
 namespace osu.EzRealmSync.AppModel
@@ -1108,10 +1109,7 @@ namespace osu.EzRealmSync.AppModel
 
         public async Task ApplyAllFixesAsync() => await applyFixesAsync(FixIssues.Select(i => i.Id).ToList()).ConfigureAwait(false);
 
-        public async Task ConvertSelectedFixRealmToOfficialPrimaryAsync() =>
-            await ConvertSelectedFixRealmToOfficialAsync(OfficialConvertPlanner.ResolvePrimaryConvertTarget(requireFixEzSchemaVersion())).ConfigureAwait(false);
-
-        public async Task ConvertSelectedFixRealmToOfficialAsync(OfficialConvertTarget convertTarget)
+        public async Task ConvertSelectedFixRealmToOfficialAsync()
         {
             var file = getRealmFile(FixRealmId.Value);
             if (file == null)
@@ -1123,14 +1121,42 @@ namespace osu.EzRealmSync.AppModel
                 return;
             }
 
-            if (convertTarget == OfficialConvertTarget.LibMinusOneUpstream
-                && !OfficialConvertPlanner.CanUseLibMinusOneConvert(file.SchemaVersion.Value))
+            int sourceSchema = file.SchemaVersion.Value;
+            var (upstream, _) = RealmSchemaVersions.Decode(sourceSchema);
+
+            if (upstream <= 0)
             {
-                runOnUi(() => StatusMessage.Value = Loc.Format("ErrorSchemaTooLow", Loc.Get("FixConvertOfficialLibMinusOne")));
+                runOnUi(() => StatusMessage.Value = Loc.Format("ErrorConvertOfficialNoUpstream", sourceSchema));
                 return;
             }
 
-            int targetOfficial = OfficialConvertPlanner.ResolveTargetOfficialUpstream(file.SchemaVersion.Value, convertTarget);
+            // 官方 schema 的事实来源：快照仓库里有就直接用；没有时请用户指一份官方库当场采集。
+            string? pickedSourcePath = null;
+
+            if (!OfficialSchemaSourceResolver.TryFromSnapshots(upstream, out OfficialSchemaSource? official, out string? sourceError))
+            {
+                runOnUi(() => StatusMessage.Value = sourceError);
+
+                if (PickRealmPathAsync == null)
+                    return;
+
+                string initialPath = Path.GetDirectoryName(file.FilePath) ?? string.Empty;
+                string? pickedPath = await PickRealmPathAsync(initialPath).ConfigureAwait(false);
+
+                if (string.IsNullOrWhiteSpace(pickedPath))
+                    return;
+
+                try
+                {
+                    official = OfficialSchemaSourceResolver.FromFile(pickedPath, upstream);
+                    pickedSourcePath = pickedPath;
+                }
+                catch (Exception ex)
+                {
+                    runOnUi(() => StatusMessage.Value = toUserMessage(ex));
+                    return;
+                }
+            }
 
             string backupDir = string.IsNullOrWhiteSpace(BackupDirectory.Value)
                 ? EzRealmSyncDefaults.DefaultBackupDirectory
@@ -1138,7 +1164,7 @@ namespace osu.EzRealmSync.AppModel
 
             if (ConfirmAsync != null)
             {
-                string message = formatConvertOfficialConfirm(convertTarget, targetOfficial, backupDir);
+                string message = Loc.Format("FixConvertOfficialConfirm", official!.UpstreamVersion, backupDir, official.Description);
 
                 if (!await ConfirmAsync(message, Loc.Get("FixConvertOfficialTitle"), true).ConfigureAwait(false))
                     return;
@@ -1149,7 +1175,12 @@ namespace osu.EzRealmSync.AppModel
             try
             {
                 var progress = createScanProgress();
-                var result = await fixService.ConvertToOfficialRealmAsync(file.Id, convertTarget, backupDirectory: backupDir, progress: progress).ConfigureAwait(false);
+                var result = await fixService.ConvertToOfficialRealmAsync(
+                    file.Id,
+                    officialSchemaSourcePath: pickedSourcePath,
+                    backupDirectory: backupDir,
+                    progress: progress).ConfigureAwait(false);
+
                 await RefreshRealmFilesAsync(affectBusy: false).ConfigureAwait(false);
 
                 runOnUi(() =>
@@ -1161,16 +1192,8 @@ namespace osu.EzRealmSync.AppModel
                         result.BackupPath ?? string.Empty,
                         result.AppliedCount);
 
-                    if (result.FilterStats is { } stats && hasConvertFilterSkips(stats))
-                    {
-                        message += " " + Loc.Format(
-                            "StatusFixConvertedOfficialSkipped",
-                            stats.SkippedScores,
-                            stats.SkippedSkins,
-                            stats.SkippedBeatmapSets,
-                            stats.SkippedRulesets,
-                            stats.PrunedCollectionEntries);
-                    }
+                    if (result.DroppedClasses.Count > 0 || result.DroppedColumns.Count > 0)
+                        message += " " + Loc.Format("StatusFixConvertedOfficialDropped", result.DroppedClasses.Count, result.DroppedColumns.Count);
 
                     StatusMessage.Value = message;
                     Progress.Value = 1;
@@ -1186,53 +1209,24 @@ namespace osu.EzRealmSync.AppModel
             }
         }
 
-        private int requireFixEzSchemaVersion()
-        {
-            var file = getRealmFile(FixRealmId.Value)
-                       ?? throw new InvalidOperationException("未选择 Ez Realm 文件。");
-
-            if (file.SchemaVersion == null || RealmSchemaSafety.Classify(file.SchemaVersion) != RealmDiskSchemaKind.EzExtended)
-                throw new InvalidOperationException(Loc.Get("ErrorConvertOfficialRequiresEz"));
-
-            return file.SchemaVersion.Value;
-        }
-
-        private static string formatConvertOfficialConfirm(OfficialConvertTarget convertTarget, int targetOfficial, string backupDir) =>
-            convertTarget switch
-            {
-                OfficialConvertTarget.PreserveReadUpstream => Loc.Format("FixConvertOfficialReadConfirm", targetOfficial, backupDir),
-                OfficialConvertTarget.LibMinusOneUpstream => Loc.Format("FixConvertOfficialLibMinusOneConfirm", targetOfficial, backupDir),
-                OfficialConvertTarget.UpgradeToLibUpstream => Loc.Format("FixConvertOfficialLibConfirm", targetOfficial, backupDir),
-                _ => Loc.Format("FixConvertOfficialLibConfirm", targetOfficial, backupDir),
-            };
-
-        private static bool hasConvertFilterSkips(OfficialConvertFilterStats stats) =>
-            stats.SkippedScores > 0
-            || stats.SkippedSkins > 0
-            || stats.SkippedBeatmapSets > 0
-            || stats.SkippedRulesets > 0
-            || stats.PrunedCollectionEntries > 0;
-
         private void updateFixConvertPrimaryButtonState()
         {
             var file = getRealmFile(FixRealmId.Value);
 
             if (file?.SchemaVersion == null || RealmSchemaSafety.Classify(file.SchemaVersion) != RealmDiskSchemaKind.EzExtended)
             {
-                FixConvertPrimaryButtonLabel.Value = Loc.Get("FixConvertOfficialRead");
+                FixConvertPrimaryButtonLabel.Value = Loc.Get("FixConvertOfficial");
                 CanUseFixConvertPrimary.Value = false;
                 FixConvertLabelsChanged?.Invoke();
                 return;
             }
 
-            var primaryTarget = OfficialConvertPlanner.ResolvePrimaryConvertTarget(file.SchemaVersion.Value);
-            FixConvertPrimaryButtonLabel.Value = primaryTarget switch
-            {
-                OfficialConvertTarget.LibMinusOneUpstream => Loc.Get("FixConvertOfficialLibMinusOne"),
-                _ => Loc.Get("FixConvertOfficialRead"),
-            };
-            CanUseFixConvertPrimary.Value = primaryTarget != OfficialConvertTarget.LibMinusOneUpstream
-                                            || OfficialConvertPlanner.CanUseLibMinusOneConvert(file.SchemaVersion.Value);
+            var (upstream, _) = RealmSchemaVersions.Decode(file.SchemaVersion.Value);
+
+            FixConvertPrimaryButtonLabel.Value = upstream > 0
+                ? Loc.Format("FixConvertOfficialWithUpstream", upstream)
+                : Loc.Get("FixConvertOfficial");
+            CanUseFixConvertPrimary.Value = upstream > 0;
             FixConvertLabelsChanged?.Invoke();
         }
 
