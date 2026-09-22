@@ -15,6 +15,9 @@ readers/*/lib/runtimes/
 # 运行时日志（exe/log/）
 log/
 
+# 测试 blame / 覆盖率产物
+**/TestResults/
+
 *.user
 *.suo
 *.DotSettings.user
