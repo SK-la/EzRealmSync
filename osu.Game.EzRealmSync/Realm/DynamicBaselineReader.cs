@@ -17,6 +17,9 @@ namespace osu.Game.EzRealmSync.Realm
             var entities = new List<RealmDiffEntity>();
             var kinds = entityKinds is { Count: > 0 } ? entityKinds.ToHashSet() : null;
 
+            // 顺手把这份库的 schema 落盘：对比/同步本来就要完整打开它，于是"碰过哪个版本就有哪个版本的快照"。
+            RealmSchemaSnapshotStore.Default.TryCapture(session);
+
             progress?.Report(new ScanProgress { Progress = 0.05, Message = "正在读取官方基线…" });
 
             if (kinds == null || kinds.Contains(EntityKind.BeatmapSet))
@@ -64,6 +67,8 @@ namespace osu.Game.EzRealmSync.Realm
             using var session = DynamicRealmSession.OpenDynamic(realmFilePath, readOnly: true);
             var idSet = itemIds.ToHashSet();
             var bundle = new RealmSyncApplyBundle();
+
+            RealmSchemaSnapshotStore.Default.TryCapture(session);
 
             foreach (Guid id in idSet)
             {

@@ -21,6 +21,10 @@ namespace osu.Game.EzRealmSync.Realm
             var skips = new SkipCollector();
             int applied = 0;
 
+            // 写前的目标库 schema：既落盘一份快照，也作为"只填单元格"的比对基准。
+            RealmSchemaSnapshotStore.Default.TryCapture(session);
+            RealmSchemaSnapshot schemaBefore = DynamicSchemaReader.Read(session);
+
             // 故意用显式事务而非 Realm.Write(闭包)：Write 是同步执行、闭包内的 session 不会被提前释放，
             // 但「闭包捕获外层 using 变量」会让 IDE 逐处报 AccessToDisposedClosure，噪声压过收益。
             using (var transaction = session.Realm.BeginWrite())
@@ -65,6 +69,7 @@ namespace osu.Game.EzRealmSync.Realm
                         applied++;
                 }
 
+                RealmSchemaDriftGuard.EnsureUnchanged(schemaBefore, DynamicSchemaReader.Read(session.Realm), targetRealmPath);
                 transaction.Commit();
             }
 
@@ -73,7 +78,6 @@ namespace osu.Game.EzRealmSync.Realm
                 Progress = 1,
                 Message = skips.Count == 0 ? "写入完成" : $"写入完成，跳过 {skips.Count} 项。",
             });
-
             return new ApplyResult
             {
                 AppliedCount = applied,
@@ -90,6 +94,9 @@ namespace osu.Game.EzRealmSync.Realm
         {
             using var session = DynamicRealmSession.OpenDynamic(realmFilePath, readOnly: false);
             int applied = 0;
+
+            RealmSchemaSnapshotStore.Default.TryCapture(session);
+            RealmSchemaSnapshot schemaBefore = DynamicSchemaReader.Read(session);
 
             using (var transaction = session.Realm.BeginWrite())
             {
@@ -113,6 +120,7 @@ namespace osu.Game.EzRealmSync.Realm
                     }
                 }
 
+                RealmSchemaDriftGuard.EnsureUnchanged(schemaBefore, DynamicSchemaReader.Read(session.Realm), realmFilePath);
                 transaction.Commit();
             }
 

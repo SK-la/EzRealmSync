@@ -1,7 +1,7 @@
 namespace osu.Game.EzRealmSync
 {
     /// <summary>
-    /// EzRealmSync 运行时数据目录：settings、readers、备份、导出、临时文件。
+    /// EzRealmSync 运行时数据目录：settings、readers、备份、导出、schema 快照、临时文件。
     /// Worker 子目录（read-sidecar 等）会解析到 host exe 根目录。
     /// </summary>
     public static class EzRealmSyncDataPaths
@@ -57,6 +57,9 @@ namespace osu.Game.EzRealmSync
 
         public static string TempDirectory => Path.Combine(ApplicationRoot, "temp");
 
+        /// <summary>访问过的 Realm schema 快照（文件名 = 磁盘 schema 版本号）。</summary>
+        public static string SnapshotsDirectory => Path.Combine(ApplicationRoot, "snapshots");
+
         public static string LogsDirectory => Path.Combine(ApplicationRoot, "log");
 
         public static string CurrentLogFilePath => Path.Combine(LogsDirectory, $"EzRealmSync_{DateTime.Now:yyyyMMdd}.log");
@@ -72,6 +75,7 @@ namespace osu.Game.EzRealmSync
             Directory.CreateDirectory(ExportsDirectory);
             Directory.CreateDirectory(TempDirectory);
             Directory.CreateDirectory(LogsDirectory);
+            Directory.CreateDirectory(SnapshotsDirectory);
         }
 
         public static string CreateTempSubdirectory(string category)
