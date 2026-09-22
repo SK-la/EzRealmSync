@@ -111,7 +111,7 @@ namespace osu.Game.EzRealmSync.Tests
                 Assert.That(before, Is.Not.Empty, "样本里没有可读的行。");
                 Assert.That(before.Count, Is.GreaterThan(20), "样本里可读的行太少，这个测试就失去意义了。");
 
-                using (var session = DynamicRealmSession.OpenPinned(workPath, readVersion(workPath), readOnly: false))
+                using (var session = DynamicRealmSession.OpenDynamic(workPath, readOnly: false))
                 {
                     var schema = DynamicSchemaReader.Read(session);
 
@@ -316,7 +316,7 @@ namespace osu.Game.EzRealmSync.Tests
                 long[] written = [11, 22, 33];
                 Guid scoreId;
 
-                using (var session = DynamicRealmSession.OpenPinned(workPath, readVersion(workPath), readOnly: false))
+                using (var session = DynamicRealmSession.OpenDynamic(workPath, readOnly: false))
                 {
                     var pauses = DynamicSchemaReader.Read(session).Find("Score")!.Find("Pauses")!;
                     var row = firstRow(session.Realm, "Score");
@@ -538,13 +538,11 @@ namespace osu.Game.EzRealmSync.Tests
             return target;
         }
 
-        private static int readVersion(string path) =>
-            RealmDiskSchemaReader.TryReadSchemaVersion(path) ?? throw new InvalidOperationException($"读不到 {path} 的磁盘 schema 版本。");
-
         private static DynamicRealmSession openReadOnly(string path, out int version)
         {
-            version = readVersion(path);
-            return DynamicRealmSession.OpenPinned(path, version, readOnly: true);
+            DynamicRealmSession session = DynamicRealmSession.OpenDynamic(path, readOnly: true);
+            version = session.DiskSchemaVersion;
+            return session;
         }
 
         private static string? tryResolveOfficialSample()

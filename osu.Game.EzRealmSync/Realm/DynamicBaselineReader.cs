@@ -9,12 +9,11 @@ namespace osu.Game.EzRealmSync.Realm
     {
         public static RealmDiffSnapshot ReadDiffSnapshot(
             string realmFilePath,
-            int diskSchemaVersion,
             IReadOnlyList<EntityKind>? entityKinds = null,
             IProgress<ScanProgress>? progress = null,
             CancellationToken cancellationToken = default)
         {
-            using var session = DynamicRealmSession.OpenPinned(realmFilePath, diskSchemaVersion, readOnly: true);
+            using var session = DynamicRealmSession.OpenDynamic(realmFilePath, readOnly: true);
             var entities = new List<RealmDiffEntity>();
             var kinds = entityKinds is { Count: > 0 } ? entityKinds.ToHashSet() : null;
 
@@ -60,9 +59,9 @@ namespace osu.Game.EzRealmSync.Realm
             return new RealmDiffSnapshot { Entities = entities };
         }
 
-        public static RealmSyncApplyBundle ExportByIds(string realmFilePath, int diskSchemaVersion, IReadOnlyList<Guid> itemIds)
+        public static RealmSyncApplyBundle ExportByIds(string realmFilePath, IReadOnlyList<Guid> itemIds)
         {
-            using var session = DynamicRealmSession.OpenPinned(realmFilePath, diskSchemaVersion, readOnly: true);
+            using var session = DynamicRealmSession.OpenDynamic(realmFilePath, readOnly: true);
             var idSet = itemIds.ToHashSet();
             var bundle = new RealmSyncApplyBundle();
 

@@ -52,14 +52,14 @@ namespace osu.Game.EzRealmSync.Tests
                 createCurrentEzRealm(targetPath, schema);
 
                 // 先把谱面集、难度与成绩都落到 Ez 目标，再在 Ez 列上写真实值。
-                applyFromSource(sourcePath, targetPath, schema, [set_id, score_id]);
+                applyFromSource(sourcePath, targetPath, [set_id, score_id]);
                 writeEzOnlyValues(targetPath, schema);
-                assertEzValuesPresent(targetPath, schema, "写入 Ez 列后");
+                assertEzValuesPresent(targetPath, "写入 Ez 列后");
 
                 // 单独同步难度：目标已有父谱面集，走就地更新分支。
-                applyFromSource(sourcePath, targetPath, schema, [beatmap_id]);
+                applyFromSource(sourcePath, targetPath, [beatmap_id]);
 
-                assertEzValuesPreserved(targetPath, schema, "单独同步难度后");
+                assertEzValuesPreserved(targetPath, "单独同步难度后");
             }
             finally
             {
@@ -85,14 +85,14 @@ namespace osu.Game.EzRealmSync.Tests
                 createOfficialRealmViaWorker(sourcePath, 51);
                 createCurrentEzRealm(targetPath, schema);
 
-                applyFromSource(sourcePath, targetPath, schema, [set_id, score_id]);
+                applyFromSource(sourcePath, targetPath, [set_id, score_id]);
                 writeEzOnlyValues(targetPath, schema);
-                assertEzValuesPresent(targetPath, schema, "写入 Ez 列后");
+                assertEzValuesPresent(targetPath, "写入 Ez 列后");
 
                 // 冲突覆盖：同一个 ID 再同步一次（UI 上 Conflicted 走的正是这条）。
-                applyFromSource(sourcePath, targetPath, schema, [set_id, score_id]);
+                applyFromSource(sourcePath, targetPath, [set_id, score_id]);
 
-                assertEzValuesPreserved(targetPath, schema, "覆盖同步谱面集与成绩后");
+                assertEzValuesPreserved(targetPath, "覆盖同步谱面集与成绩后");
             }
             finally
             {
@@ -169,17 +169,16 @@ namespace osu.Game.EzRealmSync.Tests
             RealmNativeLifetime.Flush();
         }
 
-        private static void applyFromSource(string sourcePath, string targetPath, int targetSchema, IReadOnlyList<Guid> ids)
+        private static void applyFromSource(string sourcePath, string targetPath, IReadOnlyList<Guid> ids)
         {
-            var bundle = DynamicBaselineReader.ExportByIds(sourcePath, 51, ids);
+            var bundle = DynamicBaselineReader.ExportByIds(sourcePath, ids);
             Assert.That(bundle.BeatmapSets.Count + bundle.Beatmaps.Count + bundle.Scores.Count, Is.GreaterThan(0),
                 "源库没有导出任何要同步的对象。");
 
             var result = DynamicBaselineWriter.Apply(
                 new ApplyRequest { ItemIds = ids, CreateBackup = false },
                 bundle,
-                targetPath,
-                targetSchema);
+                targetPath);
 
             Assert.That(result.AppliedCount + result.SkippedCount, Is.GreaterThan(0), "写入既没落任何对象、也没报跳过。");
         }
@@ -211,9 +210,9 @@ namespace osu.Game.EzRealmSync.Tests
             RealmNativeLifetime.Flush();
         }
 
-        private static void assertEzValuesPresent(string path, int schema, string stage)
+        private static void assertEzValuesPresent(string path, string stage)
         {
-            readEzValues(path, schema, out var values);
+            readEzValues(path, out var values);
 
             Assert.Multiple(() =>
             {
@@ -225,9 +224,9 @@ namespace osu.Game.EzRealmSync.Tests
             });
         }
 
-        private static void assertEzValuesPreserved(string path, int schema, string stage)
+        private static void assertEzValuesPreserved(string path, string stage)
         {
-            readEzValues(path, schema, out var values);
+            readEzValues(path, out var values);
 
             Assert.Multiple(() =>
             {
@@ -251,9 +250,9 @@ namespace osu.Game.EzRealmSync.Tests
         }
 
         /// <summary>用 DynamicRealm 读回 Ez 列，避免依赖 typed 模型的内存态。</summary>
-        private static void readEzValues(string path, int schema, out EzValues values)
+        private static void readEzValues(string path, out EzValues values)
         {
-            using var session = DynamicRealmSession.OpenPinned(path, schema, readOnly: true);
+            using var session = DynamicRealmSession.OpenDynamic(path, readOnly: true);
 
             var set = DynamicRealmAccess.Find(session.Realm, OfficialBaselineSchema.BeatmapSet, set_id);
             var beatmap = DynamicRealmAccess.Find(session.Realm, OfficialBaselineSchema.Beatmap, beatmap_id);

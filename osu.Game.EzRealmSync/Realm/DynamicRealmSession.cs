@@ -5,7 +5,11 @@ using RealmInstance = Realms.Realm;
 namespace osu.Game.EzRealmSync.Realm
 {
     /// <summary>
-    /// 用磁盘文件头 schema 钉死打开 DynamicRealm。禁止加载 osu.Game 模型，避免错版本污染用户库。
+    /// 动态打开任意 Realm 文件（不传 schema，禁止加载 osu.Game 模型）。
+    ///
+    /// 打开时<b>不</b>指定 schema 版本：动态打开的版本号是惰性的（realm-core 只在
+    /// <c>schema</c> 非空时才调用 <c>update_schema</c>），因此不存在按版本号拒绝或迁移的路径；
+    /// 版本只作为识别/展示信息从已打开的库上读回。
     /// </summary>
     public sealed class DynamicRealmSession : IDisposable
     {
@@ -22,6 +26,7 @@ namespace osu.Game.EzRealmSync.Realm
 
         public string FilePath { get; }
 
+        /// <summary>打开后从 native handle 读回的磁盘 schema 版本；仅识别/展示用，不参与拒绝或选型。</summary>
         public int DiskSchemaVersion { get; }
 
         public bool IsReadOnly { get; }
@@ -30,12 +35,9 @@ namespace osu.Game.EzRealmSync.Realm
 
         public RealmInstance.Dynamic Dynamic => realm.DynamicApi;
 
-        public static DynamicRealmSession OpenPinned(string realmFilePath, int diskSchemaVersion, bool readOnly)
+        public static DynamicRealmSession OpenDynamic(string realmFilePath, bool readOnly)
         {
             ArgumentException.ThrowIfNullOrWhiteSpace(realmFilePath);
-
-            if (diskSchemaVersion <= 0)
-                throw new InvalidOperationException($"无效的磁盘 schema：{diskSchemaVersion}（{realmFilePath}）");
 
             string fullPath = Path.GetFullPath(realmFilePath);
             if (!File.Exists(fullPath))
@@ -48,7 +50,6 @@ namespace osu.Game.EzRealmSync.Realm
             {
                 IsDynamic = true,
                 IsReadOnly = readOnly,
-                SchemaVersion = (ulong)diskSchemaVersion,
                 Schema = Array.Empty<Type>(),
                 FallbackPipePath = pipeDir,
             };
@@ -58,14 +59,8 @@ namespace osu.Game.EzRealmSync.Realm
             try
             {
                 ulong handleVersion = ReadSchemaVersionFromHandle(instance);
-                if (isUsableSchemaVersion(handleVersion) && handleVersion != (ulong)diskSchemaVersion)
-                {
-                    instance.Dispose();
-                    throw new InvalidOperationException(
-                        $"拒绝打开：请求钉死 schema {diskSchemaVersion}，但磁盘文件头是 {handleVersion}。{fullPath}");
-                }
 
-                return new DynamicRealmSession(instance, fullPath, diskSchemaVersion, readOnly);
+                return new DynamicRealmSession(instance, fullPath, isUsableSchemaVersion(handleVersion) ? (int)handleVersion : 0, readOnly);
             }
             catch
             {

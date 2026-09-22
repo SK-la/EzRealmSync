@@ -26,8 +26,6 @@ namespace osu.Game.EzRealmSync.Realm
                 throw new InvalidOperationException($"无法读取 Realm schema 版本：{realmFilePath}.{suffix}");
             }
 
-            RealmSchemaToolPolicy.EnsureCanOpen(schema.Value);
-
             try
             {
                 return RealmReaderRegistry.Instance.Router.OpenByDiskSchemaVersion(schema.Value, realmFilePath);

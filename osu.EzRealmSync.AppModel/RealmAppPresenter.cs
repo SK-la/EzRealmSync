@@ -1590,7 +1590,6 @@ namespace osu.EzRealmSync.AppModel
                 RealmUserErrorKind.PathConflict => Loc.Format("ErrorPathConflict", userError.Detail),
                 RealmUserErrorKind.LegacyReaderUnavailable => Loc.Get("ErrorLegacyReaderUnavailable"),
                 RealmUserErrorKind.SchemaTooLow => Loc.Get("ErrorSchemaTooLow"),
-                RealmUserErrorKind.SchemaTooHigh => Loc.Get("ErrorSchemaTooHigh"),
                 RealmUserErrorKind.SchemaModelMismatch => Loc.Get("ErrorSchemaModelMismatch"),
                 RealmUserErrorKind.ReaderPackageMissing => Loc.Get("ErrorReaderPackageMissing"),
                 _ => userError.Detail,

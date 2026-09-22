@@ -106,7 +106,7 @@ namespace osu.Game.EzRealmSync.Tests
             try
             {
                 RealmNativeLifetime.CreateEmptyRealmFile(path, 51_007);
-                Assert.DoesNotThrow((Action)(() => RealmAccessGateway.ReadDiffSnapshot(path, 51_007)));
+                Assert.DoesNotThrow((Action)(() => RealmAccessGateway.ReadDiffSnapshot(path)));
             }
             finally
             {
@@ -129,8 +129,8 @@ namespace osu.Game.EzRealmSync.Tests
             if (!sample.RealmFileExists)
                 Assert.Ignore($"样本未放置 realm 文件：{sample.RealmFilePath}");
 
-            int schema = RealmAccessGateway.ProbeSchema(sample.RealmFilePath) ?? throw new InvalidOperationException("schema 读取失败");
-            Assert.DoesNotThrow((Action)(() => RealmAccessGateway.ReadDiffSnapshot(sample.RealmFilePath, schema)));
+            Assert.That(RealmAccessGateway.ProbeSchema(sample.RealmFilePath), Is.GreaterThan(0), "读不到样本的 schema 版本。");
+            Assert.DoesNotThrow((Action)(() => RealmAccessGateway.ReadDiffSnapshot(sample.RealmFilePath)));
         }
 
         [Test]

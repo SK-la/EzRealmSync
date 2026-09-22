@@ -13,11 +13,10 @@ namespace osu.Game.EzRealmSync.Realm
             ApplyRequest request,
             RealmSyncApplyBundle bundle,
             string targetRealmPath,
-            int targetSchema,
             IProgress<ApplyProgress>? progress = null,
             CancellationToken cancellationToken = default)
         {
-            using var session = DynamicRealmSession.OpenPinned(targetRealmPath, targetSchema, readOnly: false);
+            using var session = DynamicRealmSession.OpenDynamic(targetRealmPath, readOnly: false);
             var idSet = request.ItemIds.ToHashSet();
             var skips = new SkipCollector();
             int applied = 0;
@@ -86,11 +85,10 @@ namespace osu.Game.EzRealmSync.Realm
         public static ApplyResult SoftDelete(
             ApplyRequest request,
             string realmFilePath,
-            int diskSchemaVersion,
             IProgress<ApplyProgress>? progress = null,
             CancellationToken cancellationToken = default)
         {
-            using var session = DynamicRealmSession.OpenPinned(realmFilePath, diskSchemaVersion, readOnly: false);
+            using var session = DynamicRealmSession.OpenDynamic(realmFilePath, readOnly: false);
             int applied = 0;
 
             using (var transaction = session.Realm.BeginWrite())

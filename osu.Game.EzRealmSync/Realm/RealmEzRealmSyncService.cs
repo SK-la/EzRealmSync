@@ -84,16 +84,13 @@ namespace osu.Game.EzRealmSync.Realm
             progress?.Report(new ScanProgress { Progress = 0, Message = "正在读取源库…" });
             cancellationToken.ThrowIfCancellationRequested();
 
-            int sourceSchema = RealmAccessGateway.ProbeSchema(sourceFile.FilePath)
-                ?? throw new InvalidOperationException($"无法读取 Realm schema 版本：{sourceFile.FilePath}");
-            var sourceSnapshot = RealmAccessGateway.ReadDiffSnapshot(sourceFile.FilePath, sourceSchema, kinds, progress, cancellationToken);
+            // 版本号只用于识别/展示：读全部表列由动态打开自行判定，不再按版本选路。
+            var sourceSnapshot = RealmAccessGateway.ReadDiffSnapshot(sourceFile.FilePath, kinds, progress, cancellationToken);
 
             progress?.Report(new ScanProgress { Progress = 0.5, Message = "正在读取目标库…" });
             cancellationToken.ThrowIfCancellationRequested();
 
-            int targetSchema = RealmAccessGateway.ProbeSchema(targetFile.FilePath)
-                ?? throw new InvalidOperationException($"无法读取 Realm schema 版本：{targetFile.FilePath}");
-            var targetSnapshot = RealmAccessGateway.ReadDiffSnapshot(targetFile.FilePath, targetSchema, kinds, progress, cancellationToken);
+            var targetSnapshot = RealmAccessGateway.ReadDiffSnapshot(targetFile.FilePath, kinds, progress, cancellationToken);
 
             var diff = RealmDiffEngine.Compare(sourceSnapshot, targetSnapshot, kinds, progress, cancellationToken);
             return RealmSetCompareHelper.ApplyOperation(diff, operation);
@@ -129,21 +126,17 @@ namespace osu.Game.EzRealmSync.Realm
                 backupPath = RealmFileBackup.CreateTimestampedCopy(mutationPath, backupDir);
             }
 
-            int sourceSchema = RealmAccessGateway.ResolveSchemaVersion(plan.SourceRealmFilePath, plan.SourceSchemaVersion);
-            int targetSchema = RealmAccessGateway.ResolveSchemaVersion(plan.TargetRealmFilePath, plan.TargetSchemaVersion);
-
             ApplyResult result;
 
             if (request.DeleteFromSource)
             {
-                int mutationSchema = RealmAccessGateway.ResolveSchemaVersion(mutationPath, null);
-                result = DynamicBaselineWriter.SoftDelete(request, mutationPath, mutationSchema, progress, cancellationToken);
+                result = DynamicBaselineWriter.SoftDelete(request, mutationPath, progress, cancellationToken);
             }
             else
             {
-                var bundle = DynamicBaselineReader.ExportByIds(plan.SourceRealmFilePath, sourceSchema, request.ItemIds);
+                var bundle = DynamicBaselineReader.ExportByIds(plan.SourceRealmFilePath, request.ItemIds);
                 DynamicBaselineFileCopier.CopyMissing(plan.SourceRealmFilePath, plan.TargetRealmFilePath, bundle);
-                result = DynamicBaselineWriter.Apply(request, bundle, plan.TargetRealmFilePath, targetSchema, progress, cancellationToken);
+                result = DynamicBaselineWriter.Apply(request, bundle, plan.TargetRealmFilePath, progress, cancellationToken);
             }
 
             return new ApplyResult

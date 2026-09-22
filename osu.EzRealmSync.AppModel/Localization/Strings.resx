@@ -246,7 +246,6 @@
   <data name="ErrorPathConflict" xml:space="preserve"><value>Path conflict: {0}</value></data>
   <data name="ErrorLegacyReaderUnavailable" xml:space="preserve"><value>Missing the matching osu.Game.dll for this Realm file. Upgrade the Realm file first, or update this tool.</value></data>
   <data name="ErrorSchemaTooLow" xml:space="preserve"><value>This Realm file version is too old for this tool. Upgrade it with a matching client first.</value></data>
-  <data name="ErrorSchemaTooHigh" xml:space="preserve"><value>This Realm file version is newer than the DLL bundled with this tool. Update EzRealmSync.</value></data>
   <data name="ErrorSchemaModelMismatch" xml:space="preserve"><value>The Realm file version number looks current, but it does not match this tool's osu.Game.dll. Upgrade cannot fix this — align tool and client versions, or restore from a full backup.</value></data>
   <data name="ErrorReaderPackageMissing" xml:space="preserve"><value>Missing the matching osu.Game.dll for this Realm file. Add the reader package and try again.</value></data>
   <data name="FilterColumn" xml:space="preserve"><value>Filter this column</value></data>

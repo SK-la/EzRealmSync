@@ -62,26 +62,6 @@ namespace osu.Game.EzRealmSync.Tests
             }
         }
 
-        [Test]
-        public void UpgradeInPlace_rejects_below_min_supported()
-        {
-            int below = 51 * 1000 + (RealmSchemaRevisionCatalog.MinSupportedEzRevision - 1);
-
-            string path = Path.Combine(TestContext.CurrentContext.WorkDirectory, $"too_low_{Guid.NewGuid():N}.realm");
-
-            try
-            {
-                RealmNativeLifetime.CreateEmptyRealmFile(path, (ulong)below);
-
-                var ex = Assert.Throws<RealmUserOperationException>((Action)(() =>
-                    RealmSchemaUpgrader.UpgradeInPlace(path, below)));
-                Assert.That(ex!.Kind, Is.EqualTo(RealmUserErrorKind.SchemaTooLow));
-            }
-            finally
-            {
-                RealmNativeLifetime.DeleteRealmFiles(path);
-            }
-        }
     }
 }
 #endif

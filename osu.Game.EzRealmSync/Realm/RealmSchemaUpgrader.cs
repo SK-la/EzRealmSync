@@ -34,9 +34,6 @@ namespace osu.Game.EzRealmSync.Realm
                     $"官方库（schema {sourceSchema}）不能用本工具的 OfficialRealmAccess 升级（会污染 Ez 列）。请用官方 osu!lazer 客户端升级，或从 Ez「转回官方版」生成官方库。浏览官方库已支持。文件：{realmFilePath}");
             }
 
-            // 越界直接失败（低于同大版本下限 / 高于工具内置）
-            RealmSchemaToolPolicy.EnsureCanOpen(sourceSchema.Value);
-
             int latestSupportedSchema = RealmSchemaToolPolicy.LatestSupportedForKind(kind);
 
             if (sourceSchema.Value == latestSupportedSchema)

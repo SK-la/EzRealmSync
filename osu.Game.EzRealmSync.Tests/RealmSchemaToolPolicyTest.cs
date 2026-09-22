@@ -1,11 +1,16 @@
 #if HAS_EZ_OSU_GAME
 using NUnit.Framework;
 using osu.Game.Database;
-using osu.Game.EzRealmSync.Errors;
 using osu.Game.EzRealmSync.Models;
+using osu.Game.EzRealmSync.Realm;
+using osu.Game.EzRealmSync.Tests.TestInfrastructure;
 
 namespace osu.Game.EzRealmSync.Tests
 {
+    /// <summary>
+    /// 版本号只用于识别/展示：既不再决定"能不能开"，也不再决定"按哪套模型开"。
+    /// 动态打开不传 schema，realm-core 因此没有按版本迁移的路径（见 <see cref="DynamicRealmSession"/>）。
+    /// </summary>
     [TestFixture]
     public class RealmSchemaToolPolicyTest
     {
@@ -17,35 +22,38 @@ namespace osu.Game.EzRealmSync.Tests
             Assert.That(RealmSchemaToolPolicy.MaxSupportedEzFileSchema, Is.EqualTo(RealmAccess.EzFileSchemaVersion));
         }
 
-        [Test]
-        public void EnsureCanOpen_rejects_below_min_ez_revision()
+        /// <summary>
+        /// 白名单之外的版本（低于最低官方 50、高于内置 lib、Ez 修订低于最低、Ez 形式的 52010）
+        /// 都必须能动态打开并如实读回版本号，不得抛 SchemaTooHigh / SchemaTooLow。
+        /// </summary>
+        [TestCase(49)]
+        [TestCase(53)]
+        [TestCase(51_002)]
+        [TestCase(52_010)]
+        public void Dynamic_open_does_not_gate_on_schema_version(int diskSchemaVersion)
         {
-            int below = 51 * 1000 + (RealmSchemaRevisionCatalog.MinSupportedEzRevision - 1);
-            var ex = Assert.Throws<RealmUserOperationException>((Action)(() => RealmSchemaToolPolicy.EnsureCanOpen(below)));
-            Assert.That(ex!.Kind, Is.EqualTo(RealmUserErrorKind.SchemaTooLow));
-        }
+            string root = EzRealmSyncDataPaths.CreateTempSubdirectory("schema-gate");
+            string path = Path.Combine(root, $"{diskSchemaVersion}.realm");
 
-        [Test]
-        public void EnsureCanOpen_rejects_above_max_ez()
-        {
-            int above = RealmSchemaToolPolicy.MaxSupportedEzFileSchema + 1;
-            var ex = Assert.Throws<RealmUserOperationException>((Action)(() => RealmSchemaToolPolicy.EnsureCanOpen(above)));
-            Assert.That(ex!.Kind, Is.EqualTo(RealmUserErrorKind.SchemaTooHigh));
-        }
+            try
+            {
+                RealmNativeLifetime.CreateEmptyRealmFile(path, (ulong)diskSchemaVersion);
 
-        [Test]
-        public void EnsureCanOpen_accepts_51006_when_lib_is_newer()
-        {
-            if (RealmAccess.UpstreamSchemaVersion <= 51)
-                Assert.Ignore("lib upstream 未高于 51，跳过 51006 用例。");
+                using var session = DynamicRealmSession.OpenDynamic(path, readOnly: true);
 
-            Assert.DoesNotThrow((Action)(() => RealmSchemaToolPolicy.EnsureCanOpen(51_006)));
-        }
+                Assert.Multiple(() =>
+                {
+                    Assert.That(session.DiskSchemaVersion, Is.EqualTo(diskSchemaVersion));
+                    Assert.That(RealmDiskSchemaReader.TryReadSchemaVersion(path), Is.EqualTo(diskSchemaVersion));
+                });
+            }
+            finally
+            {
+                RealmNativeLifetime.DeleteRealmFiles(path);
 
-        [Test]
-        public void EnsureCanOpen_accepts_current_ez()
-        {
-            Assert.DoesNotThrow((Action)(() => RealmSchemaToolPolicy.EnsureCanOpen(RealmAccess.EzFileSchemaVersion)));
+                if (Directory.Exists(root))
+                    Directory.Delete(root, recursive: true);
+            }
         }
     }
 }

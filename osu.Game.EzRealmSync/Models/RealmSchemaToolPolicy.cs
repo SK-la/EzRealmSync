@@ -5,7 +5,8 @@ using osu.Game.EzRealmSync.Errors;
 namespace osu.Game.EzRealmSync.Models
 {
     /// <summary>
-    /// EzRealmSync 打开 / 修复 Realm 时的 schema 边界：最低版见 <see cref="RealmSchemaRevisionCatalog"/>，最高版见 bundled lib。
+    /// EzRealmSync 的 schema 识别口径：bundled lib 的版本号与最低支持版本，仅用于识别/展示与「是否已是最新」判断，
+    /// <b>不</b>再作为能否读写某份库的开关（动态打开不吃版本号）。
     /// </summary>
     public static class RealmSchemaToolPolicy
     {
@@ -21,31 +22,6 @@ namespace osu.Game.EzRealmSync.Models
         /// <summary>工具支持的最低 Ez 修订（常量）。</summary>
         public static int MinSupportedEzRevision => RealmSchemaRevisionCatalog.MinSupportedEzRevision;
 
-        public static void EnsureCanOpen(int diskSchemaVersion)
-        {
-            if (diskSchemaVersion > MaxSupportedForKind(RealmSchemaSafety.Classify(diskSchemaVersion)))
-            {
-                throw new RealmUserOperationException(
-                    RealmUserErrorKind.SchemaTooHigh,
-                    $"这份 Realm 文件版本 {diskSchemaVersion} 高于本工具自带 dll 支持的 {LatestSupportedForKind(RealmSchemaSafety.Classify(diskSchemaVersion))}，请更新 EzRealmSync。");
-            }
-
-            if (!RealmSchemaRevisionCatalog.IsSupportedDiskSchema(diskSchemaVersion))
-            {
-                if (RealmSchemaSafety.IsOfficialDiskSchema(diskSchemaVersion))
-                {
-                    throw new RealmUserOperationException(
-                        RealmUserErrorKind.SchemaTooLow,
-                        $"这份官方 Realm 文件版本 {diskSchemaVersion} 低于本工具最低支持 {MinSupportedOfficialSchema}。请用对应版本客户端升级后再打开。");
-                }
-
-                var (official, ez) = RealmSchemaVersions.Decode(diskSchemaVersion);
-                throw new RealmUserOperationException(
-                    RealmUserErrorKind.SchemaTooLow,
-                    $"这份 Ez Realm 文件版本 {diskSchemaVersion}（官方 {official}，Ez 修订 {ez}）低于本工具最低支持。请用对应版本客户端升级后再打开。");
-            }
-        }
-
         /// <summary>是否已在 lib 最新 schema（同类型）。</summary>
         public static bool IsAtLatestSupported(int diskSchemaVersion)
         {
@@ -60,9 +36,6 @@ namespace osu.Game.EzRealmSync.Models
 
         public static int LatestSupportedForKind(RealmDiskSchemaKind kind) =>
             kind == RealmDiskSchemaKind.PpyClient ? MaxSupportedOfficialSchema : MaxSupportedEzFileSchema;
-
-        private static int MaxSupportedForKind(RealmDiskSchemaKind kind) =>
-            LatestSupportedForKind(kind);
     }
 }
 #endif

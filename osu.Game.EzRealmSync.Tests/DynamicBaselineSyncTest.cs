@@ -33,29 +33,28 @@ namespace osu.Game.EzRealmSync.Tests
                 Assert.That(RealmDiskSchemaReader.TryReadSchemaVersion(sourcePath), Is.EqualTo(51));
                 Assert.That(RealmDiskSchemaReader.TryReadSchemaVersion(targetPath), Is.EqualTo(51));
 
-                var snapshot = DynamicBaselineReader.ReadDiffSnapshot(sourcePath, 51);
+                var snapshot = DynamicBaselineReader.ReadDiffSnapshot(sourcePath);
                 Assert.That(snapshot.Entities.Any(e => e.EntityKind == EntityKind.BeatmapSet && e.Id == setId), Is.True);
 
-                var bundle = DynamicBaselineReader.ExportByIds(sourcePath, 51, [setId]);
+                var bundle = DynamicBaselineReader.ExportByIds(sourcePath, [setId]);
                 Assert.That(bundle.BeatmapSets, Has.Count.EqualTo(1));
                 Assert.That(bundle.BeatmapSets[0].Beatmaps, Has.Count.EqualTo(1));
 
                 var result = DynamicBaselineWriter.Apply(
                     new ApplyRequest { ItemIds = [setId], CreateBackup = false },
                     bundle,
-                    targetPath,
-                    51);
+                    targetPath);
 
                 Assert.That(result.AppliedCount, Is.EqualTo(1));
                 Assert.That(RealmDiskSchemaReader.TryReadSchemaVersion(targetPath), Is.EqualTo(51));
                 Assert.That(RealmDiskSchemaReader.TryReadSchemaVersion(sourcePath), Is.EqualTo(51));
 
-                using var verify = DynamicRealmSession.OpenPinned(targetPath, 51, readOnly: true);
+                using var verify = DynamicRealmSession.OpenDynamic(targetPath, readOnly: true);
                 var copied = DynamicRealmAccess.Find(verify.Realm, OfficialBaselineSchema.BeatmapSet, setId);
                 Assert.That(copied, Is.Not.Null);
                 Assert.That(DynamicRealmAccess.GetString(copied, "Hash"), Is.EqualTo("set-hash"));
 
-                assertPinnedDynamicOpenPreservesSchema(targetPath, 51);
+                assertDynamicOpenPreservesSchema(targetPath, 51);
                 OfficialMirrorSchemaVerifier.Verify(targetPath, 51, 0);
             }
             finally
@@ -92,20 +91,19 @@ namespace osu.Game.EzRealmSync.Tests
                 createOfficialRealmViaWorker(sourcePath, 51, setId, beatmapId, "Source Song");
                 createOfficialRealmWithEmptySetViaWorker(targetPath, 51, setId);
 
-                var bundle = DynamicBaselineReader.ExportByIds(sourcePath, 51, [beatmapId]);
+                var bundle = DynamicBaselineReader.ExportByIds(sourcePath, [beatmapId]);
                 Assert.That(bundle.Beatmaps, Has.Count.EqualTo(1));
                 Assert.That(bundle.Beatmaps[0].BeatmapSetID, Is.EqualTo(setId));
 
                 var result = DynamicBaselineWriter.Apply(
                     new ApplyRequest { ItemIds = [beatmapId], CreateBackup = false },
                     bundle,
-                    targetPath,
-                    51);
+                    targetPath);
 
                 Assert.That(result.AppliedCount, Is.EqualTo(1));
                 Assert.That(RealmDiskSchemaReader.TryReadSchemaVersion(targetPath), Is.EqualTo(51));
 
-                using var verify = DynamicRealmSession.OpenPinned(targetPath, 51, readOnly: true);
+                using var verify = DynamicRealmSession.OpenDynamic(targetPath, readOnly: true);
                 var copied = DynamicRealmAccess.Find(verify.Realm, OfficialBaselineSchema.Beatmap, beatmapId);
                 Assert.That(copied, Is.Not.Null);
 
@@ -144,13 +142,12 @@ namespace osu.Game.EzRealmSync.Tests
                 createOfficialRealmViaWorker(sourcePath, 51, setId, beatmapId, "Source Song");
                 createEmptyOfficialRealmViaWorker(targetPath, 51);
 
-                var bundle = DynamicBaselineReader.ExportByIds(sourcePath, 51, [beatmapId]);
+                var bundle = DynamicBaselineReader.ExportByIds(sourcePath, [beatmapId]);
 
                 Assert.Throws<InvalidOperationException>(() => DynamicBaselineWriter.Apply(
                     new ApplyRequest { ItemIds = [beatmapId], CreateBackup = false },
                     bundle,
-                    targetPath,
-                    51));
+                    targetPath));
 
                 Assert.That(RealmDiskSchemaReader.TryReadSchemaVersion(targetPath), Is.EqualTo(51));
             }
@@ -182,21 +179,20 @@ namespace osu.Game.EzRealmSync.Tests
                 createOfficialRealmViaWorker(sourcePath, 51, setId, beatmapId, "Score Song", scoreId);
                 createOfficialRealmViaWorker(targetPath, 51, setId, beatmapId, "Score Song");
 
-                var bundle = DynamicBaselineReader.ExportByIds(sourcePath, 51, [scoreId]);
+                var bundle = DynamicBaselineReader.ExportByIds(sourcePath, [scoreId]);
                 Assert.That(bundle.Scores, Has.Count.EqualTo(1), "源库没有导出成绩。");
                 Assert.That(bundle.Scores[0].BeatmapHash, Is.EqualTo("bm-hash"));
 
                 var result = DynamicBaselineWriter.Apply(
                     new ApplyRequest { ItemIds = [scoreId], CreateBackup = false },
                     bundle,
-                    targetPath,
-                    51);
+                    targetPath);
 
                 Assert.That(result.AppliedCount, Is.EqualTo(1));
                 Assert.That(result.SkippedCount, Is.Zero);
                 Assert.That(RealmDiskSchemaReader.TryReadSchemaVersion(targetPath), Is.EqualTo(51));
 
-                using var verify = DynamicRealmSession.OpenPinned(targetPath, 51, readOnly: true);
+                using var verify = DynamicRealmSession.OpenDynamic(targetPath, readOnly: true);
                 var copied = DynamicRealmAccess.Find(verify.Realm, OfficialBaselineSchema.Score, scoreId);
                 Assert.That(copied, Is.Not.Null, "目标库没有同步过去的成绩。");
                 Assert.That(DynamicRealmAccess.Get<long>(copied, "TotalScore"), Is.EqualTo(1234567));
@@ -243,18 +239,17 @@ namespace osu.Game.EzRealmSync.Tests
                 createOfficialRealmViaWorker(sourcePath, 51, setId, beatmapId, "Score Song", scoreId);
                 createEmptyOfficialRealmViaWorker(targetPath, 51);
 
-                var bundle = DynamicBaselineReader.ExportByIds(sourcePath, 51, [scoreId]);
+                var bundle = DynamicBaselineReader.ExportByIds(sourcePath, [scoreId]);
                 var result = DynamicBaselineWriter.Apply(
                     new ApplyRequest { ItemIds = [scoreId], CreateBackup = false },
                     bundle,
-                    targetPath,
-                    51);
+                    targetPath);
 
                 Assert.That(result.AppliedCount, Is.Zero);
                 Assert.That(result.SkippedCount, Is.EqualTo(1));
                 Assert.That(result.SkipReasons, Has.Some.Contains("谱面"), "跳过原因没有点明缺谱面。");
 
-                using var verify = DynamicRealmSession.OpenPinned(targetPath, 51, readOnly: true);
+                using var verify = DynamicRealmSession.OpenDynamic(targetPath, readOnly: true);
                 Assert.That(DynamicRealmAccess.Find(verify.Realm, OfficialBaselineSchema.Score, scoreId), Is.Null,
                     "目标缺谱面时不应写入悬空成绩。");
                 Assert.That(RealmDiskSchemaReader.TryReadSchemaVersion(targetPath), Is.EqualTo(51));
@@ -287,20 +282,19 @@ namespace osu.Game.EzRealmSync.Tests
                 createOfficialRealmViaWorker(sourcePath, 51, setId, beatmapId, "BMS Song", scoreId, rulesetShortName: "bms");
                 createOfficialRealmViaWorker(targetPath, 51, setId, beatmapId, "BMS Song");
 
-                var bundle = DynamicBaselineReader.ExportByIds(sourcePath, 51, [scoreId]);
+                var bundle = DynamicBaselineReader.ExportByIds(sourcePath, [scoreId]);
                 Assert.That(bundle.Scores[0].RulesetShortName, Is.EqualTo("bms"));
 
                 var result = DynamicBaselineWriter.Apply(
                     new ApplyRequest { ItemIds = [scoreId], CreateBackup = false },
                     bundle,
-                    targetPath,
-                    51);
+                    targetPath);
 
                 Assert.That(result.AppliedCount, Is.Zero);
                 Assert.That(result.SkippedCount, Is.EqualTo(1));
                 Assert.That(result.SkipReasons, Has.Some.Contains("bms"));
 
-                using var verify = DynamicRealmSession.OpenPinned(targetPath, 51, readOnly: true);
+                using var verify = DynamicRealmSession.OpenDynamic(targetPath, readOnly: true);
                 Assert.That(DynamicRealmAccess.Find(verify.Realm, OfficialBaselineSchema.Ruleset, "bms"), Is.Null,
                     "不应往目标库凭空插 Ez 专用规则集行。");
                 Assert.That(RealmDiskSchemaReader.TryReadSchemaVersion(targetPath), Is.EqualTo(51));
@@ -333,12 +327,11 @@ namespace osu.Game.EzRealmSync.Tests
                 createOfficialRealmViaWorker(sourcePath, 51, setId, beatmapId, "BMS Song", scoreId, rulesetShortName: "bms");
                 createOfficialRealmViaWorker(targetPath, 51, setId, beatmapId, "BMS Song", rulesetShortName: "bms");
 
-                var bundle = DynamicBaselineReader.ExportByIds(sourcePath, 51, [scoreId]);
+                var bundle = DynamicBaselineReader.ExportByIds(sourcePath, [scoreId]);
                 var result = DynamicBaselineWriter.Apply(
                     new ApplyRequest { ItemIds = [scoreId], CreateBackup = false },
                     bundle,
-                    targetPath,
-                    51);
+                    targetPath);
 
                 Assert.That(result.AppliedCount, Is.EqualTo(1), "目标已有该规则集时应正常写入（Ez → Ez 场景）。");
                 Assert.That(result.SkippedCount, Is.Zero);
@@ -461,9 +454,9 @@ namespace osu.Game.EzRealmSync.Tests
             OfficialWriteProcessRunner.Run(job);
         }
 
-        private static void assertPinnedDynamicOpenPreservesSchema(string realmPath, int schema)
+        private static void assertDynamicOpenPreservesSchema(string realmPath, int schema)
         {
-            using var session = DynamicRealmSession.OpenPinned(realmPath, schema, readOnly: true);
+            using var session = DynamicRealmSession.OpenDynamic(realmPath, readOnly: true);
             Assert.That(session.DiskSchemaVersion, Is.EqualTo(schema));
             Assert.That(RealmDiskSchemaReader.TryReadSchemaVersion(realmPath), Is.EqualTo(schema));
         }

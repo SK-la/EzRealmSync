@@ -20,8 +20,6 @@ namespace osu.Game.EzRealmSync.Realm
             int schema = RealmAccessGateway.ProbeSchema(file.FilePath)
                          ?? throw new InvalidOperationException($"无法读取 Realm schema 版本：{file.FilePath}");
 
-            RealmSchemaToolPolicy.EnsureCanOpen(schema);
-
             if (RealmSchemaSafety.IsOfficialDiskSchema(schema))
             {
                 EzRealmSyncLog.Info($"ReadBrowseSnapshot via Official Worker schema={schema} file={file.FilePath}");

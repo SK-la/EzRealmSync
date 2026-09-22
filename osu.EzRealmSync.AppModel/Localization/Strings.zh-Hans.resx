@@ -246,7 +246,6 @@
   <data name="ErrorPathConflict" xml:space="preserve"><value>路径冲突：{0}</value></data>
   <data name="ErrorLegacyReaderUnavailable" xml:space="preserve"><value>缺少对应版本的 osu.Game.dll，无法打开这份 Realm 文件。请先升级 Realm 文件，或更新本工具后再试。</value></data>
   <data name="ErrorSchemaTooLow" xml:space="preserve"><value>这份 Realm 文件版本过低，本工具无法打开。请先用对应版本的客户端升级后再试。</value></data>
-  <data name="ErrorSchemaTooHigh" xml:space="preserve"><value>这份 Realm 文件版本高于本工具自带的 dll。请更新 EzRealmSync。</value></data>
   <data name="ErrorSchemaModelMismatch" xml:space="preserve"><value>Realm 文件版本号看起来已是最新，但与本工具的 osu.Game.dll 不匹配，升级无法修复。请确认工具与客户端版本一致，或从完整备份恢复。</value></data>
   <data name="ErrorReaderPackageMissing" xml:space="preserve"><value>缺少对应版本的 osu.Game.dll，无法打开这份 Realm 文件。请补齐 reader 包后再试。</value></data>
   <data name="FilterColumn" xml:space="preserve"><value>筛选此列</value></data>

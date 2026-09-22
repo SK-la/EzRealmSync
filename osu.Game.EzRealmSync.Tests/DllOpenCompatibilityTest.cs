@@ -43,7 +43,7 @@ namespace osu.Game.EzRealmSync.Tests
                 createOfficialRealm(sourcePath, official_schema, withBaseline: true);
                 createOfficialRealm(targetPath, official_schema, withBaseline: false);
 
-                syncBaseline(sourcePath, official_schema, targetPath, official_schema, [source_set_id, source_collection_id, source_skin_id]);
+                syncBaseline(sourcePath, targetPath, [source_set_id, source_collection_id, source_skin_id]);
 
                 AssertSchemaUnchanged(targetPath, official_schema);
                 AssertBaselineCopied(targetPath, official_schema);
@@ -74,7 +74,7 @@ namespace osu.Game.EzRealmSync.Tests
                 string targetPath = Path.Combine(root, "target.realm");
 
                 Guid[] ids = DynamicBaselineReader
-                             .ReadDiffSnapshot(source.RealmFilePath, ez_sample_schema, [EntityKind.BeatmapSet])
+                             .ReadDiffSnapshot(source.RealmFilePath, [EntityKind.BeatmapSet])
                              .Enumerate(EntityKind.BeatmapSet)
                              .Take(3)
                              .Select(e => e.Id)
@@ -84,12 +84,12 @@ namespace osu.Game.EzRealmSync.Tests
                     Assert.Ignore("Ez 样本没有可同步的谱面集。");
 
                 createOfficialRealm(targetPath, official_schema, withBaseline: false);
-                syncBaseline(source.RealmFilePath, ez_sample_schema, targetPath, official_schema, ids);
+                syncBaseline(source.RealmFilePath, targetPath, ids);
 
                 AssertSchemaUnchanged(targetPath, official_schema);
 
                 int copied = DynamicBaselineReader
-                             .ReadDiffSnapshot(targetPath, official_schema, [EntityKind.BeatmapSet])
+                             .ReadDiffSnapshot(targetPath, [EntityKind.BeatmapSet])
                              .Entities.Count;
                 Assert.That(copied, Is.GreaterThanOrEqualTo(ids.Length), "Ez → 官方 没有拷出谱面集。");
 
@@ -117,7 +117,7 @@ namespace osu.Game.EzRealmSync.Tests
                 createOfficialRealm(sourcePath, official_schema, withBaseline: true);
                 createCurrentEzRealm(targetPath, targetSchema);
 
-                syncBaseline(sourcePath, official_schema, targetPath, targetSchema, [source_set_id, source_collection_id, source_skin_id]);
+                syncBaseline(sourcePath, targetPath, [source_set_id, source_collection_id, source_skin_id]);
 
                 AssertSchemaUnchanged(targetPath, targetSchema);
                 AssertBaselineCopied(targetPath, targetSchema);
@@ -160,7 +160,7 @@ namespace osu.Game.EzRealmSync.Tests
                 createOfficialRealm(sourcePath, official_schema, withBaseline: true);
                 createCurrentEzRealm(targetPath, targetSchema);
 
-                syncBaseline(sourcePath, official_schema, targetPath, targetSchema, [source_set_id]);
+                syncBaseline(sourcePath, targetPath, [source_set_id]);
                 AssertSchemaUnchanged(targetPath, targetSchema);
 
                 var package = new RealmReaderPackageInfo
@@ -194,9 +194,9 @@ namespace osu.Game.EzRealmSync.Tests
             }
         }
 
-        private static void syncBaseline(string sourcePath, int sourceSchema, string targetPath, int targetSchema, IReadOnlyList<Guid> itemIds)
+        private static void syncBaseline(string sourcePath, string targetPath, IReadOnlyList<Guid> itemIds)
         {
-            var bundle = DynamicBaselineReader.ExportByIds(sourcePath, sourceSchema, itemIds);
+            var bundle = DynamicBaselineReader.ExportByIds(sourcePath, itemIds);
             Assert.That(bundle.BeatmapSets.Count + bundle.Beatmaps.Count + bundle.Collections.Count + bundle.Skins.Count, Is.GreaterThan(0), "源库没有导出任何基线对象。");
 
             DynamicBaselineFileCopier.CopyMissing(sourcePath, targetPath, bundle);
@@ -204,15 +204,14 @@ namespace osu.Game.EzRealmSync.Tests
             var result = DynamicBaselineWriter.Apply(
                 new ApplyRequest { ItemIds = itemIds, CreateBackup = false },
                 bundle,
-                targetPath,
-                targetSchema);
+                targetPath);
 
             Assert.That(result.AppliedCount, Is.GreaterThan(0), "动态写入没有落到任何对象。");
         }
 
         private static void AssertBaselineCopied(string targetPath, int targetSchema)
         {
-            using var session = DynamicRealmSession.OpenPinned(targetPath, targetSchema, readOnly: true);
+            using var session = DynamicRealmSession.OpenDynamic(targetPath, readOnly: true);
 
             var set = DynamicRealmAccess.Find(session.Realm, OfficialBaselineSchema.BeatmapSet, source_set_id);
             Assert.That(set, Is.Not.Null, "目标库没有同步过去的谱面集。");

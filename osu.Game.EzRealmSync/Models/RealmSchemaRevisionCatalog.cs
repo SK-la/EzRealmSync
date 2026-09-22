@@ -41,20 +41,6 @@ namespace osu.Game.EzRealmSync.Models
             upstream >= MinSupportedOfficialUpstream && upstream <= RealmAccess.UpstreamSchemaVersion;
 
         public static bool IsSupportedEzRevision(int ezRevision) => ezRevision >= MinSupportedEzRevision;
-
-        public static bool IsSupportedDiskSchema(int diskSchemaVersion)
-        {
-            if (RealmSchemaSafety.IsOfficialDiskSchema(diskSchemaVersion))
-                return IsSupportedOfficialUpstream(diskSchemaVersion);
-
-            if (RealmSchemaSafety.IsEzClientDiskSchema(diskSchemaVersion))
-            {
-                var (official, ez) = RealmSchemaVersions.Decode(diskSchemaVersion);
-                return IsSupportedOfficialUpstream(official) && IsSupportedEzRevision(ez);
-            }
-
-            return false;
-        }
     }
 }
 #endif

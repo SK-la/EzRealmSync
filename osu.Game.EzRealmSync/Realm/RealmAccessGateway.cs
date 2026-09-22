@@ -25,12 +25,11 @@ namespace osu.Game.EzRealmSync.Realm
         /// <summary>只读 Diff 快照：官方基线 DynamicRealm，不加载 osu.Game.dll。</summary>
         public static RealmDiffSnapshot ReadDiffSnapshot(
             string realmFilePath,
-            int pinnedDiskSchemaVersion,
             IReadOnlyList<EntityKind>? entityKinds = null,
             IProgress<ScanProgress>? progress = null,
             CancellationToken cancellationToken = default)
         {
-            return DynamicBaselineReader.ReadDiffSnapshot(realmFilePath, pinnedDiskSchemaVersion, entityKinds, progress, cancellationToken);
+            return DynamicBaselineReader.ReadDiffSnapshot(realmFilePath, entityKinds, progress, cancellationToken);
         }
 #if HAS_EZ_OSU_GAME
 
