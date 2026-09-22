@@ -31,17 +31,16 @@ namespace osu.Game.EzRealmSync.Realm
         {
             return DynamicBaselineReader.ReadDiffSnapshot(realmFilePath, entityKinds, progress, cancellationToken);
         }
-#if HAS_EZ_OSU_GAME
-
-        /// <summary>数据 Tab 只读浏览：官方 Official Worker；Ez current 进程内；Ez legacy Sidecar。</summary>
+        /// <summary>数据 Tab 只读浏览：动态打开，按磁盘 schema 读，官方库与 Ez 库同一条路径。</summary>
         public static RealmSnapshot ReadBrowseSnapshot(
             RealmFileEntry file,
             IProgress<ScanProgress>? progress = null,
             CancellationToken cancellationToken = default)
         {
-            RefreshReaders();
             return RealmBrowseSnapshotProvider.Read(file, progress, cancellationToken);
         }
+
+#if HAS_EZ_OSU_GAME
 
         /// <summary>写回 / 删改 / 导入；legacy schema 失败时不走 Sidecar。</summary>
         public static RealmAccess OpenForMutation(string realmFilePath, int? diskSchemaVersion = null) =>
