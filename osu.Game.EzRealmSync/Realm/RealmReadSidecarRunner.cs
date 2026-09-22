@@ -20,9 +20,6 @@ namespace osu.Game.EzRealmSync.Realm
         public static RealmBrowseResult ReadBrowseSnapshot(RealmReaderPackageInfo package, RealmBrowseJob job, CancellationToken cancellationToken = default) =>
             ReadBrowseSnapshot(job, package, cancellationToken);
 
-        public static RealmApplyExportResult ExportApplyBundle(RealmReaderPackageInfo package, RealmApplyExportJob job, CancellationToken cancellationToken = default) =>
-            run<RealmApplyExportResult>(package, "apply-export", job, cancellationToken);
-
         public static string ResolveWorkerExecutablePathForTests() => resolveWorkerExecutablePath();
 
         private static T run<T>(RealmReaderPackageInfo package, string mode, object job, CancellationToken cancellationToken)
@@ -66,13 +63,6 @@ namespace osu.Game.EzRealmSync.Realm
                 {
                     string message = browseResult.ErrorMessage ?? "ReadSidecar 浏览快照失败。";
                     EzRealmSyncLog.Error($"ReadSidecar browse failed (exit {runResult.ExitCode}): {message}");
-                    throw new InvalidOperationException(message);
-                }
-
-                if (result is RealmApplyExportResult exportResult && !exportResult.Success)
-                {
-                    string message = exportResult.ErrorMessage ?? "ReadSidecar 导出失败。";
-                    EzRealmSyncLog.Error($"ReadSidecar apply-export failed (exit {runResult.ExitCode}): {message}");
                     throw new InvalidOperationException(message);
                 }
 

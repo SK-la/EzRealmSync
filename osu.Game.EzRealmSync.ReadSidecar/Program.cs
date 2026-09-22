@@ -19,7 +19,7 @@ namespace osu.Game.EzRealmSync.ReadSidecar
 
             if (args.Length < 2 || string.IsNullOrWhiteSpace(args[0]) || string.IsNullOrWhiteSpace(args[1]))
             {
-                Console.Error.WriteLine("Usage: EzRealmSync.ReadSidecar <read|browse|apply-export> <job.json> [result.json]");
+                Console.Error.WriteLine("Usage: EzRealmSync.ReadSidecar <read|browse> <job.json> [result.json]");
                 return 2;
             }
 
@@ -35,7 +35,6 @@ namespace osu.Game.EzRealmSync.ReadSidecar
                 {
                     "read" => runRead(jobPath, resultPath),
                     "browse" => runBrowse(jobPath, resultPath),
-                    "apply-export" => runApplyExport(jobPath, resultPath),
                     _ => writeFailure(resultPath, $"未知模式：{mode}") ?? 2
                 };
             }
@@ -71,18 +70,6 @@ namespace osu.Game.EzRealmSync.ReadSidecar
             configureReaderProbe(job.ReaderLibDirectory, job.SharedLibDirectory);
 
             RealmBrowseResult result = ReadSidecarEngine.ReadBrowseSnapshot(job);
-            File.WriteAllText(resultPath, JsonSerializer.Serialize(result, jsonOptions));
-            return result.Success ? 0 : 1;
-        }
-
-        private static int runApplyExport(string jobPath, string resultPath)
-        {
-            RealmApplyExportJob job = JsonSerializer.Deserialize<RealmApplyExportJob>(File.ReadAllText(jobPath), jsonOptions)
-                                      ?? throw new InvalidOperationException("job.json 为空或格式无效。");
-
-            configureReaderProbe(job.ReaderLibDirectory, job.SharedLibDirectory);
-
-            RealmApplyExportResult result = ReadSidecarEngine.ExportApplyBundle(job);
             File.WriteAllText(resultPath, JsonSerializer.Serialize(result, jsonOptions));
             return result.Success ? 0 : 1;
         }

@@ -55,33 +55,7 @@ namespace osu.Game.EzRealmSync.Contracts
         public string? CollectionHashFingerprint { get; set; }
     }
 
-    /// <summary>ReadSidecar Apply 导出：按 GUID 导出完整行供主进程写入目标库。</summary>
-    public sealed class RealmApplyExportJob
-    {
-        public required string ReaderLibDirectory { get; set; }
-
-        /// <summary>profile 共享传递依赖目录（official → readers/_shared/official/lib；ez → host lib）。</summary>
-        public string? SharedLibDirectory { get; set; }
-
-        public required string SourceRealmFilePath { get; set; }
-
-        public int PinnedDiskSchemaVersion { get; set; }
-
-        public required string Profile { get; set; }
-
-        public List<Guid> ItemIds { get; set; } = new List<Guid>();
-    }
-
-    public sealed class RealmApplyExportResult
-    {
-        public bool Success { get; set; }
-
-        public string? ErrorMessage { get; set; }
-
-        /// <summary>选中项的谱面集 / 难度 / 成绩 / 收藏夹 DTO（与转官方导出同形，便于复用插入逻辑）。</summary>
-        public RealmSyncApplyBundle? Bundle { get; set; }
-    }
-
+    /// <summary>同步写入包：由 <c>DynamicBaselineReader</c> 从源库导出、<c>DynamicBaselineWriter</c> 写入目标库。</summary>
     public sealed class RealmSyncApplyBundle
     {
         public List<OfficialBeatmapSetDto> BeatmapSets { get; set; } = new List<OfficialBeatmapSetDto>();

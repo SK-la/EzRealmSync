@@ -285,27 +285,4 @@ namespace osu.Game.EzRealmSync.Contracts
 
         public List<OfficialNamedFileDto> Files { get; set; } = new List<OfficialNamedFileDto>();
     }
-
-    /// <summary>Official Worker：将 Apply 包写入官方目标库。</summary>
-    public sealed class OfficialApplyImportJob
-    {
-        public required string TargetRealmPath { get; set; }
-
-        public int PinnedDiskSchemaVersion { get; set; }
-
-        public List<Guid> ItemIds { get; set; } = new List<Guid>();
-
-        public bool DeleteFromSource { get; set; }
-
-        public required RealmSyncApplyBundle Bundle { get; set; }
-    }
-
-    public sealed class OfficialApplyImportResult
-    {
-        public bool Success { get; set; }
-
-        public string? ErrorMessage { get; set; }
-
-        public int AppliedCount { get; set; }
-    }
 }

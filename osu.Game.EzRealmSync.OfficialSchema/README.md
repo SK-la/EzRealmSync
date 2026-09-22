@@ -17,8 +17,6 @@
 | `<job.json>` | 转官方写库 |
 | `--verify` | 校验无 Ez 列 |
 | `browse` / `read` | 数据 Tab / Diff 只读 |
-| `apply-export` | 同步从官方源导出 DTO |
-| `apply-import` | 同步写入官方目标 |
 
 ## 不得持久化（官方 `[Ignored]`）
 

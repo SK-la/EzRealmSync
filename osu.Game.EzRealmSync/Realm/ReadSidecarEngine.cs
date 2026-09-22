@@ -38,36 +38,6 @@ namespace osu.Game.EzRealmSync.Realm
             }
         }
 
-        public static RealmApplyExportResult ExportApplyBundle(RealmApplyExportJob job)
-        {
-            try
-            {
-                using var access = open(new RealmReadJob
-                {
-                    ReaderLibDirectory = job.ReaderLibDirectory,
-                    RealmFilePath = job.SourceRealmFilePath,
-                    PinnedDiskSchemaVersion = job.PinnedDiskSchemaVersion,
-                    Profile = job.Profile,
-                });
-
-                var bundle = OfficialConvertJobExporter.ExportPartialByIds(access, job.ItemIds);
-
-                return new RealmApplyExportResult
-                {
-                    Success = true,
-                    Bundle = bundle,
-                };
-            }
-            catch (Exception ex)
-            {
-                return new RealmApplyExportResult
-                {
-                    Success = false,
-                    ErrorMessage = ExceptionFormatting.SafeFormat(ex),
-                };
-            }
-        }
-
         public static RealmBrowseResult ReadBrowseSnapshot(RealmBrowseJob job)
         {
             try

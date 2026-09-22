@@ -117,46 +117,6 @@ namespace osu.Game.EzRealmSync.OfficialSchema
                 return added;
             };
 
-        public static int AppendBeatmapSets(RealmInstance realm, IReadOnlyList<OfficialBeatmapSetDto> sets) =>
-            writeBeatmapSets(realm, sets);
-
-        public static int AppendScores(RealmInstance realm, IReadOnlyList<OfficialScoreDto> scores) =>
-            writeScores(realm, scores);
-
-        public static int AppendCollections(RealmInstance realm, IReadOnlyList<OfficialCollectionDto> collections) =>
-            writeCollections(realm, collections);
-
-        public static int SoftDeleteByIds(RealmInstance realm, IReadOnlyList<Guid> itemIds) =>
-            realm.Write(r =>
-            {
-                int deleted = 0;
-
-                foreach (Guid id in itemIds)
-                {
-                    if (r.Find<BeatmapSetInfo>(id) is BeatmapSetInfo set)
-                    {
-                        set.DeletePending = true;
-                        deleted++;
-                        continue;
-                    }
-
-                    if (r.Find<ScoreInfo>(id) is ScoreInfo score)
-                    {
-                        score.DeletePending = true;
-                        deleted++;
-                        continue;
-                    }
-
-                    if (r.Find<BeatmapCollection>(id) is BeatmapCollection collection)
-                    {
-                        r.Remove(collection);
-                        deleted++;
-                    }
-                }
-
-                return deleted;
-            });
-
         private static int writeBeatmapSets(RealmInstance realm, IReadOnlyList<OfficialBeatmapSetDto> sets) =>
             realm.Write(r =>
             {

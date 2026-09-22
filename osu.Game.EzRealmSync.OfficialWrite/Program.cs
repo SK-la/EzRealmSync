@@ -31,15 +31,13 @@ internal static class Program
 
     private static bool isReadMode(string mode) =>
         string.Equals(mode, "browse", StringComparison.OrdinalIgnoreCase)
-        || string.Equals(mode, "read", StringComparison.OrdinalIgnoreCase)
-        || string.Equals(mode, "apply-export", StringComparison.OrdinalIgnoreCase)
-        || string.Equals(mode, "apply-import", StringComparison.OrdinalIgnoreCase);
+        || string.Equals(mode, "read", StringComparison.OrdinalIgnoreCase);
 
     private static void printUsage()
     {
         Console.Error.WriteLine("Usage: EzRealmSync.OfficialWrite <job.json> [result.json]");
         Console.Error.WriteLine("       EzRealmSync.OfficialWrite --verify <verify-job.json> [result.json]");
-        Console.Error.WriteLine("       EzRealmSync.OfficialWrite <browse|read|apply-export|apply-import> <job.json> [result.json]");
+        Console.Error.WriteLine("       EzRealmSync.OfficialWrite <browse|read> <job.json> [result.json]");
     }
 
     private static int runWrite(string[] args)
@@ -97,24 +95,6 @@ internal static class Program
                 var job = JsonSerializer.Deserialize<RealmReadJob>(jobJson, jsonOptions)
                           ?? throw new InvalidOperationException("read job 无效。");
                 RealmReadResult result = OfficialMirrorDiffReader.Read(job);
-                File.WriteAllText(resultPath, JsonSerializer.Serialize(result, jsonOptions));
-                return result.Success ? 0 : 1;
-            }
-
-            if (string.Equals(mode, "apply-export", StringComparison.OrdinalIgnoreCase))
-            {
-                var job = JsonSerializer.Deserialize<RealmApplyExportJob>(jobJson, jsonOptions)
-                          ?? throw new InvalidOperationException("apply-export job 无效。");
-                RealmApplyExportResult result = OfficialMirrorApplyExporter.Export(job);
-                File.WriteAllText(resultPath, JsonSerializer.Serialize(result, jsonOptions));
-                return result.Success ? 0 : 1;
-            }
-
-            if (string.Equals(mode, "apply-import", StringComparison.OrdinalIgnoreCase))
-            {
-                var job = JsonSerializer.Deserialize<OfficialApplyImportJob>(jobJson, jsonOptions)
-                          ?? throw new InvalidOperationException("apply-import job 无效。");
-                OfficialApplyImportResult result = OfficialMirrorApplyImporter.Apply(job);
                 File.WriteAllText(resultPath, JsonSerializer.Serialize(result, jsonOptions));
                 return result.Success ? 0 : 1;
             }
@@ -207,8 +187,6 @@ internal static class Program
             object failure = mode.ToLowerInvariant() switch
             {
                 "browse" => new RealmBrowseResult { Success = false, ErrorMessage = message },
-                "apply-export" => new RealmApplyExportResult { Success = false, ErrorMessage = message },
-                "apply-import" => new OfficialApplyImportResult { Success = false, ErrorMessage = message },
                 _ => new RealmReadResult { Success = false, ErrorMessage = message },
             };
             File.WriteAllText(resultPath, JsonSerializer.Serialize(failure, jsonOptions));
