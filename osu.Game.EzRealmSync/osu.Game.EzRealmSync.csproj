@@ -13,6 +13,11 @@
     <ProjectReference Include="..\osu.Game.EzRealmSync.Contracts\osu.Game.EzRealmSync.Contracts.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <!-- 官方 mod 名录：纯数据随包发布，产品进程不加载 osu.Game.dll（见 OfficialModCatalog）。 -->
+    <EmbeddedResource Include="Realm\OfficialModList.json" />
+  </ItemGroup>
+
   <ItemGroup Condition="'$(UseLocalOsuLibs)' != 'true'">
     <PackageReference Include="ez2lazer.Framework" />
     <PackageReference Include="Realm" />
