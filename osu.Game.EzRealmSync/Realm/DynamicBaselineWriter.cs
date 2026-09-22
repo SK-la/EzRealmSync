@@ -22,7 +22,9 @@ namespace osu.Game.EzRealmSync.Realm
             var skips = new SkipCollector();
             int applied = 0;
 
-            session.Realm.Write(() =>
+            // 故意用显式事务而非 Realm.Write(闭包)：Write 是同步执行、闭包内的 session 不会被提前释放，
+            // 但「闭包捕获外层 using 变量」会让 IDE 逐处报 AccessToDisposedClosure，噪声压过收益。
+            using (var transaction = session.Realm.BeginWrite())
             {
                 foreach (var set in bundle.BeatmapSets.Where(s => idSet.Contains(s.ID)))
                 {
@@ -63,7 +65,9 @@ namespace osu.Game.EzRealmSync.Realm
                     if (upsertScore(session, score, beatmapsByHash, skips))
                         applied++;
                 }
-            });
+
+                transaction.Commit();
+            }
 
             progress?.Report(new ApplyProgress
             {
@@ -89,7 +93,7 @@ namespace osu.Game.EzRealmSync.Realm
             using var session = DynamicRealmSession.OpenPinned(realmFilePath, diskSchemaVersion, readOnly: false);
             int applied = 0;
 
-            session.Realm.Write(() =>
+            using (var transaction = session.Realm.BeginWrite())
             {
                 foreach (Guid id in request.ItemIds)
                 {
@@ -110,7 +114,9 @@ namespace osu.Game.EzRealmSync.Realm
                         applied++;
                     }
                 }
-            });
+
+                transaction.Commit();
+            }
 
             progress?.Report(new ApplyProgress { Progress = 1, Message = "删除完成" });
             return new ApplyResult { AppliedCount = applied };
