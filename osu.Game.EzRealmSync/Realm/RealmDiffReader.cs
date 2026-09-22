@@ -54,9 +54,9 @@ namespace osu.Game.EzRealmSync.Realm
             string filename = RealmWorkspacePaths.ResolveStorageRelativeRealmPath(fullPath);
             var storage = new NativeStorage(storageRoot);
 
-            return ez
+            return RealmOpenContext.WithoutCapturedContext(() => ez
                 ? RealmAccess.OpenWithoutMigration(storage, filename, pinnedDiskSchemaVersion)
-                : OfficialRealmAccess.OpenWithoutMigration(storage, filename, pinnedDiskSchemaVersion);
+                : OfficialRealmAccess.OpenWithoutMigration(storage, filename, pinnedDiskSchemaVersion));
         }
 
         private static IEnumerable<RealmDiffEntity> readBeatmapSets(RealmInstance realm)

@@ -65,7 +65,7 @@ namespace osu.Game.EzRealmSync.Realm
                     FallbackPipePath = tempPathLocation,
                 };
 
-                using var realm = RealmInstance.GetInstance(config);
+                using var realm = RealmOpenContext.GetInstance(config);
                 ulong version = DynamicRealmSession.ReadSchemaVersionFromHandle(realm);
 
                 if (version == 0 || version > int.MaxValue)

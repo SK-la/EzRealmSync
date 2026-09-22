@@ -53,7 +53,7 @@ namespace osu.Game.EzRealmSync.Realm
                 FallbackPipePath = pipeDir,
             };
 
-            RealmInstance instance = RealmInstance.GetInstance(config);
+            RealmInstance instance = RealmOpenContext.GetInstance(config);
 
             try
             {

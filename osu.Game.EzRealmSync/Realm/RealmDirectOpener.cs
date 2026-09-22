@@ -26,7 +26,7 @@ namespace osu.Game.EzRealmSync.Realm
                 SchemaVersion = (ulong)diskSchemaVersion,
             };
 
-            using (RealmInstance.GetInstance(configuration))
+            using (RealmOpenContext.GetInstance(configuration))
             {
             }
 

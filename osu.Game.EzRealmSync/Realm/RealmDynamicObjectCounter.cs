@@ -40,7 +40,7 @@ namespace osu.Game.EzRealmSync.Realm
                 FallbackPipePath = tempPathLocation,
             };
 
-            using var realm = RealmInstance.GetInstance(config);
+            using var realm = RealmOpenContext.GetInstance(config);
 
             return new Snapshot
             {

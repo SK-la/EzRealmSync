@@ -1,12 +1,13 @@
 using NUnit.Framework;
+using osu.Game.EzRealmSync.Realm;
 using Realms;
-using RealmInstance = Realms.Realm;
 
 namespace osu.Game.EzRealmSync.Tests.TestInfrastructure
 {
     /// <summary>
     /// Realm-core 在进程退出时若仍有未刷完的 SharedRealm / 写事务最终化，可能触发
-    /// <c>!realm.is_in_transaction()</c> 把 test host 打崩。测试侧统一创建与释放。
+    /// <c>!realm.is_in_transaction()</c> 把 test host 打崩。测试侧统一创建与释放，
+    /// 且统一经 <see cref="RealmOpenContext"/> 打开（不绑定 NUnit 的 SynchronizationContext）。
     /// </summary>
     public static class RealmNativeLifetime
     {
@@ -17,7 +18,7 @@ namespace osu.Game.EzRealmSync.Tests.TestInfrastructure
                 Directory.CreateDirectory(dir);
 
             var config = new RealmConfiguration(path) { SchemaVersion = schemaVersion };
-            using (RealmInstance.GetInstance(config))
+            using (RealmOpenContext.GetInstance(config))
             {
             }
 
