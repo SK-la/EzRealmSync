@@ -6,7 +6,10 @@ using RealmInstance = Realms.Realm;
 
 namespace osu.Game.EzRealmSync.OfficialSchema
 {
-    /// <summary>官方镜像只读 → 数据 Tab 浏览 DTO（与 ReadSidecar browse 同形）。</summary>
+    /// <summary>
+    /// 官方镜像只读 → 浏览 DTO。只服务 OfficialWrite Worker（造官方样本、做 parity 对照），
+    /// 产品浏览走 DynamicRealm，不经过这里。
+    /// </summary>
     public static class OfficialMirrorBrowseReader
     {
         public static RealmBrowseResult Read(RealmBrowseJob job)
