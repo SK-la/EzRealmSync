@@ -18,10 +18,9 @@
           Condition="'@(EzRealmSyncRuntimeNative)' != ''" />
   </Target>
 
-  <!-- 构建 WinExe 时把 lib/*.dll 与引擎程序集复制到输出目录 -->
+  <!-- 构建 WinExe 时把官方写库 Worker 复制到输出目录 -->
   <PropertyGroup>
     <OfficialWriteOutputDir>$(MSBuildThisFileDirectory)osu.Game.EzRealmSync.OfficialWrite\bin\$(Configuration)\$(EzRealmSyncWorkerTfm)</OfficialWriteOutputDir>
-    <ReadSidecarOutputDir>$(MSBuildThisFileDirectory)osu.Game.EzRealmSync.ReadSidecar\bin\$(Configuration)\$(EzRealmSyncWorkerTfm)</ReadSidecarOutputDir>
   </PropertyGroup>
 
   <Target Name="CopyOfficialWriteWorkerToOutput"
@@ -49,76 +48,6 @@
           DestinationFiles="@(_OfficialWriteRuntime->'$(OutputPath)official-write\runtimes\%(RecursiveDir)%(Filename)%(Extension)')"
           SkipUnchangedFiles="true"
           Condition="'@(_OfficialWriteRuntime)' != ''" />
-  </Target>
-
-  <Target Name="CopyReadSidecarWorkerToOutput"
-          AfterTargets="Build"
-          DependsOnTargets="ResolveProjectReferences"
-          Condition="'$(OutputType)' == 'WinExe'">
-    <ItemGroup>
-      <_ReadSidecarCopy Include="$(ReadSidecarOutputDir)\EzRealmSync.ReadSidecar.exe" Condition="Exists('$(ReadSidecarOutputDir)\EzRealmSync.ReadSidecar.exe')" />
-      <_ReadSidecarCopy Include="$(ReadSidecarOutputDir)\EzRealmSync.ReadSidecar.dll" Condition="Exists('$(ReadSidecarOutputDir)\EzRealmSync.ReadSidecar.dll')" />
-      <_ReadSidecarCopy Include="$(ReadSidecarOutputDir)\EzRealmSync.ReadSidecar.deps.json" Condition="Exists('$(ReadSidecarOutputDir)\EzRealmSync.ReadSidecar.deps.json')" />
-      <_ReadSidecarCopy Include="$(ReadSidecarOutputDir)\EzRealmSync.ReadSidecar.runtimeconfig.json" Condition="Exists('$(ReadSidecarOutputDir)\EzRealmSync.ReadSidecar.runtimeconfig.json')" />
-      <_ReadSidecarManaged Include="$(ReadSidecarOutputDir)\*.dll"
-                          Exclude="$(ReadSidecarOutputDir)\*Game.Resources*.dll;$(ReadSidecarOutputDir)\*Resources.dll"
-                          Condition="Exists('$(ReadSidecarOutputDir)')" />
-      <_ReadSidecarRuntime Include="$(ReadSidecarOutputDir)\runtimes\**\*.*" Condition="Exists('$(ReadSidecarOutputDir)\runtimes')" />
-    </ItemGroup>
-    <MakeDir Directories="$(OutputPath)read-sidecar" Condition="@(_ReadSidecarCopy->Count()) != 0 OR '@(_ReadSidecarManaged)' != ''" />
-    <Copy SourceFiles="@(_ReadSidecarCopy)"
-          DestinationFolder="$(OutputPath)read-sidecar"
-          SkipUnchangedFiles="true"
-          Condition="@(_ReadSidecarCopy->Count()) != 0" />
-    <Copy SourceFiles="@(_ReadSidecarManaged)"
-          DestinationFolder="$(OutputPath)read-sidecar"
-          SkipUnchangedFiles="true"
-          Condition="'@(_ReadSidecarManaged)' != ''" />
-    <Copy SourceFiles="@(_ReadSidecarRuntime)"
-          DestinationFiles="@(_ReadSidecarRuntime->'$(OutputPath)read-sidecar\runtimes\%(RecursiveDir)%(Filename)%(Extension)')"
-          SkipUnchangedFiles="true"
-          Condition="'@(_ReadSidecarRuntime)' != ''" />
-  </Target>
-
-  <Target Name="CopyReadSidecarWorkerToTestOutput"
-          AfterTargets="Build"
-          DependsOnTargets="ResolveProjectReferences"
-          Condition="'$(MSBuildProjectName)' == 'osu.Game.EzRealmSync.Tests'">
-    <ItemGroup>
-      <_ReadSidecarCopy Include="$(ReadSidecarOutputDir)\EzRealmSync.ReadSidecar.exe" Condition="Exists('$(ReadSidecarOutputDir)\EzRealmSync.ReadSidecar.exe')" />
-      <_ReadSidecarCopy Include="$(ReadSidecarOutputDir)\EzRealmSync.ReadSidecar.dll" Condition="Exists('$(ReadSidecarOutputDir)\EzRealmSync.ReadSidecar.dll')" />
-      <_ReadSidecarCopy Include="$(ReadSidecarOutputDir)\EzRealmSync.ReadSidecar.deps.json" Condition="Exists('$(ReadSidecarOutputDir)\EzRealmSync.ReadSidecar.deps.json')" />
-      <_ReadSidecarCopy Include="$(ReadSidecarOutputDir)\EzRealmSync.ReadSidecar.runtimeconfig.json" Condition="Exists('$(ReadSidecarOutputDir)\EzRealmSync.ReadSidecar.runtimeconfig.json')" />
-      <_ReadSidecarManaged Include="$(ReadSidecarOutputDir)\*.dll"
-                          Exclude="$(ReadSidecarOutputDir)\*Game.Resources*.dll;$(ReadSidecarOutputDir)\*Resources.dll"
-                          Condition="Exists('$(ReadSidecarOutputDir)')" />
-      <_ReadSidecarRuntime Include="$(ReadSidecarOutputDir)\runtimes\**\*.*" Condition="Exists('$(ReadSidecarOutputDir)\runtimes')" />
-    </ItemGroup>
-    <MakeDir Directories="$(OutputPath)read-sidecar" Condition="@(_ReadSidecarCopy->Count()) != 0 OR '@(_ReadSidecarManaged)' != ''" />
-    <Copy SourceFiles="@(_ReadSidecarCopy)"
-          DestinationFolder="$(OutputPath)read-sidecar"
-          SkipUnchangedFiles="true"
-          Condition="@(_ReadSidecarCopy->Count()) != 0" />
-    <Copy SourceFiles="@(_ReadSidecarManaged)"
-          DestinationFolder="$(OutputPath)read-sidecar"
-          SkipUnchangedFiles="true"
-          Condition="'@(_ReadSidecarManaged)' != ''" />
-    <Copy SourceFiles="@(_ReadSidecarRuntime)"
-          DestinationFiles="@(_ReadSidecarRuntime->'$(OutputPath)read-sidecar\runtimes\%(RecursiveDir)%(Filename)%(Extension)')"
-          SkipUnchangedFiles="true"
-          Condition="'@(_ReadSidecarRuntime)' != ''" />
-  </Target>
-
-  <Target Name="CopyReadersFolderToOutput"
-          AfterTargets="Build"
-          Condition="'$(OutputType)' == 'WinExe'">
-    <ItemGroup>
-      <_ReadersContent Include="$(MSBuildThisFileDirectory)readers\**\*.*" />
-    </ItemGroup>
-    <Copy SourceFiles="@(_ReadersContent)"
-          DestinationFiles="@(_ReadersContent->'$(OutputPath)readers\%(RecursiveDir)%(Filename)%(Extension)')"
-          SkipUnchangedFiles="true"
-          Condition="'@(_ReadersContent)' != ''" />
   </Target>
 
   <Target Name="CopyReadersFolderToTestOutput"
@@ -160,70 +89,21 @@
           Condition="'@(_OfficialWriteRuntime)' != ''" />
   </Target>
 
-  <ItemGroup Condition="'$(UseLocalOsuLibs)' == 'true'">
-    <EzRealmSyncEngineOutput Include="$(MSBuildThisFileDirectory)osu.Game.EzRealmSync\bin\$(Configuration)\$(EzRealmSyncWorkerTfm)\osu.Game.EzRealmSync.dll" />
-  </ItemGroup>
-
-  <Target Name="CopyEzRealmSyncLibsToOutput"
-          AfterTargets="Build"
-          Condition="'$(OutputType)' == 'WinExe' AND '$(UseLocalOsuLibs)' == 'true' AND ('@(EzRealmSyncRuntimeLib)' != '' OR '@(EzRealmSyncEngineOutput)' != '')">
-    <ItemGroup>
-      <_EzCopyToOutput Include="@(EzRealmSyncRuntimeLib)" />
-      <_EzCopyToOutput Include="@(EzRealmSyncEngineOutput)" />
-    </ItemGroup>
-    <Message Importance="high" Text="CopyEzRealmSyncLibs -> $(OutputPath): @(_EzCopyToOutput->'%(Filename)%(Extension)', ', ')" />
-    <Copy SourceFiles="@(_EzCopyToOutput)"
-          DestinationFolder="$(OutputPath)"
-          SkipUnchangedFiles="false" />
-    <Copy SourceFiles="@(EzRealmSyncRuntimeNative)"
-          DestinationFiles="@(EzRealmSyncRuntimeNative->'$(OutputPath)runtimes\%(RecursiveDir)%(Filename)%(Extension)')"
-          SkipUnchangedFiles="false"
-          Condition="'@(EzRealmSyncRuntimeNative)' != ''" />
-  </Target>
-
-  <!-- WPF MarkupCompile 需要能解析 osu.Game.EzRealmSync 的传递依赖（如 Realm.dll） -->
-  <Target Name="StageEzRealmDepsForWpfMarkup"
-          BeforeTargets="MarkupCompilePass1"
-          DependsOnTargets="ResolveProjectReferences"
-          Condition="'$(OutputType)' == 'WinExe' AND '$(UseLocalOsuLibs)' == 'true'">
-    <ItemGroup>
-      <_WpfStageDll Include="$(MSBuildThisFileDirectory)osu.Game.EzRealmSync\bin\$(Configuration)\$(EzRealmSyncWorkerTfm)\osu.Game.EzRealmSync.dll" />
-      <_WpfStageDll Include="$(EzRealmSyncLibDir)\Realm.dll" Condition="Exists('$(EzRealmSyncLibDir)\Realm.dll')" />
-      <_WpfStageDll Include="$(EzRealmSyncLibDir)\osu.Game.dll" Condition="Exists('$(EzRealmSyncLibDir)\osu.Game.dll')" />
-      <_WpfStageDll Include="$(EzRealmSyncLibDir)\osu.Framework.dll" Condition="Exists('$(EzRealmSyncLibDir)\osu.Framework.dll')" />
-    </ItemGroup>
-    <MakeDir Directories="$(OutputPath)" Condition="!Exists('$(OutputPath)')" />
-    <Copy SourceFiles="@(_WpfStageDll)" DestinationFolder="$(OutputPath)" SkipUnchangedFiles="true" />
-  </Target>
-
-  <Target Name="CopyEzRealmSyncLibsToPublish"
-          AfterTargets="Publish"
-          Condition="'$(OutputType)' == 'WinExe' AND '$(UseLocalOsuLibs)' == 'true'">
-    <Copy SourceFiles="@(EzRealmSyncRuntimeLib)"
-          DestinationFolder="$(PublishDir)"
-          SkipUnchangedFiles="false"
-          Condition="'@(EzRealmSyncRuntimeLib)' != ''" />
-    <Copy SourceFiles="@(EzRealmSyncRuntimeNative)"
-          DestinationFiles="@(EzRealmSyncRuntimeNative->'$(PublishDir)runtimes\%(RecursiveDir)%(Filename)%(Extension)')"
-          SkipUnchangedFiles="false"
-          Condition="'@(EzRealmSyncRuntimeNative)' != ''" />
-  </Target>
-
-  <!-- dotnet build -t:SyncReaderLibs EzRealmSync.sln -->
+  <!-- dotnet build -t:SyncReaderLibs EzRealmSync.sln（刷新 readers/ 里的测试夹具 dll） -->
   <Target Name="SyncReaderLibs"
-          Condition="'$(MSBuildProjectName)' == 'osu.EzRealmSync.Desktop'">
+          Condition="'$(MSBuildProjectName)' == 'osu.Game.EzRealmSync.Tests'">
     <Exec Command="pwsh -NoProfile -ExecutionPolicy Bypass -File &quot;$(MSBuildThisFileDirectory)scripts\Sync-ReaderLibs.ps1&quot;"
           IgnoreExitCode="false" />
   </Target>
 
-  <!-- dotnet build -t:SyncEzRealmLibs EzRealmSync.sln -->
+  <!-- dotnet build -t:SyncEzRealmLibs EzRealmSync.sln（刷新 lib/ 本地覆盖，-p:UseLocalOsuLibs=true 的测试用） -->
   <PropertyGroup>
     <EzOsuGameProject>$(MSBuildThisFileDirectory)..\osu\osu.Game\osu.Game.csproj</EzOsuGameProject>
     <EzOsuGamePublishStagingDir>$(MSBuildThisFileDirectory)obj\SyncEzRealmLibs\$(Configuration)\$(EzRealmSyncWorkerTfm)</EzOsuGamePublishStagingDir>
   </PropertyGroup>
 
   <Target Name="SyncEzRealmLibs"
-          Condition="'$(MSBuildProjectName)' == 'osu.EzRealmSync.Desktop'">
+          Condition="'$(MSBuildProjectName)' == 'osu.Game.EzRealmSync.Tests'">
     <Message Importance="high"
              Text="SyncEzRealmLibs: publish $(EzOsuGameProject) -> $(EzRealmSyncLibDir)"
              Condition="Exists('$(EzOsuGameProject)')" />

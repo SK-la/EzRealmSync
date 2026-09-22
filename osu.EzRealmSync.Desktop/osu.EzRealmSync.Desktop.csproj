@@ -18,29 +18,17 @@
     <ProjectReference Include="..\osu.Game.EzRealmSync.OfficialWrite\osu.Game.EzRealmSync.OfficialWrite.csproj">
       <ReferenceOutputAssembly>false</ReferenceOutputAssembly>
     </ProjectReference>
-    <ProjectReference Include="..\osu.Game.EzRealmSync.ReadSidecar\osu.Game.EzRealmSync.ReadSidecar.csproj">
-      <ReferenceOutputAssembly>false</ReferenceOutputAssembly>
-    </ProjectReference>
   </ItemGroup>
 
   <ItemGroup>
+    <!-- 只保留 osu.Framework（RealmAppPresenter / ShellViewModel 用 Bindables）：
+         产品进程不加载 osu.Game.dll，见 docs/DATA-OPERATIONS.zh.md。 -->
     <PackageReference Include="ez2lazer.Framework" />
-    <PackageReference Include="ez2lazer.Game" />
     <PackageReference Include="WPF-UI" />
     <PackageReference Include="WPF-UI.Abstractions" />
     <PackageReference Include="WPF-UI.DependencyInjection" />
     <PackageReference Include="WPF-UI.Markdown" />
     <PackageReference Include="WPF-UI.Tray" />
     <PackageReference Include="WPF-UI.Violeta" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <!-- manifest / config / lib/README：输出与 Release 均带 -->
-    <Content Include="..\readers\**\*"
-             Exclude="..\readers\**\lib\*.dll;..\readers\**\lib\**\*.dll;..\readers\**\lib\runtimes\**\*.*">
-      <Link>readers\%(RecursiveDir)%(Filename)%(Extension)</Link>
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-      <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
-    </Content>
   </ItemGroup>
 </Project>

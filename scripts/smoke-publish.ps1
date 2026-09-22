@@ -15,10 +15,19 @@ if (-not (Test-Path -LiteralPath $exePath)) {
     throw "Missing $exePath"
 }
 
-foreach ($required in @('osu.Game.dll', 'osu.Framework.dll', 'Realm.dll', 'realm-wrappers.dll')) {
+foreach ($required in @('osu.Framework.dll', 'Realm.dll', 'realm-wrappers.dll')) {
     $path = Join-Path $publishRoot $required
     if (-not (Test-Path -LiteralPath $path)) {
         throw "Missing required file: $path"
+    }
+}
+
+# 产品进程不加载 osu.Game.dll（全部读写走 DynamicRealm + OfficialWrite Worker）：
+# 一旦它出现在发布目录，说明有工程又把它引成了产品依赖，必须当场拦下。
+foreach ($forbidden in @('osu.Game.dll')) {
+    $path = Join-Path $publishRoot $forbidden
+    if (Test-Path -LiteralPath $path) {
+        throw "Forbidden file in publish output: $path（产品不得依赖 osu.Game.dll）"
     }
 }
 

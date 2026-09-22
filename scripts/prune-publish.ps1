@@ -23,7 +23,6 @@ function Test-ProtectedFile {
         'EzRealmSync.dll' { return $true }
         'osu.EzRealmSync.AppModel.dll' { return $true }
         'osu.Game.EzRealmSync.dll' { return $true }
-        'osu.Game.dll' { return $true }
         'osu.Framework.dll' { return $true }
         'Realm.dll' { return $true }
         'realm-wrappers.dll' { return $true }
@@ -33,6 +32,7 @@ function Test-ProtectedFile {
 }
 
 $prunePatterns = @(
+    'osu.Game.dll',
     'osu.Game.Resources*.dll',
     'Veldrid*.dll',
     'vk.dll',
@@ -80,7 +80,7 @@ foreach ($root in $searchRoots) {
     }
 }
 
-$removedFiles = $removedFiles | Sort-Object FullName -Unique
+$removedFiles = @($removedFiles | Sort-Object FullName -Unique)
 
 foreach ($file in $removedFiles) {
     Remove-Item -LiteralPath $file.FullName -Force
