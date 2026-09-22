@@ -26,7 +26,10 @@ if (-not $config.packages) {
 }
 
 $cacheRoot = Join-Path $scriptRoot 'obj\SyncReaderLibs\cache'
-$stagingRoot = Join-Path $scriptRoot 'obj\SyncReaderLibs\staging'
+
+# staging（含 nuget probe csproj）必须放在仓库之外：仓库内的工程会继承
+# Directory.Build.props 注入的无版本 ez2lazer.Game.Resources，restore 直接 NU1015 失败。
+$stagingRoot = Join-Path ([System.IO.Path]::GetTempPath()) 'EzRealmSyncReaderLibs\staging'
 New-Item -ItemType Directory -Force -Path $cacheRoot, $stagingRoot | Out-Null
 
 function Expand-ArchiveFile {

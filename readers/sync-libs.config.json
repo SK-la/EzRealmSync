@@ -22,7 +22,16 @@
     },
     {
       "readerDir": "52007",
-      "comment": "Ez schema 52007，与 Directory.Packages.props 中 ez2lazer.Game 对齐。",
+      "comment": "Ez schema 52007（Ez 修订 7 的客户端写出的库）。",
+      "source": {
+        "type": "nuget",
+        "gameId": "ez2lazer.Game",
+        "gameVersion": "2026.906.1-ez2lazer"
+      }
+    },
+    {
+      "readerDir": "52010",
+      "comment": "Ez schema 52010（当前 bundled Ez 模型），与 Directory.Packages.props 中 ez2lazer.Game 对齐。",
       "source": {
         "type": "nuget",
         "gameId": "ez2lazer.Game",

@@ -18,6 +18,8 @@ readers/
     lib/osu.Game.dll        # 薄切片：该 schema 的 ez2lazer.Game
 ```
 
+现有包（`diskSchemaVersions` = 一个 Ez 修订）：`51007`（Ez 修订 7 的 51 系）、`52007`（Ez 修订 7）、`52010`（Ez 修订 10，当前 bundled 模型）。每个包由 `sync-libs.config.json` 钉死到写出该库的 `ez2lazer.Game` 版本——改版本会改变该 DLL 的模型（如 2026.917.0 = Ez 修订 10），不能拿它去填 52007。
+
 - **Ez legacy**：共享层 = 主进程 exe 根；薄切片覆盖 `osu.Game.dll`。
 - **ReadSidecar**（`read-sidecar/`）自带托管闭包；仅服务 Ez legacy。
 - **官方**：见 `official-write/` 与 `OfficialSchema/README.md`。
@@ -35,6 +37,7 @@ dotnet run --project osu.EzRealmSync.Desktop
 ```
 
 只同步某一 Ez schema：`pwsh scripts/Sync-ReaderLibs.ps1 -ReaderDir 51007`
+多个包：`pwsh -NoProfile -Command "& './scripts/Sync-ReaderLibs.ps1' -ReaderDir 52007,52010"`（`-File` 传数组参数会被当成一个字符串）。
 
 ## manifest.json
 

@@ -9,8 +9,8 @@
 |------|------|------|
 | **同步（任意 schema）** | DynamicRealm + 官方基线列白名单 | 主进程；**不加载 `osu.Game.dll`** |
 | **官方**（schema &lt; 1000，如 51 / 52） | OfficialSchema 镜像（无 Ez 列） | `official-write/` Worker（转官方 / 数据页官方浏览） |
-| **Ez current**（如 52007） | Ez `osu.Game` | 主进程（数据页 Ez 写删、修复升级） |
-| **Ez legacy**（如 51007） | Ez `osu.Game`（Sidecar 自包含 + readers 薄切片） | `read-sidecar/`（仅 typed 浏览旧 Ez，不同步） |
+| **Ez current**（如 52010） | Ez `osu.Game` | 主进程（数据页 Ez 写删、修复升级） |
+| **Ez legacy**（如 51007 / 52007） | Ez `osu.Game`（Sidecar 自包含 + readers 薄切片） | `read-sidecar/`（仅 typed 浏览旧 Ez，不同步） |
 
 主进程 **永不**加载 OfficialSchema（`[MapTo]` 冲突）。  
 官方库 **禁止**再用 `OfficialRealmAccess` + Ez 对象模型假装官方（会 `MigrationNeeded` / 污染 Ez 列）。  
