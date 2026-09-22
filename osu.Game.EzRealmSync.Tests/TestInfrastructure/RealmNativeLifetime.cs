@@ -55,11 +55,4 @@ namespace osu.Game.EzRealmSync.Tests.TestInfrastructure
             }
         }
     }
-
-    [SetUpFixture]
-    public sealed class RealmNativeLifetimeFixture
-    {
-        [OneTimeTearDown]
-        public void FlushNativeHandles() => RealmNativeLifetime.Flush();
-    }
 }
