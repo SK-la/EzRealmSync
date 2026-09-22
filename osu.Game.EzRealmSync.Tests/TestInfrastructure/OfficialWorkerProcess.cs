@@ -2,8 +2,6 @@ using System.Diagnostics;
 using System.Text;
 using System.Text.Json;
 using osu.Game.EzRealmSync.Contracts;
-using osu.Game.EzRealmSync.IO;
-using osu.Game.EzRealmSync.Realm;
 
 namespace osu.Game.EzRealmSync.Tests.TestInfrastructure
 {

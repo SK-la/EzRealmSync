@@ -1,4 +1,5 @@
 using osu.Game.EzRealmSync.OfficialSchema.V51;
+using osu.Game.EzRealmSync.OfficialSchema.V52;
 using Realms;
 
 namespace osu.Game.EzRealmSync.OfficialSchema
@@ -23,7 +24,7 @@ namespace osu.Game.EzRealmSync.OfficialSchema
         };
 
         private static readonly Type[] v52_object_types = v51_object_types
-            .Append(typeof(V52.RealmOnlineAsset))
+            .Append(typeof(RealmOnlineAsset))
             .ToArray();
 
         public static Type[] ResolveObjectTypes(int targetUpstreamSchema) =>

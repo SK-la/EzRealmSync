@@ -2,198 +2,199 @@ using System.Text.Json;
 using osu.Game.EzRealmSync.Contracts;
 using osu.Game.EzRealmSync.OfficialSchema;
 
-namespace osu.Game.EzRealmSync.OfficialWrite;
-
-internal static class Program
+namespace osu.Game.EzRealmSync.OfficialWrite
 {
-    private static readonly JsonSerializerOptions jsonOptions = new JsonSerializerOptions
+    internal static class Program
     {
-        PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
-        WriteIndented = false,
-    };
-
-    public static int Main(string[] args)
-    {
-        if (args.Length >= 1 && string.Equals(args[0], "--verify", StringComparison.OrdinalIgnoreCase))
-            return runVerify(args);
-
-        if (args.Length >= 1 && isReadMode(args[0]))
-            return runReadMode(args);
-
-        if (args.Length < 1 || string.IsNullOrWhiteSpace(args[0]))
+        private static readonly JsonSerializerOptions jsonOptions = new JsonSerializerOptions
         {
-            printUsage();
-            return 2;
-        }
+            PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
+            WriteIndented = false,
+        };
 
-        return runWrite(args);
-    }
-
-    private static bool isReadMode(string mode) =>
-        string.Equals(mode, "browse", StringComparison.OrdinalIgnoreCase)
-        || string.Equals(mode, "read", StringComparison.OrdinalIgnoreCase);
-
-    private static void printUsage()
-    {
-        Console.Error.WriteLine("Usage: EzRealmSync.OfficialWrite <job.json> [result.json]");
-        Console.Error.WriteLine("       EzRealmSync.OfficialWrite --verify <verify-job.json> [result.json]");
-        Console.Error.WriteLine("       EzRealmSync.OfficialWrite <browse|read> <job.json> [result.json]");
-    }
-
-    private static int runWrite(string[] args)
-    {
-        string jobPath = Path.GetFullPath(args[0]);
-        string resultPath = args.Length >= 2 && !string.IsNullOrWhiteSpace(args[1])
-            ? Path.GetFullPath(args[1])
-            : jobPath + ".result.json";
-
-        try
+        public static int Main(string[] args)
         {
-            var job = JsonSerializer.Deserialize<OfficialConvertJob>(File.ReadAllText(jobPath), jsonOptions)
-                      ?? throw new InvalidOperationException("job.json 为空或格式无效。");
+            if (args.Length >= 1 && string.Equals(args[0], "--verify", StringComparison.OrdinalIgnoreCase))
+                return runVerify(args);
 
-            OfficialConvertResult result = OfficialMirrorRealmWriter.Write(job);
-            File.WriteAllText(resultPath, JsonSerializer.Serialize(result, jsonOptions));
-            return result.Success ? 0 : 1;
-        }
-        catch (Exception ex)
-        {
-            writeFailure(resultPath, ExceptionFormatting.SafeFormat(ex));
-            return 1;
-        }
-    }
+            if (args.Length >= 1 && isReadMode(args[0]))
+                return runReadMode(args);
 
-    private static int runReadMode(string[] args)
-    {
-        if (args.Length < 2 || string.IsNullOrWhiteSpace(args[1]))
-        {
-            printUsage();
-            return 2;
-        }
-
-        string mode = args[0];
-        string jobPath = Path.GetFullPath(args[1]);
-        string resultPath = args.Length >= 3 && !string.IsNullOrWhiteSpace(args[2])
-            ? Path.GetFullPath(args[2])
-            : jobPath + ".result.json";
-
-        try
-        {
-            string jobJson = File.ReadAllText(jobPath);
-
-            if (string.Equals(mode, "browse", StringComparison.OrdinalIgnoreCase))
+            if (args.Length < 1 || string.IsNullOrWhiteSpace(args[0]))
             {
-                var job = JsonSerializer.Deserialize<RealmBrowseJob>(jobJson, jsonOptions)
-                          ?? throw new InvalidOperationException("browse job 无效。");
-                RealmBrowseResult result = OfficialMirrorBrowseReader.Read(job);
+                printUsage();
+                return 2;
+            }
+
+            return runWrite(args);
+        }
+
+        private static bool isReadMode(string mode) =>
+            string.Equals(mode, "browse", StringComparison.OrdinalIgnoreCase)
+            || string.Equals(mode, "read", StringComparison.OrdinalIgnoreCase);
+
+        private static void printUsage()
+        {
+            Console.Error.WriteLine("Usage: EzRealmSync.OfficialWrite <job.json> [result.json]");
+            Console.Error.WriteLine("       EzRealmSync.OfficialWrite --verify <verify-job.json> [result.json]");
+            Console.Error.WriteLine("       EzRealmSync.OfficialWrite <browse|read> <job.json> [result.json]");
+        }
+
+        private static int runWrite(string[] args)
+        {
+            string jobPath = Path.GetFullPath(args[0]);
+            string resultPath = args.Length >= 2 && !string.IsNullOrWhiteSpace(args[1])
+                ? Path.GetFullPath(args[1])
+                : jobPath + ".result.json";
+
+            try
+            {
+                var job = JsonSerializer.Deserialize<OfficialConvertJob>(File.ReadAllText(jobPath), jsonOptions)
+                          ?? throw new InvalidOperationException("job.json 为空或格式无效。");
+
+                OfficialConvertResult result = OfficialMirrorRealmWriter.Write(job);
                 File.WriteAllText(resultPath, JsonSerializer.Serialize(result, jsonOptions));
                 return result.Success ? 0 : 1;
             }
-
-            if (string.Equals(mode, "read", StringComparison.OrdinalIgnoreCase))
+            catch (Exception ex)
             {
-                var job = JsonSerializer.Deserialize<RealmReadJob>(jobJson, jsonOptions)
-                          ?? throw new InvalidOperationException("read job 无效。");
-                RealmReadResult result = OfficialMirrorDiffReader.Read(job);
-                File.WriteAllText(resultPath, JsonSerializer.Serialize(result, jsonOptions));
-                return result.Success ? 0 : 1;
+                writeFailure(resultPath, ExceptionFormatting.SafeFormat(ex));
+                return 1;
+            }
+        }
+
+        private static int runReadMode(string[] args)
+        {
+            if (args.Length < 2 || string.IsNullOrWhiteSpace(args[1]))
+            {
+                printUsage();
+                return 2;
             }
 
-            printUsage();
-            return 2;
-        }
-        catch (Exception ex)
-        {
-            writeReadFailure(mode, resultPath, ExceptionFormatting.SafeFormat(ex));
-            return 1;
-        }
-    }
+            string mode = args[0];
+            string jobPath = Path.GetFullPath(args[1]);
+            string resultPath = args.Length >= 3 && !string.IsNullOrWhiteSpace(args[2])
+                ? Path.GetFullPath(args[2])
+                : jobPath + ".result.json";
 
-    private static int runVerify(string[] args)
-    {
-        if (args.Length < 2 || string.IsNullOrWhiteSpace(args[1]))
-        {
-            Console.Error.WriteLine("--verify 需要 verify-job.json");
-            return 2;
-        }
-
-        string verifyJobPath = Path.GetFullPath(args[1]);
-        string resultPath = args.Length >= 3 && !string.IsNullOrWhiteSpace(args[2])
-            ? Path.GetFullPath(args[2])
-            : verifyJobPath + ".result.json";
-
-        try
-        {
-            using var doc = JsonDocument.Parse(File.ReadAllText(verifyJobPath));
-            var jobElement = doc.RootElement.GetProperty("job");
-            var job = jobElement.Deserialize<OfficialConvertJob>(jsonOptions)
-                      ?? throw new InvalidOperationException("verify job 无效。");
-
-            int sourceFileHashCount = doc.RootElement.TryGetProperty("sourceFileHashCount", out var countElement)
-                ? countElement.GetInt32()
-                : 0;
-
-            var (success, error, fileCount) = OfficialMirrorVerifier.Verify(
-                job.TargetRealmPath,
-                job.TargetUpstreamSchema,
-                sourceFileHashCount);
-
-            var payload = new
+            try
             {
-                success,
-                errorMessage = error,
-                realmFileCount = fileCount,
-            };
+                string jobJson = File.ReadAllText(jobPath);
 
-            File.WriteAllText(resultPath, JsonSerializer.Serialize(payload, jsonOptions));
-            return success ? 0 : 1;
-        }
-        catch (Exception ex)
-        {
-            writeFailure(resultPath, ExceptionFormatting.SafeFormat(ex));
-            return 1;
-        }
-    }
+                if (string.Equals(mode, "browse", StringComparison.OrdinalIgnoreCase))
+                {
+                    var job = JsonSerializer.Deserialize<RealmBrowseJob>(jobJson, jsonOptions)
+                              ?? throw new InvalidOperationException("browse job 无效。");
+                    RealmBrowseResult result = OfficialMirrorBrowseReader.Read(job);
+                    File.WriteAllText(resultPath, JsonSerializer.Serialize(result, jsonOptions));
+                    return result.Success ? 0 : 1;
+                }
 
-    private static void writeFailure(string resultPath, string message)
-    {
-        try
-        {
-            var failure = new OfficialConvertResult
+                if (string.Equals(mode, "read", StringComparison.OrdinalIgnoreCase))
+                {
+                    var job = JsonSerializer.Deserialize<RealmReadJob>(jobJson, jsonOptions)
+                              ?? throw new InvalidOperationException("read job 无效。");
+                    RealmReadResult result = OfficialMirrorDiffReader.Read(job);
+                    File.WriteAllText(resultPath, JsonSerializer.Serialize(result, jsonOptions));
+                    return result.Success ? 0 : 1;
+                }
+
+                printUsage();
+                return 2;
+            }
+            catch (Exception ex)
             {
-                Success = false,
-                ErrorMessage = message,
-            };
-            File.WriteAllText(resultPath, JsonSerializer.Serialize(failure, jsonOptions));
+                writeReadFailure(mode, resultPath, ExceptionFormatting.SafeFormat(ex));
+                return 1;
+            }
         }
-        catch (Exception ex)
+
+        private static int runVerify(string[] args)
+        {
+            if (args.Length < 2 || string.IsNullOrWhiteSpace(args[1]))
+            {
+                Console.Error.WriteLine("--verify 需要 verify-job.json");
+                return 2;
+            }
+
+            string verifyJobPath = Path.GetFullPath(args[1]);
+            string resultPath = args.Length >= 3 && !string.IsNullOrWhiteSpace(args[2])
+                ? Path.GetFullPath(args[2])
+                : verifyJobPath + ".result.json";
+
+            try
+            {
+                using var doc = JsonDocument.Parse(File.ReadAllText(verifyJobPath));
+                var jobElement = doc.RootElement.GetProperty("job");
+                var job = jobElement.Deserialize<OfficialConvertJob>(jsonOptions)
+                          ?? throw new InvalidOperationException("verify job 无效。");
+
+                int sourceFileHashCount = doc.RootElement.TryGetProperty("sourceFileHashCount", out var countElement)
+                    ? countElement.GetInt32()
+                    : 0;
+
+                var (success, error, fileCount) = OfficialMirrorVerifier.Verify(
+                    job.TargetRealmPath,
+                    job.TargetUpstreamSchema,
+                    sourceFileHashCount);
+
+                var payload = new
+                {
+                    success,
+                    errorMessage = error,
+                    realmFileCount = fileCount,
+                };
+
+                File.WriteAllText(resultPath, JsonSerializer.Serialize(payload, jsonOptions));
+                return success ? 0 : 1;
+            }
+            catch (Exception ex)
+            {
+                writeFailure(resultPath, ExceptionFormatting.SafeFormat(ex));
+                return 1;
+            }
+        }
+
+        private static void writeFailure(string resultPath, string message)
         {
             try
             {
-                Console.Error.WriteLine(ExceptionFormatting.SafeFormat(ex));
-                Console.Error.WriteLine(message);
+                var failure = new OfficialConvertResult
+                {
+                    Success = false,
+                    ErrorMessage = message,
+                };
+                File.WriteAllText(resultPath, JsonSerializer.Serialize(failure, jsonOptions));
+            }
+            catch (Exception ex)
+            {
+                try
+                {
+                    Console.Error.WriteLine(ExceptionFormatting.SafeFormat(ex));
+                    Console.Error.WriteLine(message);
+                }
+                catch
+                {
+                    // 最后兜底。
+                }
+            }
+        }
+
+        private static void writeReadFailure(string mode, string resultPath, string message)
+        {
+            try
+            {
+                object failure = mode.ToLowerInvariant() switch
+                {
+                    "browse" => new RealmBrowseResult { Success = false, ErrorMessage = message },
+                    _ => new RealmReadResult { Success = false, ErrorMessage = message },
+                };
+                File.WriteAllText(resultPath, JsonSerializer.Serialize(failure, jsonOptions));
             }
             catch
             {
-                // 最后兜底。
+                writeFailure(resultPath, message);
             }
-        }
-    }
-
-    private static void writeReadFailure(string mode, string resultPath, string message)
-    {
-        try
-        {
-            object failure = mode.ToLowerInvariant() switch
-            {
-                "browse" => new RealmBrowseResult { Success = false, ErrorMessage = message },
-                _ => new RealmReadResult { Success = false, ErrorMessage = message },
-            };
-            File.WriteAllText(resultPath, JsonSerializer.Serialize(failure, jsonOptions));
-        }
-        catch
-        {
-            writeFailure(resultPath, message);
         }
     }
 }

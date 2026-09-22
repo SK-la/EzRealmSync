@@ -4,7 +4,6 @@ using osu.Game.Beatmaps;
 using osu.Game.Collections;
 using osu.Game.Database;
 using osu.Game.EzRealmSync.Models;
-using osu.Game.EzRealmSync.Realm;
 using osu.Game.Models;
 using osu.Game.Rulesets;
 using osu.Game.Scoring;

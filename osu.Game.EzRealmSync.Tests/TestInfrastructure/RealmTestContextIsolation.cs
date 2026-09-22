@@ -1,8 +1,10 @@
-using System.Threading;
 using NUnit.Framework;
 using NUnit.Framework.Interfaces;
+using osu.Game.EzRealmSync.Tests.TestInfrastructure;
 
 [assembly: RealmTestContextIsolation]
+
+namespace osu.Game.EzRealmSync.Tests.TestInfrastructure;
 
 /// <summary>
 /// 每个测试执行期间都摘掉当前线程的 <see cref="SynchronizationContext"/>。

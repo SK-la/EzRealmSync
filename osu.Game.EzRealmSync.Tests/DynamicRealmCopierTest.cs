@@ -1,4 +1,3 @@
-using System.Linq;
 using NUnit.Framework;
 using osu.Game.EzRealmSync.Models;
 using osu.Game.EzRealmSync.Realm;

@@ -1,10 +1,13 @@
 #if HAS_EZ_OSU_GAME
 using NUnit.Framework;
+using osu.Game.Beatmaps;
+using osu.Game.Collections;
 using osu.Game.Database;
 using osu.Game.EzRealmSync.Models;
 using osu.Game.EzRealmSync.Realm;
 using osu.Game.EzRealmSync.Realm.Dynamic;
 using osu.Game.EzRealmSync.Tests.TestInfrastructure;
+using osu.Game.Scoring;
 
 namespace osu.Game.EzRealmSync.Tests
 {
@@ -69,7 +72,7 @@ namespace osu.Game.EzRealmSync.Tests
                 List<Guid> collectionIds;
 
                 using (var access = TypedRealmAccess.OpenForMutation(path, schema))
-                    collectionIds = access.Run(realm => realm.All<osu.Game.Collections.BeatmapCollection>().AsEnumerable().Select(c => c.ID).ToList());
+                    collectionIds = access.Run(realm => realm.All<BeatmapCollection>().AsEnumerable().Select(c => c.ID).ToList());
 
                 Assert.That(collectionIds, Is.Not.Empty, "样本没有同步进收藏夹，这条对照没有覆盖面。");
 
@@ -106,7 +109,7 @@ namespace osu.Game.EzRealmSync.Tests
                 List<Guid> ids;
 
                 using (var access = TypedRealmAccess.OpenForMutation(path, schema))
-                    ids = access.Run(realm => realm.All<osu.Game.Collections.BeatmapCollection>().AsEnumerable().Select(c => c.ID).ToList());
+                    ids = access.Run(realm => realm.All<BeatmapCollection>().AsEnumerable().Select(c => c.ID).ToList());
 
                 Assert.That(ids, Is.Not.Empty, "样本没有同步进收藏夹，这条对照没有覆盖面。");
 
@@ -146,7 +149,7 @@ namespace osu.Game.EzRealmSync.Tests
                 List<Guid> ids;
 
                 using (var access = TypedRealmAccess.OpenForMutation(path, schema))
-                    ids = access.Run(realm => realm.All<osu.Game.Scoring.ScoreInfo>().Where(s => !s.DeletePending).AsEnumerable().Select(s => s.ID).ToList());
+                    ids = access.Run(realm => realm.All<ScoreInfo>().Where(s => !s.DeletePending).AsEnumerable().Select(s => s.ID).ToList());
 
                 Assert.That(ids, Is.Not.Empty, "样本没有同步进成绩，这条对照没有覆盖面。");
 
@@ -259,7 +262,7 @@ namespace osu.Game.EzRealmSync.Tests
                 {
                     access.Run(realm =>
                     {
-                        var beatmaps = realm.All<osu.Game.Beatmaps.BeatmapInfo>().AsEnumerable().ToList();
+                        var beatmaps = realm.All<BeatmapInfo>().AsEnumerable().ToList();
 
                         Assert.That(beatmaps.All(b => !b.Metadata.Tags.Contains(':') && !b.Metadata.Source.Contains(':')), Is.True,
                             "修复后库里仍有含 ':' 的元数据。");
@@ -293,8 +296,8 @@ namespace osu.Game.EzRealmSync.Tests
 
                 using (var access = TypedRealmAccess.OpenForMutation(path, schema))
                 {
-                    target = access.Run(realm => realm.All<osu.Game.Beatmaps.BeatmapSetInfo>().AsEnumerable().First(s => !s.DeletePending).ID);
-                    ezRootBefore = access.Run(realm => realm.Find<osu.Game.Beatmaps.BeatmapSetInfo>(target)!.ExternalContentRoot);
+                    target = access.Run(realm => realm.All<BeatmapSetInfo>().AsEnumerable().First(s => !s.DeletePending).ID);
+                    ezRootBefore = access.Run(realm => realm.Find<BeatmapSetInfo>(target)!.ExternalContentRoot);
                 }
 
                 var snapshots = new RealmSchemaSnapshotStore(Path.Combine(root, "snapshots"));
@@ -318,7 +321,7 @@ namespace osu.Game.EzRealmSync.Tests
                     // 值必须在 Run 里取出来：Run 返回后 realm 已关闭，拿着对象再读属性会抛 RealmClosedException。
                     (bool Found, bool DeletePending, string? EzRoot) state = access.Run(realm =>
                     {
-                        var set = realm.Find<osu.Game.Beatmaps.BeatmapSetInfo>(target);
+                        var set = realm.Find<BeatmapSetInfo>(target);
 
                         return set == null
                             ? (false, false, null)
@@ -343,7 +346,7 @@ namespace osu.Game.EzRealmSync.Tests
 
             access.Write(realm =>
             {
-                var beatmaps = realm.All<osu.Game.Beatmaps.BeatmapInfo>().AsEnumerable().Take(2).ToList();
+                var beatmaps = realm.All<BeatmapInfo>().AsEnumerable().Take(2).ToList();
 
                 Assert.That(beatmaps, Is.Not.Empty, "样本没有同步进难度，无法造非法字符数据。");
 

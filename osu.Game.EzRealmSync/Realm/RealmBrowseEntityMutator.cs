@@ -1,6 +1,5 @@
 using osu.Game.EzRealmSync.Models;
 using osu.Game.EzRealmSync.Realm.Dynamic;
-using Realms;
 
 namespace osu.Game.EzRealmSync.Realm
 {

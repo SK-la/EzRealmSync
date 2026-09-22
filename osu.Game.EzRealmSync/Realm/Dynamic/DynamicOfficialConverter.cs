@@ -1,5 +1,6 @@
 using osu.Game.EzRealmSync.Errors;
 using osu.Game.EzRealmSync.Models;
+using Realms.Schema;
 
 namespace osu.Game.EzRealmSync.Realm.Dynamic
 {
@@ -121,7 +122,7 @@ namespace osu.Game.EzRealmSync.Realm.Dynamic
 
                 foreach (RealmPropertySchema property in sourceClass.Properties)
                 {
-                    if (property.ElementType != Realms.Schema.PropertyType.LinkingObjects && !officialClass.HasProperty(property.Name))
+                    if (property.ElementType != PropertyType.LinkingObjects && !officialClass.HasProperty(property.Name))
                         droppedColumns.Add($"{sourceClass.Name}.{property.Name}");
                 }
             }

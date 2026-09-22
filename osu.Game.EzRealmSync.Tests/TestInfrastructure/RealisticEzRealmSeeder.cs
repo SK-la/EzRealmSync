@@ -1,7 +1,6 @@
 #if HAS_EZ_OSU_GAME
 using NUnit.Framework;
 using osu.Game.Beatmaps;
-using osu.Game.Database;
 using osu.Game.EzOsuGame.Configuration;
 using osu.Game.EzRealmSync.Contracts;
 using osu.Game.EzRealmSync.Models;

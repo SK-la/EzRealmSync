@@ -1,6 +1,7 @@
 #if HAS_EZ_OSU_GAME
 using System.Collections;
 using System.Reflection;
+using osu.Game.Beatmaps;
 using osu.Game.EzRealmSync.Realm.Dynamic;
 using Realms;
 using RealmInstance = Realms.Realm;
@@ -191,7 +192,7 @@ namespace osu.Game.EzRealmSync.Tests.TestInfrastructure
         {
             var map = new Dictionary<string, Type>(StringComparer.Ordinal);
 
-            foreach (Type type in typeof(Beatmaps.BeatmapSetInfo).Assembly.GetTypes())
+            foreach (Type type in typeof(BeatmapSetInfo).Assembly.GetTypes())
             {
                 if (type.IsAbstract || !typeof(RealmObject).IsAssignableFrom(type))
                     continue;

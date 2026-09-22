@@ -1,5 +1,6 @@
 using System.Collections.ObjectModel;
 using System.Collections.Specialized;
+using System.ComponentModel;
 using System.Reflection;
 
 namespace osu.EzRealmSync.AppModel
@@ -55,8 +56,8 @@ namespace osu.EzRealmSync.AppModel
                     new[] { typeof(NotifyCollectionChangedEventArgs) },
                     null);
 
-                onProp?.Invoke(target, new object[] { new System.ComponentModel.PropertyChangedEventArgs("Count") });
-                onProp?.Invoke(target, new object[] { new System.ComponentModel.PropertyChangedEventArgs("Item[]") });
+                onProp?.Invoke(target, new object[] { new PropertyChangedEventArgs("Count") });
+                onProp?.Invoke(target, new object[] { new PropertyChangedEventArgs("Item[]") });
                 onCollectionChanged?.Invoke(target, new object[] { new NotifyCollectionChangedEventArgs(NotifyCollectionChangedAction.Reset) });
                 return true;
             }

@@ -1,6 +1,6 @@
 using System.Text.Json;
-using Realms;
 using osu.Game.EzRealmSync.Realm.Dynamic;
+using Realms;
 
 namespace osu.Game.EzRealmSync.Realm
 {

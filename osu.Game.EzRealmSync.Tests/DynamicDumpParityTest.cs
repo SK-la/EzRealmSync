@@ -3,12 +3,11 @@ using NUnit.Framework;
 using osu.Game.Beatmaps;
 using osu.Game.Collections;
 using osu.Game.Database;
-using osu.Game.EzRealmSync.Models;
 using osu.Game.EzRealmSync.Realm;
 using osu.Game.EzRealmSync.Realm.Dynamic;
 using osu.Game.EzRealmSync.Tests.TestInfrastructure;
-using osu.Game.Scoring;
 using osu.Game.Skinning;
+using Realms;
 
 namespace osu.Game.EzRealmSync.Tests
 {
@@ -319,7 +318,7 @@ namespace osu.Game.EzRealmSync.Tests
             DynamicRealmSession session,
             RealmSchemaSnapshot schema,
             string className,
-            Realms.IRealmObjectBase row,
+            IRealmObjectBase row,
             string property,
             object value)
         {

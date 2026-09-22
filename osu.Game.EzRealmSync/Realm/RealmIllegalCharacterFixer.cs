@@ -1,3 +1,4 @@
+using System.Collections;
 using osu.Game.EzRealmSync.Models;
 using osu.Game.EzRealmSync.Realm.Dynamic;
 using Realms;
@@ -66,7 +67,7 @@ namespace osu.Game.EzRealmSync.Realm
                     if (DynamicRealmAccess.Find(session.Realm, OfficialBaselineSchema.BeatmapSet, targetId) is not { } set)
                         return 0;
 
-                    if (DynamicRowAccess.Resolve(set, schema, "Beatmaps") is not System.Collections.IEnumerable beatmaps)
+                    if (DynamicRowAccess.Resolve(set, schema, "Beatmaps") is not IEnumerable beatmaps)
                         return 0;
 
                     var targets = new List<IRealmObjectBase?>();

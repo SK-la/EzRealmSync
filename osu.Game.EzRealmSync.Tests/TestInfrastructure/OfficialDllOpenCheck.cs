@@ -1,5 +1,4 @@
 using osu.Game.EzRealmSync.Contracts;
-using osu.Game.EzRealmSync.Realm;
 
 namespace osu.Game.EzRealmSync.Tests.TestInfrastructure
 {

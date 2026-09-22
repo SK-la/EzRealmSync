@@ -1,3 +1,4 @@
+using System.Collections;
 using osu.Game.EzRealmSync.Models;
 using Realms;
 
@@ -42,7 +43,7 @@ namespace osu.Game.EzRealmSync.Realm.Dynamic
                 string folder = DynamicDisplayText.SanitizePathSegment(DynamicRowAccess.ResolveString(collection, schema, "Name") ?? string.Empty);
                 var seen = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
 
-                if (DynamicRowAccess.Resolve(collection, schema, "BeatmapMD5Hashes") is not System.Collections.IEnumerable hashes)
+                if (DynamicRowAccess.Resolve(collection, schema, "BeatmapMD5Hashes") is not IEnumerable hashes)
                     continue;
 
                 foreach (object? value in hashes)

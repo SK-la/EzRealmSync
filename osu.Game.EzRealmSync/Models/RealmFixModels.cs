@@ -1,5 +1,3 @@
-using osu.Game.EzRealmSync.Contracts;
-
 namespace osu.Game.EzRealmSync.Models
 {
     public enum RealmFixIssueKind
@@ -81,5 +79,4 @@ namespace osu.Game.EzRealmSync.Models
         /// <summary>被剔除的 Ez 列（<c>类.列</c>）。</summary>
         public IReadOnlyList<string> DroppedColumns { get; init; } = Array.Empty<string>();
     }
-
 }

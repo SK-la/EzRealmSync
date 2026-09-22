@@ -1,5 +1,4 @@
 using NUnit.Framework;
-using osu.Game.EzRealmSync.Models;
 using osu.Game.EzRealmSync.Realm;
 using osu.Game.EzRealmSync.Realm.Dynamic;
 using osu.Game.EzRealmSync.Tests.TestInfrastructure;

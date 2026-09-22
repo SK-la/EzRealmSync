@@ -1,3 +1,4 @@
+using System.Collections;
 using osu.Game.EzRealmSync.Models;
 using Realms;
 
@@ -253,7 +254,7 @@ namespace osu.Game.EzRealmSync.Realm.Dynamic
 
         private static string? findReplayHash(IRealmObjectBase score, RealmSchemaSnapshot schema)
         {
-            if (DynamicRowAccess.Resolve(score, schema, "Files") is not System.Collections.IEnumerable files)
+            if (DynamicRowAccess.Resolve(score, schema, "Files") is not IEnumerable files)
                 return null;
 
             foreach (object? file in files)
@@ -286,7 +287,7 @@ namespace osu.Game.EzRealmSync.Realm.Dynamic
 
         private static IRealmObjectBase? firstListElement(IRealmObjectBase row, RealmSchemaSnapshot schema, string listProperty)
         {
-            if (DynamicRowAccess.Resolve(row, schema, listProperty) is not System.Collections.IEnumerable list)
+            if (DynamicRowAccess.Resolve(row, schema, listProperty) is not IEnumerable list)
                 return null;
 
             foreach (object? element in list)
@@ -297,7 +298,7 @@ namespace osu.Game.EzRealmSync.Realm.Dynamic
 
         private static int listCount(IRealmObjectBase row, RealmSchemaSnapshot schema, string listProperty)
         {
-            if (DynamicRowAccess.Resolve(row, schema, listProperty) is not System.Collections.ICollection collection)
+            if (DynamicRowAccess.Resolve(row, schema, listProperty) is not ICollection collection)
                 return 0;
 
             return collection.Count;

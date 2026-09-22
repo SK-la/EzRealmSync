@@ -1,3 +1,4 @@
+using System.Collections;
 using osu.Game.EzRealmSync.IO;
 using osu.Game.EzRealmSync.Models;
 using osu.Game.EzRealmSync.Realm.Dynamic;
@@ -120,7 +121,7 @@ namespace osu.Game.EzRealmSync.Realm
 
         private static IEnumerable<string> readHashes(IRealmObjectBase collection, RealmSchemaSnapshot schema)
         {
-            if (DynamicRowAccess.Resolve(collection, schema, "BeatmapMD5Hashes") is not System.Collections.IEnumerable hashes)
+            if (DynamicRowAccess.Resolve(collection, schema, "BeatmapMD5Hashes") is not IEnumerable hashes)
                 yield break;
 
             foreach (object? hash in hashes)

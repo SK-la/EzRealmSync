@@ -1,5 +1,6 @@
 using NUnit.Framework;
-using osu.Game.EzRealmSync.Tests.TestInfrastructure;
+
+namespace osu.Game.EzRealmSync.Tests.TestInfrastructure;
 
 /// <summary>
 /// 整个测试程序集跑完后先强制终结一遍 Realm 原生句柄，再让进程退出。

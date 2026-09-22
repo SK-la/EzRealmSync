@@ -1,3 +1,4 @@
+using System.Collections;
 using System.Reflection;
 using Realms;
 using Realms.Schema;
@@ -274,7 +275,7 @@ namespace osu.Game.EzRealmSync.Realm
                 yield break;
             }
 
-            if (raw is not System.Collections.IEnumerable enumerable || raw is string)
+            if (raw is not IEnumerable enumerable || raw is string)
                 yield break;
 
             foreach (object? item in enumerable)
@@ -289,7 +290,7 @@ namespace osu.Game.EzRealmSync.Realm
         public static IEnumerable<T> EnumerateValues<T>(IRealmObjectBase obj, string property)
         {
             object? raw = GetListRaw(obj, property);
-            if (raw is not System.Collections.IEnumerable enumerable || raw is string)
+            if (raw is not IEnumerable enumerable || raw is string)
                 yield break;
 
             foreach (object? item in enumerable)
@@ -334,7 +335,7 @@ namespace osu.Game.EzRealmSync.Realm
 
         public static void ClearList(object? list)
         {
-            if (list is System.Collections.IList generic)
+            if (list is IList generic)
             {
                 generic.Clear();
                 return;

@@ -1,4 +1,5 @@
 using System.Collections;
+using System.Reflection;
 using osu.Game.EzRealmSync.Models;
 using Realms;
 using Realms.Schema;
@@ -330,7 +331,7 @@ namespace osu.Game.EzRealmSync.Realm.Dynamic
 
             /// <summary>反射调用链会把真实异常包在 <see cref="System.Reflection.TargetInvocationException"/> 里。</summary>
             private static string describe(Exception ex) =>
-                ex is System.Reflection.TargetInvocationException { InnerException: { } inner }
+                ex is TargetInvocationException { InnerException: { } inner }
                     ? $"{inner.GetType().Name} {inner.Message}"
                     : $"{ex.GetType().Name} {ex.Message}";
 

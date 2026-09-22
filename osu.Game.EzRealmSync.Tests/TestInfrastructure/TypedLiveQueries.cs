@@ -1,5 +1,4 @@
 using osu.Game.Beatmaps;
-using osu.Game.Database;
 using osu.Game.Scoring;
 using RealmInstance = Realms.Realm;
 

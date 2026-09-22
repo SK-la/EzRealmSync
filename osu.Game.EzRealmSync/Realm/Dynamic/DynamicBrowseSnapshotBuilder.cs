@@ -1,3 +1,4 @@
+using System.Collections;
 using System.Globalization;
 using System.Security.Cryptography;
 using System.Text;
@@ -165,7 +166,7 @@ namespace osu.Game.EzRealmSync.Realm.Dynamic
 
                 foreach (IRealmObjectBase row in DynamicRowAccess.AllRows(session, schema, holder))
                 {
-                    if (DynamicRowAccess.Resolve(row, schema, "Files") is not System.Collections.IEnumerable usages)
+                    if (DynamicRowAccess.Resolve(row, schema, "Files") is not IEnumerable usages)
                         continue;
 
                     foreach (object? usage in usages)
@@ -266,7 +267,7 @@ namespace osu.Game.EzRealmSync.Realm.Dynamic
 
         private static int countOf(object? value)
         {
-            if (value is string || value is not System.Collections.IEnumerable enumerable)
+            if (value is string || value is not IEnumerable enumerable)
                 return 0;
 
             int count = 0;
