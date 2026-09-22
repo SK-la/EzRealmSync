@@ -1,7 +1,7 @@
 using Realms.Schema;
 using RealmInstance = Realms.Realm;
 
-namespace osu.Game.EzRealmSync.Realm
+namespace osu.Game.EzRealmSync.Realm.Dynamic
 {
     /// <summary>
     /// 从**已打开的**动态 Realm 读出完整 schema（类 / 列 / 类型 / 可空 / 主键 / 索引）。

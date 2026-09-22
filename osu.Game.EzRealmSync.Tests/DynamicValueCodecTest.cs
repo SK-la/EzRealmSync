@@ -2,6 +2,7 @@ using System.Collections;
 using System.Globalization;
 using NUnit.Framework;
 using osu.Game.EzRealmSync.Realm;
+using osu.Game.EzRealmSync.Realm.Dynamic;
 using osu.Game.EzRealmSync.Tests.TestInfrastructure;
 using Realms;
 using Realms.Schema;

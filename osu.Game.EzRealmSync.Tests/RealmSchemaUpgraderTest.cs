@@ -1,7 +1,6 @@
 #if HAS_EZ_OSU_GAME
 using NUnit.Framework;
 using osu.Game.Database;
-using osu.Game.EzRealmSync.Errors;
 using osu.Game.EzRealmSync.Models;
 using osu.Game.EzRealmSync.Realm;
 using osu.Game.EzRealmSync.Tests.TestInfrastructure;
@@ -61,7 +60,6 @@ namespace osu.Game.EzRealmSync.Tests
                 RealmNativeLifetime.DeleteRealmFiles(path);
             }
         }
-
     }
 }
 #endif

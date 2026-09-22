@@ -39,10 +39,9 @@ namespace osu.Game.EzRealmSync.Tests
             {
                 RealmNativeLifetime.CreateEmptyRealmFile(path, (ulong)diskSchemaVersion);
 
-                using var session = DynamicRealmSession.OpenDynamic(path, readOnly: true);
-
                 Assert.Multiple(() =>
                 {
+                    using var session = DynamicRealmSession.OpenDynamic(path, readOnly: true);
                     Assert.That(session.DiskSchemaVersion, Is.EqualTo(diskSchemaVersion));
                     Assert.That(RealmDiskSchemaReader.TryReadSchemaVersion(path), Is.EqualTo(diskSchemaVersion));
                 });

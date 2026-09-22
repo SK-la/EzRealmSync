@@ -1,6 +1,7 @@
 using NUnit.Framework;
 using osu.Game.EzRealmSync.Models;
 using osu.Game.EzRealmSync.Realm;
+using osu.Game.EzRealmSync.Realm.Dynamic;
 using osu.Game.EzRealmSync.Tests.TestInfrastructure;
 using Realms;
 using Realms.Schema;
@@ -223,12 +224,11 @@ namespace osu.Game.EzRealmSync.Tests
 
         private static string EzFingerprintDetail(RealmSchemaSnapshot snapshot) =>
             string.Join(", ", snapshot.Classes
-                                       .SelectMany(c => c.Properties.Select(p => (Class: c.Name, Property: p.Name)))
-                                       .Where(p => RealmSchemaSnapshotClassifier.IsEzOnlyProperty(p.Class, p.Property))
-                                       .Select(p => $"{p.Class}.{p.Property}"));
+                                      .SelectMany(c => c.Properties.Select(p => (Class: c.Name, Property: p.Name)))
+                                      .Where(p => RealmSchemaSnapshotClassifier.IsEzOnlyProperty(p.Class, p.Property))
+                                      .Select(p => $"{p.Class}.{p.Property}"));
 
-        private static RealmPropertySchema property(string name) =>
-            new(name, PropertyType.String, string.Empty, null, false, IndexType.None);
+        private static RealmPropertySchema property(string name) => new RealmPropertySchema(name, PropertyType.String, string.Empty, null, false, IndexType.None);
 
         /// <summary>按官方基线登记表构造"纯官方"快照，用来验证判据不会误判官方。</summary>
         private static RealmSchemaSnapshot knownOfficialSnapshot(string? withScoreProperty = null)

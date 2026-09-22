@@ -1,7 +1,7 @@
 using Realms;
 using Realms.Schema;
 
-namespace osu.Game.EzRealmSync.Realm
+namespace osu.Game.EzRealmSync.Realm.Dynamic
 {
     /// <summary>
     /// 动态 schema 里的一列。<see cref="Type"/> 保留原始 flags（可空 / 集合位）：

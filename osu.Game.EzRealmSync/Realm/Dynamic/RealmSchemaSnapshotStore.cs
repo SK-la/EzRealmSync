@@ -3,7 +3,7 @@ using System.Text.Json.Serialization;
 using Realms;
 using Realms.Schema;
 
-namespace osu.Game.EzRealmSync.Realm
+namespace osu.Game.EzRealmSync.Realm.Dynamic
 {
     /// <summary>
     /// schema 快照的本地仓库：访问任何 Realm 时顺手落盘，于是「碰过哪个版本就有哪个版本的快照」。

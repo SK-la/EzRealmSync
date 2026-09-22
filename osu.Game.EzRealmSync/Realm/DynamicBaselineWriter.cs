@@ -1,5 +1,6 @@
 using osu.Game.EzRealmSync.Contracts;
 using osu.Game.EzRealmSync.Models;
+using osu.Game.EzRealmSync.Realm.Dynamic;
 using Realms;
 
 namespace osu.Game.EzRealmSync.Realm
@@ -25,6 +26,9 @@ namespace osu.Game.EzRealmSync.Realm
             RealmSchemaSnapshotStore.Default.TryCapture(session);
             RealmSchemaSnapshot schemaBefore = DynamicSchemaReader.Read(session);
 
+            // Ez 扩展列 = 目标独有、官方没有的列；覆盖写入（删行重建）必须把它们原值搬回去。
+            EzColumnResolver ezColumns = EzColumnResolver.Resolve(session);
+
             // 故意用显式事务而非 Realm.Write(闭包)：Write 是同步执行、闭包内的 session 不会被提前释放，
             // 但「闭包捕获外层 using 变量」会让 IDE 逐处报 AccessToDisposedClosure，噪声压过收益。
             using (var transaction = session.Realm.BeginWrite())
@@ -32,7 +36,7 @@ namespace osu.Game.EzRealmSync.Realm
                 foreach (var set in bundle.BeatmapSets.Where(s => idSet.Contains(s.ID)))
                 {
                     cancellationToken.ThrowIfCancellationRequested();
-                    upsertBeatmapSet(session, set);
+                    upsertBeatmapSet(session, ezColumns, set);
                     applied++;
                 }
 
@@ -46,14 +50,14 @@ namespace osu.Game.EzRealmSync.Realm
                 foreach (var collection in bundle.Collections.Where(c => idSet.Contains(c.ID)))
                 {
                     cancellationToken.ThrowIfCancellationRequested();
-                    upsertCollection(session, collection);
+                    upsertCollection(session, ezColumns, collection);
                     applied++;
                 }
 
                 foreach (var skin in bundle.Skins.Where(s => idSet.Contains(s.ID)))
                 {
                     cancellationToken.ThrowIfCancellationRequested();
-                    if (upsertSkin(session, skin))
+                    if (upsertSkin(session, ezColumns, skin))
                         applied++;
                 }
 
@@ -65,7 +69,7 @@ namespace osu.Game.EzRealmSync.Realm
                     cancellationToken.ThrowIfCancellationRequested();
                     beatmapsByHash ??= buildBeatmapHashIndex(session);
 
-                    if (upsertScore(session, score, beatmapsByHash, skips))
+                    if (upsertScore(session, ezColumns, score, beatmapsByHash, skips))
                         applied++;
                 }
 
@@ -140,13 +144,13 @@ namespace osu.Game.EzRealmSync.Realm
             return true;
         }
 
-        private static void upsertBeatmapSet(DynamicRealmSession session, OfficialBeatmapSetDto dto)
+        private static void upsertBeatmapSet(DynamicRealmSession session, EzColumnResolver ezColumns, OfficialBeatmapSetDto dto)
         {
             if (!session.HasClass(OfficialBaselineSchema.BeatmapSet))
                 return;
 
             var existing = DynamicRealmAccess.Find(session.Realm, OfficialBaselineSchema.BeatmapSet, dto.ID);
-            var setEzValues = captureEzOnlyValues(session, OfficialBaselineSchema.BeatmapSet, existing);
+            var setEzValues = captureEzOnlyValues(ezColumns, OfficialBaselineSchema.BeatmapSet, existing);
             if (existing != null)
                 session.Realm.Remove(existing);
 
@@ -159,7 +163,7 @@ namespace osu.Game.EzRealmSync.Realm
             DynamicRealmAccess.Set(set, OfficialBaselineSchema.BeatmapSet, "DeletePending", false);
             DynamicRealmAccess.Set(set, OfficialBaselineSchema.BeatmapSet, "Hash", dto.Hash);
             DynamicRealmAccess.Set(set, OfficialBaselineSchema.BeatmapSet, "Protected", dto.Protected);
-            restoreEzOnlyValues(session, OfficialBaselineSchema.BeatmapSet, set, setEzValues);
+            restoreEzOnlyValues(ezColumns, OfficialBaselineSchema.BeatmapSet, set, setEzValues);
 
             linkFiles(session, set, dto.Files);
 
@@ -169,12 +173,12 @@ namespace osu.Game.EzRealmSync.Realm
                     continue;
 
                 var existingBeatmap = DynamicRealmAccess.Find(session.Realm, OfficialBaselineSchema.Beatmap, beatmapDto.ID);
-                var beatmapEzValues = captureEzOnlyValues(session, OfficialBaselineSchema.Beatmap, existingBeatmap);
+                var beatmapEzValues = captureEzOnlyValues(ezColumns, OfficialBaselineSchema.Beatmap, existingBeatmap);
                 if (existingBeatmap != null)
                     session.Realm.Remove(existingBeatmap);
 
                 var beatmap = createBeatmap(session, beatmapDto);
-                restoreEzOnlyValues(session, OfficialBaselineSchema.Beatmap, beatmap, beatmapEzValues);
+                restoreEzOnlyValues(ezColumns, OfficialBaselineSchema.Beatmap, beatmap, beatmapEzValues);
                 linkBeatmapToSet(session, beatmap, set);
             }
         }
@@ -183,7 +187,7 @@ namespace osu.Game.EzRealmSync.Realm
         /// 暂存一行的 Ez 扩展列原值。目标 schema 里没有这些列（官方库）时自然取不到，返回空。
         /// </summary>
         private static Dictionary<string, RealmValue>? captureEzOnlyValues(
-            DynamicRealmSession session,
+            EzColumnResolver ezColumns,
             string className,
             IRealmObjectBase? existing)
         {
@@ -192,11 +196,8 @@ namespace osu.Game.EzRealmSync.Realm
 
             Dictionary<string, RealmValue>? captured = null;
 
-            foreach (string property in OfficialBaselineSchema.EzOnlyPropertyNames)
+            foreach (string property in ezColumns.EzColumnsOf(className))
             {
-                if (!session.HasProperty(className, property))
-                    continue;
-
                 if (DynamicRealmAccess.GetRaw(existing, property) is not { } value)
                     continue;
 
@@ -208,10 +209,10 @@ namespace osu.Game.EzRealmSync.Realm
 
         /// <summary>
         /// 删行重建后把 Ez 列原值写回。写的是**同一行删除前的原值**，与「同步只写白名单列」不冲突；
-        /// 不还原会让覆盖同步静默清空 Ez 列（ExternalContentRoot、XxyStarRating 等）。
+        /// 不还原会让覆盖同步静默清空 Ez 列（ExternalContentRoot、XxyStarRating、Score.Passed 等）。
         /// </summary>
         private static void restoreEzOnlyValues(
-            DynamicRealmSession session,
+            EzColumnResolver ezColumns,
             string className,
             IRealmObjectBase target,
             Dictionary<string, RealmValue>? captured)
@@ -221,7 +222,7 @@ namespace osu.Game.EzRealmSync.Realm
 
             foreach ((string property, RealmValue value) in captured)
             {
-                if (!session.HasProperty(className, property))
+                if (!ezColumns.IsEzColumn(className, property))
                     continue;
 
                 DynamicRealmAccess.SetRaw(target, property, value);
@@ -337,12 +338,13 @@ namespace osu.Game.EzRealmSync.Realm
             DynamicRealmAccess.Set(settings, OfficialBaselineSchema.BeatmapUserSettings, "Offset", dto.UserSettings.Offset);
         }
 
-        private static void upsertCollection(DynamicRealmSession session, OfficialCollectionDto dto)
+        private static void upsertCollection(DynamicRealmSession session, EzColumnResolver ezColumns, OfficialCollectionDto dto)
         {
             if (!session.HasClass(OfficialBaselineSchema.BeatmapCollection))
                 return;
 
             var existing = DynamicRealmAccess.Find(session.Realm, OfficialBaselineSchema.BeatmapCollection, dto.ID);
+            var collectionEzValues = captureEzOnlyValues(ezColumns, OfficialBaselineSchema.BeatmapCollection, existing);
             if (existing != null)
                 session.Realm.Remove(existing);
 
@@ -354,9 +356,11 @@ namespace osu.Game.EzRealmSync.Realm
             DynamicRealmAccess.ClearList(hashes);
             foreach (string md5 in dto.BeatmapMD5Hashes)
                 DynamicRealmAccess.AddToList(hashes, md5);
+
+            restoreEzOnlyValues(ezColumns, OfficialBaselineSchema.BeatmapCollection, collection, collectionEzValues);
         }
 
-        private static bool upsertSkin(DynamicRealmSession session, OfficialSkinDto dto)
+        private static bool upsertSkin(DynamicRealmSession session, EzColumnResolver ezColumns, OfficialSkinDto dto)
         {
             if (!session.HasClass(OfficialBaselineSchema.Skin))
                 return false;
@@ -365,6 +369,7 @@ namespace osu.Game.EzRealmSync.Realm
                 return false;
 
             var existing = DynamicRealmAccess.Find(session.Realm, OfficialBaselineSchema.Skin, dto.ID);
+            var skinEzValues = captureEzOnlyValues(ezColumns, OfficialBaselineSchema.Skin, existing);
             if (existing != null)
                 session.Realm.Remove(existing);
 
@@ -376,6 +381,7 @@ namespace osu.Game.EzRealmSync.Realm
             DynamicRealmAccess.Set(skin, OfficialBaselineSchema.Skin, "Protected", dto.Protected);
             DynamicRealmAccess.Set(skin, OfficialBaselineSchema.Skin, "DeletePending", false);
             linkFiles(session, skin, dto.Files);
+            restoreEzOnlyValues(ezColumns, OfficialBaselineSchema.Skin, skin, skinEzValues);
             return true;
         }
 
@@ -386,6 +392,7 @@ namespace osu.Game.EzRealmSync.Realm
         /// </summary>
         private static bool upsertScore(
             DynamicRealmSession session,
+            EzColumnResolver ezColumns,
             OfficialScoreDto dto,
             Dictionary<string, IRealmObjectBase> beatmapsByHash,
             SkipCollector skips)
@@ -415,7 +422,7 @@ namespace osu.Game.EzRealmSync.Realm
             }
 
             var existing = DynamicRealmAccess.Find(session.Realm, OfficialBaselineSchema.Score, dto.ID);
-            var scoreEzValues = captureEzOnlyValues(session, OfficialBaselineSchema.Score, existing);
+            var scoreEzValues = captureEzOnlyValues(ezColumns, OfficialBaselineSchema.Score, existing);
             if (existing != null)
                 session.Realm.Remove(existing);
 
@@ -453,7 +460,7 @@ namespace osu.Game.EzRealmSync.Realm
                 DynamicRealmAccess.AddToList(pauses, pause);
 
             linkFiles(session, score, dto.Files);
-            restoreEzOnlyValues(session, OfficialBaselineSchema.Score, score, scoreEzValues);
+            restoreEzOnlyValues(ezColumns, OfficialBaselineSchema.Score, score, scoreEzValues);
             return true;
         }
 

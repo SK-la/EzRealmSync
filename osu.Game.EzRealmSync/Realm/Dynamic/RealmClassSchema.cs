@@ -1,6 +1,6 @@
 using System.Diagnostics.CodeAnalysis;
 
-namespace osu.Game.EzRealmSync.Realm
+namespace osu.Game.EzRealmSync.Realm.Dynamic
 {
     /// <summary>动态 schema 里的一个类（含嵌入类）。</summary>
     public sealed class RealmClassSchema

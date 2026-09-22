@@ -1,4 +1,4 @@
-namespace osu.Game.EzRealmSync.Realm
+namespace osu.Game.EzRealmSync.Realm.Dynamic
 {
     /// <summary>
     /// 「只填单元格」的硬校验：动态写入不提供 schema，Realm 不可能加类或加列，

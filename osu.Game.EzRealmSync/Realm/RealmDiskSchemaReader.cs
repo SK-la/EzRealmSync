@@ -1,6 +1,5 @@
 using System.Text.RegularExpressions;
 using RealmConfiguration = Realms.RealmConfiguration;
-using RealmInstance = Realms.Realm;
 
 namespace osu.Game.EzRealmSync.Realm
 {

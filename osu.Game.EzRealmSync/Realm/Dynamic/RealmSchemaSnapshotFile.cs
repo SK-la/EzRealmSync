@@ -1,4 +1,4 @@
-namespace osu.Game.EzRealmSync.Realm
+namespace osu.Game.EzRealmSync.Realm.Dynamic
 {
     /// <summary>
     /// 一次 schema 采集的落盘单元：磁盘版本 + 全量类/列定义 + 采集来源。

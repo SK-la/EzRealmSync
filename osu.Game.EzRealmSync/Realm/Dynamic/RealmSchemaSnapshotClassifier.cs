@@ -1,6 +1,6 @@
 using osu.Game.EzRealmSync.Models;
 
-namespace osu.Game.EzRealmSync.Realm
+namespace osu.Game.EzRealmSync.Realm.Dynamic
 {
     /// <summary>
     /// 用快照内容判断一份库能否当「官方 N 的事实来源」。

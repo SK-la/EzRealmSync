@@ -5,7 +5,7 @@ using MongoDB.Bson;
 using Realms;
 using Realms.Schema;
 
-namespace osu.Game.EzRealmSync.Realm
+namespace osu.Game.EzRealmSync.Realm.Dynamic
 {
     /// <summary>
     /// 按 schema 的列类型分派的通用动态读写。

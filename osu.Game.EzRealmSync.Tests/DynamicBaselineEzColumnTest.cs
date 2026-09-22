@@ -8,7 +8,6 @@ using osu.Game.EzRealmSync.Realm;
 using osu.Game.EzRealmSync.Tests.TestInfrastructure;
 using osu.Game.Rulesets;
 using osu.Game.Scoring;
-using Realms;
 
 namespace osu.Game.EzRealmSync.Tests
 {

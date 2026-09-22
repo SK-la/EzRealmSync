@@ -3,6 +3,7 @@ using osu.Game.Database;
 using osu.Game.EzRealmSync.Contracts;
 using osu.Game.EzRealmSync.Errors;
 using osu.Game.EzRealmSync.Models;
+using osu.Game.EzRealmSync.Realm.Dynamic;
 using osu.Game.EzRealmSync.Realm.Readers;
 
 namespace osu.Game.EzRealmSync.Realm

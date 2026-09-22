@@ -1,6 +1,5 @@
 #if HAS_EZ_OSU_GAME
 using osu.Game.Database;
-using osu.Game.EzRealmSync.Errors;
 
 namespace osu.Game.EzRealmSync.Models
 {

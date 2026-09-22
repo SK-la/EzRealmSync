@@ -1,6 +1,5 @@
 #if HAS_EZ_OSU_GAME
 using Realms;
-using RealmInstance = Realms.Realm;
 
 namespace osu.Game.EzRealmSync.Realm
 {
