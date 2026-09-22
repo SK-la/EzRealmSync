@@ -89,9 +89,16 @@ namespace osu.Game.EzRealmSync.Tests
         public void Production_services_do_not_reference_typed_osu_game_access()
         {
             // DLL 只允许出现在测试夹具里：产品工程不得再出现 typed 打开 / reader 选路。
+            // 引擎之外，AppModel / Desktop 与 Contracts 同属产品面，一并扫。
             string repoRoot = Path.GetFullPath(Path.Combine(TestContext.CurrentContext.TestDirectory, "..", "..", "..", ".."));
-            string projectDir = Path.Combine(repoRoot, "osu.Game.EzRealmSync");
-            Assert.That(Directory.Exists(projectDir), Is.True, projectDir);
+
+            string[] productProjects =
+            [
+                "osu.Game.EzRealmSync",
+                "osu.Game.EzRealmSync.Contracts",
+                "osu.EzRealmSync.AppModel",
+                "osu.EzRealmSync.Desktop",
+            ];
 
             string[] typedMarkers =
             [
@@ -101,14 +108,46 @@ namespace osu.Game.EzRealmSync.Tests
                 "RealmReaderRegistry",
             ];
 
-            var offenders = Directory.EnumerateFiles(projectDir, "*.cs", SearchOption.AllDirectories)
-                                     .Where(path => !path.Contains($"{Path.DirectorySeparatorChar}obj{Path.DirectorySeparatorChar}"))
-                                     .Where(path => typedMarkers.Any(marker => File.ReadAllText(path).Contains(marker, StringComparison.Ordinal)))
-                                     .Select(p => Path.GetRelativePath(repoRoot, p))
-                                     .ToList();
+            var offenders = new List<string>();
+
+            foreach (string project in productProjects)
+            {
+                string projectDir = Path.Combine(repoRoot, project);
+                Assert.That(Directory.Exists(projectDir), Is.True, projectDir);
+
+                offenders.AddRange(Directory.EnumerateFiles(projectDir, "*.cs", SearchOption.AllDirectories)
+                                            .Where(path => !path.Contains($"{Path.DirectorySeparatorChar}obj{Path.DirectorySeparatorChar}"))
+                                            .Where(path => typedMarkers.Any(marker => File.ReadAllText(path).Contains(marker, StringComparison.Ordinal)))
+                                            .Select(p => Path.GetRelativePath(repoRoot, p)));
+            }
 
             Assert.That(offenders, Is.Empty, $"产品工程仍引用 typed osu.Game 访问：{string.Join(", ", offenders)}");
         }
+
+        [Test]
+        public void Product_projects_do_not_pull_in_the_typed_game_package()
+        {
+            // 产品只认 Realm 与 osu.Framework；一旦有人把 ez2lazer.Game 加回来，
+            // 「publish 里没有 osu.Game.dll」就会靠 prune 脚本硬删来兜底，而不是结构上成立。
+            string repoRoot = Path.GetFullPath(Path.Combine(TestContext.CurrentContext.TestDirectory, "..", "..", "..", ".."));
+
+            string[] productProjects =
+            [
+                "osu.Game.EzRealmSync/osu.Game.EzRealmSync.csproj",
+                "osu.Game.EzRealmSync.Contracts/osu.Game.EzRealmSync.Contracts.csproj",
+                "osu.EzRealmSync.AppModel/osu.EzRealmSync.AppModel.csproj",
+                "osu.EzRealmSync.Desktop/osu.EzRealmSync.Desktop.csproj",
+            ];
+
+            var offenders = productProjects
+                            .Where(relative => PackageReferencePattern.IsMatch(File.ReadAllText(Path.Combine(repoRoot, relative))))
+                            .ToList();
+
+            Assert.That(offenders, Is.Empty, $"产品工程把 typed 游戏包加回来了：{string.Join(", ", offenders)}");
+        }
+
+        private static readonly System.Text.RegularExpressions.Regex PackageReferencePattern =
+            new(@"PackageReference[^>]*ez2lazer\.Game", System.Text.RegularExpressions.RegexOptions.Compiled);
 
         [Test]
         public void LoadRealmSnapshot_does_not_call_OpenForMutation()
