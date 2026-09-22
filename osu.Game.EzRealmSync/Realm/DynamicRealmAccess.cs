@@ -26,6 +26,36 @@ namespace osu.Game.EzRealmSync.Realm
         public static string GetString(IRealmObjectBase? obj, string property) =>
             Get<string>(obj, property) ?? string.Empty;
 
+        /// <summary>
+        /// 读原始值：不过白名单、不跳 Ez 列。**只**供「删行重建前暂存 Ez 列原值」用。
+        /// </summary>
+        public static RealmValue? GetRaw(IRealmObjectBase? obj, string property)
+        {
+            if (obj == null || !HasProperty(obj, property))
+                return null;
+
+            try
+            {
+                return obj.DynamicApi.Get<RealmValue>(property);
+            }
+            catch
+            {
+                return null;
+            }
+        }
+
+        /// <summary>
+        /// 写回原始值：绕过 Ez 列守卫。仅用于把同一行删除前的原值还原——这里的值**全部来自本库原有行**，
+        /// 不是同步产物，所以不违反「同步不产生 Ez 列新值」。
+        /// </summary>
+        public static void SetRaw(IRealmObjectBase obj, string property, RealmValue value)
+        {
+            if (!HasProperty(obj, property))
+                return;
+
+            obj.DynamicApi.Set(property, value);
+        }
+
         public static void Set(IRealmObjectBase obj, string className, string property, object? value)
         {
             if (OfficialBaselineSchema.EzOnlyPropertyNames.Contains(property, StringComparer.Ordinal))

@@ -32,6 +32,7 @@
 
 - **同步读/写**：DynamicRealm 官方基线；不因 schema 高于 bundled NuGet 拒绝，也不加载 `osu.Game.dll`。
 - **成绩同步的边界**：成绩按 `BeatmapHash` 链接目标难度。目标缺该难度、缺归属规则集（Ez 专用 `diva`/`bms` 且目标本来没有）、或没有 `Score` 表时**跳过**，在结果里计数并在状态栏列出原因，不写目标端看不见的悬空成绩；整次同步不中断。Ez → Ez 时目标已有该规则集行则正常写入。
+- **Ez 列不被改动**：目标已有同 ID 行时按覆盖重建，但 Ez 扩展列取**删除前的原值**写回（谱面集的 `ExternalContentRoot`/`HostingKind`、难度的 `XxyStarRating`/`PerformancePoints`/`HasVideo`/`HasStoryboard`、成绩的 `ManiaHitMode`/`ManiaHealthMode`、规则集的 `LastAppliedXxySrVersion`）。覆盖同步不会顺手清掉 xxySR 或外部托管路径；单独同步难度走就地更新，天然保留。
 - 数据页只读官方：Official Worker；缺 Worker 构建产物 → 明确错误（重新 build Desktop）。
 - 数据页只读 Ez legacy + 有 reader 包 → Sidecar；无包 → `ReaderPackageMissing`。
 - **写回官方（数据 Tab）** → `SchemaModelMismatch`（请用同步 / 转官方）。
