@@ -1,4 +1,3 @@
-#if HAS_EZ_OSU_GAME
 using osu.Game.EzRealmSync.Abstractions;
 using osu.Game.EzRealmSync.Errors;
 using osu.Game.EzRealmSync.IO;
@@ -268,4 +267,3 @@ namespace osu.Game.EzRealmSync.Realm
         }
     }
 }
-#endif

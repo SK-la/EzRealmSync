@@ -4,6 +4,7 @@ using osu.Game.Database;
 using osu.Game.EzRealmSync.Models;
 using osu.Game.EzRealmSync.Realm;
 using osu.Game.Scoring;
+using osu.Game.EzRealmSync.Tests.TestInfrastructure;
 
 namespace osu.Game.EzRealmSync.Tests.TestInfrastructure
 {

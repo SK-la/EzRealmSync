@@ -42,7 +42,7 @@ namespace osu.Game.EzRealmSync.Tests
 
                     List<RealmExportItem> typedItems;
 
-                    using (var access = RealmAccessGateway.OpenForMutation(path, schema))
+                    using (var access = TypedRealmAccess.OpenForMutation(path, schema))
                         typedItems = TypedExportCatalogBuilder.Build(access, kind).Items.ToList();
 
                     assertSameItems(kind, typedItems, dynamicItems);
@@ -68,7 +68,7 @@ namespace osu.Game.EzRealmSync.Tests
 
                 List<Guid> collectionIds;
 
-                using (var access = RealmAccessGateway.OpenForMutation(path, schema))
+                using (var access = TypedRealmAccess.OpenForMutation(path, schema))
                     collectionIds = access.Run(realm => realm.All<osu.Game.Collections.BeatmapCollection>().AsEnumerable().Select(c => c.ID).ToList());
 
                 Assert.That(collectionIds, Is.Not.Empty, "样本没有同步进收藏夹，这条对照没有覆盖面。");
@@ -80,7 +80,7 @@ namespace osu.Game.EzRealmSync.Tests
 
                 List<RealmExportFileEntry> typedEntries;
 
-                using (var access = RealmAccessGateway.OpenForMutation(path, schema))
+                using (var access = TypedRealmAccess.OpenForMutation(path, schema))
                     typedEntries = TypedExportExecutor.ResolveCollectionFiles(access, collectionIds).ToList();
 
                 assertSameEntries("Collection", typedEntries, dynamicEntries);
@@ -105,7 +105,7 @@ namespace osu.Game.EzRealmSync.Tests
 
                 List<Guid> ids;
 
-                using (var access = RealmAccessGateway.OpenForMutation(path, schema))
+                using (var access = TypedRealmAccess.OpenForMutation(path, schema))
                     ids = access.Run(realm => realm.All<osu.Game.Collections.BeatmapCollection>().AsEnumerable().Select(c => c.ID).ToList());
 
                 Assert.That(ids, Is.Not.Empty, "样本没有同步进收藏夹，这条对照没有覆盖面。");
@@ -114,7 +114,7 @@ namespace osu.Game.EzRealmSync.Tests
                 string dynamicFile = Path.Combine(root, "dynamic-collection.db");
 
                 int typedCount;
-                using (var access = RealmAccessGateway.OpenForMutation(path, schema))
+                using (var access = TypedRealmAccess.OpenForMutation(path, schema))
                     typedCount = TypedCollectionDbExporter.Export(access, ids, typedFile);
 
                 int dynamicCount;
@@ -145,7 +145,7 @@ namespace osu.Game.EzRealmSync.Tests
 
                 List<Guid> ids;
 
-                using (var access = RealmAccessGateway.OpenForMutation(path, schema))
+                using (var access = TypedRealmAccess.OpenForMutation(path, schema))
                     ids = access.Run(realm => realm.All<osu.Game.Scoring.ScoreInfo>().Where(s => !s.DeletePending).AsEnumerable().Select(s => s.ID).ToList());
 
                 Assert.That(ids, Is.Not.Empty, "样本没有同步进成绩，这条对照没有覆盖面。");
@@ -154,7 +154,7 @@ namespace osu.Game.EzRealmSync.Tests
                 string dynamicFile = Path.Combine(root, "dynamic-scores.db");
 
                 int typedCount;
-                using (var access = RealmAccessGateway.OpenForMutation(path, schema))
+                using (var access = TypedRealmAccess.OpenForMutation(path, schema))
                     typedCount = TypedScoresDbExporter.Export(access, ids, typedFile);
 
                 int dynamicCount;
@@ -198,7 +198,7 @@ namespace osu.Game.EzRealmSync.Tests
 
                 var typedIssues = new List<RealmFixIssue>();
 
-                using (var access = RealmAccessGateway.OpenForMutation(path, schema))
+                using (var access = TypedRealmAccess.OpenForMutation(path, schema))
                     TypedIllegalCharacterScanner.Scan(access, typedIssues, options);
 
                 Assert.That(describe(dynamicIssues), Is.EqualTo(describe(typedIssues)),
@@ -255,7 +255,7 @@ namespace osu.Game.EzRealmSync.Tests
                 RealmSchemaSnapshot after = snapshots.Capture(path).Snapshot;
                 RealmSchemaDriftGuard.EnsureUnchanged(before, after, path);
 
-                using (var access = RealmAccessGateway.OpenForMutation(path, schema))
+                using (var access = TypedRealmAccess.OpenForMutation(path, schema))
                 {
                     access.Run(realm =>
                     {
@@ -291,7 +291,7 @@ namespace osu.Game.EzRealmSync.Tests
                 Guid target;
                 string ezRootBefore;
 
-                using (var access = RealmAccessGateway.OpenForMutation(path, schema))
+                using (var access = TypedRealmAccess.OpenForMutation(path, schema))
                 {
                     target = access.Run(realm => realm.All<osu.Game.Beatmaps.BeatmapSetInfo>().AsEnumerable().First(s => !s.DeletePending).ID);
                     ezRootBefore = access.Run(realm => realm.Find<osu.Game.Beatmaps.BeatmapSetInfo>(target)!.ExternalContentRoot);
@@ -313,7 +313,7 @@ namespace osu.Game.EzRealmSync.Tests
                 RealmSchemaSnapshot after = snapshots.Capture(path).Snapshot;
                 RealmSchemaDriftGuard.EnsureUnchanged(before, after, path);
 
-                using (var access = RealmAccessGateway.OpenForMutation(path, schema))
+                using (var access = TypedRealmAccess.OpenForMutation(path, schema))
                 {
                     // 值必须在 Run 里取出来：Run 返回后 realm 已关闭，拿着对象再读属性会抛 RealmClosedException。
                     (bool Found, bool DeletePending, string? EzRoot) state = access.Run(realm =>
@@ -339,7 +339,7 @@ namespace osu.Game.EzRealmSync.Tests
         /// <summary>往元数据里写文档树不允许的字符：部分难度带 <c>:</c>，再加一条带 <c>*</c> 的，覆盖两个字符。</summary>
         private static void seedIllegalCharacters(string path, int schema)
         {
-            using var access = RealmAccessGateway.OpenForMutation(path, schema);
+            using var access = TypedRealmAccess.OpenForMutation(path, schema);
 
             access.Write(realm =>
             {

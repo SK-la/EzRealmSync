@@ -40,8 +40,6 @@ namespace osu.Game.EzRealmSync.Tests
                 ExportRealmId = "export",
                 BackupDirectory = @"D:\backups",
                 ConfirmBeforeDelete = false,
-                ActiveReaderPackageId = "ez-51003",
-                ReaderPackagesDirectory = @"D:\readers",
             };
 
             AppSettingsStore.Save(original, settingsPath);
@@ -54,8 +52,6 @@ namespace osu.Game.EzRealmSync.Tests
             Assert.That(loaded.FixRealmId, Is.EqualTo(original.FixRealmId));
             Assert.That(loaded.BackupDirectory, Is.EqualTo(original.BackupDirectory));
             Assert.That(loaded.ConfirmBeforeDelete, Is.False);
-            Assert.That(loaded.ActiveReaderPackageId, Is.EqualTo("ez-51003"));
-            Assert.That(loaded.ReaderPackagesDirectory, Is.EqualTo(@"D:\readers"));
         }
 
         [Test]

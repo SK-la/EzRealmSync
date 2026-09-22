@@ -24,7 +24,7 @@ namespace osu.Game.EzRealmSync.Tests.TestInfrastructure
 
             try
             {
-                worker = OfficialWriteProcessRunner.ResolveWorkerExecutablePathForTests();
+                worker = OfficialWorkerProcess.ResolveWorkerExecutablePathForTests();
             }
             catch (Exception ex)
             {
@@ -40,7 +40,7 @@ namespace osu.Game.EzRealmSync.Tests.TestInfrastructure
 
             try
             {
-                var result = OfficialReadProcessRunner.Read(new RealmReadJob
+                var result = OfficialWorkerProcess.Read(new RealmReadJob
                 {
                     ReaderLibDirectory = string.Empty,
                     RealmFilePath = realmPath,
@@ -63,6 +63,6 @@ namespace osu.Game.EzRealmSync.Tests.TestInfrastructure
 
         /// <summary>Worker 是否就绪；未就绪时测试应 Assert.Ignore 而不是失败。</summary>
         public static bool WorkerAvailable =>
-            File.Exists(OfficialWriteProcessRunner.ResolveWorkerExecutablePathForTests());
+            File.Exists(OfficialWorkerProcess.ResolveWorkerExecutablePathForTests());
     }
 }

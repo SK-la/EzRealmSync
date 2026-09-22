@@ -1,6 +1,4 @@
-#if HAS_EZ_OSU_GAME
 using NUnit.Framework;
-using osu.Game.EzRealmSync.Errors;
 using osu.Game.EzRealmSync.Models;
 using osu.Game.EzRealmSync.Realm;
 using osu.Game.EzRealmSync.Tests.TestInfrastructure;
@@ -22,7 +20,7 @@ namespace osu.Game.EzRealmSync.Tests
             {
                 RealmNativeLifetime.CreateEmptyRealmFile(path, 51_006);
 
-                Assert.That(RealmSchemaProbe.TryReadSchemaVersion(path), Is.EqualTo(51_006));
+                Assert.That(RealmDiskSchemaReader.TryReadSchemaVersion(path), Is.EqualTo(51_006));
             }
             finally
             {
@@ -39,7 +37,7 @@ namespace osu.Game.EzRealmSync.Tests
             {
                 RealmNativeLifetime.CreateEmptyRealmFile(path, 51);
 
-                Assert.That(RealmSchemaProbe.TryReadSchemaVersion(path), Is.EqualTo(51));
+                Assert.That(RealmDiskSchemaReader.TryReadSchemaVersion(path), Is.EqualTo(51));
             }
             finally
             {
@@ -58,7 +56,7 @@ namespace osu.Game.EzRealmSync.Tests
             {
                 RealmNativeLifetime.CreateEmptyRealmFile(path, 51);
 
-                int? schema = RealmSchemaProbe.TryReadSchemaVersion(path);
+                int? schema = RealmDiskSchemaReader.TryReadSchemaVersion(path);
                 Assert.That(schema, Is.EqualTo(51));
                 Assert.That(RealmSchemaSafety.Classify(schema), Is.EqualTo(RealmDiskSchemaKind.PpyClient));
             }
@@ -78,7 +76,7 @@ namespace osu.Game.EzRealmSync.Tests
 
             try
             {
-                Assert.That(RealmSchemaProbe.TryReadSchemaVersion(path), Is.EqualTo(51_003));
+                Assert.That(RealmDiskSchemaReader.TryReadSchemaVersion(path), Is.EqualTo(51_003));
             }
             finally
             {
@@ -92,7 +90,7 @@ namespace osu.Game.EzRealmSync.Tests
             if (!sample.RealmFileExists)
                 Assert.Ignore($"样本未放置 realm 文件：{sample.RealmFilePath}");
 
-            int? schema = RealmSchemaProbe.TryReadSchemaVersion(sample.RealmFilePath);
+            int? schema = RealmDiskSchemaReader.TryReadSchemaVersion(sample.RealmFilePath);
             Assert.That(schema, Is.Not.Null, $"schema 读取失败：{sample.RealmFilePath}");
 
             bool parsed = Enum.TryParse(sample.DiskSchemaKind, ignoreCase: true, out RealmDiskSchemaKind expectedKind);
@@ -101,38 +99,21 @@ namespace osu.Game.EzRealmSync.Tests
         }
 
         [TestCaseSource(nameof(sample_cases))]
-        public void Open_behaviour_matches_manifest_expectation(RealmSampleInfo sample)
+        public void Every_sample_is_readable_dynamically(RealmSampleInfo sample)
         {
+            // 动态读取不吃版本号：老 Ez / 官方样本都应能读出，不要求匹配的 DLL，也不改动文件头。
             if (!sample.RealmFileExists)
                 Assert.Ignore($"样本未放置 realm 文件：{sample.RealmFilePath}");
 
-            bool parsed = Enum.TryParse(sample.DiskSchemaKind, ignoreCase: true, out RealmDiskSchemaKind expectedKind);
-            Assert.That(parsed, Is.True, $"manifest expected.diskSchemaKind 非法：{sample.DiskSchemaKind}");
+            int? schema = RealmDiskSchemaReader.TryReadSchemaVersion(sample.RealmFilePath);
+            Assert.That(schema, Is.Not.Null);
 
-            if (sample.CanOpenWithoutMigration)
+            Assert.DoesNotThrow((Action)(() =>
             {
-                Assert.DoesNotThrow((Action)(() =>
-                {
-                    using var access = RealmAccessGateway.OpenForMutation(sample.RealmFilePath);
-                    if (expectedKind == RealmDiskSchemaKind.PpyClient)
-                        Assert.That(access.GetType().Name, Is.EqualTo("OfficialRealmAccess"));
-                    else if (expectedKind == RealmDiskSchemaKind.EzExtended)
-                        Assert.That(access.GetType().Name, Is.Not.EqualTo("OfficialRealmAccess"));
-                    access.Run(_ => { });
-                }));
-                return;
-            }
-
-            var ex = Assert.Throws<RealmUserOperationException>((Action)(() =>
-            {
-                using var access = RealmAccessGateway.OpenForMutation(sample.RealmFilePath);
-                access.Run(_ => { });
+                using var session = RealmAccessGateway.OpenDynamicForRead(sample.RealmFilePath, out _);
             }));
-            Assert.That(ex!.Kind, Is.AnyOf(
-                RealmUserErrorKind.MigrationRequired,
-                RealmUserErrorKind.SchemaTooLow,
-                RealmUserErrorKind.SchemaModelMismatch));
+
+            Assert.That(RealmDiskSchemaReader.TryReadSchemaVersion(sample.RealmFilePath), Is.EqualTo(schema), "只读打开改动了文件头。");
         }
     }
 }
-#endif

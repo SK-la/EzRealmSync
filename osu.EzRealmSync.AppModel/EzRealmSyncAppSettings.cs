@@ -36,12 +36,6 @@ namespace osu.EzRealmSync.AppModel
 
         /// <summary>UI 测试模式（Mock 数据）；可在设置中切换，无需重启。</summary>
         public bool UiTestMode { get; set; }
-
-        /// <summary>可选：覆盖 reader 包扫描目录（默认 exe/readers）。</summary>
-        public string ReaderPackagesDirectory { get; set; } = string.Empty;
-
-        /// <summary>启动时使用的 reader 包 ID；留空表示使用内置 NuGet/本地 lib。</summary>
-        public string? ActiveReaderPackageId { get; set; }
     }
 
     public static class AppSettingsStore
@@ -103,9 +97,6 @@ namespace osu.EzRealmSync.AppModel
 
             if (string.IsNullOrWhiteSpace(settings.ExportDirectory))
                 settings.ExportDirectory = EzRealmSyncDataPaths.ExportsDirectory;
-
-            if (string.IsNullOrWhiteSpace(settings.ReaderPackagesDirectory))
-                settings.ReaderPackagesDirectory = EzRealmSyncDataPaths.ReadersDirectory;
         }
     }
 }

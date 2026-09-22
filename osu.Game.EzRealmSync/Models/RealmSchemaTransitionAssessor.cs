@@ -1,4 +1,3 @@
-#if HAS_EZ_OSU_GAME
 namespace osu.Game.EzRealmSync.Models
 {
     public enum RealmSchemaTransitionRisk
@@ -59,4 +58,3 @@ namespace osu.Game.EzRealmSync.Models
         }
     }
 }
-#endif

@@ -143,7 +143,7 @@ namespace osu.Game.EzRealmSync.Tests
             using (var session = openDynamic(realmPath))
                 schemaSnapshot = DynamicSchemaReader.Read(session.Realm);
 
-            using var access = RealmAccessGateway.OpenForMutation(realmPath, schema);
+            using var access = TypedRealmAccess.OpenForMutation(realmPath, schema);
             TypedDumpResult typed = null!;
 
             access.Run(realm => typed = TypedRealmDumper.Dump(realm, schemaSnapshot, schema));
@@ -213,7 +213,7 @@ namespace osu.Game.EzRealmSync.Tests
 
         private static void writeChangeTyped(string path, int schema, ChangeTargets change)
         {
-            using var access = RealmAccessGateway.OpenForMutation(path, schema);
+            using var access = TypedRealmAccess.OpenForMutation(path, schema);
 
             // 断言不能留在写事务里：抛出会让事务半途结束，失败原因反而被事务清理掩盖。
             var found = new ChangeTargets(Guid.Empty, null, null);

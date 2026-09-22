@@ -8,7 +8,6 @@ using osu.Game.EzRealmSync.Errors;
 using osu.Game.EzRealmSync.Mock;
 using osu.Game.EzRealmSync.Models;
 using osu.Game.EzRealmSync.Realm.Dynamic;
-using osu.Game.EzRealmSync.Realm.Readers;
 
 namespace osu.EzRealmSync.AppModel
 {
@@ -100,8 +99,6 @@ namespace osu.EzRealmSync.AppModel
             ExportGroupScoresByPlayer.BindValueChanged(_ => persistSettings());
             IllegalCharacterReplacement.BindValueChanged(_ => persistSettings());
             ConfirmBeforeDelete.BindValueChanged(_ => persistSettings());
-            ActiveReaderPackageId.BindValueChanged(_ => persistSettings());
-            ReaderPackagesDirectory.BindValueChanged(_ => persistSettings());
         }
 
         public ObservableCollection<RealmFileEntry> RealmFiles { get; } = new ObservableCollection<RealmFileEntry>();
@@ -169,10 +166,6 @@ namespace osu.EzRealmSync.AppModel
 
         public BindableBool UiTestMode { get; } = new BindableBool();
 
-        public Bindable<string?> ActiveReaderPackageId { get; } = new Bindable<string?>();
-
-        public Bindable<string> ReaderPackagesDirectory { get; } = new Bindable<string>(string.Empty);
-
         public EzRealmSyncBackendKind BackendKind { get; private set; }
 
         public Bindable<EntityKindFilter> EntityFilter { get; } = new Bindable<EntityKindFilter>();
@@ -193,16 +186,6 @@ namespace osu.EzRealmSync.AppModel
         public IReadOnlyList<DiffRowModel> SyncRows => syncRows;
 
         public MockEzRealmSyncService? MockService => syncService as MockEzRealmSyncService;
-
-        public IReadOnlyList<RealmReaderPackageInfo> InstalledReaderPackages =>
-            EzRealmSyncBackend.IsRealBackendCompiled
-                ? RealmReaderRegistry.Instance.Packages
-                : Array.Empty<RealmReaderPackageInfo>();
-
-        public string ReaderPackagesPath =>
-            EzRealmSyncBackend.IsRealBackendCompiled
-                ? RealmReaderRegistry.Instance.PackagesDirectory
-                : RealmReaderPaths.ResolvePackagesDirectory(ReaderPackagesDirectory.Value);
 
         public Func<string, string, bool, Task<bool>>? ConfirmAsync { get; set; }
         public Func<string, Task<string?>>? PickFolderAsync { get; set; }
@@ -1530,12 +1513,8 @@ namespace osu.EzRealmSync.AppModel
             return userError.Kind switch
             {
                 RealmUserErrorKind.FileInUse => Loc.Get("ErrorFileInUse"),
-                RealmUserErrorKind.MigrationRequired => Loc.Get("ErrorMigrationRequired"),
                 RealmUserErrorKind.PathConflict => Loc.Format("ErrorPathConflict", userError.Detail),
-                RealmUserErrorKind.LegacyReaderUnavailable => Loc.Get("ErrorLegacyReaderUnavailable"),
-                RealmUserErrorKind.SchemaTooLow => Loc.Get("ErrorSchemaTooLow"),
                 RealmUserErrorKind.SchemaModelMismatch => Loc.Get("ErrorSchemaModelMismatch"),
-                RealmUserErrorKind.ReaderPackageMissing => Loc.Get("ErrorReaderPackageMissing"),
                 _ => userError.Detail,
             };
         }
@@ -1650,8 +1629,6 @@ namespace osu.EzRealmSync.AppModel
                 : settings.IllegalCharacterReplacement;
 
             ConfirmBeforeDelete.Value = settings.ConfirmBeforeDelete;
-            ActiveReaderPackageId.Value = settings.ActiveReaderPackageId;
-            ReaderPackagesDirectory.Value = settings.ReaderPackagesDirectory;
         }
 
         private void applyBackendMode(bool uiTest)
@@ -1741,8 +1718,6 @@ namespace osu.EzRealmSync.AppModel
                 IllegalCharacterReplacement = IllegalCharacterReplacement.Value,
                 ConfirmBeforeDelete = ConfirmBeforeDelete.Value,
                 UiTestMode = UiTestMode.Value,
-                ReaderPackagesDirectory = ReaderPackagesDirectory.Value,
-                ActiveReaderPackageId = ActiveReaderPackageId.Value,
             });
         }
 

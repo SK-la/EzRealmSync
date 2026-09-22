@@ -14,7 +14,7 @@ namespace osu.Game.EzRealmSync.Tests
         [Test]
         public void Probe_and_sync_do_not_change_schema_and_copy_baseline_set()
         {
-            string worker = OfficialWriteProcessRunner.ResolveWorkerExecutablePathForTests();
+            string worker = OfficialWorkerProcess.ResolveWorkerExecutablePathForTests();
             if (!File.Exists(worker))
                 Assert.Ignore($"OfficialWrite Worker 未复制到测试输出：{worker}");
 
@@ -78,7 +78,7 @@ namespace osu.Game.EzRealmSync.Tests
         [Test]
         public void Standalone_beatmap_sync_links_into_existing_set()
         {
-            string worker = OfficialWriteProcessRunner.ResolveWorkerExecutablePathForTests();
+            string worker = OfficialWorkerProcess.ResolveWorkerExecutablePathForTests();
             if (!File.Exists(worker))
                 Assert.Ignore($"OfficialWrite Worker 未复制到测试输出：{worker}");
 
@@ -129,7 +129,7 @@ namespace osu.Game.EzRealmSync.Tests
         [Test]
         public void Standalone_beatmap_sync_without_parent_set_reports_error()
         {
-            string worker = OfficialWriteProcessRunner.ResolveWorkerExecutablePathForTests();
+            string worker = OfficialWorkerProcess.ResolveWorkerExecutablePathForTests();
             if (!File.Exists(worker))
                 Assert.Ignore($"OfficialWrite Worker 未复制到测试输出：{worker}");
 
@@ -165,7 +165,7 @@ namespace osu.Game.EzRealmSync.Tests
         [Test]
         public void Score_sync_links_by_beatmap_hash_and_copies_fields()
         {
-            string worker = OfficialWriteProcessRunner.ResolveWorkerExecutablePathForTests();
+            string worker = OfficialWorkerProcess.ResolveWorkerExecutablePathForTests();
             if (!File.Exists(worker))
                 Assert.Ignore($"OfficialWrite Worker 未复制到测试输出：{worker}");
 
@@ -225,7 +225,7 @@ namespace osu.Game.EzRealmSync.Tests
         [Test]
         public void Score_sync_skips_when_target_lacks_matching_beatmap()
         {
-            string worker = OfficialWriteProcessRunner.ResolveWorkerExecutablePathForTests();
+            string worker = OfficialWorkerProcess.ResolveWorkerExecutablePathForTests();
             if (!File.Exists(worker))
                 Assert.Ignore($"OfficialWrite Worker 未复制到测试输出：{worker}");
 
@@ -268,7 +268,7 @@ namespace osu.Game.EzRealmSync.Tests
         [Test]
         public void Score_sync_skips_ez_only_ruleset_missing_on_target()
         {
-            string worker = OfficialWriteProcessRunner.ResolveWorkerExecutablePathForTests();
+            string worker = OfficialWorkerProcess.ResolveWorkerExecutablePathForTests();
             if (!File.Exists(worker))
                 Assert.Ignore($"OfficialWrite Worker 未复制到测试输出：{worker}");
 
@@ -313,7 +313,7 @@ namespace osu.Game.EzRealmSync.Tests
         [Test]
         public void Score_sync_applies_ez_only_ruleset_when_target_already_has_it()
         {
-            string worker = OfficialWriteProcessRunner.ResolveWorkerExecutablePathForTests();
+            string worker = OfficialWorkerProcess.ResolveWorkerExecutablePathForTests();
             if (!File.Exists(worker))
                 Assert.Ignore($"OfficialWrite Worker 未复制到测试输出：{worker}");
 
@@ -349,7 +349,7 @@ namespace osu.Game.EzRealmSync.Tests
 
         private static void createEmptyOfficialRealmViaWorker(string path, int schema)
         {
-            OfficialWriteProcessRunner.Run(new OfficialConvertJob
+            OfficialWorkerProcess.Run(new OfficialConvertJob
             {
                 TargetUpstreamSchema = schema,
                 TargetRealmPath = path,
@@ -362,7 +362,7 @@ namespace osu.Game.EzRealmSync.Tests
 
         private static void createOfficialRealmWithEmptySetViaWorker(string path, int schema, Guid setId)
         {
-            OfficialWriteProcessRunner.Run(new OfficialConvertJob
+            OfficialWorkerProcess.Run(new OfficialConvertJob
             {
                 TargetUpstreamSchema = schema,
                 TargetRealmPath = path,
@@ -455,7 +455,7 @@ namespace osu.Game.EzRealmSync.Tests
                 });
             }
 
-            OfficialWriteProcessRunner.Run(job);
+            OfficialWorkerProcess.Run(job);
         }
 
         private static void assertDynamicOpenPreservesSchema(string realmPath, int schema)

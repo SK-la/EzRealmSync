@@ -15,7 +15,6 @@
 
   <ItemGroup Condition="'$(UseLocalOsuLibs)' != 'true'">
     <PackageReference Include="ez2lazer.Framework" />
-    <PackageReference Include="ez2lazer.Game" />
     <PackageReference Include="Realm" />
   </ItemGroup>
 

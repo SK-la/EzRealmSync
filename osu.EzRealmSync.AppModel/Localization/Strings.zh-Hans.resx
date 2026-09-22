@@ -233,24 +233,14 @@
   <data name="StatusFixConvertedOfficialDropped" xml:space="preserve"><value>已删除 Ez 表 {0} 张、Ez 列 {1} 列</value></data>
   <data name="ErrorConvertOfficialRequiresEz" xml:space="preserve"><value>「转回官方版」仅适用于 Ez 扩展的 Realm 文件。</value></data>
   <data name="ErrorConvertOfficialNoUpstream" xml:space="preserve"><value>无法从版本号 {0} 判断该收窄到哪个官方版本。</value></data>
-  <data name="ErrorMigrationRequired" xml:space="preserve"><value>无法修改这份 Realm 文件：版本对本工具过旧。请先用 Ez2Lazer 客户端打开一次，让游戏完成迁移后再试。</value></data>
   <data name="ErrorFileInUse" xml:space="preserve"><value>文件正在被占用。请先关闭 osu!/Ez2Lazer 后重试。</value></data>
   <data name="ErrorPathConflict" xml:space="preserve"><value>路径冲突：{0}</value></data>
-  <data name="ErrorLegacyReaderUnavailable" xml:space="preserve"><value>缺少对应版本的 osu.Game.dll，无法打开这份 Realm 文件。请先升级 Realm 文件，或更新本工具后再试。</value></data>
-  <data name="ErrorSchemaTooLow" xml:space="preserve"><value>这份 Realm 文件版本过低，本工具无法打开。请先用对应版本的客户端升级后再试。</value></data>
   <data name="ErrorSchemaModelMismatch" xml:space="preserve"><value>Realm 文件版本号看起来已是最新，但与本工具的 osu.Game.dll 不匹配，升级无法修复。请确认工具与客户端版本一致，或从完整备份恢复。</value></data>
-  <data name="ErrorReaderPackageMissing" xml:space="preserve"><value>缺少对应版本的 osu.Game.dll，无法打开这份 Realm 文件。请补齐 reader 包后再试。</value></data>
   <data name="FilterColumn" xml:space="preserve"><value>筛选此列</value></data>
   <data name="FilterSearchPlaceholder" xml:space="preserve"><value>搜索…</value></data>
   <data name="FilterBlankValue" xml:space="preserve"><value>（空）</value></data>
   <data name="FilterApply" xml:space="preserve"><value>应用</value></data>
   <data name="FilterClear" xml:space="preserve"><value>清除</value></data>
-  <data name="ReaderSettings" xml:space="preserve"><value>Reader 包</value></data>
-  <data name="ReaderPackagesDirectory" xml:space="preserve"><value>Reader 包目录</value></data>
-  <data name="ActiveReaderPackage" xml:space="preserve"><value>启动时使用的 reader</value></data>
-  <data name="ReaderPackageDefault" xml:space="preserve"><value>内置 NuGet / 本地 dll（默认）</value></data>
-  <data name="ReaderPackageMissingLib" xml:space="preserve"><value> [缺少 dll]</value></data>
-  <data name="ReaderRestartHint" xml:space="preserve"><value>将 reader 包放入 exe 同目录的 readers 文件夹（见下方路径）；切换 reader 后需重启应用。</value></data>
   <data name="EndpointB" xml:space="preserve"><value>B</value></data>
   <data name="TargetRealm" xml:space="preserve"><value>B</value></data>
   <data name="SyncWriteTarget" xml:space="preserve"><value>操作目标</value></data>

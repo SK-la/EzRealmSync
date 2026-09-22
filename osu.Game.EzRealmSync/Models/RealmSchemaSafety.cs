@@ -11,10 +11,6 @@ namespace osu.Game.EzRealmSync.Models
         /// <summary>Ez 客户端库：<c>official * 1000 + ez</c>（当前 51006）。</summary>
         public static bool IsEzClientDiskSchema(int? diskSchemaVersion) => diskSchemaVersion is >= 1000;
 
-        public static bool RequiresOfficialRealmAccess(int? diskSchemaVersion) => IsOfficialDiskSchema(diskSchemaVersion);
-
-        public static bool RequiresEzRealmAccess(int? diskSchemaVersion) => IsEzClientDiskSchema(diskSchemaVersion);
-
         public static RealmDiskSchemaKind Classify(int? diskSchemaVersion) => diskSchemaVersion switch
         {
             null => RealmDiskSchemaKind.Unknown,

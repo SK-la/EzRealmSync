@@ -1,12 +1,12 @@
 namespace osu.Game.EzRealmSync
 {
     /// <summary>
-    /// EzRealmSync 运行时数据目录：settings、readers、备份、导出、schema 快照、临时文件。
-    /// Worker 子目录（read-sidecar 等）会解析到 host exe 根目录。
+    /// EzRealmSync 运行时数据目录：settings、备份、导出、schema 快照、临时文件。
+    /// Worker 子目录（official-write）会解析到 host exe 根目录。
     /// </summary>
     public static class EzRealmSyncDataPaths
     {
-        private static readonly string[] worker_subdirectories = { "read-sidecar", "official-write" };
+        private static readonly string[] worker_subdirectories = { "official-write" };
 
         /// <summary>Host 应用根目录（EzRealmSync.exe 所在目录；Worker 进程为上级目录）。</summary>
         public static string ResolveHostApplicationRoot()
@@ -49,8 +49,6 @@ namespace osu.Game.EzRealmSync
 
         public static string SettingsFile => ResolveSettingsFile();
 
-        public static string ReadersDirectory => Path.Combine(ApplicationRoot, "readers");
-
         public static string BackupsDirectory => Path.Combine(ApplicationRoot, "backups");
 
         public static string ExportsDirectory => Path.Combine(ApplicationRoot, "exports");
@@ -70,7 +68,6 @@ namespace osu.Game.EzRealmSync
 
         public static void EnsureStandardDirectories()
         {
-            Directory.CreateDirectory(ReadersDirectory);
             Directory.CreateDirectory(BackupsDirectory);
             Directory.CreateDirectory(ExportsDirectory);
             Directory.CreateDirectory(TempDirectory);

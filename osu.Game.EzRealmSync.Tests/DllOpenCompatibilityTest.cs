@@ -4,7 +4,6 @@ using osu.Game.Database;
 using osu.Game.EzRealmSync.Contracts;
 using osu.Game.EzRealmSync.Models;
 using osu.Game.EzRealmSync.Realm;
-using osu.Game.EzRealmSync.Realm.Readers;
 using osu.Game.EzRealmSync.Tests.TestInfrastructure;
 
 namespace osu.Game.EzRealmSync.Tests
@@ -13,11 +12,9 @@ namespace osu.Game.EzRealmSync.Tests
     /// 动态同步产物必须能被「写出该产物 schema 的 osu.Game.dll」以 pinned disk schema 打开
     /// （<c>OpenWithoutMigration</c>），且产物文件头 schema 与同步前一致。
     ///
-    /// 验证通道必须与产物 schema 同源：官方产物 → official-write Worker（OfficialSchema 镜像，
-    /// 按目标 upstream 建 schema）；Ez 产物 → 与产物同版本的 Ez DLL（进程内 bundled 模型，
-    /// 或 readers/&lt;schema&gt;/lib + read-sidecar）。
-    /// 不要在 Ez 产物上用**不同 Ez 修订**的 reader 包做验证——那会触发 MigrationNeeded，
-    /// 与同步无关（这正是「DLL 不是同步前提」的含义）。
+    /// 验证通道与产物 schema 同源：官方产物 → official-write Worker（OfficialSchema 镜像，
+    /// 按目标 upstream 建 schema）；Ez 产物 → 与产物同版本的 bundled Ez 模型。
+    /// 产品侧已不加载 osu.Game.dll（读写全走 DynamicRealm），这里只做产物可打开性的外部校验。
     /// </summary>
     [TestFixture]
     public class DllOpenCompatibilityTest
@@ -123,68 +120,8 @@ namespace osu.Game.EzRealmSync.Tests
                 AssertBaselineCopied(targetPath, targetSchema);
 
                 // 目标 schema == bundled Ez schema，用当前 DLL 进程内 pinned 打开。
-                using (var access = RealmAccessGateway.OpenForMutation(targetPath, targetSchema))
+                using (var access = TypedRealmAccess.OpenForMutation(targetPath, targetSchema))
                     access.Run(_ => { });
-
-                AssertSchemaUnchanged(targetPath, targetSchema);
-            }
-            finally
-            {
-                cleanup(root);
-            }
-        }
-
-        [Test]
-        public void Current_ez_target_after_baseline_sync_opens_in_sidecar_with_matching_reader_package()
-        {
-            string root = newRoot("ez-sidecar");
-            int targetSchema = RealmAccess.EzFileSchemaVersion;
-
-            string? repoRoot = findRepoRoot();
-            string libDirectory = repoRoot == null
-                ? string.Empty
-                : Path.Combine(repoRoot, "readers", targetSchema.ToString(), "lib");
-
-            if (!File.Exists(Path.Combine(libDirectory, "osu.Game.dll")))
-                Assert.Ignore($"没有 schema {targetSchema} 的 reader 包（先运行 scripts/Sync-ReaderLibs.ps1 并更新 sync-libs.config.json）。");
-
-            string worker = RealmReadSidecarRunner.ResolveWorkerExecutablePathForTests();
-            if (!File.Exists(worker))
-                Assert.Ignore($"ReadSidecar Worker 未复制到测试输出：{worker}");
-
-            try
-            {
-                string sourcePath = Path.Combine(root, "source.realm");
-                string targetPath = Path.Combine(root, "target.realm");
-
-                createOfficialRealm(sourcePath, official_schema, withBaseline: true);
-                createCurrentEzRealm(targetPath, targetSchema);
-
-                syncBaseline(sourcePath, targetPath, [source_set_id]);
-                AssertSchemaUnchanged(targetPath, targetSchema);
-
-                var package = new RealmReaderPackageInfo
-                {
-                    Id = $"test-{targetSchema}",
-                    DisplayName = $"test-{targetSchema}",
-                    Profile = "ez",
-                    DiskSchemaVersions = [targetSchema],
-                    PackageDirectory = libDirectory,
-                    LibDirectory = libDirectory,
-                };
-
-                var job = new RealmReadJob
-                {
-                    ReaderLibDirectory = libDirectory,
-                    SharedLibDirectory = Path.GetDirectoryName(worker),
-                    RealmFilePath = targetPath,
-                    PinnedDiskSchemaVersion = targetSchema,
-                    Profile = "ez",
-                };
-
-                var result = RealmReadSidecarRunner.ReadDiffSnapshot(package, job);
-                Assert.That(result.Success, Is.True);
-                Assert.That(result.Entities.Any(e => e.Id == source_set_id), Is.True, "sidecar 没读到同步过去的谱面集。");
 
                 AssertSchemaUnchanged(targetPath, targetSchema);
             }
@@ -238,11 +175,11 @@ namespace osu.Game.EzRealmSync.Tests
 
         private static void assertOpensWithOfficialDll(string realmPath, int pinnedSchema)
         {
-            string worker = OfficialWriteProcessRunner.ResolveWorkerExecutablePathForTests();
+            string worker = OfficialWorkerProcess.ResolveWorkerExecutablePathForTests();
             if (!File.Exists(worker))
                 Assert.Ignore($"Official Worker 未复制到测试输出：{worker}");
 
-            var result = OfficialReadProcessRunner.Read(new RealmReadJob
+            var result = OfficialWorkerProcess.Read(new RealmReadJob
             {
                 ReaderLibDirectory = string.Empty,
                 RealmFilePath = realmPath,
@@ -310,7 +247,7 @@ namespace osu.Game.EzRealmSync.Tests
                 });
             }
 
-            OfficialWriteProcessRunner.Run(job);
+            OfficialWorkerProcess.Run(job);
         }
 
         /// <summary>用 bundled Ez 模型在同版本全新库上落 schema；这是「当前 Ez 客户端」写出的等价产物。</summary>
@@ -318,7 +255,7 @@ namespace osu.Game.EzRealmSync.Tests
         {
             RealmNativeLifetime.CreateEmptyRealmFile(path, (ulong)schema);
 
-            using (var access = RealmAccessGateway.OpenForMutation(path, schema))
+            using (var access = TypedRealmAccess.OpenForMutation(path, schema))
                 access.Run(_ => { });
 
             RealmNativeLifetime.Flush();
@@ -350,21 +287,6 @@ namespace osu.Game.EzRealmSync.Tests
             {
                 // 清理失败不影响断言结果。
             }
-        }
-
-        private static string? findRepoRoot()
-        {
-            string? current = AppContext.BaseDirectory;
-
-            for (int i = 0; i < 10 && current != null; i++)
-            {
-                if (File.Exists(Path.Combine(current, "EzRealmSync.sln")))
-                    return current;
-
-                current = Directory.GetParent(current)?.FullName;
-            }
-
-            return null;
         }
     }
 }

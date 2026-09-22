@@ -41,11 +41,9 @@ namespace osu.Game.EzRealmSync.Tests
         public void RealmSchemaSafety_distinguishes_official_and_ez()
         {
             Assert.That(RealmSchemaSafety.IsOfficialDiskSchema(51), Is.True);
-            Assert.That(RealmSchemaSafety.RequiresOfficialRealmAccess(51), Is.True);
             Assert.That(RealmSchemaSafety.IsEzClientDiskSchema(51), Is.False);
 
             Assert.That(RealmSchemaSafety.IsEzClientDiskSchema(51_006), Is.True);
-            Assert.That(RealmSchemaSafety.RequiresEzRealmAccess(51_006), Is.True);
             Assert.That(RealmSchemaSafety.IsOfficialDiskSchema(51_006), Is.False);
         }
     }

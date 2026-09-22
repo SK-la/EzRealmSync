@@ -1,18 +1,11 @@
-#if HAS_EZ_OSU_GAME
-using osu.Game.Database;
-
 namespace osu.Game.EzRealmSync.Models
 {
     /// <summary>
-    /// 内置修订分类表（对照 osu.Game <see cref="RealmAccess"/> migration 注释）。
-    /// 合并上游 / bump Ez 后由维护者更新。
+    /// 内置修订分类表（对照上游/ Ez 侧的 migration 记录人工维护）。
+    /// 合并上游 / bump Ez 后由维护者更新。只做分类，不参与任何"版本够不够新"的判定。
     /// </summary>
     public static class RealmSchemaRevisionCatalog
     {
-        public const int MinSupportedOfficialUpstream = 50;
-
-        public const int MinSupportedEzRevision = 3;
-
         private static readonly Dictionary<int, RealmSchemaRevisionKind> upstream_kinds = new Dictionary<int, RealmSchemaRevisionKind>
         {
             [50] = RealmSchemaRevisionKind.AddColumn,
@@ -36,11 +29,5 @@ namespace osu.Game.EzRealmSync.Models
 
         public static RealmSchemaRevisionKind ClassifyEzRevision(int ezRevision) =>
             ez_kinds.GetValueOrDefault(ezRevision, RealmSchemaRevisionKind.DataChange);
-
-        public static bool IsSupportedOfficialUpstream(int upstream) =>
-            upstream >= MinSupportedOfficialUpstream && upstream <= RealmAccess.UpstreamSchemaVersion;
-
-        public static bool IsSupportedEzRevision(int ezRevision) => ezRevision >= MinSupportedEzRevision;
     }
 }
-#endif

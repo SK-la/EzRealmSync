@@ -2,7 +2,6 @@ using osu.EzRealmSync.AppModel;
 using osu.EzRealmSync.AppModel.Localization;
 using osu.EzRealmSync.Desktop.ViewModels;
 using osu.Game.EzRealmSync;
-using osu.Game.EzRealmSync.Realm.Readers;
 using osu.Game.EzRealmSync.Runtime;
 
 namespace osu.EzRealmSync.Desktop
@@ -18,16 +17,7 @@ namespace osu.EzRealmSync.Desktop
 
             var settings = AppSettingsStore.Load();
 
-            var readerPackages = RealmReaderPackageCatalog.Scan(settings.ReaderPackagesDirectory);
-            string? readerLibOverride = RealmReaderPackageCatalog.FindById(readerPackages, settings.ActiveReaderPackageId)?.LibDirectory;
-
-            if (!string.IsNullOrWhiteSpace(readerLibOverride))
-                EzRealmSyncRuntimeLibLoader.PrependProbeDirectory(readerLibOverride);
-
-            if (EzRealmSyncBackend.IsRealBackendCompiled)
-                RealmReaderRegistry.Instance.Initialize(settings.ReaderPackagesDirectory);
-
-            EzRealmSyncLog.Info($"Backend={(EzRealmSyncBackend.IsRealBackendCompiled ? "real" : "stub")}; reader packages={readerPackages.Count}");
+            EzRealmSyncLog.Info($"Backend={(EzRealmSyncBackend.IsRealBackendCompiled ? "real" : "stub")}");
 
             var options = EzRealmSyncLaunchOptions.Parse(args);
             Loc.SetLanguage(AppLanguage.ZhHans);

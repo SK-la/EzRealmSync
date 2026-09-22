@@ -3,15 +3,9 @@ namespace osu.Game.EzRealmSync.Errors
     public enum RealmUserErrorKind
     {
         FileInUse,
-        MigrationRequired,
         PathConflict,
-        LegacyReaderUnavailable,
-        /// <summary>磁盘 schema 低于本工具同大版本最低支持。</summary>
-        SchemaTooLow,
-        /// <summary>版本号已是最新但对象模型仍无法 pinned 打开（工具/游戏脱节或脏库）。</summary>
+        /// <summary>对象模型与磁盘 schema 对不上（例如官方库走进了只写 Ez 列的路径）。</summary>
         SchemaModelMismatch,
-        /// <summary>磁盘 schema 无匹配 reader 包（readers/ manifest + lib）。</summary>
-        ReaderPackageMissing,
     }
 
     public sealed class RealmUserOperationException : InvalidOperationException

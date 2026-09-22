@@ -252,7 +252,7 @@ namespace osu.Game.EzRealmSync.Tests
         /// </summary>
         private static OfficialSchemaSource readOfficialSchemaSource()
         {
-            string worker = OfficialWriteProcessRunner.ResolveWorkerExecutablePathForTests();
+            string worker = OfficialWorkerProcess.ResolveWorkerExecutablePathForTests();
 
             if (!File.Exists(worker))
                 Assert.Ignore($"OfficialWrite Worker 未复制到测试输出，无法造官方 {official_upstream} 参考库：{worker}");
@@ -282,7 +282,7 @@ namespace osu.Game.EzRealmSync.Tests
 
         private static void createEmptyOfficialLibraryViaWorker(string path)
         {
-            OfficialWriteProcessRunner.Run(new OfficialConvertJob
+            OfficialWorkerProcess.Run(new OfficialConvertJob
             {
                 TargetUpstreamSchema = official_upstream,
                 TargetRealmPath = path,

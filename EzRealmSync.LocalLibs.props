@@ -9,7 +9,11 @@
     <UseLocalOsuLibs Condition="'$(UseLocalOsuLibs)' == ''">false</UseLocalOsuLibs>
   </PropertyGroup>
 
-  <PropertyGroup Condition="'$(MSBuildProjectName)' == 'osu.Game.EzRealmSync' Or '$(MSBuildProjectName)' == 'osu.Game.EzRealmSync.Tests'">
+  <!--
+    产品工程不加载 osu.Game.dll：只有测试工程需要 typed 模型做 parity 对照，
+    因此 HAS_EZ_OSU_GAME 仅对 Tests 定义。
+  -->
+  <PropertyGroup Condition="'$(MSBuildProjectName)' == 'osu.Game.EzRealmSync.Tests'">
     <DefineConstants>$(DefineConstants);HAS_EZ_OSU_GAME</DefineConstants>
   </PropertyGroup>
 
@@ -19,7 +23,7 @@
     <EzRealmSyncRuntimeNative Include="$(EzRealmSyncLibDir)\runtimes\**\*.*" />
   </ItemGroup>
 
-  <ItemGroup Condition="'$(UseLocalOsuLibs)' == 'true' AND '$(MSBuildProjectName)' == 'osu.Game.EzRealmSync'">
+  <ItemGroup Condition="'$(UseLocalOsuLibs)' == 'true' AND '$(MSBuildProjectName)' == 'osu.Game.EzRealmSync.Tests'">
     <EzRealmSyncLibDll Include="@(EzRealmSyncRuntimeLib)" />
     <Reference Include="@(EzRealmSyncLibDll)">
       <HintPath>%(Identity)</HintPath>

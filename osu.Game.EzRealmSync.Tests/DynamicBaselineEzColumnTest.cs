@@ -36,7 +36,7 @@ namespace osu.Game.EzRealmSync.Tests
         [Test]
         public void Standalone_beatmap_sync_keeps_ez_columns()
         {
-            string worker = OfficialWriteProcessRunner.ResolveWorkerExecutablePathForTests();
+            string worker = OfficialWorkerProcess.ResolveWorkerExecutablePathForTests();
             if (!File.Exists(worker))
                 Assert.Ignore($"OfficialWrite Worker 未复制到测试输出：{worker}");
 
@@ -70,7 +70,7 @@ namespace osu.Game.EzRealmSync.Tests
         [Test]
         public void Set_and_score_overwrite_keeps_ez_columns()
         {
-            string worker = OfficialWriteProcessRunner.ResolveWorkerExecutablePathForTests();
+            string worker = OfficialWorkerProcess.ResolveWorkerExecutablePathForTests();
             if (!File.Exists(worker))
                 Assert.Ignore($"OfficialWrite Worker 未复制到测试输出：{worker}");
 
@@ -102,7 +102,7 @@ namespace osu.Game.EzRealmSync.Tests
 
         private static void createOfficialRealmViaWorker(string path, int schema)
         {
-            OfficialWriteProcessRunner.Run(new OfficialConvertJob
+            OfficialWorkerProcess.Run(new OfficialConvertJob
             {
                 TargetUpstreamSchema = schema,
                 TargetRealmPath = path,
@@ -162,7 +162,7 @@ namespace osu.Game.EzRealmSync.Tests
         {
             RealmNativeLifetime.CreateEmptyRealmFile(path, (ulong)schema);
 
-            using (var access = RealmAccessGateway.OpenForMutation(path, schema))
+            using (var access = TypedRealmAccess.OpenForMutation(path, schema))
                 access.Run(_ => { });
 
             RealmNativeLifetime.Flush();
@@ -185,7 +185,7 @@ namespace osu.Game.EzRealmSync.Tests
         /// <summary>用 typed 模型往 Ez 列写真实值——这些列在官方 schema 里不存在。</summary>
         private static void writeEzOnlyValues(string path, int schema)
         {
-            using var access = RealmAccessGateway.OpenForMutation(path, schema);
+            using var access = TypedRealmAccess.OpenForMutation(path, schema);
             access.Write(realm =>
             {
                 var set = realm.All<BeatmapSetInfo>().Single(s => s.ID == set_id);

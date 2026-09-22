@@ -42,21 +42,5 @@
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
       <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
     </Content>
-    <!-- lib DLL：仅本地 bin/ 输出，不打进 Release zip -->
-    <Content Include="..\readers\**\lib\*.dll;..\readers\**\lib\runtimes\**\*.*">
-      <Link>readers\%(RecursiveDir)%(Filename)%(Extension)</Link>
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-      <CopyToPublishDirectory>Never</CopyToPublishDirectory>
-    </Content>
-    <Content Include="..\scripts\Sync-ReaderLibs.ps1">
-      <Link>scripts\Sync-ReaderLibs.ps1</Link>
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-      <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
-    </Content>
-    <Content Include="..\scripts\Sync-ReaderLibs.cmd">
-      <Link>scripts\Sync-ReaderLibs.cmd</Link>
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-      <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
-    </Content>
   </ItemGroup>
 </Project>

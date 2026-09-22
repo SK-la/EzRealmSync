@@ -47,7 +47,7 @@ namespace osu.Game.EzRealmSync.Tests.TestInfrastructure
         {
             RealmNativeLifetime.CreateEmptyRealmFile(path, (ulong)schema);
 
-            using (var access = RealmAccessGateway.OpenForMutation(path, schema))
+            using (var access = TypedRealmAccess.OpenForMutation(path, schema))
                 access.Run(_ => { });
 
             RealmNativeLifetime.Flush();
@@ -194,7 +194,7 @@ namespace osu.Game.EzRealmSync.Tests.TestInfrastructure
         /// <summary>往 Ez 扩展列写真实值：这些列官方样本里没有，只能 typed 写。</summary>
         public static void WriteEzOnlyValues(string path, int schema)
         {
-            using var access = RealmAccessGateway.OpenForMutation(path, schema);
+            using var access = TypedRealmAccess.OpenForMutation(path, schema);
 
             access.Write(realm =>
             {

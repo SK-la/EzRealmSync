@@ -3,47 +3,35 @@
 > 面向开发者与进阶用户：说明工具**怎么打开**不同版本的 Realm、**会不会改版本**。  
 > 日常怎么点界面请看仓库根目录 [README.md](../README.md)。
 
-## 两套模型（产品轴）
+## 一套模型（产品轴）
 
-| 磁盘 | 模型 | 进程 |
-|------|------|------|
-| **同步（任意 schema）** | DynamicRealm + 官方基线列白名单 | 主进程；**不加载 `osu.Game.dll`** |
-| **官方**（schema &lt; 1000，如 51 / 52） | OfficialSchema 镜像（无 Ez 列） | `official-write/` Worker（转官方 / 数据页官方浏览） |
-| **Ez current**（如 52010） | Ez `osu.Game` | 主进程（数据页 Ez 写删、修复升级） |
-| **Ez legacy**（如 51007 / 52007） | Ez `osu.Game`（Sidecar 自包含 + readers 薄切片） | `read-sidecar/`（仅 typed 浏览旧 Ez，不同步） |
+**所有**读写都由 DynamicRealm 完成，产品进程**永不加载 `osu.Game.dll`**：
 
-主进程 **永不**加载 OfficialSchema（`[MapTo]` 冲突）。  
-官方库 **禁止**再用 `OfficialRealmAccess` + Ez 对象模型假装官方（会 `MigrationNeeded` / 污染 Ez 列）。  
-**同步禁止**用任何版本的 `osu.Game.dll` 打开用户库，避免错版本污染 schema。
+| 场景 | 打开方式 |
+|------|----------|
+| 探测文件头 | `RealmDiskSchemaReader`（只读文件头，不开库） |
+| 同步对比 / 导出包 | `DynamicBaselineReader`（官方基线列白名单） |
+| 同步写入 | `DynamicBaselineWriter`（只写目标库**已有**的官方列） |
+| 数据页浏览 | `DynamicBrowseSnapshotBuilder` |
+| 修复页扫描 / 删改 | 动态扫描 + 动态软删（只动 Ez 目标） |
+| 转回官方版 | `DynamicOfficialConverter`（按官方 schema 收窄成新文件） |
 
-## RealmAccessGateway（统一访问策略）
-
-所有 Tab / Service **不得**自行选择 Provider / Sidecar / Official Worker；经 `RealmAccessGateway` 按**操作意图**分流：
-
-| 入口 | 用途 | 打开方式 |
-|------|------|----------|
-| `ProbeSchema` | 读文件头 schema | DynamicRealm 只读文件头，不加载 osu.Game |
-| `ReadDiffSnapshot` | 同步对比 | DynamicRealm 官方基线列 |
-| `ReadBrowseSnapshot` | 数据 Tab 浏览 | 官方 → Official Worker；Ez current → 进程内；Ez legacy → ReadSidecar |
-| `OpenForWrite` / `OpenForMutation` | 数据页删改 / 修复写 **Ez** 目标 | 仅 Ez；官方直接拒绝。同步写入不走此入口 |
-| `OpenForMigration` | 修复页升级 | **仅 Ez**；官方请用官方客户端升级或「转回官方版」 |
+- 打开一律**钉死磁盘 schema**：不迁移、不改文件头版本号。
+- 不因 schema 高于/低于 bundled 版本拒绝用户库；版本号只用于**显示**与**选官方 schema 目标**。
+- `osu.Game.dll` 只存在于**测试工程**，用来验证产物能否被对应版本的客户端打开（`DllOpenCompatibilityTest`、parity 对照）。
 
 **错误语义：**
 
-- **同步读/写**：DynamicRealm 官方基线；不因 schema 高于 bundled NuGet 拒绝，也不加载 `osu.Game.dll`。
+- **同步读/写**：DynamicRealm 官方基线；缺列跳过，不因版本拒绝。
 - **成绩同步的边界**：成绩按 `BeatmapHash` 链接目标难度。目标缺该难度、缺归属规则集（Ez 专用 `diva`/`bms` 且目标本来没有）、或没有 `Score` 表时**跳过**，在结果里计数并在状态栏列出原因，不写目标端看不见的悬空成绩；整次同步不中断。Ez → Ez 时目标已有该规则集行则正常写入。
 - **Ez 列不被改动**：目标已有同 ID 行时按覆盖重建，但 Ez 扩展列取**删除前的原值**写回（谱面集的 `ExternalContentRoot`/`HostingKind`、难度的 `XxyStarRating`/`PerformancePoints`/`HasVideo`/`HasStoryboard`、成绩的 `ManiaHitMode`/`ManiaHealthMode`、规则集的 `LastAppliedXxySrVersion`）。覆盖同步不会顺手清掉 xxySR 或外部托管路径；单独同步难度走就地更新，天然保留。
-- 数据页只读官方：Official Worker；缺 Worker 构建产物 → 明确错误（重新 build Desktop）。
-- 数据页只读 Ez legacy + 有 reader 包 → Sidecar；无包 → `ReaderPackageMissing`。
-- **写回官方（数据 Tab）** → `SchemaModelMismatch`（请用同步 / 转官方）。
-- **写回 Ez legacy** → `MigrationRequired`（请先修复页升级）。
+- **官方库写回**（数据 Tab 删改）→ `SchemaModelMismatch`（请用同步 / 转官方）。
+- **版本过旧**：本工具不升级 Realm 文件。请用 Ez2Lazer 客户端打开一次让游戏迁移，再回到本工具。
 
 **运行时布局：**
 
-- Host 闭包：exe 根（主进程 + Ez current）。
-- `official-write/`：OfficialSchema + Contracts + Realm native（官方读写）。
-- `read-sidecar/`：Ez 托管闭包（STJ、osu.Game 等）；仅服务 **Ez legacy**。
-- `readers/{id}/lib`：Ez legacy 薄切片；**不再**用于官方读。
+- Host 闭包：exe 根（全部读写都在这里完成）。
+- `official-write/`：仅测试与「转官方」的外部写入通道（OfficialSchema 镜像），不参与日常浏览。
 
 ## 三类能力
 
@@ -52,8 +40,7 @@
 | **读取（数据 Tab）** | 浏览各类对象 | **否** |
 | **同步（同步 Tab）** | A/B 按 GUID 复制官方基线（谱面 / 收藏夹 / 皮肤 / 成绩 / File + files/）；两边 schema 原样保留 | **否** |
 | **导出 / 删除（数据 Tab）** | Ez 库软删 / 导出文件 | **否**；官方库不支持数据 Tab 写回 |
-| **修复「升级到 lib 最新」** | Ez 工作副本 migration | **是**（仅 Ez） |
-| **修复「转回官方版」** | Official Worker 写官方库 | **是**（目标官方 schema） |
+| **修复「转回官方版」** | 按官方 schema 收窄成新文件，原文件先备份 | **是**（落成官方 schema 的新文件） |
 
 ## 版本号
 
@@ -61,12 +48,11 @@
 |------|------|
 | 文件当前版本 | 磁盘文件头 |
 | 官方 upstream | `Decode(文件头).official`（&lt;1000 即官方） |
-| lib 最新 | bundled `osu.Game` |
-| 最低支持 | 官方 ≥50，Ez 修订 ≥3 |
 
-## 版本识别
+Ez 修订号仍按 `official * 1000 + ez` 编码，但工具只把它当**显示信息**，不再据此选 reader。
 
-1. **探测 / 同步**：`RealmDiskSchemaReader` + DynamicRealm，钉死磁盘 schema，不加载 `osu.Game.dll`。
-2. **数据页打开**：官方 → OfficialSchema Worker；Ez current → 进程内 `RealmAccess`（pinned，无 migration）；Ez legacy → Sidecar。
-3. **禁止**：对用户库被动 `performSchemaMigration: true`；禁止主进程 Ez 模型打开官方库；禁止用错版本 `osu.Game.dll` 打开用户库。
-4. **例外**：修复页 Ez 升级；转官方写库（Official Worker）。 `osu.Game.dll` 只用于测试验证产物能否被同版本/更新客户端打开。
+## 禁止
+
+1. 对用户库被动 `performSchemaMigration: true`。
+2. 在主进程中加载任何版本的 `osu.Game.dll`（测试工程除外）。
+3. 用「错误版本的工具」当借口拒绝读写：动态路径本就不吃版本号。

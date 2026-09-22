@@ -41,8 +41,8 @@ namespace osu.Game.EzRealmSync.Tests
 
                 RealmSnapshot typedSnapshot;
 
-                using (var access = RealmAccessGateway.OpenForMutation(path, schema))
-                    typedSnapshot = RealmSnapshotBuilder.Build(file, access);
+                using (var access = TypedRealmAccess.OpenForMutation(path, schema))
+                    typedSnapshot = TypedBrowseSnapshotBuilder.Build(file, access);
 
                 assertSameClasses(typedSnapshot, dynamicSnapshot);
             }

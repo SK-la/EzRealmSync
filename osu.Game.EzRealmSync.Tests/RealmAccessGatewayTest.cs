@@ -1,12 +1,14 @@
-#if HAS_EZ_OSU_GAME
 using NUnit.Framework;
-using osu.Game.Database;
-using osu.Game.EzRealmSync.Errors;
+using osu.Game.EzRealmSync.Models;
 using osu.Game.EzRealmSync.Realm;
+using osu.Game.EzRealmSync.Realm.Dynamic;
 using osu.Game.EzRealmSync.Tests.TestInfrastructure;
 
 namespace osu.Game.EzRealmSync.Tests
 {
+    /// <summary>
+    /// 只读探测与浏览一律走 DynamicRealm：任何磁盘 schema 都能读，不按版本选路、不要求匹配的 DLL。
+    /// </summary>
     [TestFixture]
     public class RealmAccessGatewayTest
     {
@@ -27,77 +29,7 @@ namespace osu.Game.EzRealmSync.Tests
         }
 
         [Test]
-        public void OpenForMutation_legacy_schema_throws_MigrationRequired_with_sidecar_hint()
-        {
-            var sample = RealmSampleFixture.GetSample("ez-old");
-            if (!sample.RealmFileExists)
-                Assert.Ignore($"样本未放置 realm 文件：{sample.RealmFilePath}");
-
-            int schema = RealmAccessGateway.ProbeSchema(sample.RealmFilePath) ?? throw new InvalidOperationException("schema 读取失败");
-
-            var ex = Assert.Throws<RealmUserOperationException>((Action)(() =>
-            {
-                using var access = RealmAccessGateway.OpenForMutation(sample.RealmFilePath, schema);
-                access.Run(_ => { });
-            }));
-
-            Assert.That(ex!.Kind, Is.EqualTo(RealmUserErrorKind.MigrationRequired).Or.EqualTo(RealmUserErrorKind.LegacyReaderUnavailable));
-            Assert.That(ex.Message, Does.Contain("Realm 文件").Or.Contain("升级").Or.Contain("osu.Game.dll"));
-        }
-
-        [Test]
-        public void TryOpenInProcessForRead_returns_false_for_official_schema()
-        {
-            int schema = RealmAccess.UpstreamSchemaVersion;
-            string path = Path.Combine(TestContext.CurrentContext.WorkDirectory, $"gw_official_{Guid.NewGuid():N}.realm");
-
-            try
-            {
-                RealmNativeLifetime.CreateEmptyRealmFile(path, (ulong)schema);
-                Assert.That(
-                    RealmAccessGateway.TryOpenInProcessForRead(path, schema, out RealmAccess? access),
-                    Is.False);
-                Assert.That(access, Is.Null);
-            }
-            finally
-            {
-                RealmNativeLifetime.DeleteRealmFiles(path);
-            }
-        }
-
-        [Test]
-        public void TryOpenInProcessForRead_succeeds_for_current_ez_schema_empty_realm()
-        {
-            var sample = RealmSampleFixture.GetAllSamples()
-                .FirstOrDefault(s => s.CanOpenWithoutMigration && s.RealmFileExists && s.DiskSchemaKind == "EzExtended");
-            if (sample == null)
-                Assert.Ignore("未放置可进程内打开的当前 Ez 样本。");
-
-            int schema = RealmAccessGateway.ProbeSchema(sample.RealmFilePath) ?? throw new InvalidOperationException("schema 读取失败");
-            Assert.That(
-                RealmAccessGateway.TryOpenInProcessForRead(sample.RealmFilePath, schema, out RealmAccess? access),
-                Is.True);
-            Assert.That(access, Is.Not.Null);
-            access?.Dispose();
-        }
-
-        [Test]
-        public void TryOpenInProcessForRead_returns_false_without_throw_when_legacy_open_fails()
-        {
-            var sample = RealmSampleFixture.GetSample("ez-old");
-            if (!sample.RealmFileExists)
-                Assert.Ignore($"样本未放置 realm 文件：{sample.RealmFilePath}");
-
-            int schema = RealmAccessGateway.ProbeSchema(sample.RealmFilePath) ?? throw new InvalidOperationException("schema 读取失败");
-
-            Assert.That(
-                RealmAccessGateway.TryOpenInProcessForRead(sample.RealmFilePath, schema, out RealmAccess? access),
-                Is.False);
-            Assert.That(access, Is.Null);
-        }
-
-        [Test]
-        public void ReadDiffSnapshot_uses_dynamic_baseline_without_reader_package()
+        public void ReadDiffSnapshot_uses_dynamic_baseline_without_dll()
         {
             string root = Path.Combine(Path.GetTempPath(), "EzRealmSyncGatewayTests", Guid.NewGuid().ToString("N"));
             string path = Path.Combine(root, "client_51007.realm");
@@ -111,6 +43,7 @@ namespace osu.Game.EzRealmSync.Tests
             finally
             {
                 RealmNativeLifetime.DeleteRealmFiles(path);
+
                 try
                 {
                     if (Directory.Exists(root))
@@ -123,7 +56,7 @@ namespace osu.Game.EzRealmSync.Tests
         }
 
         [Test]
-        public void ReadDiffSnapshot_reads_legacy_sample_without_sidecar()
+        public void ReadDiffSnapshot_reads_legacy_sample()
         {
             var sample = RealmSampleFixture.GetSample("ez-old");
             if (!sample.RealmFileExists)
@@ -134,21 +67,48 @@ namespace osu.Game.EzRealmSync.Tests
         }
 
         [Test]
-        public void Production_services_do_not_call_RealmSchemaProbe_Open_directly()
+        public void OpenDynamic_reads_without_touching_the_disk_header()
         {
+            string path = Path.Combine(TestContext.CurrentContext.WorkDirectory, $"gw_dynamic_{Guid.NewGuid():N}.realm");
+
+            try
+            {
+                RealmNativeLifetime.CreateEmptyRealmFile(path, 52_010);
+
+                using (RealmAccessGateway.OpenDynamicForRead(path, out RealmSchemaSnapshot schema))
+                    Assert.That(schema.ClassCount, Is.GreaterThanOrEqualTo(0));
+
+                Assert.That(RealmDiskSchemaReader.TryReadSchemaVersion(path), Is.EqualTo(52_010), "只读打开不得改动文件头。");
+            }
+            finally
+            {
+                RealmNativeLifetime.DeleteRealmFiles(path);
+            }
+        }
+
+        [Test]
+        public void Production_services_do_not_reference_typed_osu_game_access()
+        {
+            // DLL 只允许出现在测试夹具里：产品工程不得再出现 typed 打开 / reader 选路。
             string repoRoot = Path.GetFullPath(Path.Combine(TestContext.CurrentContext.TestDirectory, "..", "..", "..", ".."));
             string projectDir = Path.Combine(repoRoot, "osu.Game.EzRealmSync");
             Assert.That(Directory.Exists(projectDir), Is.True, projectDir);
 
-            var offenders = Directory.EnumerateFiles(projectDir, "*.cs", SearchOption.AllDirectories)
-                .Where(path => !path.Contains($"{Path.DirectorySeparatorChar}obj{Path.DirectorySeparatorChar}"))
-                .Where(path => !string.Equals(Path.GetFileName(path), "RealmAccessGateway.cs", StringComparison.OrdinalIgnoreCase))
-                .Where(path => !string.Equals(Path.GetFileName(path), "RealmSchemaProbe.cs", StringComparison.OrdinalIgnoreCase))
-                .Where(path => File.ReadAllText(path).Contains("RealmSchemaProbe.Open", StringComparison.Ordinal))
-                .Select(p => Path.GetRelativePath(repoRoot, p))
-                .ToList();
+            string[] typedMarkers =
+            [
+                "RealmAccess.OpenWithoutMigration",
+                "OfficialRealmAccess",
+                "RealmAccessGateway.OpenFor",
+                "RealmReaderRegistry",
+            ];
 
-            Assert.That(offenders, Is.Empty, $"以下文件仍直接调用 RealmSchemaProbe.Open：{string.Join(", ", offenders)}");
+            var offenders = Directory.EnumerateFiles(projectDir, "*.cs", SearchOption.AllDirectories)
+                                     .Where(path => !path.Contains($"{Path.DirectorySeparatorChar}obj{Path.DirectorySeparatorChar}"))
+                                     .Where(path => typedMarkers.Any(marker => File.ReadAllText(path).Contains(marker, StringComparison.Ordinal)))
+                                     .Select(p => Path.GetRelativePath(repoRoot, p))
+                                     .ToList();
+
+            Assert.That(offenders, Is.Empty, $"产品工程仍引用 typed osu.Game 访问：{string.Join(", ", offenders)}");
         }
 
         [Test]
@@ -160,4 +120,3 @@ namespace osu.Game.EzRealmSync.Tests
         }
     }
 }
-#endif
