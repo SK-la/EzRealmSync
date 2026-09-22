@@ -5,13 +5,15 @@ using System.Runtime.Loader;
 namespace osu.Game.EzRealmSync.Runtime
 {
     /// <summary>
-    /// 从 host exe 根目录（标准 dotnet 平铺布局）解析 Ez osu.Game 运行时依赖。
-    /// 须在首次使用 Realm / osu.Game 类型之前调用 <see cref="Install"/>。
+    /// 解析产品进程的托管/原生运行时依赖（osu.Framework、Realm 与 Realm 原生 realm-wrappers）。
+    /// <para>
+    /// 产品进程不加载 <c>osu.Game.dll</c>：Realm 读写全走 DynamicRealm，官方产物的写出交给
+    /// OfficialWrite Worker（见 docs/DATA-OPERATIONS.zh.md）。
+    /// </para>
     /// </summary>
     public static class EzRealmSyncRuntimeLibLoader
     {
         private static bool handlersRegistered;
-        private static readonly List<string> prependProbeDirectories = new List<string>();
 
         public static string? RuntimeLibDirectory { get; private set; }
 
@@ -33,46 +35,9 @@ namespace osu.Game.EzRealmSync.Runtime
             verifyRealmNativeLibraryPresent();
         }
 
-        /// <summary>
-        /// ReadSidecar Worker：注册 probe 链并校验 Realm native，但不 preload <c>osu.Game</c> / <c>osu.Framework</c>，
-        /// 以便 job 内 prepend reader 薄切片后再加载正确版本。
-        /// </summary>
-        public static void InstallSidecarHost(string? hostLibDirectoryOverride = null)
-        {
-            if (!string.IsNullOrWhiteSpace(hostLibDirectoryOverride) && Directory.Exists(hostLibDirectoryOverride))
-                RuntimeLibDirectory = Path.GetFullPath(hostLibDirectoryOverride);
-            else if (RuntimeLibDirectory == null)
-                RuntimeLibDirectory = EzRealmSyncBackend.ResolveRuntimeLibDirectory();
-
-            ensureHandlersRegistered();
-
-            foreach (string name in sidecarPreloadOrder)
-                tryLoadManaged(name);
-
-            verifyRealmNativeLibraryPresent();
-        }
-
-        private static readonly string[] sidecarPreloadOrder =
-        {
-            "Sentry",
-            "Realm",
-        };
-
-        /// <summary>将目录置于 probe 链最前（reader Sidecar job 内 reader lib 优先于主 lib）。</summary>
-        public static void PrependProbeDirectory(string directory)
-        {
-            if (string.IsNullOrWhiteSpace(directory) || !Directory.Exists(directory))
-                return;
-
-            string full = Path.GetFullPath(directory);
-            prependProbeDirectories.RemoveAll(d => string.Equals(d, full, StringComparison.OrdinalIgnoreCase));
-            prependProbeDirectories.Insert(0, full);
-        }
-
         private static readonly string[] preloadOrder =
         {
             "osu.Framework",
-            "osu.Game",
             "Realm",
         };
 
@@ -131,16 +96,13 @@ namespace osu.Game.EzRealmSync.Runtime
 
         private static IEnumerable<string> probeManagedDirectories()
         {
-            foreach (string directory in prependProbeDirectories)
-                yield return directory;
-
             if (RuntimeLibDirectory != null)
                 yield return RuntimeLibDirectory;
 
             yield return AppContext.BaseDirectory;
 
             string parentHost = Path.GetFullPath(Path.Combine(AppContext.BaseDirectory, ".."));
-            if (File.Exists(Path.Combine(parentHost, "osu.Game.dll")))
+            if (File.Exists(Path.Combine(parentHost, "EzRealmSync.exe")))
                 yield return parentHost;
         }
 
@@ -164,12 +126,6 @@ namespace osu.Game.EzRealmSync.Runtime
         {
             string rid = resolveRuntimeIdentifier();
 
-            foreach (string directory in prependProbeDirectories)
-            {
-                yield return Path.Combine(directory, "runtimes", rid, "native");
-                yield return directory;
-            }
-
             if (RuntimeLibDirectory != null)
             {
                 yield return Path.Combine(RuntimeLibDirectory, "runtimes", rid, "native");
@@ -180,7 +136,7 @@ namespace osu.Game.EzRealmSync.Runtime
             yield return AppContext.BaseDirectory;
 
             string parentHost = Path.GetFullPath(Path.Combine(AppContext.BaseDirectory, ".."));
-            if (File.Exists(Path.Combine(parentHost, "osu.Game.dll")))
+            if (File.Exists(Path.Combine(parentHost, "EzRealmSync.exe")))
             {
                 yield return Path.Combine(parentHost, "runtimes", rid, "native");
                 yield return parentHost;

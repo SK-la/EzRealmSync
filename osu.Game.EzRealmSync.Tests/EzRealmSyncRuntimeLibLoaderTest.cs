@@ -7,8 +7,12 @@ namespace osu.Game.EzRealmSync.Tests
     [TestFixture]
     public class EzRealmSyncRuntimeLibLoaderTest
     {
+        /// <summary>
+        /// 产品进程永不加载 osu.Game.dll：即使运行目录里躺着它（开发期 lib/ 平铺布局），
+        /// preload 也必须只挑 osu.Framework 与 Realm。
+        /// </summary>
         [Test]
-        public void InstallSidecarHost_does_not_preload_osu_game()
+        public void Install_does_not_preload_osu_game()
         {
             string tempRoot = Path.Combine(Path.GetTempPath(), "EzRealmSyncLoader", Guid.NewGuid().ToString("N"));
             string libDir = Path.Combine(tempRoot, "lib");
@@ -24,10 +28,10 @@ namespace osu.Game.EzRealmSync.Tests
             try
             {
                 var preloadedGame = findLoadedAssembly("osu.Game");
-                EzRealmSyncRuntimeLibLoader.InstallSidecarHost(libDir);
+                EzRealmSyncRuntimeLibLoader.Install(libDir);
 
                 if (preloadedGame == null)
-                    Assert.That(findLoadedAssembly("osu.Game"), Is.Null, "Sidecar host 不应 preload osu.Game");
+                    Assert.That(findLoadedAssembly("osu.Game"), Is.Null, "产品进程不应 preload osu.Game");
 
                 Assert.That(EzRealmSyncRuntimeLibLoader.RuntimeLibDirectory, Is.EqualTo(libDir));
             }
