@@ -110,9 +110,9 @@
 | `osu.EzRealmSync.AppModel` | 界面状态（Presenter、本地化） |
 | `osu.Game.EzRealmSync` | Realm 读写、同步、修复、导出逻辑 |
 | `osu.Game.EzRealmSync.OfficialSchema` / `OfficialWrite` | 官方库读写 Worker |
-| `osu.Game.EzRealmSync.ReadSidecar` | Ez legacy 只读 Sidecar |
+| `osu.Game.EzRealmSync.Tests` | 测试；也是唯一允许加载 `osu.Game.dll` 的地方（parity 对照、`readers/` 夹具） |
 
-默认依赖 **`ez2lazer.Game` NuGet**（不是 nuget.org 的 `ppy.osu.Game`）。UI 层不直接引用 `osu.Game`。
+产品工程只依赖 **`ez2lazer.Framework`**（osu.Framework），**不依赖** `ez2lazer.Game`：读写全走 DynamicRealm，官方产物由 `OfficialWrite` Worker 用官方 schema 镜像写出。测试工程才引 `ez2lazer.Game`，用来做 typed 对照。发布前 CI 会跑 `scripts/smoke-publish.ps1`，它断言 `osu.Game.dll` **不得**出现在发布目录。
 
 ### 构建与运行
 
@@ -129,7 +129,7 @@ dotnet run --project osu.EzRealmSync.Desktop
 | （默认） | 真实 Realm 后端 |
 | `--ui-test` | Mock 数据，只调 UI |
 | `--mock-delay=0` | Mock 去掉模拟延迟 |
-| `-p:UseLocalOsuLibs=true` | 用仓库 `lib/` 覆盖 NuGet（需先 `dotnet build -t:SyncEzRealmLibs`） |
+| `-p:UseLocalOsuLibs=true` | 测试工程改用仓库 `lib/` 的 `osu.Game.dll` 做 typed 对照（需先 `dotnet build -t:SyncEzRealmLibs`）；产品工程不受影响 |
 
 本地 lib、与主仓库并行开发：[lib/README.md](lib/README.md)
 
