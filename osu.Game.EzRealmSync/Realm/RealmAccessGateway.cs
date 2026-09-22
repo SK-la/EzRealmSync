@@ -45,62 +45,6 @@ namespace osu.Game.EzRealmSync.Realm
             return RealmBrowseSnapshotProvider.Read(file, progress, cancellationToken);
         }
 
-        /// <summary>是否需要子进程只读（官方或 Ez legacy）。</summary>
-        public static bool RequiresSidecarForRead(string realmFilePath, int pinnedDiskSchemaVersion)
-        {
-            RefreshReaders();
-            return RealmDiffSnapshotProvider.RequiresSidecarForRead(realmFilePath, pinnedDiskSchemaVersion);
-        }
-
-        /// <summary>子进程导出 Apply 包：官方 Official Worker；Ez legacy Sidecar。</summary>
-        public static RealmSyncApplyBundle ExportApplyBundleViaSidecar(
-            string realmFilePath,
-            int pinnedDiskSchemaVersion,
-            IReadOnlyList<Guid> itemIds,
-            CancellationToken cancellationToken = default)
-        {
-            RefreshReaders();
-            return RealmDiffSnapshotProvider.ExportApplyBundleViaSidecar(realmFilePath, pinnedDiskSchemaVersion, itemIds, cancellationToken);
-        }
-
-        /// <summary>官方目标库 Apply 写入（Official Worker）。</summary>
-        public static OfficialApplyImportResult ApplyImportToOfficial(
-            string targetRealmPath,
-            int pinnedDiskSchemaVersion,
-            IReadOnlyList<Guid> itemIds,
-            RealmSyncApplyBundle bundle,
-            CancellationToken cancellationToken = default)
-        {
-            var job = new OfficialApplyImportJob
-            {
-                TargetRealmPath = Path.GetFullPath(targetRealmPath),
-                PinnedDiskSchemaVersion = pinnedDiskSchemaVersion,
-                ItemIds = itemIds.ToList(),
-                Bundle = bundle,
-            };
-
-            return OfficialReadProcessRunner.ApplyImport(job, cancellationToken);
-        }
-
-        /// <summary>官方目标库软删（Official Worker）。</summary>
-        public static OfficialApplyImportResult ApplyDeleteToOfficial(
-            string targetRealmPath,
-            int pinnedDiskSchemaVersion,
-            IReadOnlyList<Guid> itemIds,
-            CancellationToken cancellationToken = default)
-        {
-            var job = new OfficialApplyImportJob
-            {
-                TargetRealmPath = Path.GetFullPath(targetRealmPath),
-                PinnedDiskSchemaVersion = pinnedDiskSchemaVersion,
-                ItemIds = itemIds.ToList(),
-                DeleteFromSource = true,
-                Bundle = new RealmSyncApplyBundle(),
-            };
-
-            return OfficialReadProcessRunner.ApplyImport(job, cancellationToken);
-        }
-
         /// <summary>写回 / 删改 / 导入；legacy schema 失败时不走 Sidecar。</summary>
         public static RealmAccess OpenForMutation(string realmFilePath, int? diskSchemaVersion = null) =>
             OpenForWrite(realmFilePath, diskSchemaVersion);

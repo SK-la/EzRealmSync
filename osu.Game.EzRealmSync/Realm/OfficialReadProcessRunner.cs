@@ -4,7 +4,7 @@ using osu.Game.EzRealmSync.Contracts;
 namespace osu.Game.EzRealmSync.Realm
 {
     /// <summary>
-    /// 官方磁盘 schema 只读：browse / read / apply-export，复用 official-write Worker（OfficialSchema 镜像）。
+    /// 官方磁盘 schema 只读：browse / read，复用 official-write Worker（OfficialSchema 镜像）。
     /// </summary>
     public static class OfficialReadProcessRunner
     {
@@ -18,12 +18,6 @@ namespace osu.Game.EzRealmSync.Realm
 
         public static RealmReadResult Read(RealmReadJob job, CancellationToken cancellationToken = default) =>
             run<RealmReadResult>("read", job, cancellationToken);
-
-        public static RealmApplyExportResult ExportApplyBundle(RealmApplyExportJob job, CancellationToken cancellationToken = default) =>
-            run<RealmApplyExportResult>("apply-export", job, cancellationToken);
-
-        public static OfficialApplyImportResult ApplyImport(OfficialApplyImportJob job, CancellationToken cancellationToken = default) =>
-            run<OfficialApplyImportResult>("apply-import", job, cancellationToken);
 
         private static TResult run<TResult>(string mode, object job, CancellationToken cancellationToken)
             where TResult : class
@@ -66,20 +60,6 @@ namespace osu.Game.EzRealmSync.Realm
                 {
                     string message = read.ErrorMessage ?? "Official Worker read 失败。";
                     EzRealmSyncLog.Error($"Official Worker read failed (exit {runResult.ExitCode}): {message}");
-                    throw new InvalidOperationException(message);
-                }
-
-                if (result is RealmApplyExportResult export && !export.Success)
-                {
-                    string message = export.ErrorMessage ?? "Official Worker apply-export 失败。";
-                    EzRealmSyncLog.Error($"Official Worker apply-export failed (exit {runResult.ExitCode}): {message}");
-                    throw new InvalidOperationException(message);
-                }
-
-                if (result is OfficialApplyImportResult import && !import.Success)
-                {
-                    string message = import.ErrorMessage ?? "Official Worker apply-import 失败。";
-                    EzRealmSyncLog.Error($"Official Worker apply-import failed (exit {runResult.ExitCode}): {message}");
                     throw new InvalidOperationException(message);
                 }
 

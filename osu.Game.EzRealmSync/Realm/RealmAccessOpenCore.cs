@@ -19,15 +19,6 @@ namespace osu.Game.EzRealmSync.Realm
         public static bool IsInProcessReadableRoute(RealmReaderRoute route) =>
             route == RealmReaderRoute.EzCurrent;
 
-        public static bool RequiresOutOfProcessRead(int pinnedDiskSchemaVersion)
-        {
-            return !IsInProcessReadableRoute(ResolveRoute(pinnedDiskSchemaVersion));
-        }
-
-        /// <summary>兼容旧名：非 Ez current 即需子进程（官方 → Official Worker；Ez legacy → Sidecar）。</summary>
-        public static bool RequiresSidecar(int pinnedDiskSchemaVersion) =>
-            RequiresOutOfProcessRead(pinnedDiskSchemaVersion);
-
         public static RealmAccess OpenCurrentInProcess(string realmFilePath, int pinnedDiskSchemaVersion, RealmReaderRoute route)
         {
             return route switch

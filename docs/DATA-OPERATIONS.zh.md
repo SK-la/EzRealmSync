@@ -25,14 +25,13 @@
 | `ProbeSchema` | 读文件头 schema | DynamicRealm 只读文件头，不加载 osu.Game |
 | `ReadDiffSnapshot` | 同步对比 | DynamicRealm 官方基线列 |
 | `ReadBrowseSnapshot` | 数据 Tab 浏览 | 官方 → Official Worker；Ez current → 进程内；Ez legacy → ReadSidecar |
-| `ExportApplyBundleViaSidecar` | 旧 typed 导出（非同步主路径） | 官方 → Official Worker；Ez legacy → Sidecar |
-| `ApplyImportToOfficial` | 转官方写入 | Official Worker `apply-import` |
 | `OpenForWrite` / `OpenForMutation` | 数据页删改 / 修复写 **Ez** 目标 | 仅 Ez；官方直接拒绝。同步写入不走此入口 |
 | `OpenForMigration` | 修复页升级 | **仅 Ez**；官方请用官方客户端升级或「转回官方版」 |
 
 **错误语义：**
 
 - **同步读/写**：DynamicRealm 官方基线；不因 schema 高于 bundled NuGet 拒绝，也不加载 `osu.Game.dll`。
+- **成绩同步的边界**：成绩按 `BeatmapHash` 链接目标难度。目标缺该难度、缺归属规则集（Ez 专用 `diva`/`bms` 且目标本来没有）、或没有 `Score` 表时**跳过**，在结果里计数并在状态栏列出原因，不写目标端看不见的悬空成绩；整次同步不中断。Ez → Ez 时目标已有该规则集行则正常写入。
 - 数据页只读官方：Official Worker；缺 Worker 构建产物 → 明确错误（重新 build Desktop）。
 - 数据页只读 Ez legacy + 有 reader 包 → Sidecar；无包 → `ReaderPackageMissing`。
 - **写回官方（数据 Tab）** → `SchemaModelMismatch`（请用同步 / 转官方）。
@@ -50,7 +49,7 @@
 | 能力 | 作用 | 是否改磁盘 schema |
 |------|------|-------------------|
 | **读取（数据 Tab）** | 浏览各类对象 | **否** |
-| **同步（同步 Tab）** | A/B 按 GUID 复制官方基线（谱面 / 收藏夹 / 皮肤 / File + files/）；两边 schema 原样保留 | **否** |
+| **同步（同步 Tab）** | A/B 按 GUID 复制官方基线（谱面 / 收藏夹 / 皮肤 / 成绩 / File + files/）；两边 schema 原样保留 | **否** |
 | **导出 / 删除（数据 Tab）** | Ez 库软删 / 导出文件 | **否**；官方库不支持数据 Tab 写回 |
 | **修复「升级到 lib 最新」** | Ez 工作副本 migration | **是**（仅 Ez） |
 | **修复「转回官方版」** | Official Worker 写官方库 | **是**（目标官方 schema） |

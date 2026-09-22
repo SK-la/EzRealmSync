@@ -22,7 +22,7 @@
 
 - [x] **P2.1** `OfficialRealmAccess`（`osu.Game`）
 - [x] **P2.2** `RealmDiffEngine` + `RealmDiffReader` + `ScanAsync`（需 `lib/osu.Game.dll`）
-- [x] **P2.3** `RealmRowCopier` + `ApplyAsync`（Ez→官方；`RealmApplySupport` 单测）
+- [x] **P2.3** ~~`RealmRowCopier` + `ApplyAsync`（Ez→官方；`RealmApplySupport` 单测）~~ —— typed 复制已被 DynamicRealm 官方基线同步取代（`DynamicBaselineReader` / `DynamicBaselineWriter`），相关类已删除
 - [x] **P2.4** `RealmBackupCatalog` / 还原、`RealmRealmDataService` 真实加载与集合比对
 - [x] **P2.4b** 任意 A→B 库对（含同类型/跨版本）Diff+写入；`RealmWritePlan`；导入页备份还原 UI
 - [x] **P2.4c** 单目录扫描（Ez 根目录 `*.realm` + 共享 `files/`）；`RealmServiceSession` 共享注册表；真实修复/导出

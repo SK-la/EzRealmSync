@@ -97,17 +97,6 @@ namespace osu.Game.EzRealmSync.Tests
         }
 
         [Test]
-        public void RequiresSidecarForRead_true_when_in_process_open_fails()
-        {
-            var sample = RealmSampleFixture.GetSample("ez-old");
-            if (!sample.RealmFileExists)
-                Assert.Ignore($"样本未放置 realm 文件：{sample.RealmFilePath}");
-
-            int schema = RealmAccessGateway.ProbeSchema(sample.RealmFilePath) ?? throw new InvalidOperationException("schema 读取失败");
-            Assert.That(RealmAccessGateway.RequiresSidecarForRead(sample.RealmFilePath, schema), Is.True);
-        }
-
-        [Test]
         public void ReadDiffSnapshot_uses_dynamic_baseline_without_reader_package()
         {
             string root = Path.Combine(Path.GetTempPath(), "EzRealmSyncGatewayTests", Guid.NewGuid().ToString("N"));
