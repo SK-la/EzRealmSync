@@ -1,35 +1,38 @@
-#if HAS_EZ_OSU_GAME
-using osu.Game.Beatmaps;
-using osu.Game.Database;
 using osu.Game.EzRealmSync.Models;
-using osu.Game.Scoring;
-using RealmInstance = Realms.Realm;
+using osu.Game.EzRealmSync.Realm.Dynamic;
+using Realms;
 
 namespace osu.Game.EzRealmSync.Realm
 {
+    /// <summary>
+    /// 谱面元数据 / 成绩哈希里的非法字符修复。
+    ///
+    /// 动态读写：只碰官方基线列（元数据 6 个文本列 + <c>Score.BeatmapHash</c>），
+    /// 不改 schema、不动 Ez 列。写前先重读当前值，避免"诊断时的值"和"落库时的值"不是同一份。
+    /// </summary>
     internal static class RealmIllegalCharacterFixer
     {
-        public static void Scan(RealmAccess access, List<RealmFixIssue> issues, RealmFixScanOptions options)
+        /// <summary>元数据里可能含非法字符的文本列（与官方展示 / 导出文件名相关的字段）。</summary>
+        private static readonly string[] metadata_text_fields = ["Title", "TitleUnicode", "Artist", "ArtistUnicode", "Source", "Tags"];
+
+        public static void Scan(DynamicRealmSession session, RealmSchemaSnapshot schema, List<RealmFixIssue> issues, RealmFixScanOptions options)
         {
             char replacement = string.IsNullOrEmpty(options.IllegalCharacterReplacement)
                 ? '_'
                 : options.IllegalCharacterReplacement[0];
 
-            access.Run(realm =>
-            {
-                foreach (var beatmap in realm.LiveBeatmaps())
-                    scanMetadata(beatmap.Metadata, beatmap.ID, EntityKind.Beatmap, issues, options.IllegalCharacters, replacement);
+            foreach (IRealmObjectBase beatmap in DynamicRowAccess.LiveRows(session, schema, OfficialBaselineSchema.Beatmap))
+                scanEntity(beatmap, schema, EntityKind.Beatmap, issues, options.IllegalCharacters, replacement, metadata_text_fields, "Metadata.");
 
-                foreach (var score in realm.LiveScores())
-                    scanScore(score, issues, options.IllegalCharacters, replacement);
-            });
+            foreach (IRealmObjectBase score in DynamicRowAccess.LiveRows(session, schema, OfficialBaselineSchema.Score))
+                scanEntity(score, schema, EntityKind.Score, issues, options.IllegalCharacters, replacement, ["BeatmapHash"], string.Empty);
         }
 
-        public static int Apply(RealmAccess access, IReadOnlyList<RealmFixIssue> issues, CancellationToken cancellationToken)
+        public static int Apply(DynamicRealmSession session, RealmSchemaSnapshot schema, IReadOnlyList<RealmFixIssue> issues, CancellationToken cancellationToken)
         {
             int applied = 0;
 
-            access.Write(realm =>
+            using (var transaction = session.Realm.BeginWrite())
             {
                 foreach (var issue in issues)
                 {
@@ -38,52 +41,110 @@ namespace osu.Game.EzRealmSync.Realm
                     if (issue.Kind != RealmFixIssueKind.IllegalCharacter || issue.TargetEntityId == null)
                         continue;
 
-                    if (issue.EntityKind == EntityKind.Beatmap)
-                    {
-                        var beatmap = realm.Find<BeatmapInfo>(issue.TargetEntityId.Value);
-                        if (beatmap == null)
-                            continue;
-
-                        if (applyToMetadata(realm, beatmap.Metadata, issue.FieldName, issue.SuggestedValue))
-                            applied++;
-                    }
-                    else if (issue.EntityKind == EntityKind.BeatmapSet)
-                    {
-                        var set = realm.Find<BeatmapSetInfo>(issue.TargetEntityId.Value);
-                        if (set == null)
-                            continue;
-
-                        foreach (var beatmap in set.Beatmaps)
-                        {
-                            if (applyToMetadata(realm, beatmap.Metadata, issue.FieldName, issue.SuggestedValue))
-                                applied++;
-                        }
-                    }
-                    else if (issue.EntityKind == EntityKind.Score)
-                    {
-                        var score = realm.Find<ScoreInfo>(issue.TargetEntityId.Value);
-                        if (score == null)
-                            continue;
-
-                        if (applyToScore(realm, score, issue.FieldName, issue.SuggestedValue))
-                            applied++;
-                    }
+                    applied += applyOne(session, schema, issue);
                 }
-            });
+
+                transaction.Commit();
+            }
 
             return applied;
         }
 
-        private static void scanMetadata(
-            BeatmapMetadata metadata,
-            Guid entityId,
+        private static int applyOne(DynamicRealmSession session, RealmSchemaSnapshot schema, RealmFixIssue issue)
+        {
+            if (issue.TargetEntityId is not { } targetId)
+                return 0;
+
+            switch (issue.EntityKind)
+            {
+                case EntityKind.Beatmap:
+                    return applyToBeatmaps(session, schema, [DynamicRealmAccess.Find(session.Realm, OfficialBaselineSchema.Beatmap, targetId)], issue);
+
+                case EntityKind.BeatmapSet:
+                {
+                    // 谱面集自己没有元数据列，修复范围是它下面所有难度。
+                    if (DynamicRealmAccess.Find(session.Realm, OfficialBaselineSchema.BeatmapSet, targetId) is not { } set)
+                        return 0;
+
+                    if (DynamicRowAccess.Resolve(set, schema, "Beatmaps") is not System.Collections.IEnumerable beatmaps)
+                        return 0;
+
+                    var targets = new List<IRealmObjectBase?>();
+
+                    foreach (object? beatmap in beatmaps)
+                        targets.Add(beatmap as IRealmObjectBase);
+
+                    return applyToBeatmaps(session, schema, targets, issue);
+                }
+
+                case EntityKind.Score:
+                {
+                    if (DynamicRealmAccess.Find(session.Realm, OfficialBaselineSchema.Score, targetId) is not { } score)
+                        return 0;
+
+                    if (!string.Equals(issue.FieldName, "BeatmapHash", StringComparison.Ordinal))
+                        return 0;
+
+                    // 以库里的当前值为准：诊断之后用户可能已经手改过，别用旧诊断值覆盖新值。
+                    if (DynamicRowAccess.ResolveString(score, schema, "BeatmapHash") is string current
+                        && string.Equals(current, issue.SuggestedValue, StringComparison.Ordinal))
+                    {
+                        return 0;
+                    }
+
+                    DynamicRealmAccess.Set(score, OfficialBaselineSchema.Score, "BeatmapHash", issue.SuggestedValue);
+                    return 1;
+                }
+
+                default:
+                    return 0;
+            }
+        }
+
+        private static int applyToBeatmaps(DynamicRealmSession session, RealmSchemaSnapshot schema, IEnumerable<IRealmObjectBase?> beatmaps, RealmFixIssue issue)
+        {
+            if (Array.IndexOf(metadata_text_fields, issue.FieldName) < 0)
+                return 0;
+
+            int applied = 0;
+
+            foreach (IRealmObjectBase? beatmap in beatmaps)
+            {
+                if (beatmap == null)
+                    continue;
+
+                // 元数据列在嵌入对象上：直接对该嵌入对象写列即可，父行已经在库里、无需额外 Add。
+                if (DynamicRowAccess.Resolve(beatmap, schema, "Metadata") is not IRealmObjectBase metadata)
+                    continue;
+
+                if (DynamicRowAccess.ResolveString(metadata, schema, issue.FieldName) is not string current)
+                    continue;
+
+                if (string.Equals(current, issue.SuggestedValue, StringComparison.Ordinal))
+                    continue;
+
+                DynamicRealmAccess.Set(metadata, OfficialBaselineSchema.BeatmapMetadata, issue.FieldName, issue.SuggestedValue);
+                applied++;
+            }
+
+            return applied;
+        }
+
+        private static void scanEntity(
+            IRealmObjectBase row,
+            RealmSchemaSnapshot schema,
             EntityKind kind,
             List<RealmFixIssue> issues,
             IReadOnlyList<char> illegalCharacters,
-            char replacement)
+            char replacement,
+            IReadOnlyList<string> fields,
+            string prefix)
         {
-            foreach (var (fieldName, value) in metadataStringFields(metadata))
+            foreach (string field in fields)
             {
+                if (DynamicRowAccess.Resolve(row, schema, prefix + field) is not string value || value.Length == 0)
+                    continue;
+
                 foreach (char illegal in illegalCharacters)
                 {
                     if (!value.Contains(illegal))
@@ -94,136 +155,23 @@ namespace osu.Game.EzRealmSync.Realm
                         Id = Guid.NewGuid(),
                         Kind = RealmFixIssueKind.IllegalCharacter,
                         EntityKind = kind,
-                        TargetEntityId = entityId,
-                        FieldName = fieldName,
+                        TargetEntityId = readRowId(row, schema),
+                        FieldName = field,
                         CurrentValue = value,
                         SuggestedValue = value.Replace(illegal, replacement),
-                        Detail = $"字段 {fieldName} 包含非法字符 '{illegal}'",
+                        Detail = prefix.Length == 0
+                            ? $"Hash 包含非法字符 '{illegal}'"
+                            : $"字段 {field} 包含非法字符 '{illegal}'",
                     });
+
+                    // 一个字段只报第一个非法字符：后续修复会把整段值替换掉，逐字符各报一条是同一处缺陷重复计数。
                     break;
                 }
             }
         }
 
-        private static void scanScore(
-            ScoreInfo score,
-            List<RealmFixIssue> issues,
-            IReadOnlyList<char> illegalCharacters,
-            char replacement)
-        {
-            // 成绩一般无路径非法字符问题；保留扩展点
-            if (string.IsNullOrEmpty(score.BeatmapHash))
-                return;
-
-            foreach (char illegal in illegalCharacters)
-            {
-                if (!score.BeatmapHash.Contains(illegal))
-                    continue;
-
-                issues.Add(new RealmFixIssue
-                {
-                    Id = Guid.NewGuid(),
-                    Kind = RealmFixIssueKind.IllegalCharacter,
-                    EntityKind = EntityKind.Score,
-                    TargetEntityId = score.ID,
-                    FieldName = nameof(ScoreInfo.BeatmapHash),
-                    CurrentValue = score.BeatmapHash,
-                    SuggestedValue = score.BeatmapHash.Replace(illegal, replacement),
-                    Detail = $"Hash 包含非法字符 '{illegal}'",
-                });
-                break;
-            }
-        }
-
-        private static bool applyToMetadata(RealmInstance realm, BeatmapMetadata metadata, string fieldName, string suggestedValue)
-        {
-            bool changed = false;
-
-            switch (fieldName)
-            {
-                case nameof(BeatmapMetadata.Title):
-                    if (!string.Equals(metadata.Title, suggestedValue, StringComparison.Ordinal))
-                    {
-                        metadata.Title = suggestedValue;
-                        changed = true;
-                    }
-
-                    break;
-
-                case nameof(BeatmapMetadata.TitleUnicode):
-                    if (!string.Equals(metadata.TitleUnicode, suggestedValue, StringComparison.Ordinal))
-                    {
-                        metadata.TitleUnicode = suggestedValue;
-                        changed = true;
-                    }
-
-                    break;
-
-                case nameof(BeatmapMetadata.Artist):
-                    if (!string.Equals(metadata.Artist, suggestedValue, StringComparison.Ordinal))
-                    {
-                        metadata.Artist = suggestedValue;
-                        changed = true;
-                    }
-
-                    break;
-
-                case nameof(BeatmapMetadata.ArtistUnicode):
-                    if (!string.Equals(metadata.ArtistUnicode, suggestedValue, StringComparison.Ordinal))
-                    {
-                        metadata.ArtistUnicode = suggestedValue;
-                        changed = true;
-                    }
-
-                    break;
-
-                case nameof(BeatmapMetadata.Source):
-                    if (!string.Equals(metadata.Source, suggestedValue, StringComparison.Ordinal))
-                    {
-                        metadata.Source = suggestedValue;
-                        changed = true;
-                    }
-
-                    break;
-
-                case nameof(BeatmapMetadata.Tags):
-                    if (!string.Equals(metadata.Tags, suggestedValue, StringComparison.Ordinal))
-                    {
-                        metadata.Tags = suggestedValue;
-                        changed = true;
-                    }
-
-                    break;
-            }
-
-            if (changed)
-                realm.Add(metadata, update: true);
-
-            return changed;
-        }
-
-        private static bool applyToScore(RealmInstance realm, ScoreInfo score, string fieldName, string suggestedValue)
-        {
-            if (fieldName != nameof(ScoreInfo.BeatmapHash))
-                return false;
-
-            if (string.Equals(score.BeatmapHash, suggestedValue, StringComparison.Ordinal))
-                return false;
-
-            score.BeatmapHash = suggestedValue;
-            realm.Add(score, update: true);
-            return true;
-        }
-
-        private static IEnumerable<(string FieldName, string Value)> metadataStringFields(BeatmapMetadata metadata)
-        {
-            yield return (nameof(BeatmapMetadata.Title), metadata.Title);
-            yield return (nameof(BeatmapMetadata.TitleUnicode), metadata.TitleUnicode);
-            yield return (nameof(BeatmapMetadata.Artist), metadata.Artist);
-            yield return (nameof(BeatmapMetadata.ArtistUnicode), metadata.ArtistUnicode);
-            yield return (nameof(BeatmapMetadata.Source), metadata.Source);
-            yield return (nameof(BeatmapMetadata.Tags), metadata.Tags);
-        }
+        /// <summary>修复条目靠主键回查对象；诊断对象没有 Guid 主键的类不参与修复页。</summary>
+        private static Guid readRowId(IRealmObjectBase row, RealmSchemaSnapshot schema) =>
+            DynamicRowAccess.Resolve(row, schema, "ID") is Guid id ? id : Guid.Empty;
     }
 }
-#endif

@@ -1,6 +1,6 @@
-#if HAS_EZ_OSU_GAME
 using osu.Game.EzRealmSync.IO;
 using osu.Game.EzRealmSync.Models;
+using osu.Game.EzRealmSync.Realm.Dynamic;
 
 namespace osu.Game.EzRealmSync.Realm
 {
@@ -31,8 +31,8 @@ namespace osu.Game.EzRealmSync.Realm
 
             cancellationToken.ThrowIfCancellationRequested();
 
-            using var access = RealmAccessGateway.OpenForMutation(file.FilePath, file.SchemaVersion);
-            int deleted = RealmBrowseEntityMutator.Delete(access, objectClass, entityIds);
+            using var session = RealmAccessGateway.OpenDynamicForWrite(file.FilePath, out RealmSchemaSnapshot schema);
+            int deleted = RealmBrowseEntityMutator.Delete(session, schema, objectClass, entityIds);
 
             if (deleted > 0)
             {
@@ -69,8 +69,8 @@ namespace osu.Game.EzRealmSync.Realm
             var collections = LegacyCollectionDb.ReadFile(collectionDbPath);
             progress?.Report(new ScanProgress { Progress = 0.4, Message = $"正在合并 {collections.Count} 个收藏夹…" });
 
-            using var access = RealmAccessGateway.OpenForMutation(file.FilePath, file.SchemaVersion);
-            var result = RealmCollectionDbSync.Import(access, collections);
+            using var session = RealmAccessGateway.OpenDynamicForWrite(file.FilePath, out RealmSchemaSnapshot schema);
+            var result = RealmCollectionDbSync.Import(session, schema, collections);
 
             snapshotCache.Remove(realmId);
             InvalidateCatalog(realmId);
@@ -81,4 +81,3 @@ namespace osu.Game.EzRealmSync.Realm
         public void InvalidateSnapshotCache(string realmId) => snapshotCache.Remove(realmId);
     }
 }
-#endif

@@ -6,7 +6,7 @@ using osu.Game.EzRealmSync.IO;
 using osu.Game.Scoring;
 using osu.Game.Scoring.Legacy;
 
-namespace osu.Game.EzRealmSync.Realm
+namespace osu.Game.EzRealmSync.Tests.TestInfrastructure
 {
     /// <summary>
     /// Realm 成绩 ↔ osu!stable <c>scores.db</c>。
@@ -16,7 +16,7 @@ namespace osu.Game.EzRealmSync.Realm
     /// - 将选中成绩合并写入已有 scores.db（按 Beatmap MD5 分组追加，可选按 ReplayMd5 / OnlineId 去重）
     /// - 从 scores.db 导入回 Realm（与 collection.db → Realm 导入对称）
     /// </remarks>
-    internal static class RealmScoresDbSync
+    internal static class TypedScoresDbExporter
     {
         public static int Export(RealmAccess access, IReadOnlyCollection<Guid> selectedIds, string outputFile)
         {

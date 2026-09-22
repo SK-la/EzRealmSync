@@ -64,12 +64,8 @@ namespace osu.Game.EzRealmSync.Realm.Dynamic
 
             var rows = new List<RealmBrowseRow>();
 
-            foreach (IRealmObjectBase row in DynamicRealmAccess.All(session.Realm, spec.ClassName))
+            foreach (IRealmObjectBase row in DynamicRowAccess.LiveRows(session, schema, spec.ClassName))
             {
-                // 软删 / 隐藏的对象不进浏览：旧 typed 版本用 Live* 查询过滤，这里按同一套列判定。
-                if (!isLive(row, schema, spec.Class))
-                    continue;
-
                 rows.Add(new RealmBrowseRow
                 {
                     Id = readRowId(row, schema, spec),
@@ -86,28 +82,6 @@ namespace osu.Game.EzRealmSync.Realm.Dynamic
         }
 
         /// <summary>
-        /// 与旧 typed 的 <c>Live*</c> 查询对齐：谱面集 / 成绩 / 皮肤要未软删；难度还要未 Hidden，且其所属谱面集未软删。
-        /// </summary>
-        private static bool isLive(IRealmObjectBase row, RealmSchemaSnapshot schema, RealmObjectClass cls)
-        {
-            switch (cls)
-            {
-                case RealmObjectClass.BeatmapSet:
-                case RealmObjectClass.Score:
-                case RealmObjectClass.Skin:
-                    return !isTrue(resolve(row, schema, "DeletePending"));
-
-                case RealmObjectClass.Beatmap:
-                    return !isTrue(resolve(row, schema, "Hidden")) && !isTrue(resolve(row, schema, "BeatmapSet.DeletePending"));
-
-                default:
-                    return true;
-            }
-        }
-
-        private static bool isTrue(object? value) => value is true;
-
-        /// <summary>
         /// 元数据在库里是嵌入类（没有独立表），旧 typed 版本按「标题 + 作者」去重后当成一类展示。保持同样做法。
         /// </summary>
         private static RealmClassGroup readMetadata(DynamicRealmSession session, RealmSchemaSnapshot schema)
@@ -117,15 +91,11 @@ namespace osu.Game.EzRealmSync.Realm.Dynamic
 
             if (schema.HasClass(OfficialBaselineSchema.Beatmap) && schema.HasClass(metadata_class))
             {
-                foreach (IRealmObjectBase beatmap in DynamicRealmAccess.All(session.Realm, OfficialBaselineSchema.Beatmap))
+                foreach (IRealmObjectBase beatmap in DynamicRowAccess.LiveRows(session, schema, OfficialBaselineSchema.Beatmap))
                 {
-                    // 元数据分组跟着「可见难度」走：隐藏的难度或软删谱面集下的难度不进这一组（与旧 typed 的 LiveBeatmaps 一致）。
-                    if (!isLive(beatmap, schema, RealmObjectClass.Beatmap))
-                        continue;
-
                     // 缺失的标题 / 作者按空串参与去重：旧 typed 版本也把它们当空串拼 key，这里保持同一套行标识。
-                    string title = resolve(beatmap, schema, metadata_title_path) as string ?? string.Empty;
-                    string artist = resolve(beatmap, schema, metadata_artist_path) as string ?? string.Empty;
+                    string title = DynamicRowAccess.ResolveString(beatmap, schema, metadata_title_path) ?? string.Empty;
+                    string artist = DynamicRowAccess.ResolveString(beatmap, schema, metadata_artist_path) ?? string.Empty;
 
                     if (!seen.Add($"{title}\0{artist}"))
                         continue;
@@ -133,7 +103,7 @@ namespace osu.Game.EzRealmSync.Realm.Dynamic
                     var cells = new Dictionary<string, string>(StringComparer.Ordinal);
 
                     foreach (ColumnSpec column in metadata_columns)
-                        cells[column.Key] = format(resolve(beatmap, schema, column.Paths[0]), column.Format);
+                        cells[column.Key] = format(DynamicRowAccess.Resolve(beatmap, schema, column.Paths[0]), column.Format);
 
                     rows.Add(new RealmBrowseRow { Id = toRowId($"{title}\0{artist}"), Cells = cells });
                 }
@@ -160,9 +130,9 @@ namespace osu.Game.EzRealmSync.Realm.Dynamic
             IReadOnlyDictionary<string, string> names = buildFileNames(session, schema);
             var rows = new List<RealmBrowseRow>();
 
-            foreach (IRealmObjectBase row in DynamicRealmAccess.All(session.Realm, OfficialBaselineSchema.File))
+            foreach (IRealmObjectBase row in DynamicRowAccess.AllRows(session, schema, OfficialBaselineSchema.File))
             {
-                string hash = resolve(row, schema, "Hash") as string ?? string.Empty;
+                string hash = DynamicRowAccess.ResolveString(row, schema, "Hash") ?? string.Empty;
 
                 rows.Add(new RealmBrowseRow
                 {
@@ -193,9 +163,9 @@ namespace osu.Game.EzRealmSync.Realm.Dynamic
                 if (!schema.HasClass(holder))
                     continue;
 
-                foreach (IRealmObjectBase row in DynamicRealmAccess.All(session.Realm, holder))
+                foreach (IRealmObjectBase row in DynamicRowAccess.AllRows(session, schema, holder))
                 {
-                    if (resolve(row, schema, "Files") is not System.Collections.IEnumerable usages)
+                    if (DynamicRowAccess.Resolve(row, schema, "Files") is not System.Collections.IEnumerable usages)
                         continue;
 
                     foreach (object? usage in usages)
@@ -203,10 +173,10 @@ namespace osu.Game.EzRealmSync.Realm.Dynamic
                         if (usage is not IRealmObjectBase usageObject)
                             continue;
 
-                        if (resolve(usageObject, schema, "File.Hash") is not string hash)
+                        if (DynamicRowAccess.ResolveString(usageObject, schema, "File.Hash") is not string hash)
                             continue;
 
-                        if (resolve(usageObject, schema, "Filename") is string name)
+                        if (DynamicRowAccess.ResolveString(usageObject, schema, "Filename") is string name)
                             names.TryAdd(hash, name);
                     }
                 }
@@ -233,7 +203,7 @@ namespace osu.Game.EzRealmSync.Realm.Dynamic
                 // 多路径即「取第一个有值的」：链接行可能缺失，退回到字符串列（旧 typed 版本的 ?? 写法）。
                 foreach (string path in column.Paths)
                 {
-                    value = resolve(row, schema, path);
+                    value = DynamicRowAccess.Resolve(row, schema, path);
 
                     if (value != null)
                         break;
@@ -248,7 +218,7 @@ namespace osu.Game.EzRealmSync.Realm.Dynamic
         /// <summary>行标识：主键是 Guid 就照用，否则（File.Hash、Ruleset.ShortName）沿用旧版的「哈希成 Guid」。</summary>
         private static Guid readRowId(IRealmObjectBase row, RealmSchemaSnapshot schema, ClassSpec spec)
         {
-            object? key = resolve(row, schema, spec.KeyProperty);
+            object? key = DynamicRowAccess.Resolve(row, schema, spec.KeyProperty);
 
             return key switch
             {
@@ -256,34 +226,6 @@ namespace osu.Game.EzRealmSync.Realm.Dynamic
                 null => GuidFromHash(string.Empty),
                 _ => GuidFromHash(DynamicDumpValue.Describe(key)),
             };
-        }
-
-        /// <summary>
-        /// 按「列路径」取值：点号分段，每段是当前对象的列名，可以逐段穿过链接
-        /// （<c>BeatmapSet.Hash</c>、<c>Metadata.Title</c>、<c>File.Hash</c>）。
-        /// 路径解析不出来（列不存在、链接为空、类型不符）一律返回 null，由显示层留空——浏览不该因为
-        /// 库里少一列而整页失败。
-        /// </summary>
-        private static object? resolve(object? current, RealmSchemaSnapshot schema, string path)
-        {
-            foreach (string segment in path.Split('.'))
-            {
-                if (current == null)
-                    return null;
-
-                if (current is not IRealmObjectBase realmObject)
-                    return null;
-
-                if (!schema.TryFindClass(realmObject.ObjectSchema.Name, out RealmClassSchema? classSchema))
-                    return null;
-
-                if (!classSchema.TryFindProperty(segment, out RealmPropertySchema? property))
-                    return null;
-
-                current = DynamicValueCodec.Read(realmObject, property);
-            }
-
-            return current;
         }
 
         private static string format(object? value, ValueFormat format)

@@ -3,6 +3,7 @@ using osu.Game.Database;
 #endif
 using osu.Game.EzRealmSync.Errors;
 using osu.Game.EzRealmSync.Models;
+using osu.Game.EzRealmSync.Realm.Dynamic;
 #if HAS_EZ_OSU_GAME
 using osu.Game.EzRealmSync.Realm.Readers;
 #endif
@@ -38,6 +39,48 @@ namespace osu.Game.EzRealmSync.Realm
             CancellationToken cancellationToken = default)
         {
             return RealmBrowseSnapshotProvider.Read(file, progress, cancellationToken);
+        }
+
+        /// <summary>
+        /// 动态只读打开：按磁盘 schema 读，不迁移、不加载 osu.Game。顺手把该版本的 schema 快照落盘
+        /// （「碰过哪个版本就有哪个版本的快照」）；快照失败不影响本次读取。
+        /// </summary>
+        public static DynamicRealmSession OpenDynamicForRead(string realmFilePath, out RealmSchemaSnapshot schema)
+        {
+            DynamicRealmSession session = DynamicRealmSession.OpenDynamic(realmFilePath, readOnly: true);
+
+            try
+            {
+                RealmSchemaSnapshotStore.Default.TryCapture(session);
+                schema = DynamicSchemaReader.Read(session);
+                return session;
+            }
+            catch
+            {
+                session.Dispose();
+                throw;
+            }
+        }
+
+        /// <summary>
+        /// 动态可写打开：**不迁移**，只改磁盘上已有的官方基线列（Ez 列一律不动）。
+        /// 调用方自带事务，并负责进程占用 / 冲突检查。
+        /// </summary>
+        public static DynamicRealmSession OpenDynamicForWrite(string realmFilePath, out RealmSchemaSnapshot schema)
+        {
+            DynamicRealmSession session = DynamicRealmSession.OpenDynamic(realmFilePath, readOnly: false);
+
+            try
+            {
+                RealmSchemaSnapshotStore.Default.TryCapture(session);
+                schema = DynamicSchemaReader.Read(session);
+                return session;
+            }
+            catch
+            {
+                session.Dispose();
+                throw;
+            }
         }
 
 #if HAS_EZ_OSU_GAME

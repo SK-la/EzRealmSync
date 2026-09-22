@@ -41,6 +41,22 @@ namespace osu.Game.EzRealmSync.Models
         public IReadOnlyList<RealmExportItem> Items { get; init; } = Array.Empty<RealmExportItem>();
     }
 
+    /// <summary>
+    /// 单个文件的导出对（源相对路径 → 目标相对路径）。
+    ///
+    /// 不依赖 osu.Game 模型：动态读路径与测试侧的 typed 参考实现共用同一类型，
+    /// 对照测试才能直接比两个列表。
+    /// </summary>
+    public readonly struct RealmExportFileEntry
+    {
+        public string SourceRelative { get; init; }
+
+        public string DestinationRelative { get; init; }
+
+        /// <summary>收藏夹展开时的子目录名；为空表示直接落在输出根目录。</summary>
+        public string? CollectionFolder { get; init; }
+    }
+
     public sealed class RealmExportRequest
     {
         public required string RealmId { get; init; }

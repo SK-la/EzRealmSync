@@ -1,49 +1,53 @@
-using osu.Game.Database;
 using osu.Game.EzRealmSync.Models;
-using osu.Game.Models;
+using osu.Game.EzRealmSync.Realm.Dynamic;
+using Realms;
 
 namespace osu.Game.EzRealmSync.Realm
 {
     /// <summary>
-    /// 扫描 <c>files/</c> 与 Realm <c>RealmFile</c> 表的一致性（缺失 / 僵尸文件）。
+    /// 扫描 <c>files/</c> 与 Realm <c>File</c> 表的一致性（缺失 / 僵尸文件）。
+    ///
+    /// 动态读：只认 <c>File.Hash</c> 一列，官方库与 Ez 库同一条路径。
     /// </summary>
     public static class RealmOrphanFileScanner
     {
-#if HAS_EZ_OSU_GAME
         public static void ScanMissingReferencedFiles(
-            RealmAccess access,
+            DynamicRealmSession session,
+            RealmSchemaSnapshot schema,
             string filesDirectory,
             List<RealmFixIssue> issues,
             CancellationToken cancellationToken)
         {
-            access.Run(realm =>
+            foreach (IRealmObjectBase file in DynamicRowAccess.AllRows(session, schema, OfficialBaselineSchema.File))
             {
-                foreach (var file in realm.All<RealmFile>())
+                cancellationToken.ThrowIfCancellationRequested();
+
+                string? hash = DynamicRowAccess.ResolveString(file, schema, "Hash");
+                if (string.IsNullOrEmpty(hash))
+                    continue;
+
+                string expected = RealmFilePathHelper.GetFullPath(filesDirectory, hash);
+
+                if (!File.Exists(expected))
                 {
-                    cancellationToken.ThrowIfCancellationRequested();
-
-                    string expected = RealmFilePathHelper.GetFullPath(filesDirectory, file.Hash);
-
-                    if (!File.Exists(expected))
+                    issues.Add(new RealmFixIssue
                     {
-                        issues.Add(new RealmFixIssue
-                        {
-                            Id = Guid.NewGuid(),
-                            Kind = RealmFixIssueKind.MissingFile,
-                            EntityKind = EntityKind.BeatmapSet,
-                            FieldName = "File",
-                            CurrentValue = file.Hash,
-                            SuggestedValue = string.Empty,
-                            Detail = "Realm 文件表有条目但 files/ 中缺少实体文件",
-                            ExpectedFilePath = expected,
-                        });
-                    }
+                        Id = Guid.NewGuid(),
+                        Kind = RealmFixIssueKind.MissingFile,
+                        EntityKind = EntityKind.BeatmapSet,
+                        FieldName = "File",
+                        CurrentValue = hash,
+                        SuggestedValue = string.Empty,
+                        Detail = "Realm 文件表有条目但 files/ 中缺少实体文件",
+                        ExpectedFilePath = expected,
+                    });
                 }
-            });
+            }
         }
 
         public static void ScanOrphansOnDisk(
-            RealmAccess access,
+            DynamicRealmSession session,
+            RealmSchemaSnapshot schema,
             string filesDirectory,
             List<RealmFixIssue> issues,
             CancellationToken cancellationToken,
@@ -51,11 +55,11 @@ namespace osu.Game.EzRealmSync.Realm
         {
             var referencedHashes = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
 
-            access.Run(realm =>
+            foreach (IRealmObjectBase file in DynamicRowAccess.AllRows(session, schema, OfficialBaselineSchema.File))
             {
-                foreach (var file in realm.All<RealmFile>())
-                    referencedHashes.Add(file.Hash);
-            });
+                if (DynamicRowAccess.ResolveString(file, schema, "Hash") is string hash && !string.IsNullOrEmpty(hash))
+                    referencedHashes.Add(hash);
+            }
 
             if (!Directory.Exists(filesDirectory))
                 return;
@@ -95,7 +99,6 @@ namespace osu.Game.EzRealmSync.Realm
 
             return null;
         }
-#endif
 
         public static int DeleteOrphanFiles(IReadOnlyList<RealmFixIssue> issues)
         {

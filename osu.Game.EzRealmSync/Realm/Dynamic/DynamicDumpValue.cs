@@ -117,7 +117,9 @@ namespace osu.Game.EzRealmSync.Realm.Dynamic
 
             try
             {
-                ObjectSchema schema = realmObject.ObjectSchema;
+                if (realmObject.ObjectSchema is not { } schema)
+                    return Null;
+
                 string? primaryKey = null;
 
                 foreach (Property candidate in schema)

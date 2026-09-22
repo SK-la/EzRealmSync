@@ -7,12 +7,17 @@ using osu.Game.EzRealmSync.Models;
 using osu.Game.Scoring;
 using RealmInstance = Realms.Realm;
 
-namespace osu.Game.EzRealmSync.Realm
+namespace osu.Game.EzRealmSync.Tests.TestInfrastructure
 {
     /// <summary>
-    /// 从已打开的 Realm 构建导出目录（不依赖浏览快照）。
+    /// 导出目录的 **typed 参考实现**，只给对照测试用（产品侧已改为动态读取 <c>DynamicExportCatalogBuilder</c>）。
+    ///
+    /// 与旧产品实现只有一处差别：筛选「未软删谱面」的查询先 <c>AsEnumerable()</c> 再 <c>Where</c>。
+    /// 原来的 <c>realm.All&lt;BeatmapInfo&gt;().Where(b =&gt; b.BeatmapSet == null || !b.BeatmapSet.DeletePending)</c>
+    /// 表达式 Realm 的 LINQ provider 翻译不了，枚举时抛 <c>NotSupportedException</c>；这里保留参考语义，
+    /// 不在测试夹具里重演那个查询缺陷。
     /// </summary>
-    internal static class RealmExportCatalogBuilder
+    internal static class TypedExportCatalogBuilder
     {
         public static RealmExportCatalog Build(RealmAccess access, ExportDataKind kind, IProgress<ScanProgress>? progress = null, CancellationToken cancellationToken = default)
         {
@@ -78,8 +83,8 @@ namespace osu.Game.EzRealmSync.Realm
         {
             int index = 0;
             var beatmaps = realm.All<BeatmapInfo>()
-                                .Where(b => b.BeatmapSet == null || !b.BeatmapSet.DeletePending)
                                 .AsEnumerable()
+                                .Where(b => b.BeatmapSet == null || !b.BeatmapSet.DeletePending)
                                 .ToList();
 
             foreach (var beatmap in beatmaps)
@@ -144,7 +149,7 @@ namespace osu.Game.EzRealmSync.Realm
 
                 if (requireReplayFile)
                 {
-                    var entry = RealmExportExecutor.CreateScoreEntry(score, groupScoresByPlayer: true);
+                    var entry = TypedExportExecutor.CreateScoreEntry(score, groupScoresByPlayer: true);
                     relative = entry.SourceRelative;
                     dest = entry.DestinationRelative;
                 }

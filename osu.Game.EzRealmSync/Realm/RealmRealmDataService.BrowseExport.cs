@@ -1,9 +1,6 @@
-#if HAS_EZ_OSU_GAME
-using osu.Game.Beatmaps;
-using osu.Game.Collections;
 using osu.Game.EzRealmSync.Models;
-using osu.Game.Scoring;
-using RealmInstance = Realms.Realm;
+using osu.Game.EzRealmSync.Realm.Dynamic;
+using Realms;
 
 namespace osu.Game.EzRealmSync.Realm
 {
@@ -21,6 +18,12 @@ namespace osu.Game.EzRealmSync.Realm
             CancellationToken cancellationToken = default) =>
             Task.Run(() => exportBrowseCore(realmId, filesDirectory, objectClass, entityIds, outputDirectory, folderName, groupScoresByPlayer, progress, cancellationToken), cancellationToken);
 
+        /// <summary>
+        /// 数据页导出：按选中行收集「源文件相对路径 → 目标相对路径」，再逐个复制。
+        ///
+        /// 全程动态读（<c>RealmFilePathHelper.GetStoragePath</c> 只吃 hash，不需要模型），
+        /// 所以旧库 / 官方库同样能导出，不要求磁盘 schema 能被当前模型打开。
+        /// </summary>
         private RealmExportResult exportBrowseCore(
             string realmId,
             string filesDirectory,
@@ -50,13 +53,13 @@ namespace osu.Game.EzRealmSync.Realm
 
             var relativePaths = new List<(string sourceRelative, string destRelative, string? subDir)>();
 
-            using (var access = RealmAccessGateway.OpenForMutation(file.FilePath, file.SchemaVersion))
+            using (var session = RealmAccessGateway.OpenDynamicForRead(file.FilePath, out RealmSchemaSnapshot schema))
             {
-                access.Run(realm =>
+                foreach (Guid id in entityIds)
                 {
-                    foreach (var id in entityIds)
-                        collectExportPaths(realm, objectClass, id, relativePaths, groupScoresByPlayer);
-                });
+                    cancellationToken.ThrowIfCancellationRequested();
+                    collectExportPaths(session, schema, objectClass, id, relativePaths, groupScoresByPlayer);
+                }
             }
 
             int exported = 0;
@@ -74,7 +77,7 @@ namespace osu.Game.EzRealmSync.Realm
                     Message = destRelative,
                 });
 
-                string targetDir = string.IsNullOrEmpty(subDir) ? outputRoot : Path.Combine(outputRoot, RealmExportExecutor.SanitizePathSegment(subDir));
+                string targetDir = string.IsNullOrEmpty(subDir) ? outputRoot : Path.Combine(outputRoot, DynamicDisplayText.SanitizePathSegment(subDir));
                 string destPath = Path.Combine(targetDir, destRelative);
                 string? destDir = Path.GetDirectoryName(destPath);
                 if (!string.IsNullOrEmpty(destDir))
@@ -104,7 +107,8 @@ namespace osu.Game.EzRealmSync.Realm
         }
 
         private static void collectExportPaths(
-            RealmInstance realm,
+            DynamicRealmSession session,
+            RealmSchemaSnapshot schema,
             RealmObjectClass objectClass,
             Guid id,
             List<(string sourceRelative, string destRelative, string? subDir)> paths,
@@ -114,10 +118,11 @@ namespace osu.Game.EzRealmSync.Realm
             {
                 case RealmObjectClass.BeatmapSet:
                 {
-                    if (realm.Find<BeatmapSetInfo>(id) is BeatmapSetInfo set)
+                    // 谱面集自己没有文件列：导出集就是导出它下面所有难度的 .osu。
+                    if (DynamicRealmAccess.Find(session.Realm, OfficialBaselineSchema.BeatmapSet, id) is { } set)
                     {
-                        foreach (var bm in set.Beatmaps)
-                            addBeatmapPath(paths, bm.Hash, null);
+                        foreach (IRealmObjectBase beatmap in DynamicRealmAccess.EnumerateObjects(set, "Beatmaps"))
+                            addBeatmapPath(paths, DynamicRowAccess.ResolveString(beatmap, schema, "Hash"));
                     }
 
                     break;
@@ -125,23 +130,25 @@ namespace osu.Game.EzRealmSync.Realm
 
                 case RealmObjectClass.Beatmap:
                 {
-                    if (realm.Find<BeatmapInfo>(id) is BeatmapInfo bm)
-                        addBeatmapPath(paths, bm.Hash, null);
+                    if (DynamicRealmAccess.Find(session.Realm, OfficialBaselineSchema.Beatmap, id) is { } beatmap)
+                        addBeatmapPath(paths, DynamicRowAccess.ResolveString(beatmap, schema, "Hash"));
 
                     break;
                 }
 
                 case RealmObjectClass.BeatmapCollection:
                 {
-                    if (realm.Find<BeatmapCollection>(id) is BeatmapCollection collection)
+                    if (DynamicRealmAccess.Find(session.Realm, OfficialBaselineSchema.BeatmapCollection, id) is { } collection)
                     {
-                        string subDir = collection.Name;
+                        string subDir = DynamicRowAccess.ResolveString(collection, schema, "Name") ?? string.Empty;
 
-                        foreach (string md5 in collection.BeatmapMD5Hashes)
+                        // 收藏夹存的是难度 MD5，不是文件 hash：要经 Beatmap 表翻译成 blob 路径。
+                        var md5ToHash = buildMd5ToHash(session, schema);
+
+                        foreach (string md5 in DynamicRealmAccess.EnumerateValues<string>(collection, "BeatmapMD5Hashes"))
                         {
-                            var bm = realm.All<BeatmapInfo>().FirstOrDefault(b => b.MD5Hash == md5);
-                            if (bm != null)
-                                addBeatmapPath(paths, bm.Hash, subDir);
+                            if (md5ToHash.TryGetValue(md5, out string? hash))
+                                addBeatmapPath(paths, hash, subDir);
                         }
                     }
 
@@ -150,15 +157,35 @@ namespace osu.Game.EzRealmSync.Realm
 
                 case RealmObjectClass.Score:
                 {
-                    if (realm.Find<ScoreInfo>(id) is ScoreInfo score)
-                        addScorePath(paths, score, groupScoresByPlayer);
+                    if (DynamicRealmAccess.Find(session.Realm, OfficialBaselineSchema.Score, id) is { } score)
+                        addScorePath(paths, score, schema, groupScoresByPlayer);
 
                     break;
                 }
             }
         }
 
-        private static void addBeatmapPath(List<(string sourceRelative, string destRelative, string? subDir)> paths, string beatmapHash, string? subDir)
+        /// <summary>收藏夹展开时的 MD5 → 文件 hash 映射；与旧 typed 版本一致，软删谱面不参与。</summary>
+        private static Dictionary<string, string> buildMd5ToHash(DynamicRealmSession session, RealmSchemaSnapshot schema)
+        {
+            var map = new Dictionary<string, string>(StringComparer.Ordinal);
+
+            foreach (IRealmObjectBase beatmap in DynamicRowAccess.AllRows(session, schema, OfficialBaselineSchema.Beatmap))
+            {
+                if (DynamicRowAccess.ResolveBool(beatmap, schema, "BeatmapSet.DeletePending"))
+                    continue;
+
+                string? md5 = DynamicRowAccess.ResolveString(beatmap, schema, "MD5Hash");
+                string? hash = DynamicRowAccess.ResolveString(beatmap, schema, "Hash");
+
+                if (!string.IsNullOrEmpty(md5) && !string.IsNullOrEmpty(hash))
+                    map.TryAdd(md5, hash);
+            }
+
+            return map;
+        }
+
+        private static void addBeatmapPath(List<(string sourceRelative, string destRelative, string? subDir)> paths, string? beatmapHash, string? subDir = null)
         {
             if (string.IsNullOrWhiteSpace(beatmapHash))
                 return;
@@ -167,17 +194,17 @@ namespace osu.Game.EzRealmSync.Realm
             paths.Add((relative, relative, subDir));
         }
 
-        private static void addScorePath(List<(string sourceRelative, string destRelative, string? subDir)> paths, ScoreInfo score, bool groupScoresByPlayer)
+        private static void addScorePath(
+            List<(string sourceRelative, string destRelative, string? subDir)> paths,
+            IRealmObjectBase score,
+            RealmSchemaSnapshot schema,
+            bool groupScoresByPlayer)
         {
-            try
-            {
-                var entry = RealmExportExecutor.CreateScoreEntry(score, groupScoresByPlayer);
-                paths.Add((entry.SourceRelative, entry.DestinationRelative, null));
-            }
-            catch (InvalidOperationException)
-            {
-            }
+            // 没有 .osr 引用的成绩导不出回放文件；旧 typed 版本靠异常吞掉，这里显式跳过。
+            if (DynamicExportCatalogBuilder.TryCreateScoreEntry(score, schema, groupScoresByPlayer) is not { } entry)
+                return;
+
+            paths.Add((entry.SourceRelative, entry.DestinationRelative, null));
         }
     }
 }
-#endif
