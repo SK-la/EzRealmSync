@@ -1,4 +1,5 @@
 using System.Reflection;
+using Realms.Schema;
 using RealmConfiguration = Realms.RealmConfiguration;
 using RealmInstance = Realms.Realm;
 
@@ -61,6 +62,54 @@ namespace osu.Game.EzRealmSync.Realm
                 ulong handleVersion = ReadSchemaVersionFromHandle(instance);
 
                 return new DynamicRealmSession(instance, fullPath, isUsableSchemaVersion(handleVersion) ? (int)handleVersion : 0, readOnly);
+            }
+            catch
+            {
+                instance.Dispose();
+                throw;
+            }
+        }
+
+        /// <summary>
+        /// 带显式 schema 打开动态库：文件不存在时按该 schema 新建，已存在时以该 schema 为基准做一次
+        /// schema 更新。与 <see cref="OpenDynamic"/> 相反，这里<b>会</b>触发迁移——"把数据搬进官方 schema
+        /// 的新库"正是需要它。收窄既有文件（丢掉 Ez 表/列）不在支持范围内：Realm 不允许把 schema
+        /// 版本降回官方号，所以这类请求一律落到新建文件上。
+        /// </summary>
+        public static DynamicRealmSession OpenDynamicWithSchema(
+            string realmFilePath,
+            RealmSchema schema,
+            ulong schemaVersion,
+            bool readOnly)
+        {
+            ArgumentException.ThrowIfNullOrWhiteSpace(realmFilePath);
+            ArgumentNullException.ThrowIfNull(schema);
+
+            Directory.CreateDirectory(Path.GetDirectoryName(Path.GetFullPath(realmFilePath))!);
+
+            string pipeDir = EzRealmSyncDataPaths.RealmPipeDirectory;
+            Directory.CreateDirectory(pipeDir);
+
+            var config = new RealmConfiguration(Path.GetFullPath(realmFilePath))
+            {
+                IsDynamic = true,
+                IsReadOnly = readOnly,
+                Schema = schema,
+                SchemaVersion = schemaVersion,
+                FallbackPipePath = pipeDir,
+            };
+
+            RealmInstance instance = RealmOpenContext.GetInstance(config);
+
+            try
+            {
+                ulong handleVersion = ReadSchemaVersionFromHandle(instance);
+
+                return new DynamicRealmSession(
+                    instance,
+                    Path.GetFullPath(realmFilePath),
+                    isUsableSchemaVersion(handleVersion) ? (int)handleVersion : 0,
+                    readOnly);
             }
             catch
             {

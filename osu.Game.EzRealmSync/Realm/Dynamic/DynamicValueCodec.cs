@@ -146,12 +146,38 @@ namespace osu.Game.EzRealmSync.Realm.Dynamic
             }
 
             object?[] items = flatten(value, property);
+
+            if (tryWriteValueList(obj, property, items))
+                return;
+
             Type elementClrType = clrTypeFor(property.ElementType);
 
             if (property.IsSet)
                 invoke(write_set_method, elementClrType, obj, property.Name, property.ElementType, items);
             else
                 invoke(write_list_method, elementClrType, obj, property.Name, property.ElementType, items);
+        }
+
+        /// <summary>
+        /// 标量列表走 <c>IList&lt;RealmValue&gt;</c>：这与 Realm 对值列表的实际存储形态一致，也是
+        /// <see cref="DynamicRealmAccess.AddToList"/> 已验证过的路。闭合 <c>DynamicApi.GetList&lt;T&gt;</c>
+        /// 的写法对 <c>Array&lt;String?&gt;</c> 一类列会在写入时抛 <c>KeyNotFoundException</c>（按空属性名查表），
+        /// 因此标量列表不再走那条路。对象列表（含 embedded）仍由调用方单独处理。
+        /// </summary>
+        private static bool tryWriteValueList(IRealmObjectBase obj, RealmPropertySchema property, object?[] items)
+        {
+            if (property.IsSet || property.ElementType == PropertyType.Object)
+                return false;
+
+            if (DynamicRealmAccess.GetListRaw(obj, property.Name) is not IList<RealmValue> list)
+                return false;
+
+            list.Clear();
+
+            foreach (object? item in items)
+                list.Add(toScalarValue(property.ElementType, item));
+
+            return true;
         }
 
         private static object?[] flatten(object? value, RealmPropertySchema property)
