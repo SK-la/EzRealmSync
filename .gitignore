@@ -2,6 +2,9 @@ bin/
 obj/
 .vs/
 
+# 发布暂存目录（release.yml 用 artifacts/publish）
+artifacts/
+
 # 可选本地 osu 构建产物（见 lib/README.md）；NuGet 模式不需要
 lib/*.dll
 lib/**/*.dll
