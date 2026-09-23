@@ -38,6 +38,11 @@
     <ProjectReference Include="..\osu.Game.EzRealmSync.OfficialWrite\osu.Game.EzRealmSync.OfficialWrite.csproj">
       <ReferenceOutputAssembly>false</ReferenceOutputAssembly>
     </ProjectReference>
+    <!-- DllVerifier 是唯一引用**真实官方包**的工程，与 Ez 线的 osu.Game 同名，只能进程外跑：
+         这里借它的构建产物（不引用其类型），路径由 OfficialDllVerifierProcess 解析。 -->
+    <ProjectReference Include="..\osu.Game.EzRealmSync.DllVerifier\osu.Game.EzRealmSync.DllVerifier.csproj">
+      <ReferenceOutputAssembly>false</ReferenceOutputAssembly>
+    </ProjectReference>
   </ItemGroup>
 
   <ItemGroup>
