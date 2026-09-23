@@ -175,18 +175,10 @@ namespace osu.Game.EzRealmSync.Tests
 
         private static void assertOpensWithOfficialDll(string realmPath, int pinnedSchema)
         {
-            string worker = OfficialWorkerProcess.ResolveWorkerExecutablePathForTests();
-            if (!File.Exists(worker))
-                Assert.Ignore($"Official Worker 未复制到测试输出：{worker}");
+            if (!OfficialDllOpenCheck.VerifierAvailable)
+                Assert.Ignore($"DllVerifier 未构建：{OfficialDllVerifierProcess.ResolveVerifierPathForTests()}");
 
-            var result = OfficialWorkerProcess.Read(new RealmReadJob
-            {
-                RealmFilePath = realmPath,
-                PinnedDiskSchemaVersion = pinnedSchema,
-                Profile = "official",
-            });
-
-            Assert.That(result.Success, Is.True);
+            Assert.That(OfficialDllOpenCheck.TryOpen(realmPath, pinnedSchema, out string? error), Is.True, error);
         }
 
         private static void createOfficialRealm(string path, int schema, bool withBaseline)

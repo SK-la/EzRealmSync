@@ -78,7 +78,10 @@ namespace osu.Game.EzRealmSync.Tests
                 RealmSchemaSnapshot producedSchema = DynamicSchemaReader.Read(produced);
 
                 Assert.That(produced.DiskSchemaVersion, Is.EqualTo(official.UpstreamVersion), "产物不是官方版本号。");
-                Assert.That(producedSchema.FindDifferences(official.Snapshot), Is.Empty, "产物 schema 与官方不一致。");
+                Assert.That(producedSchema.FindDifferences(official.Snapshot), Is.Empty, "产物 schema 与官方镜像不一致。");
+
+                assertMatchesTheRealOfficialSchema(producedSchema, official.UpstreamVersion);
+
                 Assert.That(produced.HasClass(ez_only_class), Is.False, "产物里出现了 Ez 表。");
                 Assert.That(produced.HasProperty(OfficialBaselineSchema.BeatmapSet, ez_only_beatmap_set_column), Is.False, "产物里出现了谱面集的 Ez 列。");
                 Assert.That(produced.HasProperty(OfficialBaselineSchema.Score, ez_only_score_column), Is.False, "产物里出现了成绩的 Ez 列。");
@@ -106,8 +109,8 @@ namespace osu.Game.EzRealmSync.Tests
         [Test]
         public void Converted_library_opens_with_the_official_dll()
         {
-            if (!OfficialDllOpenCheck.WorkerAvailable)
-                Assert.Ignore("Official Worker 未复制到测试输出，跳过官方 DLL 打开验收。");
+            if (!OfficialDllOpenCheck.VerifierAvailable)
+                Assert.Ignore($"DllVerifier 未构建：{OfficialDllVerifierProcess.ResolveVerifierPathForTests()}");
 
             string root = RealisticEzRealmSeeder.NewRoot("convert-official-dll");
 
@@ -340,6 +343,31 @@ namespace osu.Game.EzRealmSync.Tests
         {
             foreach (Guid id in ids)
                 Assert.That(DynamicRealmAccess.Find(produced.Realm, className, id), Is.Null, $"{className} {id} 本应被滤掉，却出现在了产物里。");
+        }
+
+        /// <summary>
+        /// 与**官方包自带的 schema**逐列对拍。上一条 <c>official.Snapshot</c> 来自 Ez 侧手抄的官方镜像，
+        /// 对拍只能证明「产物与镜像自洽」；这一条才证明产物就是官方客户端认得的那一份——镜像若抄漏/抄多了
+        /// 列，这里会直接炸出来。
+        ///
+        /// DllVerifier 没构建时只记录一次提示，不把整套转换验收变红：其余断言仍然有效。
+        /// </summary>
+        private static void assertMatchesTheRealOfficialSchema(RealmSchemaSnapshot producedSchema, int expectedUpstreamVersion)
+        {
+            if (!OfficialDllVerifierProcess.VerifierAvailable)
+            {
+                TestContext.Out.WriteLine($"DllVerifier 未构建（{OfficialDllVerifierProcess.ResolveVerifierPathForTests()}），跳过与官方包 schema 的对拍。");
+                return;
+            }
+
+            var realOfficial = OfficialDllVerifierProcess.DumpOfficialSchema();
+
+            Assert.That(
+                realOfficial.DeclaredSchemaVersion,
+                Is.EqualTo(expectedUpstreamVersion),
+                "官方包声明的版本与本用例假设的 upstream 不一致，请同步升级本用例的参考版本。");
+
+            Assert.That(producedSchema.FindDifferences(realOfficial.Snapshot), Is.Empty, "产物 schema 与官方包自带 schema 不一致。");
         }
 
         /// <summary>

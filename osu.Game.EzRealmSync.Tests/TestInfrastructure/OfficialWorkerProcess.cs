@@ -1,5 +1,3 @@
-using System.Diagnostics;
-using System.Text;
 using System.Text.Json;
 using osu.Game.EzRealmSync.Contracts;
 
@@ -26,11 +24,11 @@ namespace osu.Game.EzRealmSync.Tests.TestInfrastructure
             {
                 File.WriteAllText(jobPath, JsonSerializer.Serialize(job, json_options));
 
-                var psi = CreateWorkerStartInfo(ResolveWorkerExecutablePathForTests(), new[] { jobPath, resultPath });
-                var runResult = RunProcess(psi, cancellationToken);
+                string[] psi = new[] { jobPath, resultPath };
+                var runResult = ExternalProcessRunner.Run(ResolveWorkerExecutablePathForTests(), psi, cancellationToken);
 
                 if (!File.Exists(resultPath))
-                    throw new InvalidOperationException(BuildFailureMessage("OfficialWrite Worker", psi.FileName, runResult, "未产出 result.json"));
+                    throw new InvalidOperationException(ExternalProcessRunner.DescribeFailure("OfficialWrite Worker", ResolveWorkerExecutablePathForTests(), runResult, "未产出 result.json"));
 
                 var result = JsonSerializer.Deserialize<OfficialConvertResult>(File.ReadAllText(resultPath), json_options)
                              ?? throw new InvalidOperationException("OfficialWrite Worker 结果 JSON 无效。");
@@ -42,7 +40,7 @@ namespace osu.Game.EzRealmSync.Tests.TestInfrastructure
             }
             finally
             {
-                deleteTempRoot(tempRoot);
+                ExternalProcessRunner.DeleteDirectoryQuietly(tempRoot);
             }
         }
 
@@ -91,11 +89,11 @@ namespace osu.Game.EzRealmSync.Tests.TestInfrastructure
             {
                 File.WriteAllText(jobPath, JsonSerializer.Serialize(job, json_options));
 
-                var psi = CreateWorkerStartInfo(workerPath, new[] { mode, jobPath, resultPath });
-                var runResult = RunProcess(psi, cancellationToken);
+                string[] psi = new[] { mode, jobPath, resultPath };
+                var runResult = ExternalProcessRunner.Run(workerPath, psi, cancellationToken);
 
                 if (!File.Exists(resultPath))
-                    throw new InvalidOperationException(BuildFailureMessage("Official Worker", workerPath, runResult, "未产出 result.json"));
+                    throw new InvalidOperationException(ExternalProcessRunner.DescribeFailure("Official Worker", workerPath, runResult, "未产出 result.json"));
 
                 var result = JsonSerializer.Deserialize<TResult>(File.ReadAllText(resultPath), json_options)
                              ?? throw new InvalidOperationException("Official Worker 结果 JSON 无效。");
@@ -114,112 +112,8 @@ namespace osu.Game.EzRealmSync.Tests.TestInfrastructure
             }
             finally
             {
-                deleteTempRoot(tempRoot);
+                ExternalProcessRunner.DeleteDirectoryQuietly(tempRoot);
             }
-        }
-
-        private static ProcessStartInfo CreateWorkerStartInfo(string workerPath, IReadOnlyList<string> arguments)
-        {
-            string fullWorkerPath = Path.GetFullPath(workerPath);
-            string workerDir = Path.GetDirectoryName(fullWorkerPath) ?? AppContext.BaseDirectory;
-
-            var psi = new ProcessStartInfo
-            {
-                UseShellExecute = false,
-                CreateNoWindow = true,
-                RedirectStandardOutput = true,
-                RedirectStandardError = true,
-                WorkingDirectory = workerDir,
-            };
-
-            if (fullWorkerPath.EndsWith(".dll", StringComparison.OrdinalIgnoreCase))
-            {
-                psi.FileName = "dotnet";
-                psi.ArgumentList.Add("exec");
-                psi.ArgumentList.Add(fullWorkerPath);
-            }
-            else
-            {
-                psi.FileName = fullWorkerPath;
-            }
-
-            foreach (string arg in arguments)
-                psi.ArgumentList.Add(arg);
-
-            return psi;
-        }
-
-        private static WorkerProcessResult RunProcess(ProcessStartInfo psi, CancellationToken cancellationToken)
-        {
-            using var process = Process.Start(psi) ?? throw new InvalidOperationException("无法启动 Worker 进程。");
-
-            using (cancellationToken.Register(state =>
-            {
-                var p = (Process?)state;
-
-                try
-                {
-                    if (p != null && !p.HasExited)
-                        p.Kill(entireProcessTree: true);
-                }
-                catch
-                {
-                    // 取消路径忽略 kill 失败。
-                }
-            }, process))
-            {
-                var stdoutTask = process.StandardOutput.ReadToEndAsync(cancellationToken);
-                var stderrTask = process.StandardError.ReadToEndAsync(cancellationToken);
-                process.WaitForExit();
-
-                return new WorkerProcessResult
-                {
-                    ExitCode = process.ExitCode,
-                    StandardOutput = stdoutTask.GetAwaiter().GetResult(),
-                    StandardError = stderrTask.GetAwaiter().GetResult(),
-                };
-            }
-        }
-
-        private static string BuildFailureMessage(string workerLabel, string workerPath, WorkerProcessResult result, string? extra = null)
-        {
-            var sb = new StringBuilder();
-            sb.Append($"{workerLabel} 失败（exit {result.ExitCode}，worker={workerPath}）");
-
-            if (!string.IsNullOrWhiteSpace(extra))
-                sb.AppendLine().Append(extra);
-
-            if (!string.IsNullOrWhiteSpace(result.StandardError))
-                sb.AppendLine().Append("stderr: ").Append(result.StandardError.Trim());
-
-            if (!string.IsNullOrWhiteSpace(result.StandardOutput))
-                sb.AppendLine().Append("stdout: ").Append(result.StandardOutput.Trim());
-
-            return sb.ToString().Trim();
-        }
-
-        private static void deleteTempRoot(string tempRoot)
-        {
-            if (!Directory.Exists(tempRoot))
-                return;
-
-            try
-            {
-                Directory.Delete(tempRoot, recursive: true);
-            }
-            catch
-            {
-                // 临时 job 目录清理失败不影响主流程。
-            }
-        }
-
-        private readonly struct WorkerProcessResult
-        {
-            public int ExitCode { get; init; }
-
-            public string StandardOutput { get; init; }
-
-            public string StandardError { get; init; }
         }
     }
 }

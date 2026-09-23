@@ -1,0 +1,17 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>$(EzRealmSyncWorkerTfm)</TargetFramework>
+    <RootNamespace>osu.Game.EzRealmSync.DllVerifier</RootNamespace>
+    <AssemblyName>EzRealmSync.DllVerifier</AssemblyName>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <!--
+      这是全仓库唯一引用**真实官方包**的工程，刻意不引用 Ez 侧任何工程或包：
+      官方 osu.Game.dll 与 Ez 版同名，同一进程里加载必然撞，只能进程外跑。
+      用途是「工具处理完的 .realm 还能不能被官方客户端打开」的验收，以及从官方模型导出 schema。
+    -->
+    <PackageReference Include="ppy.osu.Game" />
+  </ItemGroup>
+</Project>

@@ -21,6 +21,9 @@ namespace osu.Game.EzRealmSync.OfficialSchema
             typeof(RealmFile),
             typeof(RealmNamedFileUsage),
             typeof(SkinInfo),
+            typeof(RealmKeyBinding),
+            typeof(ModPreset),
+            typeof(RealmRulesetSetting),
         };
 
         private static readonly Type[] v52_object_types = v51_object_types

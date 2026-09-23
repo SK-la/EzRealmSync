@@ -2,6 +2,9 @@ using Realms;
 
 namespace osu.Game.EzRealmSync.OfficialSchema.V51
 {
+    // 本文件是**手抄**的官方 schema 镜像，只服务测试（造官方参考库、做 parity 对照）。
+    // 抄漏会在 DynamicOfficialConvertTest.assertMatchesTheRealOfficialSchema 里炸出来——
+    // 那条断言直接拿 ppy.osu.Game 自带 schema 对拍，补表补列后要一起核对。
     [MapTo("Ruleset")]
     public class RulesetInfo : RealmObject
     {
@@ -272,5 +275,60 @@ namespace osu.Game.EzRealmSync.OfficialSchema.V51
         public IList<RealmNamedFileUsage> Files { get; } = null!;
 
         public bool DeletePending { get; set; }
+    }
+
+    /// <summary>官方 <c>RealmKeyBinding</c>（表名 KeyBinding，无 Ez 列）。</summary>
+    [MapTo("KeyBinding")]
+    public class RealmKeyBinding : RealmObject
+    {
+        [PrimaryKey]
+        public Guid ID { get; set; }
+
+        public string? RulesetName { get; set; }
+
+        public int? Variant { get; set; }
+
+        public int Action { get; set; }
+
+        public string? KeyCombination { get; set; }
+    }
+
+    /// <summary>官方 <c>ModPreset</c>（无 Ez 列）。</summary>
+    public class ModPreset : RealmObject
+    {
+        [PrimaryKey]
+        public Guid ID { get; set; }
+
+        public RulesetInfo Ruleset { get; set; } = null!;
+
+        public string? Name { get; set; }
+
+        public string? Description { get; set; }
+
+        [MapTo("Mods")]
+        public string? ModsJson { get; set; }
+
+        public bool DeletePending { get; set; }
+    }
+
+    /// <summary>
+    /// 官方 <c>RealmRulesetSetting</c>（表名 RulesetSetting，无主键，无 Ez 列）。
+    /// <c>Key</c>/<c>Value</c> 在官方源里带 <c>[Required]</c>：realm-dotnet 不按 NRT 注解推非空，
+    /// 少了这个特性这两列会落成可空，官方客户端只读打开会报「has been made required」。
+    /// </summary>
+    [MapTo("RulesetSetting")]
+    public class RealmRulesetSetting : RealmObject
+    {
+        [Indexed]
+        public string? RulesetName { get; set; }
+
+        [Indexed]
+        public int Variant { get; set; }
+
+        [Required]
+        public string Key { get; set; } = string.Empty;
+
+        [Required]
+        public string Value { get; set; } = string.Empty;
     }
 }

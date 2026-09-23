@@ -229,8 +229,8 @@ namespace osu.Game.EzRealmSync.Tests
         public void Copied_official_schema_library_opens_with_the_official_dll()
         {
             // 产物要能被官方 DLL 以 pinned disk schema 打开——这是「转官方」的验收口径。
-            if (!OfficialDllOpenCheck.WorkerAvailable)
-                Assert.Ignore("Official Worker 未复制到测试输出，跳过官方 DLL 打开验收。");
+            if (!OfficialDllOpenCheck.VerifierAvailable)
+                Assert.Ignore($"DllVerifier 未构建：{OfficialDllVerifierProcess.ResolveVerifierPathForTests()}");
 
             RealmSampleInfo official = requireOfficialSample();
             string root = newRoot("official-dll");
