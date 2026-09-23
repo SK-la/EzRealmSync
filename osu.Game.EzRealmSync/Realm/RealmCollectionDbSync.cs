@@ -61,6 +61,14 @@ namespace osu.Game.EzRealmSync.Realm
 
             bool guidPrimaryKey = keyProperty.Type.HasFlag(PropertyType.Guid);
 
+            // 老库的主键就是 Name（string），新建时拿名称当主键；Guid 主键则必须自带新 ID。
+            // 其它主键类型没遇到过，与其在 Create 里炸出难懂的异常，不如在这里说清楚。
+            if (!guidPrimaryKey && !keyProperty.Type.HasFlag(PropertyType.String))
+            {
+                throw new InvalidOperationException(
+                    $"磁盘 schema 里 {OfficialBaselineSchema.BeatmapCollection} 的主键 {primaryKey} 是 {keyProperty.Type}，不知道该给新建的收藏夹什么主键值（schema {session.DiskSchemaVersion}）。");
+            }
+
             using (var transaction = session.Realm.BeginWrite())
             {
                 foreach (var incoming in collections)
