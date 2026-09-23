@@ -3,6 +3,7 @@ using NUnit.Framework;
 using osu.Game.Beatmaps;
 using osu.Game.Collections;
 using osu.Game.Database;
+using osu.Game.EzRealmSync.IO;
 using osu.Game.EzRealmSync.Models;
 using osu.Game.EzRealmSync.Realm;
 using osu.Game.EzRealmSync.Realm.Dynamic;
@@ -331,6 +332,81 @@ namespace osu.Game.EzRealmSync.Tests
                     Assert.That(state.Found, Is.True, "软删把整行删掉了，应该只置 DeletePending。");
                     Assert.That(state.DeletePending, Is.True, "DeletePending 没有置上。");
                     Assert.That(state.EzRoot, Is.EqualTo(ezRootBefore), "Ez 列在软删后变了。");
+                }
+            }
+            finally
+            {
+                RealisticEzRealmSeeder.Cleanup(root);
+            }
+        }
+
+        /// <summary>
+        /// 导入 collection.db：只写 Name / BeatmapMD5Hashes / LastModified，schema 一字未变。
+        ///
+        /// 官方 51/52 的收藏夹主键是 <c>ID</c>（Guid）而不是 <c>Name</c>，合并必须按名称找；
+        /// 这条同时守住「新建时自带一个新 Guid，不撞 Guid.Empty」。
+        /// </summary>
+        [Test]
+        public void Collection_db_import_writes_without_changing_schema()
+        {
+            string root = RealisticEzRealmSeeder.NewRoot("collection-db-import");
+            int schema = RealmAccess.EzFileSchemaVersion;
+
+            try
+            {
+                string path = Path.Combine(root, "client.realm");
+                RealisticEzRealmSeeder.CreateCurrentEzRealm(path, schema);
+                RealisticEzRealmSeeder.SeedFromOfficialSample(path, schema);
+
+                (string Name, string Hash) existing;
+
+                using (var access = TypedRealmAccess.OpenForMutation(path, schema))
+                {
+                    existing = access.Run(realm =>
+                    {
+                        var withHashes = realm.All<BeatmapCollection>().AsEnumerable().FirstOrDefault(c => c.BeatmapMD5Hashes.Count > 0);
+
+                        Assert.That(withHashes, Is.Not.Null, "样本里没有带 MD5 的收藏夹，这条导入测试失去覆盖面。");
+
+                        return (withHashes!.Name, withHashes.BeatmapMD5Hashes.First());
+                    });
+                }
+
+                var snapshots = new RealmSchemaSnapshotStore(Path.Combine(root, "snapshots"));
+                RealmSchemaSnapshot before = snapshots.Capture(path).Snapshot;
+
+                RealmCollectionDbImportResult result;
+
+                using (var session = RealmAccessGateway.OpenDynamicForWrite(path, out RealmSchemaSnapshot schemaSnapshot))
+                {
+                    result = RealmCollectionDbSync.Import(session, schemaSnapshot,
+                    [
+                        new LegacyCollectionDbEntry(existing.Name, [existing.Hash, "00000000000000000000000000000000"]),
+                        new LegacyCollectionDbEntry("parity-import-new", ["11111111111111111111111111111111"]),
+                    ]);
+                }
+
+                Assert.That(result.CreatedCount, Is.EqualTo(1), "没有按名称新建收藏夹（同名的那条应该合并而不是新建）。");
+                Assert.That(result.MergedCount, Is.EqualTo(1), "同名收藏夹没有走合并。");
+                Assert.That(result.AddedHashCount, Is.EqualTo(2), "合并只应补进那条缺失的 MD5，新建那条算 1 条。");
+
+                RealmNativeLifetime.Flush();
+
+                RealmSchemaSnapshot after = snapshots.Capture(path).Snapshot;
+                RealmSchemaDriftGuard.EnsureUnchanged(before, after, path);
+
+                using (var access = TypedRealmAccess.OpenForMutation(path, schema))
+                {
+                    access.Run(realm =>
+                    {
+                        var merged = realm.All<BeatmapCollection>().AsEnumerable().Single(c => c.Name == existing.Name);
+                        Assert.That(merged.BeatmapMD5Hashes, Does.Contain("00000000000000000000000000000000"));
+                        Assert.That(merged.BeatmapMD5Hashes, Does.Contain(existing.Hash), "合并把原有 MD5 丢了。");
+
+                        var created = realm.All<BeatmapCollection>().AsEnumerable().Single(c => c.Name == "parity-import-new");
+                        Assert.That(created.BeatmapMD5Hashes, Is.EqualTo(new[] { "11111111111111111111111111111111" }));
+                        Assert.That(created.ID, Is.Not.EqualTo(Guid.Empty), "新建收藏夹没有拿到主键。");
+                    });
                 }
             }
             finally

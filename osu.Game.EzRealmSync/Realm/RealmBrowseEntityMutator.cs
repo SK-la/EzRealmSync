@@ -58,6 +58,7 @@ namespace osu.Game.EzRealmSync.Realm
                     deleted++;
                 }
 
+                RealmSchemaDriftGuard.EnsureUnchanged(schema, DynamicSchemaReader.Read(session.Realm), session.FilePath);
                 transaction.Commit();
             }
 

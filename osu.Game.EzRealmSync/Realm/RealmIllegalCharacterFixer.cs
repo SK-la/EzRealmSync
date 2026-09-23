@@ -45,6 +45,7 @@ namespace osu.Game.EzRealmSync.Realm
                     applied += applyOne(session, schema, issue);
                 }
 
+                RealmSchemaDriftGuard.EnsureUnchanged(schema, DynamicSchemaReader.Read(session.Realm), session.FilePath);
                 transaction.Commit();
             }
 
