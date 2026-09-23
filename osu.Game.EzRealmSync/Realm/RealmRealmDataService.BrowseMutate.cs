@@ -77,7 +77,5 @@ namespace osu.Game.EzRealmSync.Realm
             progress?.Report(new ScanProgress { Progress = 1, Message = "导入完成" });
             return result;
         }
-
-        public void InvalidateSnapshotCache(string realmId) => snapshotCache.Remove(realmId);
     }
 }

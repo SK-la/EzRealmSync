@@ -60,10 +60,6 @@ namespace osu.Game.EzRealmSync.Models
             return results.OrderBy(f => f, StringComparer.OrdinalIgnoreCase).ToList();
         }
 
-        public static bool AnyWorkspaceHasFilesFolder(string? endpointAWorkspace, string? endpointBWorkspace) =>
-            RealmWorkspacePaths.WorkspaceHasFilesFolder(endpointAWorkspace)
-            || RealmWorkspacePaths.WorkspaceHasFilesFolder(endpointBWorkspace);
-
         public static bool TryResolveFilesDirectory(string? endpointAWorkspace, string? endpointBWorkspace, out string filesDirectory)
         {
             if (RealmWorkspacePaths.TryResolveFilesDirectory(endpointAWorkspace, out filesDirectory))

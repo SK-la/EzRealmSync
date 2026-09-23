@@ -84,8 +84,6 @@ namespace osu.Game.EzRealmSync.Models
             return false;
         }
 
-        public static bool WorkspaceHasFilesFolder(string? workspacePath) => TryResolveFilesDirectory(workspacePath, out _);
-
         public static string ResolveStorageRoot(string realmFilePath)
         {
             string fullPath = Path.GetFullPath(realmFilePath);

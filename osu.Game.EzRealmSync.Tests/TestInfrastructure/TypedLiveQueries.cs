@@ -10,9 +10,6 @@ namespace osu.Game.EzRealmSync.Tests.TestInfrastructure
     /// </summary>
     internal static class TypedLiveQueries
     {
-        public static IEnumerable<BeatmapSetInfo> LiveBeatmapSets(this RealmInstance realm) =>
-            realm.All<BeatmapSetInfo>().AsEnumerable().Where(s => !s.DeletePending);
-
         public static IEnumerable<BeatmapInfo> LiveBeatmaps(this RealmInstance realm) =>
             realm.All<BeatmapInfo>().AsEnumerable().Where(b => !b.Hidden && (b.BeatmapSet == null || !b.BeatmapSet.DeletePending));
 

@@ -14,12 +14,6 @@ namespace osu.Game.EzRealmSync.Tests
         }
 
         [Test]
-        public void CreateDataService_real_mode_returns_realm_service()
-        {
-            Assert.That(EzRealmSyncServiceFactory.CreateDataService(uiTestMode: false), Is.InstanceOf<RealmRealmDataService>());
-        }
-
-        [Test]
         public void CreateSession_ui_test_uses_single_mock_instance()
         {
             var session = EzRealmSyncServiceFactory.CreateSession(uiTestMode: true);

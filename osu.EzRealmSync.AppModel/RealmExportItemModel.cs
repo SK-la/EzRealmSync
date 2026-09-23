@@ -27,8 +27,6 @@ namespace osu.EzRealmSync.AppModel
 
         public string PlayerName => Item.PlayerName ?? string.Empty;
 
-        public string SecondaryLabel => BeatmapCount > 0 ? BeatmapCountLabel : PlayerName;
-
         public string RelativePath => string.IsNullOrWhiteSpace(Item.DestinationRelativePath) ? Item.RelativePath : Item.DestinationRelativePath;
 
         public string CollectionName => Item.CollectionName ?? string.Empty;

@@ -32,12 +32,6 @@ namespace osu.Game.EzRealmSync
             var data = new RealmRealmDataService(registry);
             return new RealmServiceSession(data, data, data, new RealmEzRealmSyncService(registry));
         }
-
-        public static IRealmDataService CreateDataService(bool uiTestMode, MockEzRealmSyncOptions? mockOptions = null) => CreateSession(uiTestMode, mockOptions).Data;
-
-        public static IRealmFixService CreateFixService(bool uiTestMode, MockEzRealmSyncOptions? mockOptions = null) => CreateSession(uiTestMode, mockOptions).Fix;
-
-        public static IRealmExportService CreateExportService(bool uiTestMode, MockEzRealmSyncOptions? mockOptions = null) => CreateSession(uiTestMode, mockOptions).Export;
     }
 
     public sealed class RealmServiceSession

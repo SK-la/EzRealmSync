@@ -18,21 +18,6 @@ namespace osu.Game.EzRealmSync.Contracts
         public List<string> FileHashes { get; set; } = new List<string>();
 
         public List<OfficialSkinDto> Skins { get; set; } = new List<OfficialSkinDto>();
-
-        public OfficialConvertFilterStats FilterStats { get; set; } = new OfficialConvertFilterStats();
-    }
-
-    public sealed class OfficialConvertFilterStats
-    {
-        public int SkippedSkins { get; set; }
-
-        public int SkippedScores { get; set; }
-
-        public int SkippedBeatmapSets { get; set; }
-
-        public int SkippedRulesets { get; set; }
-
-        public int PrunedCollectionEntries { get; set; }
     }
 
     public sealed class OfficialConvertResult
@@ -46,8 +31,6 @@ namespace osu.Game.EzRealmSync.Contracts
         public int RealmFileCount { get; set; }
 
         public int TargetSchemaVersion { get; set; }
-
-        public OfficialConvertFilterStats? FilterStats { get; set; }
     }
 
     public sealed class OfficialRulesetDto

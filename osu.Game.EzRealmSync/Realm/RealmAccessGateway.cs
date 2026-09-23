@@ -13,10 +13,6 @@ namespace osu.Game.EzRealmSync.Realm
         public static int? ProbeSchema(string realmFilePath) =>
             RealmDiskSchemaReader.TryReadSchemaVersion(realmFilePath);
 
-        public static int ResolveSchemaVersion(string realmFilePath, int? diskSchemaVersion) =>
-            diskSchemaVersion ?? ProbeSchema(realmFilePath)
-            ?? throw new InvalidOperationException($"无法读取 Realm schema 版本：{realmFilePath}");
-
         /// <summary>只读 Diff 快照：官方基线 DynamicRealm，不加载 osu.Game.dll。</summary>
         public static RealmDiffSnapshot ReadDiffSnapshot(
             string realmFilePath,

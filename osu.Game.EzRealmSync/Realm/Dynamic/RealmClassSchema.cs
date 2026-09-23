@@ -28,8 +28,6 @@ namespace osu.Game.EzRealmSync.Realm.Dynamic
 
         public IEnumerable<RealmPropertySchema> Properties => PropertyNames.Select(n => this.properties[n]);
 
-        public int PropertyCount => properties.Count;
-
         /// <summary>本类的稳定指纹：列按名排序，因此与 Realm 内部的列顺序无关。</summary>
         public string Signature { get; }
 

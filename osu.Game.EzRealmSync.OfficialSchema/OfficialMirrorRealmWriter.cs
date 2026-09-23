@@ -42,7 +42,6 @@ namespace osu.Game.EzRealmSync.OfficialSchema
                     AppliedCount = applied,
                     RealmFileCount = fileCount,
                     TargetSchemaVersion = schema,
-                    FilterStats = job.FilterStats,
                 };
             }
             catch (Exception ex)
@@ -52,7 +51,6 @@ namespace osu.Game.EzRealmSync.OfficialSchema
                     Success = false,
                     ErrorMessage = ex.Message,
                     TargetSchemaVersion = schema,
-                    FilterStats = job.FilterStats,
                 };
             }
         }

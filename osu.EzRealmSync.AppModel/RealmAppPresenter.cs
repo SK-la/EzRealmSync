@@ -68,13 +68,8 @@ namespace osu.EzRealmSync.AppModel
 
             CurrentWorkspaceTab.BindValueChanged(_ => { }, true);
             EntityFilter.BindValueChanged(_ => refreshSyncRows(), true);
-            CurrentCategory.BindValueChanged(_ =>
-            {
-                refreshSyncRows();
-                updateCanApply();
-            }, true);
+            CurrentCategory.BindValueChanged(_ => refreshSyncRows(), true);
             SelectedRealmClass.BindValueChanged(_ => refreshBrowseTable(), true);
-            SyncAction.BindValueChanged(_ => updateCanApply(), true);
 
             SearchDirectory.BindValueChanged(_ => persistSettings());
             BackupDirectory.BindValueChanged(_ => persistSettings());
@@ -173,7 +168,6 @@ namespace osu.EzRealmSync.AppModel
         public BindableInt SelectionCount { get; } = new BindableInt();
         public BindableInt DataSelectionCount { get; } = new BindableInt();
         public BindableBool IsBusy { get; } = new BindableBool();
-        public BindableBool CanApply { get; } = new BindableBool(true);
         public BindableBool IsSelectAllMode { get; } = new BindableBool(true);
 
         public string LoadedSnapshotSummary { get; private set; } = string.Empty;
@@ -567,7 +561,6 @@ namespace osu.EzRealmSync.AppModel
                     Progress.Value = 1;
                     CurrentCategory.Value = DiffCategory.SourceOnly;
                     refreshSyncRows();
-                    updateCanApply();
                 });
             }
             catch (Exception ex)
@@ -1425,8 +1418,6 @@ namespace osu.EzRealmSync.AppModel
             }
         }
 
-        public void OnLanguageChanged() => LabelsChanged?.Invoke();
-
         private async Task applyFixesAsync(IReadOnlyList<Guid> issueIds)
         {
             var file = getRealmFile(FixRealmId.Value);
@@ -1755,12 +1746,6 @@ namespace osu.EzRealmSync.AppModel
             SyncRowsChanged?.Invoke();
         });
 
-        private void updateCanApply()
-        {
-            // 操作（添加/删除）与操作目标（A/B）分离；忙碌时禁用。
-            CanApply.Value = !IsBusy.Value;
-        }
-
         private void updateSelectionCount() => SelectionCount.Value = syncRows.Count(r => r.IsSelected);
 
         private RealmFileEntry? getRealmFile(string? id) => string.IsNullOrEmpty(id) ? null : RealmFiles.FirstOrDefault(f => f.Id == id);
@@ -1808,7 +1793,6 @@ namespace osu.EzRealmSync.AppModel
             IsBusy.Value = busy;
             if (!busy)
                 Progress.Value = 0;
-            updateCanApply();
         });
 
         private async Task resetOperationCancellationAsync()

@@ -20,17 +20,6 @@ namespace osu.Game.EzRealmSync.DllVerifier
         /// <summary>官方包声明的 schema 版本（官方客户端会写进文件头的号）；读不到时为 null。</summary>
         public static int? DeclaredSchemaVersion => declared_schema_version.Value;
 
-        /// <summary>官方包里的类名集合，用于识别"官方 schema 里没有的表"。</summary>
-        public static IReadOnlySet<string> SchemaClassNames()
-        {
-            var names = new HashSet<string>(StringComparer.Ordinal);
-
-            foreach (Type type in ObjectTypes)
-                names.Add(realmClassName(type));
-
-            return names;
-        }
-
         /// <summary>Realm 里实际的类名（<c>[MapTo]</c> 会改名，如 <c>ScoreInfo → Score</c>）。</summary>
         public static string realmClassName(Type type)
             => type.GetCustomAttribute<MapToAttribute>()?.Mapping ?? type.Name;

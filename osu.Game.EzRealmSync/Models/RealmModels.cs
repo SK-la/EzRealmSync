@@ -40,8 +40,6 @@ namespace osu.Game.EzRealmSync.Models
         public string EzSchemaDisplay => DiskSchemaKind == RealmDiskSchemaKind.EzExtended && EzRealmSchemaVersion is > 0
             ? EzRealmSchemaVersion.ToString()!
             : "—";
-
-        public string SchemaDisplay => SchemaVersion?.ToString() ?? "—";
     }
 
     public sealed class RealmEntityRow

@@ -47,8 +47,6 @@ namespace osu.Game.EzRealmSync
 
         public static string ApplicationRoot => ResolveHostApplicationRoot();
 
-        public static string SettingsFile => ResolveSettingsFile();
-
         public static string BackupsDirectory => Path.Combine(ApplicationRoot, "backups");
 
         public static string ExportsDirectory => Path.Combine(ApplicationRoot, "exports");

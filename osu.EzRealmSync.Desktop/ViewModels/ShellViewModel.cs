@@ -333,7 +333,6 @@ namespace osu.EzRealmSync.Desktop.ViewModels
         public IEnumerable<EntityKindFilter> EntityFilters { get; } = Enum.GetValues<EntityKindFilter>();
         public IEnumerable<RealmSetOperation> SetOperations { get; } = Enum.GetValues<RealmSetOperation>();
         public IEnumerable<RealmSyncAction> SyncActions { get; } = Enum.GetValues<RealmSyncAction>();
-        public IEnumerable<EntityKind> DataGroups { get; } = new[] { EntityKind.BeatmapSet, EntityKind.Beatmap, EntityKind.Score };
 
         public string GetEntityFilterLabel(EntityKindFilter f) => RealmAppPresenter.GetEntityFilterLabel(f);
         public string GetSetOperationLabel(RealmSetOperation op) => RealmAppPresenter.GetSetOperationLabel(op);
