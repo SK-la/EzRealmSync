@@ -19,7 +19,7 @@
     <PackageVersion Include="WPF-UI.DependencyInjection" Version="4.3.0" />
     <PackageVersion Include="WPF-UI.Markdown" Version="4.0.2" />
     <PackageVersion Include="WPF-UI.Tray" Version="4.3.0" />
-    <PackageVersion Include="WPF-UI.Violeta" Version="4.3.0.14" />
+    <PackageVersion Include="WPF-UI.Violeta" Version="4.3.0.15" />
     <PackageVersion Include="Microsoft.NET.Test.Sdk" Version="18.10.1" />
     <PackageVersion Include="NUnit" Version="4.6.1" />
     <PackageVersion Include="NUnit3TestAdapter" Version="6.3.0" />
