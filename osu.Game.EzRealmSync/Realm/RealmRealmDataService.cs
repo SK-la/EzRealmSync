@@ -17,8 +17,6 @@ namespace osu.Game.EzRealmSync.Realm
             this.registry = registry;
         }
 
-        internal RealmFileRegistry Registry => registry;
-
         public Task<IReadOnlyList<RealmFileEntry>> DiscoverRealmFilesAsync(string? searchDirectory, CancellationToken cancellationToken = default) =>
             Task.Run(() =>
             {
