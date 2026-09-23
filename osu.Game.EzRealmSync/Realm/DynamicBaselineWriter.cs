@@ -1,4 +1,5 @@
 using osu.Game.EzRealmSync.Contracts;
+using osu.Game.EzRealmSync.IO;
 using osu.Game.EzRealmSync.Models;
 using osu.Game.EzRealmSync.Realm.Dynamic;
 using Realms;
@@ -95,6 +96,9 @@ namespace osu.Game.EzRealmSync.Realm
                 transaction.Commit();
             }
 
+            if (applied > 0)
+                RealmFileWriteStamp.MarkWritten(targetRealmPath);
+
             progress?.Report(new ApplyProgress
             {
                 Progress = 1,
@@ -145,6 +149,9 @@ namespace osu.Game.EzRealmSync.Realm
                 RealmSchemaDriftGuard.EnsureUnchanged(schemaBefore, DynamicSchemaReader.Read(session.Realm), realmFilePath);
                 transaction.Commit();
             }
+
+            if (applied > 0)
+                RealmFileWriteStamp.MarkWritten(realmFilePath);
 
             progress?.Report(new ApplyProgress { Progress = 1, Message = "删除完成" });
             return new ApplyResult { AppliedCount = applied };

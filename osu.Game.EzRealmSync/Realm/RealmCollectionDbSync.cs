@@ -116,6 +116,9 @@ namespace osu.Game.EzRealmSync.Realm
                 transaction.Commit();
             }
 
+            if (collections.Count > 0)
+                RealmFileWriteStamp.MarkWritten(session.FilePath);
+
             return new RealmCollectionDbImportResult
             {
                 CollectionCount = collections.Count,

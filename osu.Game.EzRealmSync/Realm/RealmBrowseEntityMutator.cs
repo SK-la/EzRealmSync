@@ -1,3 +1,4 @@
+using osu.Game.EzRealmSync.IO;
 using osu.Game.EzRealmSync.Models;
 using osu.Game.EzRealmSync.Realm.Dynamic;
 
@@ -61,6 +62,9 @@ namespace osu.Game.EzRealmSync.Realm
                 RealmSchemaDriftGuard.EnsureUnchanged(schema, DynamicSchemaReader.Read(session.Realm), session.FilePath);
                 transaction.Commit();
             }
+
+            if (deleted > 0)
+                RealmFileWriteStamp.MarkWritten(session.FilePath);
 
             return deleted;
         }

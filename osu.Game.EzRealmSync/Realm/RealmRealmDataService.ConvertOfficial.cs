@@ -65,6 +65,7 @@ namespace osu.Game.EzRealmSync.Realm
 
                 // 覆盖写在最后一步：搬运或自检失败时原文件一字未动，用户手里的库仍然可用。
                 File.Move(tempTargetPath, sourcePath, overwrite: true);
+                RealmFileWriteStamp.MarkWritten(sourcePath);
                 invalidateAfterMutatingRealm(realmId, sourcePath);
 
                 progress?.Report(new ScanProgress { Progress = 1, Message = "转换完成" });

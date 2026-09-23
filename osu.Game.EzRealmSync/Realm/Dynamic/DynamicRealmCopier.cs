@@ -1,5 +1,6 @@
 using System.Collections;
 using System.Reflection;
+using osu.Game.EzRealmSync.IO;
 using osu.Game.EzRealmSync.Models;
 using Realms;
 using Realms.Schema;
@@ -47,8 +48,13 @@ namespace osu.Game.EzRealmSync.Realm.Dynamic
                 transaction.Commit();
             }
 
+            DynamicCopyResult result = context.ToResult();
+
+            if (result.Rows > 0)
+                RealmFileWriteStamp.MarkWritten(target.FilePath);
+
             progress?.Report(new ScanProgress { Progress = 1, Message = "搬运完成" });
-            return context.ToResult();
+            return result;
         }
 
         private sealed class CopyContext

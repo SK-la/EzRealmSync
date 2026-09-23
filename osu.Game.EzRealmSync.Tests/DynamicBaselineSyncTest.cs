@@ -73,6 +73,52 @@ namespace osu.Game.EzRealmSync.Tests
         }
 
         [Test]
+        public void Apply_refreshes_target_file_timestamp()
+        {
+            string worker = OfficialWorkerProcess.ResolveWorkerExecutablePathForTests();
+            if (!File.Exists(worker))
+                Assert.Ignore($"OfficialWrite Worker 未复制到测试输出：{worker}");
+
+            string root = Path.Combine(TestContext.CurrentContext.WorkDirectory, "dyn-sync-stamp-" + Guid.NewGuid().ToString("N"));
+            Directory.CreateDirectory(root);
+
+            string sourcePath = Path.Combine(root, "source.realm");
+            string targetPath = Path.Combine(root, "target.realm");
+            Guid setId = Guid.Parse("cccccccc-cccc-cccc-cccc-cccccccccccc");
+            Guid beatmapId = Guid.Parse("dddddddd-dddd-dddd-dddd-dddddddddddd");
+            DateTime stale = new DateTime(2001, 1, 1, 0, 0, 0, DateTimeKind.Utc);
+
+            try
+            {
+                createOfficialRealmViaWorker(sourcePath, 51, setId, beatmapId, "Stamped Song");
+                createEmptyOfficialRealmViaWorker(targetPath, 51);
+
+                // 模拟 Realm 提交后的状态：Windows 不因 mmap 写页更新 LastWriteTime，这里先把它按回过去。
+                File.SetLastWriteTimeUtc(targetPath, stale);
+
+                var bundle = DynamicBaselineReader.ExportByIds(sourcePath, [setId]);
+                var result = DynamicBaselineWriter.Apply(new ApplyRequest { ItemIds = [setId], CreateBackup = false }, bundle, targetPath);
+
+                Assert.That(result.AppliedCount, Is.EqualTo(1));
+                Assert.That(
+                    File.GetLastWriteTimeUtc(targetPath),
+                    Is.GreaterThan(stale.AddMinutes(1)),
+                    "写入后目标文件时间戳没跟上：用户看文件日期会以为同步没生效。");
+
+                // 什么都没写（选中的条目不在源库里）时不该假装动过文件。
+                File.SetLastWriteTimeUtc(targetPath, stale);
+                DynamicBaselineWriter.Apply(new ApplyRequest { ItemIds = [Guid.NewGuid()], CreateBackup = false }, new RealmSyncApplyBundle(), targetPath);
+
+                Assert.That(File.GetLastWriteTimeUtc(targetPath), Is.EqualTo(stale), "空写入不该更新目标文件时间戳。");
+            }
+            finally
+            {
+                RealmNativeLifetime.Flush();
+                tryDelete(root);
+            }
+        }
+
+        [Test]
         public void Writer_does_not_assign_ez_only_columns()
         {
             Assert.That(OfficialBaselineSchema.EzOnlyPropertyNames, Does.Contain("XxyStarRating"));
