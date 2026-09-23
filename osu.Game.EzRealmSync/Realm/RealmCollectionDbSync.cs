@@ -37,34 +37,43 @@ namespace osu.Game.EzRealmSync.Realm
             return entries.Count;
         }
 
+        /// <summary>
+        /// 按<b>名称列</b>合并 MD5（与游戏导入 collection.db 的口径一致）。
+        ///
+        /// 主键是哪一列由磁盘 schema 决定，本方法不依赖它：官方 51/52 的收藏夹主键是 <c>ID</c>（Guid），
+        /// 更老的库是 <c>Name</c>（string），两种都按 <c>Name</c> 找同名收藏夹；
+        /// 新建时按主键类型给值（Guid 主键得自带一个新 ID，否则会撞上 <c>Guid.Empty</c>）。
+        /// </summary>
         public static RealmCollectionDbImportResult Import(DynamicRealmSession session, RealmSchemaSnapshot schema, IReadOnlyList<LegacyCollectionDbEntry> collections)
         {
             int created = 0;
             int merged = 0;
             int addedHashes = 0;
 
-            string? primaryKey = schema.TryFindClass(OfficialBaselineSchema.BeatmapCollection, out RealmClassSchema? classSchema)
-                                 && classSchema.PrimaryKeyProperty is { } key
-                                 && classSchema.TryFindProperty(key, out RealmPropertySchema? keyProperty)
-                                 && keyProperty.Type == PropertyType.String
-                ? key
-                : null;
-
-            if (primaryKey == null)
+            if (!schema.TryFindClass(OfficialBaselineSchema.BeatmapCollection, out RealmClassSchema? classSchema)
+                || !classSchema.TryFindProperty("Name", out _)
+                || classSchema.PrimaryKeyProperty is not { } primaryKey
+                || !classSchema.TryFindProperty(primaryKey, out RealmPropertySchema? keyProperty))
             {
                 throw new InvalidOperationException(
-                    $"磁盘 schema 里 {OfficialBaselineSchema.BeatmapCollection} 的收藏夹不是以字符串主键（如 Name）标识，无法按名称合并（schema {session.DiskSchemaVersion}）。");
+                    $"磁盘 schema 里 {OfficialBaselineSchema.BeatmapCollection} 缺 Name 列或主键，无法按名称合并（schema {session.DiskSchemaVersion}）。");
             }
+
+            bool guidPrimaryKey = keyProperty.Type.HasFlag(PropertyType.Guid);
 
             using (var transaction = session.Realm.BeginWrite())
             {
                 foreach (var incoming in collections)
                 {
-                    IRealmObjectBase? existing = findByPrimaryKey(session, schema, primaryKey, incoming.Name);
+                    IRealmObjectBase? existing = findByName(session, schema, incoming.Name);
 
                     if (existing == null)
                     {
-                        IRealmObjectBase collection = DynamicRealmAccess.Create(session.Realm, OfficialBaselineSchema.BeatmapCollection, incoming.Name);
+                        IRealmObjectBase collection = guidPrimaryKey
+                            ? DynamicRealmAccess.Create(session.Realm, OfficialBaselineSchema.BeatmapCollection, Guid.NewGuid())
+                            : DynamicRealmAccess.Create(session.Realm, OfficialBaselineSchema.BeatmapCollection, incoming.Name);
+
+                        DynamicRealmAccess.Set(collection, OfficialBaselineSchema.BeatmapCollection, "Name", incoming.Name);
 
                         object? list = DynamicRealmAccess.GetListRaw(collection, "BeatmapMD5Hashes");
                         foreach (string hash in incoming.BeatmapMd5Hashes)
@@ -95,6 +104,7 @@ namespace osu.Game.EzRealmSync.Realm
                     addedHashes += added;
                 }
 
+                RealmSchemaDriftGuard.EnsureUnchanged(schema, DynamicSchemaReader.Read(session.Realm), session.FilePath);
                 transaction.Commit();
             }
 
@@ -107,12 +117,12 @@ namespace osu.Game.EzRealmSync.Realm
             };
         }
 
-        /// <summary>按主键查已有收藏夹：主键列名从 schema 读，不假定一定是 <c>Name</c>。</summary>
-        private static IRealmObjectBase? findByPrimaryKey(DynamicRealmSession session, RealmSchemaSnapshot schema, string primaryKey, string name)
+        /// <summary>按 <c>Name</c> 找已有收藏夹：不假定它是主键，也不假定它非空。</summary>
+        private static IRealmObjectBase? findByName(DynamicRealmSession session, RealmSchemaSnapshot schema, string name)
         {
             foreach (IRealmObjectBase row in DynamicRowAccess.AllRows(session, schema, OfficialBaselineSchema.BeatmapCollection))
             {
-                if (string.Equals(DynamicRowAccess.ResolveString(row, schema, primaryKey), name, StringComparison.Ordinal))
+                if (string.Equals(DynamicRowAccess.ResolveString(row, schema, "Name") ?? string.Empty, name, StringComparison.Ordinal))
                     return row;
             }
 
