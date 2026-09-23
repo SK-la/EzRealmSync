@@ -22,7 +22,7 @@ foreach ($required in @('osu.Framework.dll', 'Realm.dll', 'realm-wrappers.dll'))
     }
 }
 
-# 产品进程不加载 osu.Game.dll（全部读写走 DynamicRealm + OfficialWrite Worker）：
+# 产品进程不加载 osu.Game.dll（读写全部走 DynamicRealm）：
 # 一旦它出现在发布目录，说明有工程又把它引成了产品依赖，必须当场拦下。
 foreach ($forbidden in @('osu.Game.dll')) {
     $path = Join-Path $publishRoot $forbidden
