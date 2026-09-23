@@ -43,7 +43,9 @@
 - **同步读/写**：DynamicRealm 官方基线；缺列跳过，不因版本拒绝。
 - **成绩同步的边界**：成绩按 `BeatmapHash` 链接目标难度。目标缺该难度、缺归属规则集，或没有 `Score` 表时**跳过**；写入官方目标时再叠加上面的官方兼容过滤。跳过都在结果里计数并在状态栏列出原因，不写目标端看不见的悬空成绩；整次同步不中断。
 - **Ez 列不被改动**：目标已有同 ID 行时按覆盖重建，但 Ez 扩展列取**删除前的原值**写回（谱面集的 `ExternalContentRoot`/`HostingKind`、难度的 `XxyStarRating`/`PerformancePoints`/`HasVideo`/`HasStoryboard`、成绩的 `ManiaHitMode`/`ManiaHealthMode`、规则集的 `LastAppliedXxySrVersion`）。覆盖同步不会顺手清掉 xxySR 或外部托管路径；单独同步难度走就地更新，天然保留。
-- **官方库写回**（数据 Tab 删改）→ `SchemaModelMismatch`（请用同步 / 转官方）。
+- **官方库就地写**（数据 Tab 软删）：允许。谱面集 / 成绩写 `DeletePending = true`，收藏夹 `realm.Remove(row)`——两者都只落在官方 schema 本来就有的行列上。生效在「下一次有客户端打开该库」时（lazer 的 `cleanupPendingDeletions`），本工具只留标记。
+- **非法字符修复**：仍只对 Ez 库开放。
+- **`SchemaModelMismatch`**：现在只剩一种含义——「转回官方版」时工具目录里没有源库 upstream 版本对应的官方 schema 快照，且用户没指定一份官方库。请提供对应版本的官方 `client.realm`（用官方客户端在独立数据目录跑一次即得空库）。
 - **版本过旧**：本工具不升级 Realm 文件。请用 Ez2Lazer 客户端打开一次让游戏迁移，再回到本工具。
 
 **运行时布局：**

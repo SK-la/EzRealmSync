@@ -233,7 +233,7 @@
   <data name="ErrorConvertOfficialNoUpstream" xml:space="preserve"><value>Cannot tell which official version {0} narrows to.</value></data>
   <data name="ErrorFileInUse" xml:space="preserve"><value>The file is in use. Close osu!/Ez2Lazer and try again.</value></data>
   <data name="ErrorPathConflict" xml:space="preserve"><value>Path conflict: {0}</value></data>
-  <data name="ErrorSchemaModelMismatch" xml:space="preserve"><value>The Realm file version looks current, but its schema does not match what this tool can write. Align tool and client versions, or restore from a full backup.</value></data>
+  <data name="ErrorSchemaModelMismatch" xml:space="preserve"><value>No official schema snapshot for this library's upstream version, so it cannot be narrowed to an official file. Point the tool at an official client.realm of the same version (running the official client once in a separate data directory gives you an empty one).</value></data>
   <data name="FilterColumn" xml:space="preserve"><value>Filter this column</value></data>
   <data name="FilterSearchPlaceholder" xml:space="preserve"><value>Search…</value></data>
   <data name="FilterBlankValue" xml:space="preserve"><value>(blank)</value></data>
