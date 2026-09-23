@@ -2,7 +2,7 @@
   <PropertyGroup Label="Project">
     <TargetFramework>net10.0</TargetFramework>
     <RootNamespace>osu.Game.EzRealmSync</RootNamespace>
-    <Description>Ez Realm 同步契约与引擎；默认 ez2lazer.Game NuGet，本地 lib/ 需 -p:UseLocalOsuLibs=true。</Description>
+    <Description>Ez Realm 动态读写与同步引擎；产品只依赖 ez2lazer.Framework，本地 lib/ 仅测试 typed 对照用（-p:UseLocalOsuLibs=true）。</Description>
     <CopyLocalLockFileAssemblies Condition="'$(UseLocalOsuLibs)' == 'true'">false</CopyLocalLockFileAssemblies>
   </PropertyGroup>
   <ItemGroup>
