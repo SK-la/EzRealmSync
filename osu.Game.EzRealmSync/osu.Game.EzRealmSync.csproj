@@ -24,6 +24,7 @@
   </ItemGroup>
 
   <ItemGroup Condition="'$(UseLocalOsuLibs)' == 'true'">
+    <PackageReference Include="NUnit" />
     <PackageReference Include="Realm" />
   </ItemGroup>
 </Project>
