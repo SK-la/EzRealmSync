@@ -121,8 +121,12 @@ namespace osu.Game.EzRealmSync.Runtime
 
         private static void verifyRealmNativeLibraryPresent()
         {
-            if (resolveNativeLibraryPath("realm-wrappers") != null)
+            string? nativePath = resolveNativeLibraryPath("realm-wrappers");
+            if (nativePath != null)
+            {
+                EzRealmSyncLog.Info($"realm-wrappers={nativePath}");
                 return;
+            }
 
             string rid = resolveRuntimeIdentifier();
             string hint = Path.Combine(RuntimeLibDirectory, "runtimes", rid, "native", "realm-wrappers.dll");

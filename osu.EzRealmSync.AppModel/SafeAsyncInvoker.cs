@@ -1,4 +1,5 @@
 using System.Diagnostics;
+using osu.Game.EzRealmSync;
 
 namespace osu.EzRealmSync.AppModel
 {
@@ -26,9 +27,13 @@ namespace osu.EzRealmSync.AppModel
             }
             catch (Exception ex)
             {
+                Action<Exception>? handler = onError ?? DefaultExceptionHandler;
+                if (handler == null)
+                    EzRealmSyncLog.Exception(ex, "异步任务失败");
+
                 try
                 {
-                    (onError ?? DefaultExceptionHandler)?.Invoke(ex);
+                    handler?.Invoke(ex);
                 }
                 catch (Exception handlerEx)
                 {

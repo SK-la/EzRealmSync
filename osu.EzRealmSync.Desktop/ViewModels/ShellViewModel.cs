@@ -6,6 +6,7 @@ using osu.EzRealmSync.AppModel.Localization;
 using osu.EzRealmSync.Desktop.Commands;
 using osu.EzRealmSync.Desktop.Services;
 using osu.Framework.Bindables;
+using osu.Game.EzRealmSync;
 using osu.Game.EzRealmSync.Models;
 
 namespace osu.EzRealmSync.Desktop.ViewModels
@@ -50,7 +51,11 @@ namespace osu.EzRealmSync.Desktop.ViewModels
                     action();
             };
 
-            void reportAsyncError(Exception ex) => presenter.MarshalToUi?.Invoke(() => presenter.StatusMessage.Value = ex.Message);
+            void reportAsyncError(Exception ex)
+            {
+                EzRealmSyncLog.Exception(ex, "异步命令失败");
+                presenter.MarshalToUi?.Invoke(() => presenter.StatusMessage.Value = ex.Message);
+            }
 
             SafeAsyncInvoker.DefaultExceptionHandler = reportAsyncError;
 

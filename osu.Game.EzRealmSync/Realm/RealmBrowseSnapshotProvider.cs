@@ -21,9 +21,9 @@ namespace osu.Game.EzRealmSync.Realm
 
             using var session = DynamicRealmSession.OpenDynamic(file.FilePath, readOnly: true);
 
-            EzRealmSyncLog.Info($"ReadBrowseSnapshot via dynamic open file={file.FilePath}");
-
-            return DynamicBrowseSnapshotBuilder.Build(file, session, progress, cancellationToken);
+            RealmSnapshot snapshot = DynamicBrowseSnapshotBuilder.Build(file, session, progress, cancellationToken);
+            RealmReadLog.BrowseSnapshot(snapshot);
+            return snapshot;
         }
     }
 }

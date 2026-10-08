@@ -79,6 +79,7 @@ namespace osu.Game.EzRealmSync.Realm
             catch (Exception ex)
             {
                 error = formatOpenFailure(ex);
+                EzRealmSyncLog.Exception(ex, "探测 schema 失败 " + RealmReadLog.DescribeFile(fullPath));
                 return false;
             }
         }

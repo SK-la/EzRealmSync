@@ -12,6 +12,18 @@ namespace osu.EzRealmSync.Desktop
         public static void Main(string[] args)
         {
             EzRealmSyncLog.Initialize();
+            AppDomain.CurrentDomain.UnhandledException += (_, eventArgs) =>
+            {
+                if (eventArgs.ExceptionObject is Exception ex)
+                    EzRealmSyncLog.Exception(ex, "未处理异常");
+                else
+                    EzRealmSyncLog.Error($"未处理异常 {eventArgs.ExceptionObject}");
+            };
+            TaskScheduler.UnobservedTaskException += (_, eventArgs) =>
+            {
+                EzRealmSyncLog.Exception(eventArgs.Exception, "未观察的任务异常");
+                eventArgs.SetObserved();
+            };
 
             EzRealmSyncRuntimeLibLoader.Install();
 

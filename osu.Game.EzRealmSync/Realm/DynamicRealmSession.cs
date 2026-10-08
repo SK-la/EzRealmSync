@@ -55,17 +55,28 @@ namespace osu.Game.EzRealmSync.Realm
                 FallbackPipePath = pipeDir,
             };
 
-            RealmInstance instance = RealmOpenContext.GetInstance(config);
+            RealmInstance instance;
+            try
+            {
+                instance = RealmOpenContext.GetInstance(config);
+            }
+            catch (Exception ex)
+            {
+                RealmReadLog.OpenFailed(fullPath, ex);
+                throw;
+            }
 
             try
             {
                 ulong handleVersion = ReadSchemaVersionFromHandle(instance);
-
-                return new DynamicRealmSession(instance, fullPath, isUsableSchemaVersion(handleVersion) ? (int)handleVersion : 0, readOnly);
+                var session = new DynamicRealmSession(instance, fullPath, isUsableSchemaVersion(handleVersion) ? (int)handleVersion : 0, readOnly);
+                RealmReadLog.Opened(session);
+                return session;
             }
-            catch
+            catch (Exception ex)
             {
                 instance.Dispose();
+                RealmReadLog.OpenFailed(fullPath, ex);
                 throw;
             }
         }
@@ -99,21 +110,33 @@ namespace osu.Game.EzRealmSync.Realm
                 FallbackPipePath = pipeDir,
             };
 
-            RealmInstance instance = RealmOpenContext.GetInstance(config);
+            string fullPath = Path.GetFullPath(realmFilePath);
+            RealmInstance instance;
+            try
+            {
+                instance = RealmOpenContext.GetInstance(config);
+            }
+            catch (Exception ex)
+            {
+                RealmReadLog.OpenFailed(fullPath, ex);
+                throw;
+            }
 
             try
             {
                 ulong handleVersion = ReadSchemaVersionFromHandle(instance);
-
-                return new DynamicRealmSession(
+                var session = new DynamicRealmSession(
                     instance,
-                    Path.GetFullPath(realmFilePath),
+                    fullPath,
                     isUsableSchemaVersion(handleVersion) ? (int)handleVersion : 0,
                     readOnly);
+                RealmReadLog.Opened(session);
+                return session;
             }
-            catch
+            catch (Exception ex)
             {
                 instance.Dispose();
+                RealmReadLog.OpenFailed(fullPath, ex);
                 throw;
             }
         }

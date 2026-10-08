@@ -238,10 +238,12 @@ namespace osu.EzRealmSync.AppModel
                     updateWorkspaceCapabilities();
                     StatusMessage.Value = buildRealmListStatusMessage(searchDirectory, files.Count);
                 });
+
+                logDiscoveredRealmFiles(searchDirectory, files);
             }
             catch (Exception ex)
             {
-                runOnUi(() => StatusMessage.Value = toUserMessage(ex));
+                reportError("刷新 Realm 列表", ex, friendly: true);
             }
             finally
             {
@@ -284,8 +286,9 @@ namespace osu.EzRealmSync.AppModel
                 {
                     recovered.Add(await dataService.RegisterRealmFileAsync(path, cancellationToken).ConfigureAwait(false));
                 }
-                catch
+                catch (Exception ex)
                 {
+                    EzRealmSyncLog.Exception(ex, "登记 Realm 失败，改用文件探测 " + path);
                     if (RealmFileDiscovery.TryCreateEntry(path, schemaVersion: null, out var entry))
                         recovered.Add(entry);
                 }
@@ -360,7 +363,7 @@ namespace osu.EzRealmSync.AppModel
             }
             catch (Exception ex)
             {
-                runOnUi(() => StatusMessage.Value = toUserMessage(ex));
+                reportError("登记 Realm", ex, friendly: true);
             }
             finally
             {
@@ -409,7 +412,7 @@ namespace osu.EzRealmSync.AppModel
             }
             catch (Exception ex)
             {
-                runOnUi(() => StatusMessage.Value = toUserMessage(ex));
+                reportError("备份 Realm", ex, friendly: true);
             }
             finally
             {
@@ -440,7 +443,7 @@ namespace osu.EzRealmSync.AppModel
             }
             catch (Exception ex)
             {
-                runOnUi(() => StatusMessage.Value = toUserMessage(ex));
+                reportError("列出备份", ex, friendly: true);
             }
             finally
             {
@@ -487,7 +490,7 @@ namespace osu.EzRealmSync.AppModel
             }
             catch (Exception ex)
             {
-                runOnUi(() => StatusMessage.Value = ex.Message);
+                reportError("恢复备份", ex);
             }
             finally
             {
@@ -518,7 +521,7 @@ namespace osu.EzRealmSync.AppModel
             }
             catch (Exception ex)
             {
-                runOnUi(() => StatusMessage.Value = ex.Message);
+                reportError("加载 Realm 快照", ex);
             }
             finally
             {
@@ -568,7 +571,7 @@ namespace osu.EzRealmSync.AppModel
             }
             catch (Exception ex)
             {
-                runOnUi(() => StatusMessage.Value = toUserMessage(ex));
+                reportError("计算同步集合", ex, friendly: true);
             }
             finally
             {
@@ -671,7 +674,7 @@ namespace osu.EzRealmSync.AppModel
             }
             catch (Exception ex)
             {
-                runOnUi(() => StatusMessage.Value = ex.Message);
+                reportError("执行同步", ex);
             }
             finally
             {
@@ -809,7 +812,7 @@ namespace osu.EzRealmSync.AppModel
             }
             catch (Exception ex)
             {
-                runOnUi(() => StatusMessage.Value = ex.Message);
+                reportError("删除浏览行", ex);
             }
             finally
             {
@@ -858,7 +861,7 @@ namespace osu.EzRealmSync.AppModel
             }
             catch (Exception ex)
             {
-                runOnUi(() => StatusMessage.Value = ex.Message);
+                reportError("导出浏览行", ex);
             }
             finally
             {
@@ -896,7 +899,7 @@ namespace osu.EzRealmSync.AppModel
             }
             catch (Exception ex)
             {
-                runOnUi(() => StatusMessage.Value = ex.Message);
+                reportError("导出收藏夹数据库", ex);
             }
             finally
             {
@@ -1062,7 +1065,7 @@ namespace osu.EzRealmSync.AppModel
             }
             catch (Exception ex)
             {
-                runOnUi(() => StatusMessage.Value = ex.Message);
+                reportError("扫描修复项", ex);
             }
             finally
             {
@@ -1129,7 +1132,7 @@ namespace osu.EzRealmSync.AppModel
                 }
                 catch (Exception ex)
                 {
-                    runOnUi(() => StatusMessage.Value = toUserMessage(ex));
+                    reportError("读取官方 schema 来源", ex, friendly: true);
                     return;
                 }
             }
@@ -1180,7 +1183,7 @@ namespace osu.EzRealmSync.AppModel
             }
             catch (Exception ex)
             {
-                runOnUi(() => StatusMessage.Value = toUserMessage(ex));
+                reportError("转换为官方库", ex, friendly: true);
             }
             finally
             {
@@ -1235,7 +1238,7 @@ namespace osu.EzRealmSync.AppModel
             }
             catch (Exception ex)
             {
-                runOnUi(() => StatusMessage.Value = ex.Message);
+                reportError("加载导出目录", ex);
             }
             finally
             {
@@ -1345,7 +1348,7 @@ namespace osu.EzRealmSync.AppModel
             }
             catch (Exception ex)
             {
-                runOnUi(() => StatusMessage.Value = ex.Message);
+                reportError("导出选中项", ex);
             }
             finally
             {
@@ -1413,7 +1416,7 @@ namespace osu.EzRealmSync.AppModel
             }
             catch (Exception ex)
             {
-                runOnUi(() => StatusMessage.Value = ex.Message);
+                reportError("导入收藏夹数据库", ex);
             }
             finally
             {
@@ -1470,7 +1473,7 @@ namespace osu.EzRealmSync.AppModel
             }
             catch (Exception ex)
             {
-                runOnUi(() => StatusMessage.Value = ex.Message);
+                reportError("应用修复", ex);
             }
             finally
             {
@@ -1487,8 +1490,6 @@ namespace osu.EzRealmSync.AppModel
 
         private string toUserMessage(Exception ex)
         {
-            EzRealmSyncLog.Exception(ex, "UI error");
-
             RealmUserOperationException? userError = ex as RealmUserOperationException
                                                      ?? ex.InnerException as RealmUserOperationException;
 
@@ -1508,6 +1509,36 @@ namespace osu.EzRealmSync.AppModel
                 RealmUserErrorKind.SchemaModelMismatch => Loc.Get("ErrorSchemaModelMismatch"),
                 _ => userError.Detail,
             };
+        }
+
+        private static void logDiscoveredRealmFiles(string? searchDirectory, IReadOnlyList<RealmFileEntry> files)
+        {
+            EzRealmSyncLog.Info($"发现 Realm count={files.Count} directory={searchDirectory ?? "(空)"}");
+
+            foreach (RealmFileEntry file in files.Take(30))
+                EzRealmSyncLog.Info($"  schema={file.SchemaVersion?.ToString() ?? "?"} name={file.DisplayName} path={file.FilePath}");
+
+            if (files.Count > 30)
+                EzRealmSyncLog.Info($"  …其余 {files.Count - 30} 个未逐条记录");
+        }
+
+        private void reportError(string operation, Exception ex, bool friendly = false)
+        {
+            EzRealmSyncLog.Exception(ex, operation);
+            string message = friendly ? toUserMessage(ex) : safeStatusMessage(ex);
+            runOnUi(() => StatusMessage.Value = message);
+        }
+
+        private static string safeStatusMessage(Exception ex)
+        {
+            try
+            {
+                return string.IsNullOrWhiteSpace(ex.Message) ? ex.GetType().Name : ex.Message;
+            }
+            catch
+            {
+                return ex.GetType().Name;
+            }
         }
 
         private void updateWorkspaceCapabilities()
@@ -1654,7 +1685,7 @@ namespace osu.EzRealmSync.AppModel
             }
             catch (Exception ex)
             {
-                runOnUi(() => StatusMessage.Value = ex.Message);
+                reportError("切换数据后端", ex);
             }
         }
 

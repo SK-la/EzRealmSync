@@ -1,3 +1,5 @@
+using System.Globalization;
+using System.Runtime.InteropServices;
 using osu.Game.EzRealmSync.Contracts;
 
 namespace osu.Game.EzRealmSync
@@ -20,6 +22,11 @@ namespace osu.Game.EzRealmSync
                 initialized = true;
                 writeLine("INFO", "EzRealmSync log initialized.");
                 writeLine("INFO", $"ApplicationRoot={EzRealmSyncDataPaths.ApplicationRoot}");
+                writeLine("INFO", $"exe={Environment.ProcessPath} base={AppContext.BaseDirectory} log={logFilePath}");
+                writeLine("INFO",
+                    $"os={Environment.OSVersion} rid={RuntimeInformation.RuntimeIdentifier} arch={RuntimeInformation.ProcessArchitecture} ptr={(Environment.Is64BitProcess ? 64 : 32)} runtime={RuntimeInformation.FrameworkDescription}");
+                writeLine("INFO",
+                    $"culture={CultureInfo.CurrentCulture.Name} ui={CultureInfo.CurrentUICulture.Name} ansi={CultureInfo.CurrentCulture.TextInfo.ANSICodePage} oem={CultureInfo.CurrentCulture.TextInfo.OEMCodePage}");
             }
         }
 
