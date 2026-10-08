@@ -84,8 +84,15 @@ namespace osu.EzRealmSync.Desktop
 
         private static void setColor(string key, byte a, byte r, byte g, byte b)
         {
-            if (Application.Current?.TryFindResource(key) is SolidColorBrush brush)
-                brush.Color = Color.FromArgb(a, r, g, b);
+            if (Application.Current == null)
+                return;
+
+            var color = Color.FromArgb(a, r, g, b);
+            if (Application.Current.TryFindResource(key) is SolidColorBrush existing && existing.Color == color)
+                return;
+
+            // ResourceDictionary 会冻结画刷，不能改 Color，只能换成新实例。
+            Application.Current.Resources[key] = new SolidColorBrush(color);
         }
     }
 }
