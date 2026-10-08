@@ -36,6 +36,9 @@ namespace osu.EzRealmSync.AppModel
 
         /// <summary>UI 测试模式（Mock 数据）；可在设置中切换，无需重启。</summary>
         public bool UiTestMode { get; set; }
+
+        /// <summary>黑暗主题。关闭后使用浅色界面。缺省为开启，避免旧配置被反序列化成浅色。</summary>
+        public bool DarkTheme { get; set; } = true;
     }
 
     public static class AppSettingsStore

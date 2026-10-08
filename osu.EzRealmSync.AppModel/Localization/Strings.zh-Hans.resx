@@ -70,6 +70,8 @@
   <data name="ConfirmDeleteRows" xml:space="preserve"><value>确定从 Realm 删除 {0} 条记录？谱面集/成绩为软删，收藏夹为永久移除。请先关闭游戏。</value></data>
   <data name="ConfirmBeforeDelete" xml:space="preserve"><value>删除前确认</value></data>
   <data name="ConfirmBeforeDeleteHint" xml:space="preserve"><value>从表格中移除行前弹出警告对话框。</value></data>
+  <data name="DarkTheme" xml:space="preserve"><value>黑暗主题</value></data>
+  <data name="DarkThemeHint" xml:space="preserve"><value>关闭后使用浅色界面，立即生效。</value></data>
   <data name="Cancel" xml:space="preserve"><value>取消</value></data>
   <data name="Ok" xml:space="preserve"><value>确定</value></data>
   <data name="SettingsTitle" xml:space="preserve"><value>设置</value></data>

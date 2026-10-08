@@ -93,6 +93,7 @@ namespace osu.EzRealmSync.AppModel
             ExportGroupScoresByPlayer.BindValueChanged(_ => persistSettings());
             IllegalCharacterReplacement.BindValueChanged(_ => persistSettings());
             ConfirmBeforeDelete.BindValueChanged(_ => persistSettings());
+            DarkTheme.BindValueChanged(_ => persistSettings());
         }
 
         public ObservableCollection<RealmFileEntry> RealmFiles { get; } = new ObservableCollection<RealmFileEntry>();
@@ -142,6 +143,8 @@ namespace osu.EzRealmSync.AppModel
         public Bindable<string> IllegalCharacterReplacement { get; } = new Bindable<string>("_");
 
         public BindableBool ConfirmBeforeDelete { get; } = new BindableBool(true);
+
+        public BindableBool DarkTheme { get; } = new BindableBool(true);
 
         public Bindable<string> ExportDirectory { get; } = new Bindable<string>(string.Empty);
 
@@ -1617,6 +1620,7 @@ namespace osu.EzRealmSync.AppModel
                 : settings.IllegalCharacterReplacement;
 
             ConfirmBeforeDelete.Value = settings.ConfirmBeforeDelete;
+            DarkTheme.Value = settings.DarkTheme;
         }
 
         private void applyBackendMode(bool uiTest)
@@ -1700,6 +1704,7 @@ namespace osu.EzRealmSync.AppModel
                 IllegalCharacterReplacement = IllegalCharacterReplacement.Value,
                 ConfirmBeforeDelete = ConfirmBeforeDelete.Value,
                 UiTestMode = UiTestMode.Value,
+                DarkTheme = DarkTheme.Value,
             });
         }
 

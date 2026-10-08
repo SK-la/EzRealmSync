@@ -27,6 +27,7 @@ namespace osu.EzRealmSync.Desktop
 
             var app = new App();
             app.InitializeComponent();
+            DesktopTheme.Apply(settings.DarkTheme);
 
             var mainWindow = new MainWindow
             {

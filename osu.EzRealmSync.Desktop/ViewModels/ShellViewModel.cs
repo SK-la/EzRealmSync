@@ -84,6 +84,7 @@ namespace osu.EzRealmSync.Desktop.ViewModels
             bindPresenter(presenter.ExportFolderName, nameof(ExportFolderName));
             bindPresenter(presenter.ExportGroupScoresByPlayer, nameof(ExportGroupScoresByPlayer));
             bindPresenter(presenter.ConfirmBeforeDelete, nameof(ConfirmBeforeDelete));
+            bindPresenter(presenter.DarkTheme, nameof(DarkTheme));
 
             presenter.RealmFilesChanged += () => Application.Current.Dispatcher.Invoke(onRealmFilesChanged);
             presenter.SyncRowsChanged += () => Application.Current.Dispatcher.Invoke(onSyncRowsChanged);
@@ -168,6 +169,12 @@ namespace osu.EzRealmSync.Desktop.ViewModels
         {
             get => Presenter.ConfirmBeforeDelete.Value;
             set => Presenter.ConfirmBeforeDelete.Value = value;
+        }
+
+        public bool DarkTheme
+        {
+            get => Presenter.DarkTheme.Value;
+            set => Presenter.DarkTheme.Value = value;
         }
 
         public MainWorkspaceTab CurrentTab

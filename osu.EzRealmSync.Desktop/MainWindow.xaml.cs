@@ -21,6 +21,7 @@ namespace osu.EzRealmSync.Desktop
         {
             InitializeComponent();
             ApplicationThemeManager.Apply(this);
+            DesktopTheme.Attach(this);
             Loaded += onLoaded;
         }
 
@@ -112,6 +113,10 @@ namespace osu.EzRealmSync.Desktop
                             break;
                         case nameof(ShellViewModel.ConfirmBeforeDelete):
                             ConfirmDeleteSwitch.IsChecked = shell.ConfirmBeforeDelete;
+                            break;
+                        case nameof(ShellViewModel.DarkTheme):
+                            DarkThemeSwitch.IsChecked = shell.DarkTheme;
+                            DesktopTheme.Apply(shell.DarkTheme);
                             break;
                         case nameof(ShellViewModel.CanUseFixAndExport):
                             updateFixExportNavEnabled();
@@ -210,6 +215,10 @@ namespace osu.EzRealmSync.Desktop
             ConfirmDeleteSwitch.IsChecked = vm.ConfirmBeforeDelete;
             ConfirmDeleteSwitch.IsEnabled = !vm.IsBusy;
 
+            DarkThemeSwitch.Content = Loc.Get("DarkTheme");
+            DarkThemeHint.Text = Loc.Get("DarkThemeHint");
+            DarkThemeSwitch.IsChecked = vm.DarkTheme;
+
             bool showMock = vm.Presenter.UiTestMode.Value && vm.Presenter.MockService != null;
             MockSettingsExpander.Visibility = showMock ? Visibility.Visible : Visibility.Collapsed;
 
@@ -277,6 +286,14 @@ namespace osu.EzRealmSync.Desktop
 
             vm.Presenter.UiTestMode.Value = enabled;
             refreshSettingsFlyout();
+        }
+
+        private void DarkThemeSwitch_OnClick(object sender, RoutedEventArgs e)
+        {
+            if (vm == null)
+                return;
+
+            vm.DarkTheme = DarkThemeSwitch.IsChecked == true;
         }
 
         private void ConfirmDeleteSwitch_OnClick(object sender, RoutedEventArgs e)

@@ -23,6 +23,7 @@ namespace osu.EzRealmSync.Desktop
             this.mode = mode;
             InitializeComponent();
             ApplicationThemeManager.Apply(this);
+            DesktopTheme.Attach(this);
             PathBreadcrumb.ItemsSource = breadcrumbSegments;
             Title = title;
             PickerTitleBar.Title = title;

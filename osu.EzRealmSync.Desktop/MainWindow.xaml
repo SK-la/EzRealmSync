@@ -128,7 +128,7 @@
           <ui:Card Padding="12"
                    MinWidth="320"
                    MaxWidth="360"
-                   Background="{StaticResource EzBrushBgSettingsFlyout}">
+                   Background="{DynamicResource EzBrushBgSettingsFlyout}">
             <ScrollViewer MaxHeight="440"
                           VerticalScrollBarVisibility="Auto"
                           HorizontalScrollBarVisibility="Disabled">
@@ -137,6 +137,14 @@
                                 IsExpanded="True"
                                 Icon="{ui:SymbolIcon Info24}">
                   <StackPanel>
+                    <ui:ToggleSwitch x:Name="DarkThemeSwitch"
+                                     Margin="0,0,0,4"
+                                     LabelPosition="Right"
+                                     Click="DarkThemeSwitch_OnClick" />
+                    <ui:TextBlock x:Name="DarkThemeHint"
+                                  Margin="0,0,0,12"
+                                  TextWrapping="Wrap"
+                                  Style="{StaticResource WorkspaceMutedText}" />
                     <ui:ToggleSwitch x:Name="UiTestModeSwitch"
                                      Margin="0,0,0,8"
                                      LabelPosition="Right"

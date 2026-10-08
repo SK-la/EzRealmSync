@@ -40,6 +40,7 @@ namespace osu.Game.EzRealmSync.Tests
                 ExportRealmId = "export",
                 BackupDirectory = @"D:\backups",
                 ConfirmBeforeDelete = false,
+                DarkTheme = false,
             };
 
             AppSettingsStore.Save(original, settingsPath);
@@ -52,6 +53,19 @@ namespace osu.Game.EzRealmSync.Tests
             Assert.That(loaded.FixRealmId, Is.EqualTo(original.FixRealmId));
             Assert.That(loaded.BackupDirectory, Is.EqualTo(original.BackupDirectory));
             Assert.That(loaded.ConfirmBeforeDelete, Is.False);
+            Assert.That(loaded.DarkTheme, Is.False);
+        }
+
+        [Test]
+        public void Load_missing_dark_theme_stays_enabled()
+        {
+            Directory.CreateDirectory(Path.GetDirectoryName(settingsPath)!);
+            File.WriteAllText(settingsPath, "{ \"ConfirmBeforeDelete\": false }");
+
+            var loaded = AppSettingsStore.Load(settingsPath);
+
+            Assert.That(loaded.DarkTheme, Is.True);
+            Assert.That(loaded.ConfirmBeforeDelete, Is.False);
         }
 
         [Test]
@@ -59,6 +73,7 @@ namespace osu.Game.EzRealmSync.Tests
         {
             var loaded = AppSettingsStore.Load(settingsPath);
             Assert.That(loaded.ConfirmBeforeDelete, Is.True);
+            Assert.That(loaded.DarkTheme, Is.True);
             Assert.That(loaded.BackupDirectory, Is.EqualTo(EzRealmSyncDataPaths.BackupsDirectory));
             Assert.That(loaded.ExportDirectory, Is.EqualTo(EzRealmSyncDataPaths.ExportsDirectory));
         }
