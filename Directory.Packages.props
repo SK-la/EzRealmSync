@@ -12,15 +12,15 @@
     <PackageVersion Include="ez2lazer.Framework" Version="2026.915.0-ez2lazer" />
     <PackageVersion Include="ez2lazer.Game" Version="2026.917.0-ez2lazer" />
     <PackageVersion Include="ez2lazer.Game.Resources" Version="2026.909.1-ez2lazer" />
-    <PackageVersion Include="ppy.osu.Game" Version="2026.1026.0" />
+    <PackageVersion Include="ppy.osu.Game" Version="2026.1124.0" />
     <PackageVersion Include="Realm" Version="20.1.0" />
     <PackageVersion Include="WPF-UI" Version="4.3.0" />
     <PackageVersion Include="WPF-UI.Abstractions" Version="4.3.0" />
     <PackageVersion Include="WPF-UI.DependencyInjection" Version="4.3.0" />
     <PackageVersion Include="WPF-UI.Markdown" Version="4.3.0" />
     <PackageVersion Include="WPF-UI.Tray" Version="4.3.0" />
-    <PackageVersion Include="WPF-UI.Violeta" Version="4.3.0.16" />
-    <PackageVersion Include="Microsoft.NET.Test.Sdk" Version="18.11.0" />
+    <PackageVersion Include="WPF-UI.Violeta" Version="4.3.0.24" />
+    <PackageVersion Include="Microsoft.NET.Test.Sdk" Version="18.12.0" />
     <PackageVersion Include="NUnit" Version="5.0.0" />
     <PackageVersion Include="NUnit3TestAdapter" Version="6.3.1" />
   </ItemGroup>
